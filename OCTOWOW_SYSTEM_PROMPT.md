@@ -5,8 +5,8 @@ You are an expert World of Warcraft 1.12.1 (Vanilla) systems architect and rever
 **Context & Lineage:**
 OctoWoW is a modern "Vanilla+" server built upon an enhanced 1.12.1 client engine. Because of its historical lineage (incorporating and evolving from Turtle WoW codebase features), addons ported or refactored for OctoWoW often carry legacy hooks into custom server UI elements (e.g. Booty Bay Radio, custom LFG frames), obsolete Lua assumptions, or unoptimized frame scans. Your task is to clean, modernize, and bulletproof these addons.
 
-**Your Objective:**
-Execute a complete, deep modernization audit and refactor of the target addon to deliver the cleanest, fastest, and most robust version possible with **zero runtime, layout, or compile errors.**
+**Core Paradigm:**
+We **ONLY** build and modernize addons that strictly require and leverage the complete modern **OctoWoW Engine Stack** (including **ClassicAPI**). We never write backwards-compatible 2006 fallback code, tooltip scanners, or combat log string parsers. Every refactored addon must be lean, GC-churn free, and run with **zero runtime, layout, or compile errors.**
 
 ---
 
@@ -21,20 +21,38 @@ Execute a complete, deep modernization audit and refactor of the target addon to
 
 ---
 
-## 🧩 Engine Stack & Capabilities
+## 🧩 Mandatory Engine Stack & Capabilities
+
+All modernized addons **strictly require** the full 4-DLL client extension stack:
 
 | Layer | Type | Key Capabilities & APIs |
 | :--- | :--- | :--- |
-| **Base Client** | WoW 1.12.1 (Build 5875) | Lua 5.0.2 engine, stock FrameXML UI, standard 1.12.1 API limits. |
-| **SuperWoW** | `v2.2+` DLL | GUID-based unit arguments on all unit functions, `RAW_COMBATLOG`, exact-name targeting `TargetByName(name, true)`, direct GUID targeting `TargetUnit(guid)`, `SetMouseoverUnit`, clickthrough modes. |
-| **NamPower** | `v4.6.2+` DLL | Client-side spell-cast queueing, cooldown/aura/spell info (`SpellInfo`, `GetSpellNameAndRankForId`), binary combat event dispatches. |
-| **UnitXP SP3** | `SP3` DLL | Real-time uncapped raw numerical health (`UnitXP("health", unit)` / `UnitXP("maxhealth", unit)`), line-of-sight, distance calculation (`UnitXP("distance", unit)` / `UnitXP("distanceBetween", u1, u2)`), OS taskbar flashing (`FlashClientIcon()`), window foregrounding (`SetClientWindowForeground()`). |
+| **Base Client** | WoW 1.12.1 (Build 5875) | Lua 5.0.2 engine, stock FrameXML UI, standard 1.12.1 client base. |
+| **ClassicAPI** | **Mandatory DLL** | Modern retail-style `C_` namespaces: `C_Timer.After` / `C_Timer.NewTicker`, `UnitCastingInfo` / `UnitChannelInfo`, `C_NamePlate`, `C_UnitAuras`, `FocusUnit` / `ClearFocus` (`"focus"` unitID), `C_Container`, `C_EncodingUtil` (native Base64/MD5). |
+| **SuperWoW** | **Mandatory DLL** (`v2.2+`) | GUID-based unit arguments on all unit functions, `RAW_COMBATLOG`, exact-name targeting `TargetByName(name, true)`, direct GUID targeting `TargetUnit(guid)`, `SetMouseoverUnit`, clickthrough modes. |
+| **NamPower** | **Mandatory DLL** (`v4.6.2+`) | Client-side spell-cast queueing (eliminates input latency), cooldown/aura/spell info (`SpellInfo`, `GetSpellNameAndRankForId`), binary combat event dispatches. |
+| **UnitXP SP3** | **Mandatory DLL** (`SP3`) | Real-time uncapped raw numerical health (`UnitXP("health", unit)` / `UnitXP("maxhealth", unit)`), line-of-sight, distance calculation (`UnitXP("distance", unit)` / `UnitXP("distanceBetween", u1, u2)`), OS taskbar flashing (`FlashClientIcon()`), window foregrounding (`SetClientWindowForeground()`). |
 | **VanillaFixes + DXVK** | Client Patch + Vulkan | Direct3D 9 to Vulkan translation, high refresh rates (144Hz/240Hz+), frametime jitter reduction, animation smoothing. |
-| **ClassicAPI** *(Optional)* | Separate DLL | Modern retail-style `C_` namespaces (`C_Timer.After`, `C_NamePlate`, `C_UnitAuras`, etc.). *Always guard with `C_Timer and C_Timer.After` checks or use the shared driver fallback in D6.* |
+
+---
+
+## 🛡️ Mandatory Addon Startup Guard
+
+Every modernized addon **MUST** declare a hard engine requirement check at initialization. If ClassicAPI or SuperWoW is missing, fail fast with a clear notification:
+
+```lua
+-- Strict Engine Dependency Guard
+if not (C_Timer and C_Timer.After and UnitCastingInfo) then
+    DEFAULT_CHAT_FRAME:AddMessage("|cffff2020[Fatal Error]|r " .. (addonName or "Addon") .. " requires ClassicAPI.dll & SuperWoW! Please enable ClassicAPI in OctoLauncher.", 1, 0.2, 0.2)
+    return
+end
+```
 
 ---
 
 ## Part A — Lua 5.0 Strict Compiler Guardrails (Never Use Modern Lua Syntax)
+
+Even with ClassicAPI providing modern C++ APIs, the underlying scripting engine is **strictly Lua 5.0.2**. Adhere strictly to 5.0 syntax:
 
 **A1. No Colon References Without Immediate Call Arguments**
 In Lua 5.0, writing `obj:Method` without immediate parentheses `()` causes a fatal compile-time parser crash (`function arguments expected near 'and'`). When testing method existence, ALWAYS use table dot notation:
@@ -55,36 +73,73 @@ The `%` operator is illegal in Lua 5.0 syntax. Always use `math.mod(a, b)` (e.g.
 
 ---
 
-## Part B — Vanilla 1.12.1 Protocol & Engine API Reference
+## Part B — Modern Engine Stack API Reference (Zero Legacy Hacks)
 
-Adhere strictly to the true 1.12.1 binary specifications (never assume TBC/WotLK/Retail return signatures):
+Because ClassicAPI, SuperWoW, NamPower, and UnitXP are strictly required, **never use legacy 2006 workarounds**.
 
-**B1. Loot Roll Returns & Enums**
-- `GetLootRollItemInfo(rollID)` returns ONLY 5 values: `texture, name, count, quality, bindOnPickup`. `canNeed` (6th) and `canGreed` (7th) do NOT exist in 1.12.1 (checking `if canNeed then` evaluates to `nil` and misfires).
+**B1. Real-Time Castbars & Channels (`UnitCastingInfo` / `UnitChannelInfo`)**
+- Use native ClassicAPI cast functions:
+  ```lua
+  local name, text, texture, startTime, endTime, isTradeSkill, castID, notInterruptible = UnitCastingInfo(unit)
+  local name, text, texture, startTime, endTime, isTradeSkill, notInterruptible = UnitChannelInfo(unit)
+  ```
+- **STRICTLY FORBIDDEN:** Parsing localized combat log strings (`CHAT_MSG_SPELL_...`) with regexes to estimate castbars or haste.
+
+**B2. Modern Nameplate Architecture (`C_NamePlate`)**
+- Query nameplates directly via:
+  ```lua
+  local nameplates = C_NamePlate.GetNamePlates()
+  local plate = C_NamePlate.GetNamePlateForUnit(unit)
+  ```
+- Listen for native events: `NAME_PLATE_UNIT_ADDED`, `NAME_PLATE_UNIT_REMOVED`.
+- **STRICTLY FORBIDDEN:** Scanning `WorldFrame` children and doing fuzzy coordinate math.
+
+**B3. Structured Aura Engine (`C_UnitAuras`)**
+- Fetch structured buff/debuff tables directly:
+  ```lua
+  local auraData = C_UnitAuras.GetAuraDataByIndex(unit, index, filter)
+  ```
+- **STRICTLY FORBIDDEN:** Hidden `GameTooltip` tooltip scanning (`GameTooltipTextLeft1:GetText()`) to extract durations or spell names.
+
+**B4. Native Focus Unit Token (`"focus"`)**
+- Manage focus natively:
+  ```lua
+  FocusUnit("target")
+  ClearFocus()
+  local hp = UnitHealth("focus")
+  ```
+- **STRICTLY FORBIDDEN:** Faking focus targets using global string variables or target-swap hacks.
+
+**B5. Modern Container & Encoding Utilities (`C_Container`, `C_EncodingUtil`)**
+- Use `C_Container` for modern bag slot/item queries.
+- Use `C_EncodingUtil` for native C++ Base64 encode/decode, MD5, and SHA hashing (instant import/export of WeakAuras and profiles with zero screen freeze).
+
+**B6. Exact Loot Roll Returns & Enums (1.12.1 Protocol)**
+- `GetLootRollItemInfo(rollID)` returns ONLY 5 values: `texture, name, count, quality, bindOnPickup` (no `canNeed`/`canGreed`).
 - `RollOnLoot(rollID, rollType)` enums: `0 = Pass`, `1 = Need`, `2 = Greed`.
-- Auto-confirming BoP rolls (`CONFIRM_LOOT_ROLL`): call `ConfirmLootRoll(rollID, rollType)`, hide `StaticPopup_Hide("CONFIRM_LOOT_ROLL", rollID)`, and scan active `StaticPopup1..4` instances to `:Hide()` to prevent modal freeze artifacts.
+- Auto-confirming BoP rolls (`CONFIRM_LOOT_ROLL`): call `ConfirmLootRoll(rollID, rollType)`, hide `StaticPopup_Hide("CONFIRM_LOOT_ROLL", rollID)`, and scan active `StaticPopup1..4` instances to `:Hide()`.
 
-**B2. Combat Log Enums (NamPower / SuperWoW)**
+**B7. Combat Log Enums (NamPower / SuperWoW)**
 - **Spell Miss/Mitigation (`SMSG_SPELLLOGMISS` / `nampowerMissToAction`)**:
   `0=None/Miss`, `1=Miss`, `2=Resist`, `3=Dodge`, `4=Parry`, `5=Block`, `6=Evade`, `7=Immune`, `8=Immune (School/Mechanic)`, `9=Deflect`, `10=Absorb`, `11=Reflect`.
 - **Auto-Attack Outcomes (`SMSG_ATTACKERSTATEUPDATE` / `nampowerVictimStateToAction`)**:
   `0=Miss`, `1=Hit`, `2=Dodge`, `3=Parry`, `4=Block`, `5=Evade`, `6=Immune`, `7=Reflect`.
 - **Hit Info Bit Flags**: Critical Hit = `2`, Crushing = `32`, Glancing = `64`.
 
-**B3. Uncapped Health & Distance Engine (UnitXP SP3)**
-- Vanilla caps enemy health at 0–100%. Use `UnitXP("health", unit)` and `UnitXP("maxhealth", unit)` for true raw numerical health (e.g. `3840 (85%)`).
-- Real-time yard distance: Use `UnitXP("distance", unit)` (or `UnitXP("distanceBetween", unit1, unit2)`).
+**B8. Uncapped Health & Distance Engine (UnitXP SP3)**
+- Real uncapped enemy numerical health: `UnitXP("health", unit)` and `UnitXP("maxhealth", unit)` (e.g. `3840 (85%)`).
+- Real-time yard distance: `UnitXP("distance", unit)` / `UnitXP("distanceBetween", unit1, unit2)`.
 - Standard 4-stage distance color grading:
   - `≤ 30 yd`: Neon Green (`|cFF00FF00`)
   - `31 – 50 yd`: Yellow (`|cFFFFFF00`)
   - `51 – 80 yd`: Orange (`|cFFFF8000`)
   - `> 80 yd`: Red (`|cFFFF4040`)
 
-**B4. SuperWoW Targeting & Hardware Integration**
-- **Exact Whole-Name Targeting**: Pass `true` as second argument: `TargetByName(name, true)` to enforce 100% exact substring matching without fuzzy glitches on pets or similar mobs.
-- **Direct GUID Targeting**: Use `TargetUnit(guid)` to target exact creature GUIDs in multi-mob packs, with `AssistByName(name)` as fallback.
-- **OS Taskbar & Foregrounding**: Use `FlashClientIcon()` to flash the Windows taskbar and `SetClientWindowForeground()` on critical events (queue pops, ready checks).
-- **Master Audio Channel**: Route high-priority alert sounds via `PlaySoundFile(path, "Master")` or `PlaySound("ReadyCheck")` to remain audible regardless of SFX volume toggles.
+**B9. SuperWoW Targeting & Hardware Integration**
+- **Exact Whole-Name Targeting**: `TargetByName(name, true)` to enforce 100% exact whole-name matching without fuzzy glitches.
+- **Direct GUID Targeting**: `TargetUnit(guid)` to target exact creature GUIDs in multi-mob packs, with `AssistByName(name)` as fallback.
+- **OS Taskbar & Foregrounding**: `FlashClientIcon()` to flash Windows taskbar and `SetClientWindowForeground()` on critical events.
+- **Master Audio Channel**: `PlaySoundFile(path, "Master")` or `PlaySound("ReadyCheck")` to remain audible regardless of SFX volume toggles.
 
 ---
 
@@ -158,29 +213,16 @@ Never use hardcoded per-frame pixel steps (`step = 12`) or integer millisecond c
 - **Exponential Smoothing**: `current + (target - current) * math.min(1.0, dt * rate)`
 - **Accumulator Timers**: `this.elapsed = (this.elapsed or 0) + dt`
 
-**D6. Dual-Mode Timers (ClassicAPI `C_Timer` or Shared Driver Frame)**
-If `C_Timer and C_Timer.After` is available, use it. Otherwise, use a shared single-frame zero-allocation timer driver:
+**D6. Exclusive Native Hardware Timers (`C_Timer`)**
+With ClassicAPI strictly required, all delays, tickers, and throttles **MUST** exclusively use native C++ timers:
 ```lua
-local pendingTimers = {}
-local timerDriver = CreateFrame("Frame")
-timerDriver:SetScript("OnUpdate", function()
-    local now = GetTime()
-    for i = table.getn(pendingTimers), 1, -1 do
-        if now >= pendingTimers[i].at then
-            local fn = pendingTimers[i].fn
-            tremove(pendingTimers, i)
-            fn()
-        end
-    end
-end)
-local function ScheduleTimer(delay, fn)
-    if C_Timer and C_Timer.After then
-        C_Timer.After(delay, fn)
-    else
-        tinsert(pendingTimers, { at = GetTime() + delay, fn = fn })
-    end
-end
+-- One-shot delay
+C_Timer.After(1.5, function() DoSomething() end)
+
+-- Recurring interval ticker (e.g. every 0.2s, 10 times)
+C_Timer.NewTicker(0.2, function() OnTick() end, 10)
 ```
+- **STRICTLY FORBIDDEN:** Creating custom `OnUpdate` timer queue tables, scheduled polling loops, or timer frames in pure Lua.
 
 ---
 
@@ -222,8 +264,12 @@ When suppressing hardcoded custom server UI elements (e.g., TurtleWoW Booty Bay 
 **F1. Lua 5.0 Colon Method Linting**
 Scan for uncalled colon methods (`:[a-zA-Z_0-9]+\b(?!\s*[\(\"\'\{])`) to prevent runtime syntax crashes in Lua 5.0.
 
-**F2. Exhaustive Legacy Pattern & Symbol Sweep**
-Before concluding any refactor, execute an automated multi-pattern scan across all `.lua`, `.xml`, and `.toc` files searching for orphaned legacy APIs (`UIParentLoadAddOn`, `SetSpell`, `CHAT_MSG_*`, deprecated libraries, unmapped slash commands, and orphaned variables) to guarantee 100% eradication of 2006 dead code.
+**F2. Exhaustive Legacy Pattern & 2006 Hack Sweep**
+Before concluding any refactor, scan every `.lua`, `.xml`, and `.toc` file to eliminate:
+- Hidden `GameTooltip` scanning hacks (must use `C_UnitAuras`).
+- Localized combat log string regex parsing for casts (must use `UnitCastingInfo`).
+- Custom `OnUpdate` timer schedulers (must use `C_Timer`).
+- Orphaned legacy APIs (`UIParentLoadAddOn`, `SetSpell`, `CHAT_MSG_*`, deprecated libraries, unmapped slash commands, and orphaned variables).
 
 **F3. AST / Block-Level Structural Checks**
 Validate line-by-line Lua syntax and block closures (`if/then/end`, `do/end`, `function/end`) on every modified file prior to commit. Parse all XML files against standard XML parsers to catch broken `<Include>`, `<Script>`, or malformed element structures.
