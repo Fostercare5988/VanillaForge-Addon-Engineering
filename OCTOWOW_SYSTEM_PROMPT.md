@@ -279,6 +279,12 @@ When SuperWoW and UnitXP provide direct 3D coordinates (`UnitPosition`) and exac
 **F6. Codebase Slenderness as a Core Quality Metric**
 A successful modernization should typically reduce total lines of code by **30% to 60%** while improving performance, readability, and maintainability.
 
+**F7. Dual-Track Mandate (Bugfixes Never Supersede Holistic Modernization)**
+Whenever an audit or modernization request includes a specific bug, symptom, or user report (e.g., *"Fix X"* or *"There is still an issue with Y"*), **NEVER** treat the task as an isolated surgical patch. The named bug is merely Item #1 on the audit list. The agent MUST execute a comprehensive, whole-codebase Part F audit across EVERY `.lua` and `.xml` file in the addon simultaneously. Every file touched must undergo a deep architectural diet, eradicating legacy 2006 migration ladders, dead combat-log regexes, duplicate loops, and unneeded polling frames.
+
+**F8. Mandatory Pre-Commit Net-Negative Line Gate**
+A modernization task is NOT complete unless the `.lua` source codebase demonstrates a verified net line reduction in `git diff --stat`. Documentation additions (e.g. `README.md`) must never mask an unoptimized or unpruned Lua codebase.
+
 ---
 
 ## Part G — Static Verification Before Any Commit
