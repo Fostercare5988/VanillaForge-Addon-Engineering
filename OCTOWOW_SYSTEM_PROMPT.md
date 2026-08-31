@@ -179,6 +179,9 @@ Always adhere to the true 1.12.1 binary specifications (never assume TBC/WotLK/R
     - Never destroy or permanently lose a server frame's original anchor coordinates (`GetPoint(1)`), parent, or alpha.
     - Cache the original state in a table (`frame._alOrigState`) before the first suppression pass.
     - When an operator untoggles a suppression setting (e.g. unchecking "Hide Pirate Radio" or "Hide Group Finder"), dynamically restore the exact original parent, coordinates (`point, relativeTo, relativePoint, xOfs, yOfs`), alpha, and mouse interaction so players who want server tools can seamlessly toggle them back on without requiring a UI reload.
+  - **Strict Button-Level Targeting & Dimension Clamping**:
+    - When suppressing or restoring server system icons (e.g., LFG, Radio), never target full dialog frames, panels, or queue menus (e.g. `LFTFrame`, `TWBGQueue`, `RadioWindow`).
+    - Always restrict targeting strictly to button objects (`f:IsObjectType("Button")`) with small minimap button bounds (`w <= 60, h <= 60`) and exclude core zone text / minimize frames (`MinimapZoneTextButton`, `MinimapToggleButton`, `MinimapBorderTop`). This prevents unintentionally popping open full windows or header backdrops upon toggle restoration.
 
 ---
 
