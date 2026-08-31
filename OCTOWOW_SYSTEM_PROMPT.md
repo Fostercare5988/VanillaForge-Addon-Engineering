@@ -259,32 +259,54 @@ When suppressing hardcoded custom server UI elements (e.g., TurtleWoW Booty Bay 
 
 ---
 
-## Part F — Static Verification Before Any Commit
+## Part F — Zero-Bloat Aggressive Consolidation & DRY Architecture Mandate
 
-**F1. Lua 5.0 Colon Method Linting**
+**F1. Never Perform Superficial 1:1 Mechanical Replacements**
+Merely swapping an API call (e.g. replacing `OnUpdate` with `C_Timer`) while leaving hundreds of lines of legacy 2006 copy-paste bloat, redundant data structures, and monolithic `if/elseif` chains intact is **STRICTLY PROHIBITED**. Every refactor must be an aggressive architectural consolidation.
+
+**F2. Consolidate Duplicate Rendering Pipelines (DRY)**
+When multiple frames, tabs, or modules execute parallel rendering logic (e.g. AB, AV, and WSG node lists; friendly vs enemy carrier HUDs; scoreboard buttons), unify them into a single parameterized rendering function. Do not write 3 copies of a 60-line loop when 1 clean 25-line table-driven function can drive all 3.
+
+**F3. Data-Driven Dispatch Over Monolithic `if/elseif` Chains**
+Replace 50-150 line `if/elseif` slash command handlers or event dispatchers with O(1) static lookup tables (e.g. `toggleMap[cmd]()`).
+
+**F4. Boilerplate & Helper Extraction**
+Consolidate repeated multi-line logic (e.g. modal popup dismissal, zone checking, chat printing, sound notifications) into single, shared helper functions.
+
+**F5. Eliminate Dead Fallback Trigonometry**
+When SuperWoW and UnitXP provide direct 3D coordinates (`UnitPosition`) and exact yard distances (`UnitXP("distance", unit)`), eradicate legacy 2006 manual map coordinate approximations and magic multipliers (`(px - ux) * 515`).
+
+**F6. Codebase Slenderness as a Core Quality Metric**
+A successful modernization should typically reduce total lines of code by **30% to 60%** while improving performance, readability, and maintainability.
+
+---
+
+## Part G — Static Verification Before Any Commit
+
+**G1. Lua 5.0 Colon Method Linting**
 Scan for uncalled colon methods (`:[a-zA-Z_0-9]+\b(?!\s*[\(\"\'\{])`) to prevent runtime syntax crashes in Lua 5.0.
 
-**F2. Exhaustive Legacy Pattern & 2006 Hack Sweep**
+**G2. Exhaustive Legacy Pattern & 2006 Hack Sweep**
 Before concluding any refactor, scan every `.lua`, `.xml`, and `.toc` file to eliminate:
 - Hidden `GameTooltip` scanning hacks (must use `C_UnitAuras`).
 - Localized combat log string regex parsing for casts (must use `UnitCastingInfo`).
 - Custom `OnUpdate` timer schedulers (must use `C_Timer`).
 - Orphaned legacy APIs (`UIParentLoadAddOn`, `SetSpell`, `CHAT_MSG_*`, deprecated libraries, unmapped slash commands, and orphaned variables).
 
-**F3. AST / Block-Level Structural Checks**
+**G3. AST / Block-Level Structural Checks**
 Validate line-by-line Lua syntax and block closures (`if/then/end`, `do/end`, `function/end`) on every modified file prior to commit. Parse all XML files against standard XML parsers to catch broken `<Include>`, `<Script>`, or malformed element structures.
 
-**F4. Syntax Parser Verification**
+**G4. Syntax Parser Verification**
 When executing syntax checks, remember that modern Lua compilers (5.1+) will accept `%`, `#`, and `string.match` — all of which are illegal in the real 1.12.1 client. Rely on Part A guardrails as the ultimate authority.
 
 ---
 
-## Part G — Conventions, Workflow & Conflict Resolution
+## Part H — Conventions, Workflow & Conflict Resolution
 
-**G1. OctoLauncher & Git Remote Preservation**
+**H1. OctoLauncher & Git Remote Preservation**
 OctoLauncher scans `.git` directories and syncs against `origin` when "Update All" is clicked. For all modernized/forked addons in `Niko2`, immediately verify or set the remote `origin` to the personal repository (`https://github.com/Fostercare5988/<AddonName>.git`) and push, preventing launcher updates from reverting local improvements.
 
-**G2. Pure English Standard & Branding**
+**H2. Pure English Standard & Branding**
 - **Strict 100% English**: All in-game text, UI labels, tooltips, chat logs, code comments, and documentation must be strictly in English.
 - **TOC File (.toc)**:
   - `## Interface: 11200`
@@ -295,13 +317,13 @@ OctoLauncher scans `.git` directories and syncs against `origin` when "Update Al
   - **NEVER use WoW color codes** (`|cff...|r`) in markdown or git messages.
   - **Title Format**: `# <AddonName>`
 
-**G3. Mandatory Read-Before-Write Protocol for System Prompt**
+**H3. Mandatory Read-Before-Write Protocol for System Prompt**
 Whenever touching, updating, or modifying `OCTOWOW_SYSTEM_PROMPT.md`:
 1. Always read the entire file first using `view_file`.
 2. Perform careful, non-destructive additive edits (add new rules, merge updates, remove verified incorrect items).
 3. NEVER blindly overwrite, truncate, or wipe existing sections.
 
-**G4. Reality & Direct Observation Precedence**
+**H4. Reality & Direct Observation Precedence**
 This document is a living record of verified client behaviors. If you observe direct behavior in the client/game that refines or supersedes a rule here, trust the direct verified evidence, document the rationale, and update the rule cleanly.
 
 ---
