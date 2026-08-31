@@ -25,6 +25,7 @@ Your objective is to perform a complete, deep modernization audit and refactor o
   ```
 - **String Library 5.0 Compliance**: Use `string.find`, `string.sub`, `string.len`, `string.lower`, `string.gsub`. Never assume Lua 5.1+ string metatables or `string.match` exist unless explicitly polyfilled.
 - **Table Size & Bounds**: Use `table.getn(t)` (or `setn`) instead of the Lua 5.1 `#t` length operator.
+- **Modulo Operator**: `%` operator is **ILLEGAL** in Lua 5.0. Always use `math.mod(a, b)` (e.g. `math.mod(i - 1, cols)`).
 - **No Colon-Chaining Function Pointers**: Never pass `self:Method` as a callback parameter; use `function() self:Method() end` or `self.Method`.
 
 ---
@@ -130,6 +131,55 @@ Always adhere to the true 1.12.1 binary specifications (never assume TBC/WotLK/R
 - **Exhaustive Legacy Pattern & Symbol Sweep**: Before concluding any refactor, execute an automated multi-pattern scan across all `.lua`, `.xml`, and `.toc` files searching for orphaned legacy APIs (`UIParentLoadAddOn`, `SetSpell`, `CHAT_MSG_*`, deprecated libraries, unmapped slash commands, and orphaned variables) to guarantee 100% eradication of 2006 dead code.
 - **AST / Block-Level Static Check**: Validate line-by-line Lua syntax and block closures (`if/then/end`, `do/end`, `function/end`) on every modified file prior to commit.
 - **FrameXML Anchor & Schema Validation**: Parse all XML files against standard XML parsers to catch broken `<Include>`, `<Script>`, or malformed element structures before runtime.
+
+---
+
+#### 11. FrameXML Event, Click & Script Registration Safeguards
+- **Explicit Right-Click Registration**: In Vanilla 1.12.1, `Button` frames do **NOT** receive right-clicks by default! You **MUST** explicitly invoke:
+  ```lua
+  btn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+  ```
+- **Frame:GetScript / SetScript Type Safety**:
+  - Calling `:GetScript("OnClick")` or `:SetScript("OnClick", ...)` on a generic `Frame` throws a fatal C++ engine error (`<FrameName> doesn't have a "OnClick" script`).
+  - Only `Button` and `CheckButton` support `OnClick`.
+  - Always guard with: `if (f:IsObjectType("Button") or f:IsObjectType("CheckButton")) then ... end`.
+- **Global Scope Pollution Defense**:
+  - NEVER declare loop iterators (`i`, `f`, `name`, `text`, `count`, `idx`) or table values without `local`.
+  - Leaking global variables into Blizzard FrameXML namespace contaminates global tables like `QuestLogFrame`, `QuestLogTitle*`, `CharacterFrame`, or `ContainerFrame`, causing quests or equipment slots to disappear or freeze.
+
+---
+
+#### 12. Strict Zero-Leak Addon Discovery & Minimap Tray Architecture
+- **NEVER Perform Generic Frame Substring Searches**:
+  - Scanning `EnumerateFrames()` for generic strings like `"doite"`, `"tower"`, `"radio"`, `"aura"`, `"icon"`, or `"lfg"` is **STRICTLY FORBIDDEN**.
+  - Doing so sweeps up player combat WeakAuras (`DoiteAuras_Icon_*`), quest log titles (`QuestLogTitle*`), and internal playback buttons into trays or banishment routines.
+- **Explicit Addon Minimap Whitelist**:
+  - Minimap button discovery must strictly target verified addon frame names (e.g. `AtlasLootMinimapButtonFrame`, `pfQuestIcon`, `DoiteAurasMinimapButton`, `TrinketMenu_IconFrame`, `BagnonMinimapButton`, `AutoBG_QuickQueueButton`, `TWThreatMinimapButton`, `shootyepgpMinimapButton`) and direct `Button` children of `Minimap` / `MinimapBackdrop` with circular borders.
+- **Combat Aura & UI Exclusion**:
+  - Explicitly reject all combat auras (`DoiteAuras_Icon_*`, `AuraFrame`, `CombatFrame`), action buttons, condition logic frames, close buttons, playlist arrows, and check boxes (`UICheckButtonTemplate`).
+- **Persistent Addon Registry & Reparenting Retention**:
+  - When buttons are reparented into a tray container (`btn:SetParent(trayFrame)`), they are no longer returned by `Minimap:GetChildren()`.
+  - Maintain a persistent registry table (`DiscoveredAddonList` / `DiscoveredAddonSet`) and ensure scanners inspect `Minimap`, `MinimapBackdrop`, `MinimapCluster`, and `trayFrame` so discovered buttons never disappear upon toggling.
+
+---
+
+#### 13. Server System UI Suppression (Booty Bay Radio & LFG)
+- When suppressing hardcoded custom server UI elements (e.g., TurtleWoW Booty Bay Pirate Radio, Broadcasting Towers, LFG eye):
+  - Target explicit known frame global names:
+    - **Radio**: `RadioMinimapButton`, `PirateRadioMinimapButton`, `BBRadioMinimapButton`, `BBPR_MinimapButton`, `Radio_MinimapButton`, `TWRadioMinimapButton`, `TW_RadioMinimapButton`, `RadioFrame`, `PirateRadioFrame`, `TW_Radio`, `BBRadio`, `TurtleRadioMinimapButton`, `TWBBRadio`, `BootyBayRadio`, `RadioIcon`, `TW_RadioIcon`, `RadioBtn`, `TW_RadioBtn`.
+    - **LFG**: `LFTMinimapButton`, `TW_LFGBtn`, `TWLFG_Minimap`, `TWLFG_MinimapButton`, `MiniMapMeetingStoneFrame`, `MiniMapLFGFrame`, `LFGMinimapButton`, `TurtleLFGMinimapButton`, `GroupFinderMinimapButton`, `TWBGQueueMinimapMenuFrame`.
+  - **Multi-Layer Texture & Region Inspection**: Custom server buttons often do NOT set `GetNormalTexture()`. Instead, textures (e.g. `INV_Helmet_66`, `Ability_Rogue_Disguise`, `INV_Misc_Bandana`) and text strings (`radio`, `pirate`, `tune in`, `station`) are attached as child `ARTWORK` regions. Always inspect `f:GetRegions()` for textures and FontStrings.
+  - **Cluster & Parent Scope**: Server custom buttons may be parented to `MinimapCluster` or `UIParent`. Always scan `Minimap`, `MinimapBackdrop`, and `MinimapCluster`.
+  - Apply off-screen banishment + alpha 0 + mouse disabled + hook guard. Never search global text strings for `"tower"` or `"radio"`.
+
+---
+
+#### 14. System Prompt Protocol & Single Workspace Rule
+- **Single Working Directory ('Niko2')**: All work, development, tests, and configuration strictly target `C:\Users\Fostercare\Desktop\Niko2\`. The legacy `Niko` directory is permanently deleted and must never be referenced, touched, or created.
+- **Mandatory Read-Before-Write Protocol for System Prompt**: Whenever touching, updating, or modifying `OCTOWOW_SYSTEM_PROMPT.md`:
+  1. Always read the entire file first using `view_file`.
+  2. Perform careful, non-destructive additive edits (add new rules, merge updates, remove verified incorrect items).
+  3. NEVER blindly overwrite, truncate, or wipe existing sections.
 
 ---
 

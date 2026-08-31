@@ -11,11 +11,12 @@ A battle-tested, high-precision system prompt designed for AI coding assistants 
 ## 🎯 Purpose
 
 Legacy Vanilla WoW (1.12.1) addons often suffer from:
-- Lua 5.0 parser incompatibilities when modern Lua syntax is applied.
+- Lua 5.0 parser incompatibilities when modern Lua syntax is applied (illegal `%` modulo, colon method checks without parentheses).
 - FrameXML relative layout collapse and missing coordinate anchors.
 - Severe garbage collection (GC) stutter and heap churn during high-frequency combat events.
 - Hardcoded 60 Hz frame-step logic causing jitter on high-refresh-rate monitors (144 Hz / 240 Hz+).
 - Inaccurate client assumptions (e.g., assuming TBC/WotLK API returns or 0–100% enemy health limits).
+- Global scope pollution corrupting core Blizzard UI frames.
 
 The [**`OCTOWOW_SYSTEM_PROMPT.md`**](OCTOWOW_SYSTEM_PROMPT.md) establishes strict rules, architectural guardrails, and binary protocol specifications to guarantee that refactored addons run with **zero runtime errors, zero layout glitches, and zero combat GC stutter**.
 
@@ -37,11 +38,12 @@ This system prompt targets the enhanced OctoWoW client stack:
 
 ## 🛡️ Core Directives Summary
 
-The prompt is structured around 10 strict architectural pillars:
+The prompt is structured around 14 strict architectural pillars:
 
 1. **Lua 5.0 Strict Compiler Guardrails**:
    - Forbids uncalled colon syntax (e.g. `obj:Method` checks without arguments) which crashes Lua 5.0's parser.
    - Requires `table.getn(t)` instead of the Lua 5.1 `#t` length operator.
+   - Forbids `%` modulo operator (illegal in Lua 5.0) — requires `math.mod(a, b)`.
    - Enforces 5.0 string APIs (`string.find`, `string.gsub`, `string.sub`).
 2. **FrameXML Deterministic Anchoring & Layout Engine**:
    - Forbids relative sibling anchoring during file load to prevent button collapse.
@@ -69,6 +71,21 @@ The prompt is structured around 10 strict architectural pillars:
    - 100% English interface, comments, and clean `.toc` metadata.
 10. **Automated Static Analysis & Syntax Verification**:
     - Pre-commit AST/closure validation, colon method regex linting, and legacy 2006 dead code eradication.
+11. **FrameXML Event, Click & Script Registration Safeguards**:
+    - Explicit right-click registration (`btn:RegisterForClicks("LeftButtonUp", "RightButtonUp")`).
+    - Type safety guards for `:GetScript("OnClick")` / `:SetScript("OnClick")` (`Button` / `CheckButton` only).
+    - Global scope pollution defense (all loop iterators strictly scoped with `local` to prevent corrupting Blizzard UI frames).
+12. **Strict Zero-Leak Addon Discovery & Minimap Tray Architecture**:
+    - Forbids broad `EnumerateFrames()` substring scanning.
+    - Explicit addon minimap whitelisting and exclusion of player combat auras, condition frames, and UI check buttons.
+    - Persistent addon registry and retention when reparenting buttons.
+13. **Server System UI Suppression (Booty Bay Radio & LFG)**:
+    - Explicit frame global naming lists for TurtleWoW radio buttons and LFG frames.
+    - Multi-layer texture (`ARTWORK` regions) and FontString inspection.
+    - Cluster & parent scoping with off-screen banishment + alpha 0 + mouse disabled.
+14. **System Prompt Protocol & Single Workspace Rule**:
+    - Strict adherence to the active `C:\Users\Fostercare\Desktop\Niko2\` workspace.
+    - Mandatory Read-Before-Write protocol for non-destructive updates to `OCTOWOW_SYSTEM_PROMPT.md`.
 
 ---
 
