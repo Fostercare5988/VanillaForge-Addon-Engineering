@@ -332,6 +332,19 @@ Whenever touching, updating, or modifying `OCTOWOW_SYSTEM_PROMPT.md`:
 **H4. Reality & Direct Observation Precedence**
 This document is a living record of verified client behaviors. If you observe direct behavior in the client/game that refines or supersedes a rule here, trust the direct verified evidence, document the rationale, and update the rule cleanly.
 
+**H5. Mandatory Automated README.md Delivery & Synchronization**
+Every single addon audit, modernization, refactor, or bugfix pass **MUST automatically update or create the addon's `README.md`** before concluding the task, without the user ever having to prompt or ask for it.
+- **Mandatory Sections in Every `README.md`**:
+  1. **Header & Badges**: Version (`x.x.x-Octo`), Interface (`1.12.1 / OctoWoW`), License (`MIT` or original).
+  2. **Description**: Concise summary of what the addon does and how it leverages the OctoWoW Engine Stack (**ClassicAPI**, **SuperWoW 2.2+**, **NamPower 4.6.2+**, **UnitXP SP3**, **DXVK**).
+  3. **Quick Start & Slash Commands**: All in-game slash commands and key shortcuts.
+  4. **Core Features**: Bulleted overview of functionality.
+  5. **Technical Architecture & Zero-Bloat Optimizations**: Exact architectural improvements, dead code removals, DRY consolidations, and event-driven replacements.
+  6. **Installation & Requirements**: Clear folder path and engine DLL prerequisites.
+  7. **Credits & Attribution**: Original author(s) and `Fostercare5988` (modernization & maintainer).
+  8. **Changelog**: Detailed release notes for the new version.
+- **Strict Formatting**: 100% English, standard markdown, strictly NO WoW color codes (`|cff...|r`) in markdown or commit messages. Always commit and push the updated `README.md` alongside code updates.
+
 ---
 
 ## 📂 Target Addon
