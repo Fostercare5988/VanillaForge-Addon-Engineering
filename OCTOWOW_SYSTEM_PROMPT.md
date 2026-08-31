@@ -160,6 +160,9 @@ Always adhere to the true 1.12.1 binary specifications (never assume TBC/WotLK/R
 - **Persistent Addon Registry & Reparenting Retention**:
   - When buttons are reparented into a tray container (`btn:SetParent(trayFrame)`), they are no longer returned by `Minimap:GetChildren()`.
   - Maintain a persistent registry table (`DiscoveredAddonList` / `DiscoveredAddonSet`) and ensure scanners inspect `Minimap`, `MinimapBackdrop`, `MinimapCluster`, and `trayFrame` so discovered buttons never disappear upon toggling.
+- **Visual Renderability Validation & Gapless Grid Layout**:
+  - Empty parent containers (e.g., `TrinketMenu_IconFrame` without icon, unrendered wrappers) must be validated with a visual inspector (`HasRenderableVisual`) checking for non-empty normal textures or `ARTWORK` regions.
+  - Never insert invisible wrapper frames into active tray slots, preventing blank gaps/holes in multi-row grid layouts.
 
 ---
 
@@ -169,14 +172,16 @@ Always adhere to the true 1.12.1 binary specifications (never assume TBC/WotLK/R
     - **Radio**: `RadioMinimapButton`, `PirateRadioMinimapButton`, `BBRadioMinimapButton`, `BBPR_MinimapButton`, `Radio_MinimapButton`, `TWRadioMinimapButton`, `TW_RadioMinimapButton`, `RadioFrame`, `PirateRadioFrame`, `TW_Radio`, `BBRadio`, `TurtleRadioMinimapButton`, `TWBBRadio`, `BootyBayRadio`, `RadioIcon`, `TW_RadioIcon`, `RadioBtn`, `TW_RadioBtn`.
     - **LFG**: `LFTMinimapButton`, `TW_LFGBtn`, `TWLFG_Minimap`, `TWLFG_MinimapButton`, `MiniMapMeetingStoneFrame`, `MiniMapLFGFrame`, `LFGMinimapButton`, `TurtleLFGMinimapButton`, `GroupFinderMinimapButton`, `TWBGQueueMinimapMenuFrame`.
   - **Multi-Layer Texture & Region Inspection**: Custom server buttons often do NOT set `GetNormalTexture()`. Instead, textures (e.g. `INV_Helmet_66`, `Ability_Rogue_Disguise`, `INV_Misc_Bandana`) and text strings (`radio`, `pirate`, `tune in`, `station`) are attached as child `ARTWORK` regions. Always inspect `f:GetRegions()` for textures and FontStrings.
-  - **Cluster & Parent Scope**: Server custom buttons may be parented to `MinimapCluster` or `UIParent`. Always scan `Minimap`, `MinimapBackdrop`, and `MinimapCluster`.
-  - Apply off-screen banishment + alpha 0 + mouse disabled + hook guard. Never search global text strings for `"tower"` or `"radio"`.
+  - **Multi-Container Sweep & Absolute Off-Screen Banishment**:
+    - Server custom buttons may be parented to `MinimapCluster`, `UIParent`, or previously reparented into `trayFrame` / `DiscoveredAddonList`. Always sweep all containers.
+    - When suppressing, apply absolute off-screen displacement (`ClearAllPoints(); SetPoint("TOPLEFT", UIParent, "TOPLEFT", -5000, -5000)`), `SetAlpha(0)`, `EnableMouse(false)`, `Hide()`, and a `Show` script hook guard to prevent floating ghost icons on the screen.
 
 ---
 
-#### 14. System Prompt Protocol & Single Workspace Rule
-- **Single Working Directory ('Niko2')**: All work, development, tests, and configuration strictly target `C:\Users\Fostercare\Desktop\Niko2\`. The legacy `Niko` directory is permanently deleted and must never be referenced, touched, or created.
-- **Mandatory Read-Before-Write Protocol for System Prompt**: Whenever touching, updating, or modifying `OCTOWOW_SYSTEM_PROMPT.md`:
+#### 14. System Prompt Protocol & Canonical Repository Rule
+- **Canonical System Prompt Repository**: The master system prompt is canonically hosted and tracked at `https://github.com/Fostercare5988/OctoWoW-Addon-Modernization-Reverse-Engineering-System-Prompt`. All future prompt updates, lessons learned, and engine directives are committed directly to this repository.
+- **Single Working Directory ('Niko2')**: All in-game addon development, tests, and client configuration strictly target `C:\Users\Fostercare\Desktop\Niko2\`. The legacy `Niko` directory is permanently deleted and must never be referenced, touched, or created.
+- **Mandatory Read-Before-Write Protocol for System Prompt**: Whenever touching, updating, or modifying the master system prompt:
   1. Always read the entire file first using `view_file`.
   2. Perform careful, non-destructive additive edits (add new rules, merge updates, remove verified incorrect items).
   3. NEVER blindly overwrite, truncate, or wipe existing sections.
