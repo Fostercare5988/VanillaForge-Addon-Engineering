@@ -163,6 +163,10 @@ Always adhere to the true 1.12.1 binary specifications (never assume TBC/WotLK/R
 - **Visual Renderability Validation & Gapless Grid Layout**:
   - Empty parent containers (e.g., `TrinketMenu_IconFrame` without icon, unrendered wrappers) must be validated with a visual inspector (`HasRenderableVisual`) checking for non-empty normal textures or `ARTWORK` regions.
   - Never insert invisible wrapper frames into active tray slots, preventing blank gaps/holes in multi-row grid layouts.
+- **Startup Auto-Collapse & Two-Way Expansion Toggle**:
+  - Automatically collapse and hide all discovered user addon buttons into the tray on login/startup by default, leaving the Minimap 100% clean and clutter-free.
+  - Execute a multi-pass delayed scan over the initial 3 seconds of session startup to capture slow, asynchronously loading addon buttons (e.g. Bagnon, pfQuest, AtlasLoot).
+  - Cache each addon button's original parent and anchor points (`_alOrigState`) upon discovery. Provide an operator toggle ("Collapse Addons into Tray") allowing users to disable auto-collapse and seamlessly restore all addon buttons back to their native Minimap coordinates in real-time.
 
 ---
 
