@@ -175,6 +175,10 @@ Always adhere to the true 1.12.1 binary specifications (never assume TBC/WotLK/R
   - **Multi-Container Sweep & Absolute Off-Screen Banishment**:
     - Server custom buttons may be parented to `MinimapCluster`, `UIParent`, or previously reparented into `trayFrame` / `DiscoveredAddonList`. Always sweep all containers.
     - When suppressing, apply absolute off-screen displacement (`ClearAllPoints(); SetPoint("TOPLEFT", UIParent, "TOPLEFT", -5000, -5000)`), `SetAlpha(0)`, `EnableMouse(false)`, `Hide()`, and a `Show` script hook guard to prevent floating ghost icons on the screen.
+  - **Reversible State Preservation & Dynamic Restoration**:
+    - Never destroy or permanently lose a server frame's original anchor coordinates (`GetPoint(1)`), parent, or alpha.
+    - Cache the original state in a table (`frame._alOrigState`) before the first suppression pass.
+    - When an operator untoggles a suppression setting (e.g. unchecking "Hide Pirate Radio" or "Hide Group Finder"), dynamically restore the exact original parent, coordinates (`point, relativeTo, relativePoint, xOfs, yOfs`), alpha, and mouse interaction so players who want server tools can seamlessly toggle them back on without requiring a UI reload.
 
 ---
 
