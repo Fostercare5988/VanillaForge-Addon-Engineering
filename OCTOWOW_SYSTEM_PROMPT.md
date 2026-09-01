@@ -114,10 +114,11 @@ Because ClassicAPI, SuperWoW, NamPower, and UnitXP are strictly required, **neve
 - Use `C_Container` for modern bag slot/item queries.
 - Use `C_EncodingUtil` for native C++ Base64 encode/decode, MD5, and SHA hashing (instant import/export of WeakAuras and profiles with zero screen freeze).
 
-**B6. Exact Loot Roll Returns & Enums (1.12.1 Protocol)**
+**B6. Exact Loot Roll & Gossip Returns (1.12.1 Protocol Compliance)**
 - `GetLootRollItemInfo(rollID)` returns ONLY 5 values: `texture, name, count, quality, bindOnPickup` (no `canNeed`/`canGreed`).
 - `RollOnLoot(rollID, rollType)` enums: `0 = Pass`, `1 = Need`, `2 = Greed`.
 - Auto-confirming BoP rolls (`CONFIRM_LOOT_ROLL`): call `ConfirmLootRoll(rollID, rollType)`, hide `StaticPopup_Hide("CONFIRM_LOOT_ROLL", rollID)`, and scan active `StaticPopup1..4` instances to `:Hide()`.
+- **Exact 1.12.1 Gossip API Returns**: `GetNumGossipActiveQuests` and `GetNumGossipAvailableQuests` **do NOT exist** (calling them causes a nil function crash). Instead, `GetGossipActiveQuests()` and `GetGossipAvailableQuests()` return a flat vararg list of titles. Checking `local activeTitle = GetGossipActiveQuests()` evaluates directly to the first quest title string (or `nil` if none), achieving zero heap allocations.
 
 **B7. Combat Log Enums (NamPower / SuperWoW)**
 - **Spell Miss/Mitigation (`SMSG_SPELLLOGMISS` / `nampowerMissToAction`)**:
