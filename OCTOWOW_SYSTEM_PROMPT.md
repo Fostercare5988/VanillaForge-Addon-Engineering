@@ -123,6 +123,7 @@ Because ClassicAPI, SuperWoW, NamPower, and UnitXP are strictly required, **neve
   - `GetNumGossipActiveQuests()` and `GetNumGossipAvailableQuests()` do **NOT** exist in 1.12.1 FrameXML (calling them causes a fatal nil function crash).
   - In 1.12.1 Vanilla, `GetGossipActiveQuests()` and `GetGossipAvailableQuests()` return a flat vararg list of quest titles.
   - Efficient zero-allocation check: `local activeTitle = GetGossipActiveQuests()` evaluates directly to the first quest title string (or `nil` if none exist), achieving instant evaluation with zero heap memory churn.
+  - **Repeatable Quest Chaining (`QUEST_FINISHED`)**: Repeatable turn-ins (e.g. reputation/token quests) do not re-fire `GOSSIP_SHOW` when the dialog remains open. Schedule a 50–60ms `C_Timer.After` tick on `QUEST_FINISHED` to inspect `GossipFrame:IsShown()` / `QuestFrameGreetingPanel:IsShown()` for continuous automated chain-processing.
 
 **B7. Combat Log Enums (NamPower / SuperWoW)**
 - **Spell Miss/Mitigation (`SMSG_SPELLLOGMISS` / `nampowerMissToAction`)**:
