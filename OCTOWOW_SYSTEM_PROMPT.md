@@ -125,13 +125,16 @@ Because ClassicAPI, SuperWoW, NamPower, and UnitXP are strictly required, **neve
 - `C_Container` covers modern bag slot/item queries and instant moves: `GetContainerItemID`, `GetContainerItemDurability`, `GetContainerItemCharges`, `GetContainerNumFreeSlots`, `IsContainerItemOpenable`, `MoveItem`, `SwapItems`, plus hearthstone helpers (`PlayerHasHearthstone`, `UseHearthstone`).
 - **Correction:** `C_EncodingUtil` does **not** expose MD5 or SHA — I couldn't find those in ClassicAPI's confirmed function list, so drop that claim. What it actually provides: `CompressString`/`DecompressString`, `EncodeBase64`/`DecodeBase64`, `EncodeHex`/`DecodeHex`, and — genuinely useful for import/export strings — `SerializeJSON`/`DeserializeJSON` and `SerializeCBOR`/`DeserializeCBOR`. For WeakAuras-style string export, Compress + EncodeBase64 is the native-C++ zero-freeze pipeline; reach for JSON/CBOR serialization instead of hand-rolled string encoding for structured profile data.
 
-**B6. Loot Roll & Gossip Protocol (1.12.1 base protocol + ClassicAPI)**
-- **Loot Rolls** (stock 1.12.1 protocol — ClassicAPI doesn't touch this system, so these rules stand unchanged):
+**B6. Loot Roll, BoP Confirmation & Quest Automation Protocol**
+- **Loot Rolls & Bind-on-Pickup (BoP) Automation** (stock 1.12.1 protocol + ClassicAPI):
   - `GetLootRollItemInfo(rollID)` returns ONLY 5 values: `texture, name, count, quality, bindOnPickup` (no `canNeed`/`canGreed`).
   - `RollOnLoot(rollID, rollType)` enums: `0 = Pass`, `1 = Need`, `2 = Greed`.
-  - Auto-confirming BoP rolls (`CONFIRM_LOOT_ROLL`): call `ConfirmLootRoll(rollID, rollType)`, hide `StaticPopup_Hide("CONFIRM_LOOT_ROLL", rollID)`, and scan active `StaticPopup1..4` instances to `:Hide()`.
-- **Gossip: use `C_GossipInfo`, not the stock flat-vararg functions.** ClassicAPI backports a full namespace — `GetNumActiveQuests`, `GetNumAvailableQuests`, `GetActiveQuests`, `GetAvailableQuests`, `GetOptions`, `GetNumOptions`, `GetText`, `SelectActiveQuest`, `SelectAvailableQuest`, `SelectOption`, `SelectOptionByIndex`, `CloseGossip`. This is the primary path now — it returns proper structured data instead of flat varargs, so use it going forward.
-  - Background, for reading or porting old code: stock 1.12.1 has no `GetNumGossipActiveQuests()`/`GetNumGossipAvailableQuests()` (calling them is a fatal nil-function crash) — the only stock option was `GetGossipActiveQuests()`/`GetGossipAvailableQuests()`, a flat vararg list of quest titles, with `local activeTitle = GetGossipActiveQuests()` as a zero-allocation trick to grab just the first one. `C_GossipInfo` replaces the need for that trick entirely.
+  - **Auto-Confirming BoP Group Rolls (`CONFIRM_LOOT_ROLL`)**: call `ConfirmLootRoll(rollID, rollType)`, hide `StaticPopup_Hide("CONFIRM_LOOT_ROLL", rollID)`, and dismiss active `StaticPopup1..4` instances (`:Hide()`).
+  - **Auto-Confirming Direct BoP Corpse Looting (`LOOT_BIND_CONFIRM`)**: call `ConfirmLootSlot(slot)`, hide `StaticPopup_Hide("LOOT_BIND")`, and dismiss popup frames to prevent blocking the UI.
+- **Gossip & Continuous Repeatable Quest Automation**:
+  - **Structured Gossip Queries**: Prefer `C_GossipInfo` namespace (`GetActiveQuests`, `GetAvailableQuests`, `SelectActiveQuest`, `SelectAvailableQuest`, `SelectOption`, `CloseGossip`) over flat varargs.
+  - **Continuous Chaining Engine**: For repeatable turn-in quests (e.g., Argent Dawn, Thorium Brotherhood, ZG Bijous/Coins, Witch Doctor Mau'ari), chain sequential dialogue hand-ins using `C_Timer.After(0.08..0.15, ...)` rather than synchronous blocking loops or `OnUpdate` polling frames.
+  - **Reward Safety Gate**: Automatically complete quests with 0 or 1 choice (`GetQuestReward(1)`). When multiple choices exist (`GetNumQuestChoices() > 1`), immediately halt automation and keep the dialog open to allow manual player reward selection.
 
 **B7. Combat Log Enums (NamPower / SuperWoW)**
 - **Spell Miss/Mitigation (`SMSG_SPELLLOGMISS` / `nampowerMissToAction`)**:
