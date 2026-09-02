@@ -1,16 +1,16 @@
-# OctoWoW Addon Modernization & Reverse Engineering — System Prompt
+# World of Warcraft 1.12.1 Enhanced Engine — Addon Modernization & Architecture System Prompt
 
 [![World of Warcraft 1.12.1](https://img.shields.io/badge/WoW-1.12.1%20(Vanilla)-blue.svg)](https://github.com/Fostercare5988/OctoWoW-Addon-Modernization-Reverse-Engineering-System-Prompt)
 [![Engine Stack](https://img.shields.io/badge/Engine-ClassicAPI%20%7C%20SuperWoW%20%7C%20NamPower%20%7C%20UnitXP-green.svg)](https://github.com/Fostercare5988/OctoWoW-Addon-Modernization-Reverse-Engineering-System-Prompt)
 [![Lua Version](https://img.shields.io/badge/Lua-5.0%20Strict-orange.svg)](https://github.com/Fostercare5988/OctoWoW-Addon-Modernization-Reverse-Engineering-System-Prompt)
 
-A battle-tested, high-precision system prompt designed for AI coding assistants and reverse engineers to modernize, refactor, and optimize legacy **World of Warcraft 1.12.1 (Vanilla)** addons for the **OctoWoW** client ecosystem.
+A battle-tested, high-precision system prompt designed for AI coding assistants and reverse engineers to modernize, refactor, and optimize legacy **World of Warcraft 1.12.1 (Vanilla)** addons for the **Enhanced World of Warcraft 1.12.1 Client Extension Stack**.
 
 ---
 
 ## 🎯 Modernization Paradigm
 
-We **ONLY** build and modernize addons that strictly require and leverage the complete modern **OctoWoW Engine Stack** (including **ClassicAPI**). We never write backwards-compatible 2006 fallback code, tooltip scanners, or combat log string parsers.
+We **ONLY** build and modernize addons that strictly require and leverage the complete modern **Enhanced 1.12.1 Engine Stack** (including **ClassicAPI**, **SuperWoW**, **NamPower**, **UnitXP SP3**, and **DXVK**). We never write backwards-compatible 2006 fallback code, tooltip scanners, or combat log string parsers.
 
 ### Why Legacy 1.12.1 Addons Lag vs. The Modern Stack:
 - **No Combat Log Parsing:** ClassicAPI provides native millisecond-accurate castbars (`UnitCastingInfo` / `UnitChannelInfo`), eradicating combat log text regexes and GC stutter.
@@ -23,7 +23,7 @@ The [**`OCTOWOW_SYSTEM_PROMPT.md`**](OCTOWOW_SYSTEM_PROMPT.md) guarantees that r
 
 ---
 
-## ⚡ The Mandatory OctoWoW Engine Stack
+## ⚡ The Mandatory Enhanced 1.12.1 Engine Stack
 
 All modernized addons **strictly require** the full 4-DLL client extension stack:
 
@@ -44,7 +44,7 @@ Every modernized addon must declare an engine dependency check at initialization
 ```lua
 -- Strict Engine Dependency Guard
 if not (CLASSIC_API_VERSION and SUPERWOW_VERSION) then
-    DEFAULT_CHAT_FRAME:AddMessage("|cffff2020[Fatal Error]|r " .. (addonName or "Addon") .. " requires ClassicAPI.dll & SuperWoW! Please enable ClassicAPI in OctoLauncher.", 1, 0.2, 0.2)
+    DEFAULT_CHAT_FRAME:AddMessage("|cffff2020[Fatal Error]|r " .. (addonName or "Addon") .. " requires ClassicAPI.dll & SuperWoW! Please ensure ClassicAPI.dll and SuperWoW are loaded.", 1, 0.2, 0.2)
     return
 end
 ```
@@ -87,7 +87,7 @@ The master prompt is structured into 8 core thematic sections:
 - **Check `C_AddOns.IsAddOnLoaded()` first**: reliable, direct addon-presence detection for anything with a normal TOC entry — no scanning needed.
 - **Currency protection**: Guards rare server currencies (e.g. `Fashion Coin`) and isolates token idols from equipable class relics.
 - **Zero-leak minimap tray discovery**: Whitelist-only addon button detection for what `C_AddOns` can't cover (loose minimap buttons, server-injected UI); strict exclusion of player WeakAuras, condition frames, and UI checkboxes; persistent registry retention; renderability validated with a hand-written helper (not a built-in function).
-- **Server UI suppression**: Explicit global frame lists and multi-layer `ARTWORK` region texture/FontString inspection for Turtle/Octo radio buttons and LFG frames; reversible state preservation (`_alOrigState`).
+- **Server UI suppression**: Explicit global frame lists and multi-layer `ARTWORK` region texture/FontString inspection for custom server radio buttons and LFG frames; reversible state preservation (`_alOrigState`).
 
 ### **Part F — Zero-Bloat Aggressive Consolidation & DRY Architecture Mandate**
 - No superficial 1:1 API swaps: replacing `OnUpdate` with `C_Timer` while leaving the surrounding 2006-era bloat untouched doesn't count as done. Every touched file gets a full architectural diet.
@@ -97,7 +97,7 @@ The master prompt is structured into 8 core thematic sections:
 
 ### **Part G — Static Verification Before Any Commit**
 - Pre-commit AST/closure verification, regex linting for bare colon methods, and automated eradication of 2006 dead code patterns (hidden tooltip scanning, combat log cast parsing, custom OnUpdate timers).
-- If you run a Lua 5.1+ syntax checker as a backstop: since ClassicAPI's rewriter now handles `#` / `%` / `string.match`, a clean 5.1 parse is a genuinely closer approximation of what will actually run on Octo — not the false "all clear" it used to be before ClassicAPI was mandatory.
+- If you run a Lua 5.1+ syntax checker as a backstop: since ClassicAPI's rewriter now handles `#` / `%` / `string.match`, a clean 5.1 parse is a genuinely closer approximation of what will actually run on the enhanced client — not the false "all clear" it used to be before ClassicAPI was mandatory.
 
 ### **Part H — Conventions, Workflow & Conflict Resolution**
 - OctoLauncher `.git` remote preservation (`https://github.com/Fostercare5988/<AddonName>.git`).
