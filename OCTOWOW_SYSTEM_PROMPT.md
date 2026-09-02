@@ -28,7 +28,7 @@ All modernized addons **strictly require** the full 4-DLL client extension stack
 | Layer | Type | Key Capabilities & APIs |
 | :--- | :--- | :--- |
 | **Base Client** | WoW 1.12.1 (Build 5875) | Lua 5.0.2 engine, stock FrameXML UI, standard 1.12.1 client base. |
-| **ClassicAPI** | **Mandatory DLL** | Modern retail-style `C_` namespaces: `C_Timer.After` / `C_Timer.NewTicker`, `UnitCastingInfo` / `UnitChannelInfo`, `C_NamePlate`, `C_UnitAuras`, `FocusUnit` / `ClearFocus` (`"focus"` unitID), `C_Container`, `C_EncodingUtil` (native Base64/MD5). |
+| **ClassicAPI** | **Mandatory DLL** | 550+ functions across ~60 modern retail-style `C_` namespaces — `C_Timer.After`/`NewTicker`, `UnitCastingInfo`/`UnitChannelInfo`, `C_NamePlate`, `C_UnitAuras`, `FocusUnit`/`ClearFocus`, `C_Container`, `C_EncodingUtil` (Base64/Hex/JSON/CBOR — not MD5, see B5), `C_GossipInfo`, `C_EquipmentSet`, `C_AddOns`, plus `hooksecurefunc`, `InCombatLockdown`, `table.wipe`, and a rewriter that makes `#`, `%`, `string.match`/`str:method()` compile on the spot — full breakdown in Part A and B10. |
 | **SuperWoW** | **Mandatory DLL** (`v2.2+`) | GUID-based unit arguments on all unit functions, `RAW_COMBATLOG`, exact-name targeting `TargetByName(name, true)`, direct GUID targeting `TargetUnit(guid)`, `SetMouseoverUnit`, clickthrough modes. |
 | **NamPower** | **Mandatory DLL** (`v4.6.2+`) | Client-side spell-cast queueing (eliminates input latency), cooldown/aura/spell info (`SpellInfo`, `GetSpellNameAndRankForId`), binary combat event dispatches. |
 | **UnitXP SP3** | **Mandatory DLL** (`SP3`) | Real-time uncapped raw numerical health (`UnitXP("health", unit)` / `UnitXP("maxhealth", unit)`), line-of-sight, distance calculation (`UnitXP("distance", unit)` / `UnitXP("distanceBetween", u1, u2)`), OS taskbar flashing (`FlashClientIcon()`), window foregrounding (`SetClientWindowForeground()`). |
@@ -38,38 +38,46 @@ All modernized addons **strictly require** the full 4-DLL client extension stack
 
 ## 🛡️ Mandatory Addon Startup Guard
 
-Every modernized addon **MUST** declare a hard engine requirement check at initialization. If ClassicAPI or SuperWoW is missing, fail fast with a clear notification:
+Every modernized addon **MUST** declare a hard engine requirement check at initialization. Check the actual version globals each DLL exposes for exactly this purpose, rather than inferring presence indirectly from a function existing:
+- ClassicAPI → `CLASSIC_API_VERSION` (global constant, always present once the DLL has hooked the engine)
+- SuperWoW → `SUPERWOW_VERSION` / `SUPERWOW_STRING` (global constants; confirm these are still the correct names on your installed build — see B10)
 
 ```lua
 -- Strict Engine Dependency Guard
-if not (C_Timer and C_Timer.After and UnitCastingInfo) then
+if not (CLASSIC_API_VERSION and SUPERWOW_VERSION) then
     DEFAULT_CHAT_FRAME:AddMessage("|cffff2020[Fatal Error]|r " .. (addonName or "Addon") .. " requires ClassicAPI.dll & SuperWoW! Please enable ClassicAPI in OctoLauncher.", 1, 0.2, 0.2)
     return
 end
 ```
+A function-existence check (`C_Timer and C_Timer.After`) still works as a *secondary* sanity check, but the version globals are the DLLs' own intended presence markers and won't be confused by some future stock-client function that happens to share a name.
 
 ---
 
-## Part A — Lua 5.0 Strict Compiler Guardrails (Never Use Modern Lua Syntax)
+## Part A — Lua Syntax: What ClassicAPI Rewrites, and What It Doesn't
 
-Even with ClassicAPI providing modern C++ APIs, the underlying scripting engine is **strictly Lua 5.0.2**. Adhere strictly to 5.0 syntax:
+The stock 1.12.1 engine runs Lua 5.0.2, which rejects a handful of syntax that later Lua versions take for granted. **Because ClassicAPI is now mandatory for every addon you build, most of that gap is closed for you**: ClassicAPI's own documentation states its flagship feature is running modern Lua 5.1 addon code on the 1.12 Lua 5.0 VM, by rewriting addon source before it compiles. That changes what's actually safe — and per your Core Paradigm (never write 2006-era workarounds), the rewritten form is now the one to prefer, not the legacy one.
 
-**A1. No Colon References Without Immediate Call Arguments**
-In Lua 5.0, writing `obj:Method` without immediate parentheses `()` causes a fatal compile-time parser crash (`function arguments expected near 'and'`). When testing method existence, ALWAYS use table dot notation:
+One practical caveat before you rely on this everywhere: the rewrite happens on addon *files* as they load through the normal TOC pipeline. Code compiled at runtime from a string (`loadstring`, `RunScript`, certain macro bodies) may not pass through the same rewrite step — keep that code in the conservative A3/A4 form unless you've confirmed otherwise. **Confirmed in-client:** `/run print(#{1,2,3})` returns `3` on your build — the length-operator rewrite is empirically verified now, not just documented. The string-metatable/`string.match` side (A2) is still only confirmed by ClassicAPI's own docs; `/run print(("x"):upper())` would confirm that one the same way whenever you get a chance.
+
+**A1. Colon-reference without an immediate call — still a hard crash, NOT rewritten.**
+`obj:Method` on its own, without `()` right after it, isn't valid Lua syntax at all — the colon form only exists as part of a call. This isn't a 5.0-vs-5.1 gap; it's a parser rule, and it's not in ClassicAPI's documented list of rewritten constructs. Treat it as permanent, regardless of engine stack:
 ```lua
--- ILLEGAL in Lua 5.0: (f:GetScript and f:GetScript("OnClick")) -> PARSER CRASH
--- REQUIRED in Lua 5.0: (f.GetScript and f:GetScript("OnClick")) -> 100% SAFE
+-- ILLEGAL, always: f:GetScript and f:GetScript("OnClick")  -> parser crash
+-- REQUIRED, always: f.GetScript and f:GetScript("OnClick") -> safe
 ```
 Never pass `self:Method` as a bare callback; use `function() self:Method() end` or `self.Method`.
 
-**A2. String Library 5.0 Compliance**
-Use `string.find`, `string.sub`, `string.len`, `string.lower`, `string.gsub`. Never assume Lua 5.1+ string metatables (`("str"):upper()`) or `string.match` exist unless explicitly polyfilled.
+**A2. String metatables & `string.match` — rewritten, write it the modern way.**
+ClassicAPI resolves string-literal and string-variable method calls — `("str"):upper()`, `("%d gold"):format(n)`, `msg:match("^!(%w+)")` — through the string table the way Lua 5.1 does, in-world, on the login screen, and inside coroutines. Stock Lua 5.0 would throw `attempt to index a string value` on all of it. `string.find`/`string.sub`/`string.gsub` still work fine too; use whichever reads better.
 
-**A3. Table Size & Bounds (No `#` Operator)**
-The `#` length operator does not exist in Lua 5.0. Always use `table.getn(t)` and `table.setn(t, n)`.
+**A3. `#` length operator — rewritten, write it the modern way.**
+Write `#t` directly. `table.getn(t)`/`table.setn(t, n)` will keep turning up in old or ported code — recognize it, but don't write new code that way.
 
-**A4. Modulo Operator (No `%` Operator)**
-The `%` operator is illegal in Lua 5.0 syntax. Always use `math.mod(a, b)` (e.g. `math.mod(i - 1, cols)`).
+**A4. `%` modulo operator — rewritten, write it the modern way.**
+Write `a % b` directly. `math.mod(a, b)` is the legacy form you'll meet in ported code, not something to write going forward.
+
+**A5. Also rewritten, worth knowing about.**
+0x hex literals and `[=[ ]=]` leveled long brackets both work now. So does the modern per-file header convention — each addon file can start with `local addonName, addonTable = ...` to receive its own name and shared table, instead of stashing everything in ad-hoc globals.
 
 ---
 
@@ -91,7 +99,8 @@ Because ClassicAPI, SuperWoW, NamPower, and UnitXP are strictly required, **neve
   local nameplates = C_NamePlate.GetNamePlates()
   local plate = C_NamePlate.GetNamePlateForUnit(unit)
   ```
-- Listen for native events: `NAME_PLATE_UNIT_ADDED`, `NAME_PLATE_UNIT_REMOVED`.
+- Two more confirmed functions worth knowing about: `C_NamePlate.GetNamePlateForGUID(guid)` (skip the unit-token step entirely if you already have a GUID from combat log or `UnitGUID`) and `C_NamePlate.GetNamePlateGUIDs()` (bulk GUID list — cheaper than resolving every plate to a full frame when all you need is "who's on screen").
+- Listen for native events: `NAME_PLATE_UNIT_ADDED`, `NAME_PLATE_UNIT_REMOVED` (also `NAME_PLATE_CREATED` if you need the frame at creation, before a unit is necessarily attached).
 - **STRICTLY FORBIDDEN:** Scanning `WorldFrame` children and doing fuzzy coordinate math.
 
 **B3. Structured Aura Engine (`C_UnitAuras`)**
@@ -99,6 +108,7 @@ Because ClassicAPI, SuperWoW, NamPower, and UnitXP are strictly required, **neve
   ```lua
   local auraData = C_UnitAuras.GetAuraDataByIndex(unit, index, filter)
   ```
+- For the common case, the more specific functions are usually a better fit than the generic one above: `C_UnitAuras.GetBuffDataByIndex(unit, index)` / `GetDebuffDataByIndex(unit, index)` skip the filter argument entirely, and `C_UnitAuras.GetUnitAuraBySpellID(unit, spellID)` / `GetPlayerAuraBySpellID(spellID)` look up a specific aura directly instead of iterating an index — the right choice whenever you're checking for one known buff/debuff rather than enumerating all of them. `C_UnitAuras.GetUnitAuras(unit, filter)` returns the whole set in one call for enumeration cases.
 - **STRICTLY FORBIDDEN:** Hidden `GameTooltip` tooltip scanning (`GameTooltipTextLeft1:GetText()`) to extract durations or spell names.
 
 **B4. Native Focus Unit Token (`"focus"`)**
@@ -111,26 +121,23 @@ Because ClassicAPI, SuperWoW, NamPower, and UnitXP are strictly required, **neve
 - **STRICTLY FORBIDDEN:** Faking focus targets using global string variables or target-swap hacks.
 
 **B5. Modern Container & Encoding Utilities (`C_Container`, `C_EncodingUtil`)**
-- Use `C_Container` for modern bag slot/item queries.
-- Use `C_EncodingUtil` for native C++ Base64 encode/decode, MD5, and SHA hashing (instant import/export of WeakAuras and profiles with zero screen freeze).
+- `C_Container` covers modern bag slot/item queries and instant moves: `GetContainerItemID`, `GetContainerItemDurability`, `GetContainerItemCharges`, `GetContainerNumFreeSlots`, `IsContainerItemOpenable`, `MoveItem`, `SwapItems`, plus hearthstone helpers (`PlayerHasHearthstone`, `UseHearthstone`).
+- **Correction:** `C_EncodingUtil` does **not** expose MD5 or SHA — I couldn't find those in ClassicAPI's confirmed function list, so drop that claim. What it actually provides: `CompressString`/`DecompressString`, `EncodeBase64`/`DecodeBase64`, `EncodeHex`/`DecodeHex`, and — genuinely useful for import/export strings — `SerializeJSON`/`DeserializeJSON` and `SerializeCBOR`/`DeserializeCBOR`. For WeakAuras-style string export, Compress + EncodeBase64 is the native-C++ zero-freeze pipeline; reach for JSON/CBOR serialization instead of hand-rolled string encoding for structured profile data.
 
-**B6. Exact Loot Roll & Gossip Protocol Compliance (1.12.1 Protocol)**
-- **Loot Rolls**:
+**B6. Loot Roll & Gossip Protocol (1.12.1 base protocol + ClassicAPI)**
+- **Loot Rolls** (stock 1.12.1 protocol — ClassicAPI doesn't touch this system, so these rules stand unchanged):
   - `GetLootRollItemInfo(rollID)` returns ONLY 5 values: `texture, name, count, quality, bindOnPickup` (no `canNeed`/`canGreed`).
   - `RollOnLoot(rollID, rollType)` enums: `0 = Pass`, `1 = Need`, `2 = Greed`.
   - Auto-confirming BoP rolls (`CONFIRM_LOOT_ROLL`): call `ConfirmLootRoll(rollID, rollType)`, hide `StaticPopup_Hide("CONFIRM_LOOT_ROLL", rollID)`, and scan active `StaticPopup1..4` instances to `:Hide()`.
-- **Gossip & Quest Dialog Protocol**:
-  - `GetNumGossipActiveQuests()` and `GetNumGossipAvailableQuests()` do **NOT** exist in 1.12.1 FrameXML (calling them causes a fatal nil function crash).
-  - In 1.12.1 Vanilla, `GetGossipActiveQuests()` and `GetGossipAvailableQuests()` return a flat vararg list of quest titles.
-  - Efficient zero-allocation check: `local activeTitle = GetGossipActiveQuests()` evaluates directly to the first quest title string (or `nil` if none exist), achieving instant evaluation with zero heap memory churn.
-  - **Repeatable Quest Chaining (`QUEST_FINISHED`)**: Repeatable turn-ins (e.g. reputation/token quests) do not re-fire `GOSSIP_SHOW` when the dialog remains open. Schedule a 50–60ms `C_Timer.After` tick on `QUEST_FINISHED` to inspect `GossipFrame:IsShown()` / `QuestFrameGreetingPanel:IsShown()` for continuous automated chain-processing.
+- **Gossip: use `C_GossipInfo`, not the stock flat-vararg functions.** ClassicAPI backports a full namespace — `GetNumActiveQuests`, `GetNumAvailableQuests`, `GetActiveQuests`, `GetAvailableQuests`, `GetOptions`, `GetNumOptions`, `GetText`, `SelectActiveQuest`, `SelectAvailableQuest`, `SelectOption`, `SelectOptionByIndex`, `CloseGossip`. This is the primary path now — it returns proper structured data instead of flat varargs, so use it going forward.
+  - Background, for reading or porting old code: stock 1.12.1 has no `GetNumGossipActiveQuests()`/`GetNumGossipAvailableQuests()` (calling them is a fatal nil-function crash) — the only stock option was `GetGossipActiveQuests()`/`GetGossipAvailableQuests()`, a flat vararg list of quest titles, with `local activeTitle = GetGossipActiveQuests()` as a zero-allocation trick to grab just the first one. `C_GossipInfo` replaces the need for that trick entirely.
 
 **B7. Combat Log Enums (NamPower / SuperWoW)**
 - **Spell Miss/Mitigation (`SMSG_SPELLLOGMISS` / `nampowerMissToAction`)**:
   `0=None/Miss`, `1=Miss`, `2=Resist`, `3=Dodge`, `4=Parry`, `5=Block`, `6=Evade`, `7=Immune`, `8=Immune (School/Mechanic)`, `9=Deflect`, `10=Absorb`, `11=Reflect`.
 - **Auto-Attack Outcomes (`SMSG_ATTACKERSTATEUPDATE` / `nampowerVictimStateToAction`)**:
   `0=Miss`, `1=Hit`, `2=Dodge`, `3=Parry`, `4=Block`, `5=Evade`, `6=Immune`, `7=Reflect`.
-- **Hit Info Bit Flags**: Critical Hit = `2`, Crushing = `32`, Glancing = `64`.
+- **Hit Info Bit Flags**: Critical Hit = `2`, Crushing = `32`, Glancing = `64`. ⚠️ Same caveat as the enums above — I couldn't independently confirm these three exact bit values against a primary source. They're structurally plausible (small distinct power-of-two flags, consistent with how `hitInfo` bitfields work elsewhere in the protocol), but confirm against an actual captured packet or your server's behavior before relying on them for anything that pays out real value (e.g. threat or DPS calculations), rather than just cosmetic combat text.
 
 **B8. Uncapped Health & Distance Engine (UnitXP SP3)**
 - Real uncapped enemy numerical health: `UnitXP("health", unit)` and `UnitXP("maxhealth", unit)` (e.g. `3840 (85%)`).
@@ -146,6 +153,18 @@ Because ClassicAPI, SuperWoW, NamPower, and UnitXP are strictly required, **neve
 - **Direct GUID Targeting**: `TargetUnit(guid)` to target exact creature GUIDs in multi-mob packs, with `AssistByName(name)` as fallback.
 - **OS Taskbar & Foregrounding**: `FlashClientIcon()` to flash Windows taskbar and `SetClientWindowForeground()` on critical events.
 - **Master Audio Channel**: `PlaySoundFile(path, "Master")` or `PlaySound("ReadyCheck")` to remain audible regardless of SFX volume toggles.
+- **Presence markers**: the DLL exposes `SUPERWOW_VERSION` / `SUPERWOW_STRING` as globals purely for other code (including your B guard clause) to detect it — same idea as `CLASSIC_API_VERSION` above.
+
+**B10. Additional ClassicAPI Primitives — confirmed, and worth building around**
+ClassicAPI backports 550+ functions across ~60 namespaces (full reference: the project's `docs/API.md`); B1–B6 cover the ones your existing addons lean on most, but a few more are worth knowing exist before you reach for a hand-rolled workaround:
+- **`hooksecurefunc`** — real, backported. This is the standard modern way to observe a function without replacing it, and it's the single biggest quality-of-life gap in stock vanilla addon dev (the usual workaround — manually wrapping a global with `local orig = Func; Func = function(...) orig(...) ... end` — breaks the moment two addons do it to the same function). Prefer it over manual function wrapping everywhere.
+- **`InCombatLockdown`** — real, backported. Use it directly instead of tracking `PLAYER_REGEN_DISABLED`/`PLAYER_REGEN_ENABLED` yourself just to answer "am I in combat right now."
+- **`C_AddOns`** (`DoesAddOnExist`, `IsAddOnLoaded`, `GetAddOnTitle`, `GetAddOnNotes`, `IsAddOnLoadable`, `GetAddOnName`, `GetAddOnSecurity`) — **this changes Part E.** For any addon that ships as a normal TOC entry, `C_AddOns.IsAddOnLoaded("AddonFolderName")` is a direct, reliable presence check — use it as the first choice for addon detection. Reserve the frame-name/minimap-substring whitelist approach in E2 for what it's actually needed for: things that *aren't* discoverable this way, like injected server UI (E3) or addons that create loose minimap buttons without you knowing their folder name in advance.
+- **`table.wipe`** — real, backported, native C++. It's a faster, direct replacement for the manual `for k in pairs(t) do t[k] = nil end` wipe idiom in D4 — prefer it in new code.
+- **Full namespaces also available** (see `docs/API.md` for exact signatures rather than guessing): `C_Spell` (spell info/cooldowns/school/usability — can replace a lot of hand-rolled spellbook scanning), `C_Item` (item info/quality/links/binding), `C_Loot` (`ScanNearbyLoot`, `GetNearbyLootableUnits`, `LootUnit` — batch/nearby-corpse looting, distinct from the roll system in B6), `C_QuestLog` (`GetQuestDetails`, `IsOnQuest`, `IsUnitOnQuest`), `C_Reputation` (faction standing/watch).
+- **Bundled Lua library (`!!!ClassicAPI`, loads automatically, no install step)** — gives you `Mixin`/`CreateFromMixins`, `TableUtil` (`tCompare`, `MergeTable`, `SafePack`), `MathUtil` (`Lerp`, `Clamp`, `CreateCounter`), `ColorMixin`/`CreateColor`, `EventUtil` (`ContinueOnAddOnLoaded`), `CallbackRegistryMixin`, `EventRegistry`. Reach for these instead of hand-rolling the equivalent — directly relevant to the DRY mandate in Part F.
+- **Bundled `DebugTools` addon (loads automatically)** — `/dump <expr>` pretty-prints any value including multi-return tuples, `/etrace` is a live event tracer, `/framestack` (`/fstack`) shows the frame hierarchy under your cursor, `/luaerrors` shows a proper Lua error window. It also backports a real `print()` global (routes to the default chat frame). These are genuine debugging tools, not workarounds — use them as part of Part G verification instead of, or alongside, static analysis.
+- **Confirmed:** OctoWoW has patched the quest log cap to 25 entries, up from vanilla's standard 20 (`MAX_QUEST_LOG_ENTRIES`), as a client-side change. If any addon hardcodes `20` as the quest log size — loop bounds, grid sizing, anything assuming the old constant — that's a real bug to fix now, not just something to watch for.
 
 ---
 
@@ -210,7 +229,7 @@ end
 - **Event-Driven Zone Pointer Caching**: Never query `GetRealZoneText()` / `GetZoneText()` inside rapid event triggers (`START_LOOT_ROLL`, `CHAT_MSG_*`). Cache zone state on `ZONE_CHANGED_NEW_AREA`, `ZONE_CHANGED`, and `PLAYER_ENTERING_WORLD`.
 
 **D4. Reuse, Don't Reallocate**
-- **Object Recycling Pools**: Use pre-allocated table pools (`pool = {}`) and in-place table wipes (`for k in pairs(t) do t[k] = nil end`).
+- **Object Recycling Pools**: Use pre-allocated table pools (`pool = {}`) and in-place wipes. Prefer ClassicAPI's native `table.wipe(t)` (see B10) over the manual `for k in pairs(t) do t[k] = nil end` loop now that it's available.
 - **Single-Pass String Parsing**: Replace multi-array string exploding with index-based `string.find` scanners.
 - **In-Place Sort Buffers**: Reusable array buffers must set bounds using `table.setn(buffer, count)` before calling `table.sort` to prevent memory thrashing.
 
@@ -240,11 +259,12 @@ C_Timer.NewTicker(0.2, function() OnTick() end, 10)
 - **Relic vs. Token Isolation**: Use explicit closed O(1) hash tables for raid turn-in tokens (e.g. the 9 AQ20 Token Idols) so equipable class relics (e.g. `Idol of Rejuvenation`, `Idol of the Moon`) or weapons (`Obsidian Edged Blade`) are never falsely matched as trash.
 
 **E2. Strict Zero-Leak Addon Discovery & Minimap Tray Architecture**
+- **Check `C_AddOns` first (see B10).** If you just need to know whether a given addon is present, `C_AddOns.IsAddOnLoaded("FolderName")` is a direct, reliable answer for anything that loads as a normal TOC entry — no scanning required. Everything below is for the remaining case this doesn't cover: discovering and organizing loose minimap *buttons* themselves (including ones from addons you can't necessarily name in advance, or server-injected ones with no TOC entry at all — see E3).
 - **NEVER Perform Generic Frame Substring Searches**: Scanning `EnumerateFrames()` for generic strings like `"doite"`, `"tower"`, `"radio"`, `"aura"`, `"icon"`, or `"lfg"` is **STRICTLY FORBIDDEN**. Doing so sweeps up player combat WeakAuras (`DoiteAuras_Icon_*`), quest log titles (`QuestLogTitle*`), and playback buttons into trays or banishment routines.
 - **Explicit Addon Minimap Whitelist**: Target verified addon frame names (e.g. `AtlasLootMinimapButtonFrame`, `pfQuestIcon`, `DoiteAurasMinimapButton`, `TrinketMenu_IconFrame`, `BagnonMinimapButton`, `AutoBG_QuickQueueButton`, `TWThreatMinimapButton`, `shootyepgpMinimapButton`) and direct `Button` children of `Minimap` / `MinimapBackdrop` with circular borders.
 - **Combat Aura & UI Exclusion**: Explicitly reject all combat auras (`DoiteAuras_Icon_*`, `AuraFrame`, `CombatFrame`), action buttons, condition logic frames, close buttons, playlist arrows, and check boxes (`UICheckButtonTemplate`).
 - **Persistent Addon Registry & Reparenting Retention**: When buttons are reparented into a tray container (`btn:SetParent(trayFrame)`), they are no longer returned by `Minimap:GetChildren()`. Maintain a persistent registry table (`DiscoveredAddonList` / `DiscoveredAddonSet`) and inspect `Minimap`, `MinimapBackdrop`, `MinimapCluster`, and `trayFrame` so discovered buttons never disappear upon toggling.
-- **Visual Renderability Validation & Gapless Grid Layout**: Empty parent containers (e.g., `TrinketMenu_IconFrame` without icon, unrendered wrappers) must be validated with a visual inspector (`HasRenderableVisual`) checking for non-empty normal textures or `ARTWORK` regions. Never insert invisible wrapper frames into active tray slots, preventing blank gaps/holes in multi-row grid layouts.
+- **Visual Renderability Validation & Gapless Grid Layout**: Empty parent containers (e.g., `TrinketMenu_IconFrame` without icon, unrendered wrappers) must be validated before being placed in a tray slot. ⚠️ **`HasRenderableVisual` is not a real engine function** — nothing in the stock API or ClassicAPI's confirmed function list is named that; calling it directly will throw a nil-function error, exactly the class of bug this whole document exists to prevent. Write it yourself as a small local helper: check `frame:GetNormalTexture()` for a non-empty texture, and fall back to iterating `frame:GetRegions()` for a non-empty `ARTWORK` texture or FontString. Never insert a frame that fails both checks into an active tray slot, to avoid blank gaps in multi-row grid layouts.
 
 **E3. Server System UI Suppression (Booty Bay Radio & LFG)**
 When suppressing hardcoded custom server UI elements (e.g., TurtleWoW Booty Bay Pirate Radio, Broadcasting Towers, LFG eye):
@@ -287,9 +307,11 @@ A successful modernization should typically reduce total lines of code by **30% 
 
 **F7. Dual-Track Mandate (Bugfixes Never Supersede Holistic Modernization)**
 Whenever an audit or modernization request includes a specific bug, symptom, or user report (e.g., *"Fix X"* or *"There is still an issue with Y"*), **NEVER** treat the task as an isolated surgical patch. The named bug is merely Item #1 on the audit list. The agent MUST execute a comprehensive, whole-codebase Part F audit across EVERY `.lua` and `.xml` file in the addon simultaneously. Every file touched must undergo a deep architectural diet, eradicating legacy 2006 migration ladders, dead combat-log regexes, duplicate loops, and unneeded polling frames.
+> ⚠️ Worth naming the trade-off: this deliberately trades turnaround speed and blast radius for thoroughness — a one-line typo fix now touches every file. Reasonable default for a personal addon collection under active rebuild. If you ever want a fast, minimal, scoped patch instead (testing something live, raid starting in five minutes), say so explicitly in that request — this mandate shouldn't force relitigating a whole file to change one number.
 
 **F8. Mandatory Pre-Commit Net-Negative Line Gate**
 A modernization task is NOT complete unless the `.lua` source codebase demonstrates a verified net line reduction in `git diff --stat`. Documentation additions (e.g. `README.md`) must never mask an unoptimized or unpruned Lua codebase.
+> ⚠️ One risk worth naming: a hard numeric gate on *every* task can push toward hitting the number instead of the underlying goal — stripped comments, dropped safety guards, or exactly the kind of error-handling this document elsewhere requires (the Startup Guard in this file adds lines; a real `HasRenderableVisual`-style helper adds lines). Treat net reduction as the expected *outcome* of removing genuine 2006-era bloat, not a target to hit by any means. A task that legitimately adds lines — a real new feature, a safety guard, expanded error handling — is still complete; call that out explicitly rather than cutting something else to compensate.
 
 ---
 
@@ -309,7 +331,7 @@ Before concluding any refactor, scan every `.lua`, `.xml`, and `.toc` file to el
 Validate line-by-line Lua syntax and block closures (`if/then/end`, `do/end`, `function/end`) on every modified file prior to commit. Parse all XML files against standard XML parsers to catch broken `<Include>`, `<Script>`, or malformed element structures.
 
 **G4. Syntax Parser Verification**
-When executing syntax checks, remember that modern Lua compilers (5.1+) will accept `%`, `#`, and `string.match` — all of which are illegal in the real 1.12.1 client. Rely on Part A guardrails as the ultimate authority.
+This flips now that ClassicAPI is mandatory. It used to be that a modern Lua 5.1+ compiler would accept `%`, `#`, and `string.match`/`str:method()` — syntax that broke on the real stock 1.12.1 client — giving a false "all clear." Now that ClassicAPI's rewriter handles exactly those constructs (Part A), a 5.1+ syntax checker is a genuinely closer approximation of what will actually run, not a source of false confidence. It will still correctly flag A1's colon-reference-without-a-call as a syntax error, since that's invalid in 5.1 too — but only if you actually run one. Use a parser (`luac5.1`, `lua5.1 -p`) as a mechanical backstop where your environment has one available; treat Part A as the authority on the reasoning either way.
 
 ---
 
@@ -321,7 +343,7 @@ OctoLauncher scans `.git` directories and syncs against `origin` when "Update Al
 **H2. Pure English Standard & Branding**
 - **Strict 100% English**: All in-game text, UI labels, tooltips, chat logs, code comments, and documentation must be strictly in English.
 - **TOC File (.toc)**:
-  - `## Interface: 11200`
+  - `## Interface: 11200` — confirmed correct, and worth understanding why so it doesn't get "fixed" incorrectly later: this is the *client API* version (1.12.x), which Blizzard never bumped between 1.12.0 and 1.12.1. It's a different number from OctoWoW's *content* patch (1.18.1) — content patches add zones/quests/systems without changing the underlying addon API surface, so the Interface line has no reason to track them. Leave it at `11200`.
   - `## Title: <AddonName> |cffc79cff[Octo]|r` (or `## Title: <AddonName>`)
   - `## Author: Fostercare5988` (or `## Author: [Original Author], Fostercare5988` for ports)
   - `## Version: 1.0.0`
