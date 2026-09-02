@@ -340,16 +340,20 @@ This flips now that ClassicAPI is mandatory. It used to be that a modern Lua 5.1
 **H1. OctoLauncher & Git Remote Preservation**
 OctoLauncher scans `.git` directories and syncs against `origin` when "Update All" is clicked. For all modernized/forked addons in `Niko2`, immediately verify or set the remote `origin` to the personal repository (`https://github.com/Fostercare5988/<AddonName>.git`) and push, preventing launcher updates from reverting local improvements.
 
-**H2. Pure English Standard & Branding**
+**H2. Pure English Standard, Clean Canonical Branding & No "-Octo" Renames**
 - **Strict 100% English**: All in-game text, UI labels, tooltips, chat logs, code comments, and documentation must be strictly in English.
-- **TOC File (.toc)**:
-  - `## Interface: 11200` — confirmed correct, and worth understanding why so it doesn't get "fixed" incorrectly later: this is the *client API* version (1.12.x), which Blizzard never bumped between 1.12.0 and 1.12.1. It's a different number from OctoWoW's *content* patch (1.18.1) — content patches add zones/quests/systems without changing the underlying addon API surface, so the Interface line has no reason to track them. Leave it at `11200`.
-  - `## Title: <AddonName> |cffc79cff[Octo]|r` (or `## Title: <AddonName>`)
-  - `## Author: Fostercare5988` (or `## Author: [Original Author], Fostercare5988` for ports)
-  - `## Version: 1.0.0`
+- **Clean Canonical Naming (Strictly NO "-Octo" or "[Octo]" Suffixes)**:
+  - Addons must preserve their clean, original/canonical folder and title names. **Never rename addon folders or append `-Octo` or `|cffc79cff[Octo]|r` to titles or versions**.
+  - **TOC File (.toc)**:
+    - `## Interface: 11200` — confirmed correct client API version (1.12.x), independent of content patches like 1.18.1.
+    - `## Title: <AddonName>` (clean title, strictly NO `[Octo]` or `-Octo` suffix).
+    - `## Author: Fostercare5988` (or `## Author: [Original Author], Fostercare5988` for ports).
+    - `## Version: 1.0.0` (clean semver, strictly NO `-Octo` suffix).
+  - **Folder Names**: Must match the canonical AddOn name (e.g. `Bagnon`, `AutoLazy`, `TWThreat`, `MikScrollingBattleText`, `AutoBG`) without folder renames.
 - **Markdown & GitHub (README.md, Commits, PRs)**:
   - **NEVER use WoW color codes** (`|cff...|r`) in markdown or git messages.
   - **Title Format**: `# <AddonName>`
+  - **Version Badges**: `x.x.x` (standard semver).
 
 **H3. Mandatory Read-Before-Write Protocol for System Prompt**
 Whenever touching, updating, or modifying `OCTOWOW_SYSTEM_PROMPT.md`:
@@ -363,7 +367,7 @@ This document is a living record of verified client behaviors. If you observe di
 **H5. Mandatory Automated README.md Delivery & Synchronization**
 Every single addon audit, modernization, refactor, or bugfix pass **MUST automatically update or create the addon's `README.md`** before concluding the task, without the user ever having to prompt or ask for it.
 - **Mandatory Sections in Every `README.md`**:
-  1. **Header & Badges**: Version (`x.x.x-Octo`), Interface (`1.12.1 / OctoWoW`), License (`MIT` or original).
+  1. **Header & Badges**: Version (`x.x.x`), Interface (`1.12.1 / OctoWoW`), License (`MIT` or original).
   2. **Description**: Concise summary of what the addon does and how it leverages the OctoWoW Engine Stack (**ClassicAPI**, **SuperWoW 2.2+**, **NamPower 4.6.2+**, **UnitXP SP3**, **DXVK**).
   3. **Quick Start & Slash Commands**: All in-game slash commands and key shortcuts.
   4. **Core Features**: Bulleted overview of functionality.
