@@ -344,7 +344,7 @@ This flips now that ClassicAPI is mandatory. It used to be that a modern Lua 5.1
 **H1. OctoLauncher & Git Remote Preservation**
 OctoLauncher scans `.git` directories and syncs against `origin` when "Update All" is clicked. For all modernized/forked addons in `Niko2`, immediately verify or set the remote `origin` to the personal repository (`https://github.com/Fostercare5988/<AddonName>.git`) and push, preventing launcher updates from reverting local improvements.
 
-**H2. Pure English Standard, Clean Canonical Branding & No "-Octo" Renames**
+**H2. Pure English Standard, Clean Canonical Branding & No Buzzword Pollution**
 - **Strict 100% English**: All in-game text, UI labels, tooltips, chat logs, code comments, and documentation must be strictly in English.
 - **Clean Canonical Naming (Strictly NO "-Octo" or "[Octo]" Suffixes)**:
   - Addons must preserve their clean, original/canonical folder and title names. **Never rename addon folders or append `-Octo` or `|cffc79cff[Octo]|r` to titles or versions**.
@@ -354,6 +354,9 @@ OctoLauncher scans `.git` directories and syncs against `origin` when "Update Al
     - `## Author: Fostercare5988` (or `## Author: [Original Author], Fostercare5988` for ports).
     - `## Version: 1.0.0` (clean semver, strictly NO `-Octo` suffix).
   - **Folder Names**: Must match the canonical AddOn name (e.g. `Bagnon`, `AutoLazy`, `TWThreat`, `MikScrollingBattleText`, `AutoBG`) without folder renames.
+- **Natural Open-Source Presentation (No "Canonical" Buzzword Pollution)**:
+  - Be canonical in architecture, structure, and naming, but **do NOT plaster the literal word "Canonical" onto titles, descriptions, or commit messages**.
+  - Standard Release Commit Format: `<AddonName> v<Version>: World of Warcraft 1.12.1 Enhanced Engine Modernization`
 - **Markdown & GitHub (README.md, Commits, PRs)**:
   - **NEVER use WoW color codes** (`|cff...|r`) in markdown or git messages.
   - **Title Format**: `# <AddonName>`
