@@ -353,7 +353,13 @@ OctoLauncher scans `.git` directories and syncs against `origin` when "Update Al
     - `## Title: <AddonName>` (clean title, strictly NO `[Octo]` or `-Octo` suffix).
     - `## Author: Fostercare5988` (or `## Author: [Original Author], Fostercare5988` for ports).
     - `## Version: 1.0.0` (clean semver, strictly NO `-Octo` suffix).
-  - **Folder Names**: Must match the canonical AddOn name (e.g. `Bagnon`, `AutoLazy`, `TWThreat`, `MikScrollingBattleText`, `AutoBG`) without folder renames.
+    - `## SavedVariables:` / `## SavedVariablesPerCharacter:` (if needed).
+    - `## OptionalDeps:` (only for actual Lua AddOn folders in `Interface\AddOns\`, e.g. `UnitXP_SP3_Addon`, `SuperAPI`).
+    - 🚨 **CRITICAL TOC DEPENDENCY RULE (Zero "Dependency Missing" Failures)**:
+      **NEVER put DLL engine names (`ClassicAPI`, `SuperWoW`, `NamPower`, `UnitXP`, `DXVK`) in `## Dependencies:` or `## OptionalDeps:`.**
+      In WoW 1.12.1, the FrameXML AddOn loader strictly treats `## Dependencies:` as a lookup for a physical directory located at `Interface\AddOns\<Name>\`. Because `ClassicAPI.dll`, `SuperWoW.dll`, `NamPower.dll`, and `UnitXP_SP3.dll` are injected C++ binaries and NOT addon folders, putting them in `## Dependencies:` causes the WoW client to permanently disable the addon at the login screen with the fatal error **`Dependency missing`**.
+      All DLL engine prerequisites **MUST ONLY** be verified at runtime via the Lua **Mandatory Addon Startup Guard** (checking `CLASSIC_API_VERSION and SUPERWOW_VERSION`).
+  - **Folder Names**: Must match the canonical AddOn name (e.g. `Bagnon`, `AutoLazy`, `TWThreat`, `MikScrollingBattleText`, `AutoBG`, `FosterFrames`) without folder renames.
 - **Natural Open-Source Presentation (No "Canonical" Buzzword Pollution)**:
   - Be canonical in architecture, structure, and naming, but **do NOT plaster the literal word "Canonical" onto titles, descriptions, or commit messages**.
   - Standard Release Commit Format: `<AddonName> v<Version>: World of Warcraft 1.12.1 Enhanced Engine Modernization`
