@@ -25,14 +25,15 @@ We **ONLY** build and modernize addons that strictly require and leverage the co
 
 All modernized addons **strictly require** the full 4-DLL client extension stack:
 
-| Layer | Type | Key Capabilities & APIs |
-| :--- | :--- | :--- |
-| **Base Client** | WoW 1.12.1 (Build 5875) | Lua 5.0.2 engine, stock FrameXML UI, standard 1.12.1 client base. |
-| **ClassicAPI** | **Mandatory DLL** | 550+ functions across ~60 modern retail-style `C_` namespaces — `C_Timer.After`/`NewTicker`, `UnitCastingInfo`/`UnitChannelInfo`, `C_NamePlate`, `C_UnitAuras`, `FocusUnit`/`ClearFocus`, `C_Container`, `C_EncodingUtil` (Base64/Hex/JSON/CBOR — not MD5, see B5), `C_GossipInfo`, `C_EquipmentSet`, `C_AddOns`, plus `hooksecurefunc`, `InCombatLockdown`, `table.wipe`, and a rewriter that makes `#`, `%`, `string.match`/`str:method()` compile on the spot — full breakdown in Part A and B10. |
-| **SuperWoW** | **Mandatory DLL** (`v2.2+`) | GUID-based unit arguments on all unit functions, `RAW_COMBATLOG`, exact-name targeting `TargetByName(name, true)`, direct GUID targeting `TargetUnit(guid)`, `SetMouseoverUnit`, clickthrough modes. |
-| **NamPower** | **Mandatory DLL** (`v4.6.2+`) | Client-side spell-cast queueing (eliminates input latency), cooldown/aura/spell info (`SpellInfo`, `GetSpellNameAndRankForId`), binary combat event dispatches. |
-| **UnitXP SP3** | **Mandatory DLL** (`SP3`) | Real-time uncapped raw numerical health (`UnitXP("health", unit)` / `UnitXP("maxhealth", unit)`), line-of-sight, distance calculation (`UnitXP("distance", unit)` / `UnitXP("distanceBetween", u1, u2)`), OS taskbar flashing (`FlashClientIcon()`), window foregrounding (`SetClientWindowForeground()`). |
-| **VanillaFixes + DXVK** | Client Patch + Vulkan | Direct3D 9 to Vulkan translation, high refresh rates (144Hz/240Hz+), frametime jitter reduction, animation smoothing. |
+| Layer | Component & Repository | Minimum Version | Key Capabilities & APIs |
+| :--- | :--- | :--- | :--- |
+| **Base Client** | World of Warcraft 1.12.1 | Build 5875 | Lua 5.0.2 engine, stock FrameXML UI, standard 1.12.1 client base. |
+| **ClassicAPI** | [**brues-code/ClassicAPI**](https://github.com/brues-code/ClassicAPI) | Mandatory DLL | 550+ functions across ~60 modern retail-style `C_` namespaces — `C_Timer.After`/`NewTicker`, `UnitCastingInfo`/`UnitChannelInfo`, `C_NamePlate`, `C_UnitAuras`, `FocusUnit`/`ClearFocus`, `C_Container`, `C_EncodingUtil` (Base64/Hex/JSON/CBOR — not MD5, see B5), `C_GossipInfo`, `C_EquipmentSet`, `C_AddOns`, plus `hooksecurefunc`, `InCombatLockdown`, `table.wipe`, and a rewriter that makes `#`, `%`, `string.match`/`str:method()` compile on the spot — full breakdown in Part A and B10. |
+| **SuperWoW** | [**balakethelock/SuperWoW**](https://github.com/balakethelock/SuperWoW) | `v2.2+` Mandatory DLL | GUID-based unit arguments on all unit functions, `RAW_COMBATLOG`, exact-name targeting `TargetByName(name, true)`, direct GUID targeting `TargetUnit(guid)`, `SetMouseoverUnit`, clickthrough modes. |
+| **NamPower** | [**Emyrk/nampower**](https://github.com/Emyrk/nampower) | `v4.6.2+` Mandatory DLL | Client-side spell-cast queueing (eliminates input latency), cooldown/aura/spell info (`SpellInfo`, `GetSpellNameAndRankForId`), binary combat event dispatches. |
+| **UnitXP SP3** | [**unitxp/unitxp-sp3**](https://github.com/unitxp/unitxp-sp3) | `SP3` Mandatory DLL | Real-time uncapped raw numerical health (`UnitXP("health", unit)` / `UnitXP("maxhealth", unit)`), line-of-sight, distance calculation (`UnitXP("distance", unit)` / `UnitXP("distanceBetween", u1, u2)`), OS taskbar flashing (`FlashClientIcon()`), window foregrounding (`SetClientWindowForeground()`). |
+| **DXVK** | [**doitsujin/dxvk**](https://github.com/doitsujin/dxvk) | `v2.0+` Vulkan Layer | Direct3D 9 to Vulkan translation layer, high refresh rate frametime smoothing (144Hz/240Hz+), jitter eradication, GPU optimization. |
+| **VanillaFixes** | [**Sadret/VanillaFixes**](https://github.com/Sadret/VanillaFixes) | Client Patch | High refresh rate animation uncap, modern OS compatibility, raw mouse input fix. |
 
 ---
 
@@ -367,12 +368,12 @@ This document is a living record of verified client behaviors. If you observe di
 **H5. Mandatory Automated README.md Delivery & Synchronization**
 Every single addon audit, modernization, refactor, or bugfix pass **MUST automatically update or create the addon's `README.md`** before concluding the task, without the user ever having to prompt or ask for it.
 - **Mandatory Sections in Every `README.md`**:
-  1. **Header & Badges**: Version (`x.x.x`), Interface (`1.12.1 / Build 5875`), License (`MIT` or original).
+  1. **Header & Badges**: Version (`x.x.x`), Interface (`1.12.1 (Build 5875)`), Engine (`ClassicAPI | SuperWoW | NamPower | UnitXP | DXVK`), License (`MIT` or original).
   2. **Description**: Concise summary of what the addon does and how it leverages the Enhanced 1.12.1 Engine Stack (**ClassicAPI**, **SuperWoW 2.2+**, **NamPower 4.6.2+**, **UnitXP SP3**, **DXVK**).
   3. **Quick Start & Slash Commands**: All in-game slash commands and key shortcuts.
   4. **Core Features**: Bulleted overview of functionality.
   5. **Technical Architecture & Zero-Bloat Optimizations**: Exact architectural improvements, dead code removals, DRY consolidations, and event-driven replacements.
-  6. **Installation & Requirements**: Clear folder path and engine DLL prerequisites.
+  6. **Installation & Requirements**: Clear folder path and engine DLL prerequisites with direct hyperlinks to official GitHub repositories ([ClassicAPI](https://github.com/brues-code/ClassicAPI), [SuperWoW](https://github.com/balakethelock/SuperWoW), [NamPower](https://github.com/Emyrk/nampower), [UnitXP SP3](https://github.com/unitxp/unitxp-sp3), [DXVK](https://github.com/doitsujin/dxvk)).
   7. **Credits & Attribution**: Original author(s) and `Fostercare5988` (modernization & maintainer).
   8. **Changelog**: Detailed release notes for the new version.
 - **Strict Formatting**: 100% English, standard markdown, strictly NO WoW color codes (`|cff...|r`) in markdown or commit messages. Always commit and push the updated `README.md` alongside code updates.
