@@ -12,7 +12,7 @@ A battle-tested, high-precision system prompt designed for AI coding assistants 
 
 We **ONLY** build and modernize addons that strictly require and leverage the complete modern **OctoWoW Engine Stack** (including **ClassicAPI**). We never write backwards-compatible 2006 fallback code, tooltip scanners, or combat log string parsers.
 
-### Why Legacy 1.12.1 Addons Lags vs. The Modern Stack:
+### Why Legacy 1.12.1 Addons Lag vs. The Modern Stack:
 - **No Combat Log Parsing:** ClassicAPI provides native millisecond-accurate castbars (`UnitCastingInfo` / `UnitChannelInfo`), eradicating combat log text regexes and GC stutter.
 - **No Hidden Tooltip Scans:** Structured aura tables via `C_UnitAuras.GetAuraDataByIndex` replace slow hidden `GameTooltip` string reading.
 - **No `OnUpdate` Polling Loops:** Hardware-level timers (`C_Timer.After` / `C_Timer.NewTicker`) eliminate Lua frame polling.
@@ -29,7 +29,7 @@ All modernized addons **strictly require** the full 4-DLL client extension stack
 
 | Component | Minimum Version | Core Capability / Role |
 | :--- | :--- | :--- |
-| **ClassicAPI** | **Mandatory DLL** | Modern retail-style `C_` namespaces (`C_Timer.After` / `NewTicker`, `UnitCastingInfo` / `UnitChannelInfo`, `C_NamePlate`, `C_UnitAuras`, `FocusUnit` / `ClearFocus`, `C_Container`, `C_EncodingUtil`). |
+| **ClassicAPI** | **Mandatory DLL** | 550+ functions across ~60 modern retail-style `C_` namespaces (`C_Timer.After` / `NewTicker`, `UnitCastingInfo` / `UnitChannelInfo`, `C_NamePlate`, `C_UnitAuras`, `FocusUnit` / `ClearFocus`, `C_Container`, `C_EncodingUtil`, `C_GossipInfo`, `C_EquipmentSet`, `C_AddOns`), plus `hooksecurefunc`, `InCombatLockdown`, `table.wipe`, and a source-rewriter that makes modern Lua 5.1 syntax (`#`, `%`, `string.match`) compile on the 5.0 VM. |
 | **SuperWoW** | `v2.2+` **Mandatory DLL** | GUID-based unit arguments on all unit functions, `RAW_COMBATLOG`, exact-name targeting `TargetByName(name, true)`, direct GUID targeting `TargetUnit(guid)`, `SetMouseoverUnit`, clickthrough modes. |
 | **NamPower** | `v4.6.2+` **Mandatory DLL** | Client-side spell-cast queueing (eliminates input latency), cooldown/aura/spell info (`SpellInfo`, `GetSpellNameAndRankForId`), binary combat event dispatches. |
 | **UnitXP SP3** | `SP3` **Mandatory DLL** | Real-time uncapped raw numerical health (`UnitXP("health", unit)` / `UnitXP("maxhealth", unit)`), line-of-sight, distance calculation (`UnitXP("distance", unit)` / `UnitXP("distanceBetween", u1, u2)`), OS taskbar flashing (`FlashClientIcon()`), window foregrounding (`SetClientWindowForeground()`). |
@@ -39,11 +39,11 @@ All modernized addons **strictly require** the full 4-DLL client extension stack
 
 ## 🛡️ Mandatory Addon Startup Guard
 
-Every modernized addon must declare an engine dependency check at initialization:
+Every modernized addon must declare an engine dependency check at initialization — checking the DLLs' own version globals, not inferring presence indirectly from a function existing:
 
 ```lua
 -- Strict Engine Dependency Guard
-if not (C_Timer and C_Timer.After and UnitCastingInfo) then
+if not (CLASSIC_API_VERSION and SUPERWOW_VERSION) then
     DEFAULT_CHAT_FRAME:AddMessage("|cffff2020[Fatal Error]|r " .. (addonName or "Addon") .. " requires ClassicAPI.dll & SuperWoW! Please enable ClassicAPI in OctoLauncher.", 1, 0.2, 0.2)
     return
 end
@@ -53,22 +53,23 @@ end
 
 ## 📚 Core Architecture & Directives Overview
 
-The master prompt is structured into 7 core thematic sections:
+The master prompt is structured into 8 core thematic sections:
 
-### **Part A — Lua 5.0 Strict Compiler Guardrails**
-- **No uncalled colon methods**: `(f.GetScript and f:GetScript("OnClick"))` is required — `(f:GetScript ...)` crashes the Lua 5.0 parser.
-- **No `%` modulo operator**: `%` is illegal in Lua 5.0 syntax — strictly use `math.mod(a, b)`.
-- **No `#` length operator**: Use `table.getn(t)` and `table.setn(t, n)`.
-- **Lua 5.0 string compliance**: Strictly use `string.find`, `string.sub`, `string.len`, `string.lower`, `string.gsub`.
+### **Part A — Lua Syntax: What ClassicAPI Rewrites, and What It Doesn't**
+- **No uncalled colon methods** — the one rule that never changes: `(f.GetScript and f:GetScript("OnClick"))` is required; `(f:GetScript ...)` alone crashes the Lua parser, in any Lua version. This is a parser rule, not a 5.0-vs-5.1 gap, so it's not something ClassicAPI's rewriter touches.
+- **`#` and `%` are safe to use directly** — confirmed in-client (`/run print(#{1,2,3})` → `3`). ClassicAPI's source-rewriter compiles modern Lua 5.1 syntax on the 1.12 Lua 5.0 VM before it reaches the compiler, so `#t` and `a % b` work normally now. `table.getn(t)`/`math.mod(a, b)` still work but are the legacy forms you'll meet in old or ported code, not something to write going forward.
+- **String metatables & `string.match` are safe to use directly** — `("str"):upper()`, `msg:match("^!(%w+)")` resolve through the rewriter the same way `string.find`/`string.sub`/`string.gsub` always have.
 
 ### **Part B — Modern Engine Stack API Reference**
 - **Real-Time Castbars**: `UnitCastingInfo(unit)` / `UnitChannelInfo(unit)`.
-- **Modern Nameplates**: `C_NamePlate.GetNamePlates()` and `NAME_PLATE_UNIT_ADDED` / `REMOVED` events.
-- **Structured Auras**: `C_UnitAuras.GetAuraDataByIndex(unit, idx)`.
+- **Modern Nameplates**: `C_NamePlate.GetNamePlates()`, `GetNamePlateForGUID()`, and `NAME_PLATE_UNIT_ADDED` / `REMOVED` events.
+- **Structured Auras**: `C_UnitAuras.GetAuraDataByIndex(unit, idx)`, plus the more direct `GetBuffDataByIndex` / `GetUnitAuraBySpellID` for single-aura lookups.
 - **Native Focus Unit**: `FocusUnit("target")`, `ClearFocus()`, `UnitHealth("focus")`.
-- **Native C++ Encodings**: `C_EncodingUtil` (Base64, MD5, SHA).
+- **Native C++ Encodings**: `C_EncodingUtil` — Base64, Hex, and JSON/CBOR serialization (no MD5/SHA — corrected from an earlier draft that claimed hashing support that doesn't exist).
+- **Native Gossip**: `C_GossipInfo` (`GetActiveQuests`, `GetOptions`, `SelectOption`, …) replaces the old flat-vararg stock functions.
 - **Protocol 1.12.1 Specifications**: Exact 5-tuple loot roll returns, NamPower combat enums (`SMSG_SPELLLOGMISS`), and UnitXP SP3 uncapped health/distance engine.
 - **SuperWoW Hardware APIs**: `TargetByName(name, true)`, `TargetUnit(guid)`, and `FlashClientIcon()`.
+- **High-value primitives easy to miss**: `hooksecurefunc`, `InCombatLockdown`, `C_AddOns.IsAddOnLoaded()` (reliable addon detection — see Part E), `table.wipe`, plus a bundled Lua utility library (`Mixin`, `TableUtil`, `MathUtil`) and a bundled `DebugTools` addon (`/dump`, `/etrace`, `/framestack`, `/luaerrors`, real `print()`).
 
 ### **Part C — FrameXML Layout & Event Rules**
 - **Deterministic anchoring**: Eliminates relative sibling load-time anchoring bugs.
@@ -83,17 +84,25 @@ The master prompt is structured into 7 core thematic sections:
 - **Exclusive C++ Hardware Timers**: `C_Timer.After` and `C_Timer.NewTicker` (custom pure-Lua timer loops are strictly forbidden).
 
 ### **Part E — Safety-Critical Matching & UI Filtering Rules**
+- **Check `C_AddOns.IsAddOnLoaded()` first**: reliable, direct addon-presence detection for anything with a normal TOC entry — no scanning needed.
 - **Currency protection**: Guards rare server currencies (e.g. `Fashion Coin`) and isolates token idols from equipable class relics.
-- **Zero-leak minimap tray discovery**: Whitelist-only addon button detection; strict exclusion of player WeakAuras, condition frames, and UI checkboxes; persistent registry retention; renderability visual inspection.
+- **Zero-leak minimap tray discovery**: Whitelist-only addon button detection for what `C_AddOns` can't cover (loose minimap buttons, server-injected UI); strict exclusion of player WeakAuras, condition frames, and UI checkboxes; persistent registry retention; renderability validated with a hand-written helper (not a built-in function).
 - **Server UI suppression**: Explicit global frame lists and multi-layer `ARTWORK` region texture/FontString inspection for Turtle/Octo radio buttons and LFG frames; reversible state preservation (`_alOrigState`).
 
-### **Part F — Static Verification Before Commit**
-- Pre-commit AST/closure verification, regex linting for bare colon methods, and automated eradication of 2006 dead code patterns (hidden tooltip scanning, combat log cast parsing, custom OnUpdate timers).
+### **Part F — Zero-Bloat Aggressive Consolidation & DRY Architecture Mandate**
+- No superficial 1:1 API swaps: replacing `OnUpdate` with `C_Timer` while leaving the surrounding 2006-era bloat untouched doesn't count as done. Every touched file gets a full architectural diet.
+- Consolidate duplicate rendering pipelines and monolithic `if/elseif` chains into single parameterized, table-driven functions.
+- Any bugfix request triggers a full-codebase audit by default, not just a surgical patch — ask explicitly for a fast, scoped patch when you want one instead (mid-raid hotfixes, live testing).
+- Target: 30–60% net line reduction per modernization pass — treated as the *expected outcome* of removing genuine bloat, not a number to hit by stripping comments or safety guards. Legitimate new lines (a real feature, a safety guard) are fine; call them out rather than cutting something else to compensate.
 
-### **Part G — Conventions, Workflow & Conflict Resolution**
+### **Part G — Static Verification Before Any Commit**
+- Pre-commit AST/closure verification, regex linting for bare colon methods, and automated eradication of 2006 dead code patterns (hidden tooltip scanning, combat log cast parsing, custom OnUpdate timers).
+- If you run a Lua 5.1+ syntax checker as a backstop: since ClassicAPI's rewriter now handles `#` / `%` / `string.match`, a clean 5.1 parse is a genuinely closer approximation of what will actually run on Octo — not the false "all clear" it used to be before ClassicAPI was mandatory.
+
+### **Part H — Conventions, Workflow & Conflict Resolution**
 - OctoLauncher `.git` remote preservation (`https://github.com/Fostercare5988/<AddonName>.git`).
-- Pure English standard and clean `.toc` metadata (`## Interface: 11200`).
-- Mandatory Read-Before-Write protocol for non-destructive system prompt updates.
+- Pure English standard and clean `.toc` metadata (`## Interface: 11200` — the client API version, unrelated to and unaffected by content patches like 1.18.1).
+- Mandatory Read-Before-Write protocol for non-destructive system prompt updates, and a standing rule that direct in-game observation overrides a stale written rule.
 
 ---
 
