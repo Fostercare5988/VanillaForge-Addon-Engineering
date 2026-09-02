@@ -33,7 +33,7 @@ All modernized addons **strictly require** the full 4-DLL client extension stack
 | **NamPower** | [**Emyrk/nampower**](https://github.com/Emyrk/nampower) | `v4.6.2+` Mandatory DLL | Client-side spell-cast queueing (eliminates input latency), cooldown/aura/spell info (`SpellInfo`, `GetSpellNameAndRankForId`), binary combat event dispatches. |
 | **UnitXP SP3** | [**unitxp/unitxp-sp3**](https://github.com/unitxp/unitxp-sp3) | `SP3` Mandatory DLL | Real-time uncapped raw numerical health (`UnitXP("health", unit)` / `UnitXP("maxhealth", unit)`), line-of-sight, distance calculation (`UnitXP("distance", unit)` / `UnitXP("distanceBetween", u1, u2)`), OS taskbar flashing (`FlashClientIcon()`), window foregrounding (`SetClientWindowForeground()`). |
 | **DXVK** | [**doitsujin/dxvk**](https://github.com/doitsujin/dxvk) | `v2.0+` Vulkan Layer | Direct3D 9 to Vulkan translation layer, high refresh rate frametime smoothing (144Hz/240Hz+), jitter eradication, GPU optimization. |
-| **VanillaFixes** | [**Sadret/VanillaFixes**](https://github.com/Sadret/VanillaFixes) | Client Patch | High refresh rate animation uncap, modern OS compatibility, raw mouse input fix. |
+| **VanillaFixes** | [**hannesmann/vanillafixes**](https://github.com/hannesmann/vanillafixes) | Client Patch | High refresh rate animation uncap, modern OS compatibility, raw mouse input fix. |
 
 ---
 
@@ -373,7 +373,7 @@ Every single addon audit, modernization, refactor, or bugfix pass **MUST automat
   3. **Quick Start & Slash Commands**: All in-game slash commands and key shortcuts.
   4. **Core Features**: Bulleted overview of functionality.
   5. **Technical Architecture & Zero-Bloat Optimizations**: Exact architectural improvements, dead code removals, DRY consolidations, and event-driven replacements.
-  6. **Installation & Requirements**: Clear folder path and engine DLL prerequisites with direct hyperlinks to official GitHub repositories ([ClassicAPI](https://github.com/brues-code/ClassicAPI), [SuperWoW](https://github.com/balakethelock/SuperWoW), [NamPower](https://github.com/Emyrk/nampower), [UnitXP SP3](https://github.com/unitxp/unitxp-sp3), [DXVK](https://github.com/doitsujin/dxvk)).
+  6. **Installation & Requirements**: Clear folder path and engine DLL prerequisites with direct hyperlinks to official GitHub repositories ([ClassicAPI](https://github.com/brues-code/ClassicAPI), [SuperWoW](https://github.com/balakethelock/SuperWoW), [NamPower](https://github.com/Emyrk/nampower), [UnitXP SP3](https://github.com/unitxp/unitxp-sp3), [DXVK](https://github.com/doitsujin/dxvk), [VanillaFixes](https://github.com/hannesmann/vanillafixes)).
   7. **Credits & Attribution**: Original author(s) and `Fostercare5988` (modernization & maintainer).
   8. **Changelog**: Detailed release notes for the new version.
 - **Strict Formatting**: 100% English, standard markdown, strictly NO WoW color codes (`|cff...|r`) in markdown or commit messages. Always commit and push the updated `README.md` alongside code updates.

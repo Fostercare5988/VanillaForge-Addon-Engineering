@@ -34,7 +34,7 @@ All modernized addons **strictly require** the full 4-DLL client extension stack
 | **NamPower** | [**Emyrk/nampower**](https://github.com/Emyrk/nampower) | `v4.6.2+` **Mandatory DLL** | Client-side spell-cast queueing (eliminates input latency), cooldown/aura/spell info (`SpellInfo`, `GetSpellNameAndRankForId`), binary combat event dispatches. |
 | **UnitXP SP3** | [**unitxp/unitxp-sp3**](https://github.com/unitxp/unitxp-sp3) | `SP3` **Mandatory DLL** | Real-time uncapped raw numerical health (`UnitXP("health", unit)` / `UnitXP("maxhealth", unit)`), line-of-sight, distance calculation (`UnitXP("distance", unit)` / `UnitXP("distanceBetween", u1, u2)`), OS taskbar flashing (`FlashClientIcon()`), window foregrounding (`SetClientWindowForeground()`). |
 | **DXVK** | [**doitsujin/dxvk**](https://github.com/doitsujin/dxvk) | `v2.0+` Vulkan Layer | Direct3D 9 to Vulkan translation layer, high refresh rate frametime smoothing (144Hz/240Hz+), jitter eradication, GPU optimization. |
-| **VanillaFixes** | [**Sadret/VanillaFixes**](https://github.com/Sadret/VanillaFixes) | Latest Client Patch | High refresh rate animation uncap, modern OS compatibility, raw mouse input fix. |
+| **VanillaFixes** | [**hannesmann/vanillafixes**](https://github.com/hannesmann/vanillafixes) | Latest Client Patch | High refresh rate animation uncap, modern OS compatibility, raw mouse input fix. |
 
 ---
 
