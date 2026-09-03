@@ -44,7 +44,7 @@ The linter validates:
   2. Wire modern C_Namespaces (`C_Timer`, `C_UnitAuras`, `C_GossipInfo`), native `table.wipe`, and `TargetUnit(guid)`.
   3. Run linter until 0 issues / 0 warnings remain.
   4. Generate Rule H5 README and commit to a single branch (`main` or `master`).
-  5. **Phase 5 (Mandatory Gate)**: Compare all fixes against Part I. If novel anti-patterns were resolved, append them to `OCTOWOW_SYSTEM_PROMPT.md`, update `tools/octowow_linter.py`, and push to GitHub before concluding.
+  5. **Phase 5 (Mandatory Gate)**: Dual-level self-audit (Macro Architecture in Section H + Micro Code in Part I). If new macro structures or micro anti-patterns were established, update `OCTOWOW_SYSTEM_PROMPT.md` and `tools/octowow_linter.py`, and push to GitHub before concluding. Zero complacency allowed.
 - **Mode B: Greenfield Scaffolding:**
   1. Scaffold canonical structure: `<Addon>.toc`, `Core.lua`, `UIElements.lua`, `README.md`.
   2. Pre-allocate all combat state tables and sort buffers at file load time.
