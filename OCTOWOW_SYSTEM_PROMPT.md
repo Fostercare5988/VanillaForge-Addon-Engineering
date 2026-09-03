@@ -613,6 +613,45 @@ C_Timer.NewTicker(interval, Callback)
 -- The OnUpdate script is completely deleted, dropping Lua CPU load to 0.
 ```
 
+### Anti-Pattern 11: Retail Protected Action Lockdown vs Unrestricted SuperWoW Exact Targeting
+```lua
+-- ❌ BANNED (1.14.2/Retail Combat Lockdown Attribute Restrictions):
+GVAR_TargetButton = CreateFrame("Button", nil, UIParent, "SecureActionButtonTemplate")
+if not InCombatLockdown() then
+    GVAR_TargetButton:SetAttribute("macrotext1", "/targetexact "..qname)
+end
+
+-- ✅ GOLDEN (SuperWoW Unrestricted Native C++ Exact-Name Targeting):
+GVAR_TargetButton = CreateFrame("Button", nil, UIParent)
+GVAR_TargetButton.targetName = qname
+GVAR_TargetButton:SetScript("OnClick", function()
+    local name = this.targetName
+    if name and arg1 == "LeftButton" then
+        TargetByName(name, true) -- SuperWoW C++ hook: exact match, 0 taint, works in combat!
+    end
+end)
+```
+
+### Anti-Pattern 12: Retail `(self, event, ...)` vs Vanilla 1.12.1 `(event)` & `this` Dispatching
+```lua
+-- ❌ BANNED (Retail Lua 5.1 assumption that fails silently on 1.12.1):
+local function OnEvent(self, event, ...)
+    if event == "PLAYER_REGEN_DISABLED" then ... end -- FAILS! self got event string, event is nil!
+end
+
+-- ✅ GOLDEN (Dual-Compatible Robust FrameXML Dispatcher):
+local function OnEvent(a1, a2, a3, a4, a5)
+    local self, event
+    if type(a1) == "table" and type(a2) == "string" then
+        self, event = a1, a2 -- Retail / 5.1 style
+    else
+        self, event = this, a1 or _G.event -- Vanilla 1.12.1 style
+    end
+    local arg1 = _G.arg1 or (self == a1 and a3 or a2)
+    ...
+end
+```
+
 ---
 
 ## 🛠️ Part J — Dual-Mode Execution Framework

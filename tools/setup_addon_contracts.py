@@ -14,7 +14,9 @@ ADDONS = [
     r"C:\Users\Fostercare\Desktop\Niko2\Interface\AddOns\AutoLazy",
     r"C:\Users\Fostercare\Desktop\Niko2\Interface\AddOns\Bagnon",
     r"C:\Users\Fostercare\Desktop\Niko2\Interface\AddOns\MikScrollingBattleText",
-    r"C:\Users\Fostercare\Desktop\Niko2\Interface\AddOns\TWThreat"
+    r"C:\Users\Fostercare\Desktop\Niko2\Interface\AddOns\TWThreat",
+    r"C:\Users\Fostercare\Desktop\Niko2\Interface\AddOns\TrinketMenu",
+    r"C:\Users\Fostercare\Desktop\Niko2\Interface\AddOns\BattlegroundTargets"
 ]
 
 CONTRACT_CONTENT = """# Mandatory AI Directives for OctoWoW Addon Development
