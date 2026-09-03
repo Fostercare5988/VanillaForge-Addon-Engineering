@@ -33,6 +33,7 @@ The linter validates:
 - Rule C8 mouse passthrough on child cooldown models and textures.
 - Rule D1 zero-GC register tail recursion hierarchy scanning.
 - Rule H5 README documentation compliance & raw WoW color escape code eradication.
+- Rule H7 modular directory architecture (eradication of legacy Locales/ folders & separation of <Addon>Opt.lua).
 - Clean DXVK standard notation without redundant "144Hz+" marketing buzzwords.
 
 ---

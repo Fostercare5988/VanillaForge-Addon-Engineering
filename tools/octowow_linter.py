@@ -263,7 +263,7 @@ class OctoWoWAuditor:
             if has_startup_guard:
                 break
 
-        # Check README
+        # Check README & Directory Standards
         readme_path = os.path.join(dir_path, 'README.md')
         readme_warnings = []
         if os.path.exists(readme_path):
@@ -273,6 +273,11 @@ class OctoWoWAuditor:
                     readme_warnings.append("[Rule H5 - Raw WoW Colors] README.md contains raw WoW color codes (|cff.../|r). Clean to standard Markdown.")
                 if '144Hz+' in rm:
                     readme_warnings.append("[Style - Redundant Marketing] README.md contains '144Hz+'. Change to clean 'DXVK' / 'DXVK: Vulkan'.")
+
+        # Check Rule H7: Modular Architecture & Locales directory
+        locales_dir = os.path.join(dir_path, 'Locales')
+        if os.path.isdir(locales_dir):
+            readme_warnings.append("[Rule H7 - Legacy Locales Clutter] Addon contains legacy 'Locales/' directory. Consolidate into a single 'Localization.lua' and delete the folder.")
 
         # Scan all files
         for root, _, files in os.walk(dir_path):
