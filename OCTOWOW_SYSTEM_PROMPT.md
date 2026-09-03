@@ -152,12 +152,23 @@ Because ClassicAPI, SuperWoW, NamPower, and UnitXP are strictly required, **neve
   - `51 – 80 yd`: Orange (`|cFFFF8000`)
   - `> 80 yd`: Red (`|cFFFF4040`)
 
-**B9. SuperWoW Targeting & Hardware Integration**
+**B9. SuperWoW Targeting, Spatial Safety & Hardware Integration**
 - **Exact Whole-Name Targeting**: `TargetByName(name, true)` to enforce 100% exact whole-name matching without fuzzy glitches.
 - **Direct GUID Targeting**: `TargetUnit(guid)` to target exact creature GUIDs in multi-mob packs, with `AssistByName(name)` as fallback.
+- **Safe Hybrid Targeting Pattern**: In multi-mob or PvP encounters, always prioritize GUID targeting via `TargetUnit(guid)` to prevent targeting wrong units with duplicate names, falling back to exact-name matching via `TargetByName(name, true)`:
+  ```lua
+  if guid and TargetUnit(guid) then
+      -- successfully targeted exact entity via SuperWoW GUID
+  elseif name then
+      TargetByName(name, true)
+  end
+  ```
+- **`UnitExists(name)` Hostile Query Trap**: In vanilla 1.12.1, passing an arbitrary hostile player name (not in your party or target) to `UnitExists(name)` throws an engine chat error (`Unknown unit name`). Never use `UnitExists(name)` on un-grouped hostiles; verify unit presence using `UnitIsVisible(guid)`, combat log events, or SuperWoW GUID tokens.
+- **Protected `UnitPosition` Coordinates**: Always call `UnitPosition(unit)` inside a protected call (`pcall(UnitPosition, unit)`) or verify unit presence first, as querying unspawned entities in memory can throw unhandled C++ exceptions.
 - **OS Taskbar & Foregrounding**: `FlashClientIcon()` to flash Windows taskbar and `SetClientWindowForeground()` on critical events.
 - **Master Audio Channel**: `PlaySoundFile(path, "Master")` or `PlaySound("ReadyCheck")` to remain audible regardless of SFX volume toggles.
 - **Presence markers**: the DLL exposes `SUPERWOW_VERSION` / `SUPERWOW_STRING` as globals purely for other code (including your B guard clause) to detect it — same idea as `CLASSIC_API_VERSION` above.
+
 
 **B10. Additional ClassicAPI Primitives — confirmed, and worth building around**
 ClassicAPI backports 550+ functions across ~60 namespaces (full reference: the project's `docs/API.md`); B1–B6 cover the ones your existing addons lean on most, but a few more are worth knowing exist before you reach for a hand-rolled workaround:
@@ -206,7 +217,28 @@ if (f.IsObjectType and (f:IsObjectType("Button") or f:IsObjectType("CheckButton"
 **C7. Global Scope Pollution Defense**
 NEVER declare loop iterators (`i`, `f`, `name`, `text`, `count`, `idx`) or temporary tables without `local`. Leaking global variables into Blizzard FrameXML namespace contaminates core tables like `QuestLogFrame`, `CharacterFrame`, or `ContainerFrame`, causing quests or inventory slots to vanish or freeze.
 
+**C8. Interactive Card Mouse Passthrough & Click Capture**
+In WoW 1.12.1 FrameXML, if child status bars (`StatusBar`), cooldown frames, texture backdrops, or icons have mouse interaction enabled, they swallow mouse clicks and prevent them from bubbling up to the parent `Button`'s `OnClick` script.
+Whenever creating compound clickable unit cards or list items:
+- Call `:EnableMouse(false)` on **ALL** child elements (`hpbar`, `manabar`, `castbar`, `icon`, `cooldownFrame`).
+- Call `:EnableMouse(true)` **ONLY** on the top-level parent `Button`.
+This guarantees 100% of the card's rectangular surface area reliably registers left/right clicks, target swaps, and mouseover events without dead zones.
+
+**C9. Single-State UI Rendering & Text Collision Defense**
+A compact status bar or unit frame card can only clearly communicate one primary informational state at a time (State Isolation).
+Never stack multiple overlapping `FontString` overlays on the same status bar level (e.g. rendering player name, health numbers, mana values, AND castbar spell text simultaneously in the same space).
+- **Active Casting State**: When a unit begins casting, the cast progress overlay must temporarily hide underlying player names, health numbers, and distance tags (`btn.name:Hide()`, `btn.hpText:Hide()`), exclusively displaying `[Spell Name]` on the left and `[Time Remaining]` on the right.
+- **Normal Resting State**: When casting finishes or is interrupted, hide the castbar and restore the player name and numerical health values.
+This state-driven isolation eradicates visual clunkiness, illegible double-printed text, and font crowding.
+
+**C10. 5-Man Group Grid Architecture & Bounded Container Sizing**
+Vanilla WoW group structures and raid frames are universally rooted in 5-player parties. Multi-unit battleground grids, arena frames, and enemy trackers must adopt the 5-man group column standard:
+- **Standard Column Size**: 5 units per column (WSG 10v10 = 2 columns of 5; AB 15v15 = 3 columns of 5; AV 40v40 = 4 columns of 10 in compact mode).
+- **Never Generate Arbitrary Ribbon Layouts**: Avoid monolithic 40-unit horizontal strips or arbitrary single-column towers that stretch across wide monitors.
+- **Bounded Container Sizing**: Container header/backdrop frames (`displayFrame:SetWidth(...)`) must calculate their dimensions based strictly on the *active* number of columns currently populated, never hardcoding maximum potential units (e.g. 40 units in open world). On a fresh login or in open world with 0–5 detected units, the container width must bound itself to 1 column (e.g. 150px), preventing empty black bars from stretching across the user's screen.
+
 ---
+
 
 ## Part D — Performance: Memory, Zero GC Churn & Frame Timing
 
@@ -253,7 +285,13 @@ C_Timer.NewTicker(0.2, function() OnTick() end, 10)
 ```
 - **STRICTLY FORBIDDEN:** Creating custom `OnUpdate` timer queue tables, scheduled polling loops, or timer frames in pure Lua.
 
+**D7. Deterministic Sorting & Jitter Prevention in Large Grids**
+Continuously sorting multi-unit frame lists (15–40 units) by real-time 3D Euclidean distance inside high-frequency `OnUpdate` or tick loops creates violent visual jitter and spasming, as minor player movements cause cards to rapidly trade positions 60 times per second.
+- **Immutable Primary Attributes**: Large multi-unit grids must always sort slots by immutable or stable attributes: Class order (e.g. Druid -> Hunter -> Mage -> Paladin -> Priest -> Rogue -> Shaman -> Warlock -> Warrior) followed alphabetically by Name.
+- **Decoupled Telemetry Updates**: Real-time distance fluctuations must only update local label text (e.g. `14y`) or visual alpha fades on the existing card slot. Distance changes must **NEVER** trigger table re-sorting or physically swap unit card anchor points during live combat.
+
 ---
+
 
 ## Part E — Safety-Critical Matching & UI Filtering Rules
 
