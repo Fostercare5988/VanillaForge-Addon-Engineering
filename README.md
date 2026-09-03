@@ -29,7 +29,7 @@ All modernized addons **strictly require** the full 4-DLL client extension stack
 
 | Component | Official Repository | Minimum Version | Core Capability / Role |
 | :--- | :--- | :--- | :--- |
-| **ClassicAPI** | [**brues-code/ClassicAPI**](https://github.com/brues-code/ClassicAPI) | **Mandatory DLL** | 550+ functions across ~60 modern retail-style `C_` namespaces (`C_Timer.After` / `NewTicker`, `UnitCastingInfo` / `UnitChannelInfo`, `C_NamePlate`, `C_UnitAuras`, `FocusUnit` / `ClearFocus`, `C_Container`, `C_EncodingUtil`, `C_GossipInfo`, `C_EquipmentSet`, `C_AddOns`), plus `hooksecurefunc`, `InCombatLockdown`, `table.wipe`, and a source-rewriter that makes modern Lua 5.1 syntax (`#`, `%`, `string.match`) compile on the 5.0 VM. |
+| **ClassicAPI** | [**brues-code/ClassicAPI**](https://github.com/brues-code/ClassicAPI) | `v1.13.3+` **Mandatory DLL** | 550+ functions across ~60 modern retail-style `C_` namespaces (`C_Timer.After` / `NewTicker`, `UnitCastingInfo` / `UnitChannelInfo`, `C_NamePlate`, `C_UnitAuras`, `FocusUnit` / `ClearFocus`, `C_Container`, `C_EncodingUtil`, `C_GossipInfo`, `C_EquipmentSet`, `C_AddOns`), plus `hooksecurefunc`, `InCombatLockdown`, `table.wipe`, and a source-rewriter that makes modern Lua 5.1 syntax (`#`, `%`, `string.match`) compile on the 5.0 VM. |
 | **SuperWoW** | [**balakethelock/SuperWoW**](https://github.com/balakethelock/SuperWoW) | `v2.2+` **Mandatory DLL** | GUID-based unit arguments on all unit functions, `RAW_COMBATLOG`, exact-name targeting `TargetByName(name, true)`, direct GUID targeting `TargetUnit(guid)`, `SetMouseoverUnit`, clickthrough modes. |
 | **NamPower** | [**Emyrk/nampower**](https://github.com/Emyrk/nampower) | `v4.6.2+` **Mandatory DLL** | Client-side spell-cast queueing (eliminates input latency), cooldown/aura/spell info (`SpellInfo`, `GetSpellNameAndRankForId`), binary combat event dispatches. |
 | **UnitXP SP3** | [**brues-code/UnitXP_SP3**](https://github.com/brues-code/UnitXP_SP3) | `v90+` **Mandatory DLL** | Real-time uncapped raw numerical health (`UnitXP("health", unit)` / `UnitXP("maxhealth", unit)`), line-of-sight, distance calculation (`UnitXP("distance", unit)` / `UnitXP("distanceBetween", u1, u2)`), OS taskbar flashing (`FlashClientIcon()`), window foregrounding (`SetClientWindowForeground()`). |
@@ -54,7 +54,7 @@ end
 
 ## 📚 Core Architecture & Directives Overview
 
-The master prompt is structured into 8 core thematic sections:
+The master prompt is structured into 10 core thematic sections (Parts A through J):
 
 ### **Part A — Lua Syntax: What ClassicAPI Rewrites, and What It Doesn't**
 - **No uncalled colon methods** — the one rule that never changes: `(f.GetScript and f:GetScript("OnClick"))` is required; `(f:GetScript ...)` alone crashes the Lua parser, in any Lua version. This is a parser rule, not a 5.0-vs-5.1 gap, so it's not something ClassicAPI's rewriter touches.
@@ -81,7 +81,7 @@ The master prompt is structured into 8 core thematic sections:
 ### **Part D — Performance: Memory, Zero GC Churn & Frame Timing**
 - **Zero combat heap allocations**: No closures, temporary tables, or string concats inside combat/OnUpdate loops.
 - **Pre-allocated unit ID arrays & LRU item caches**: O(1) cached lookup efficiency.
-- **High-refresh DXVK animation smoothing**: Delta-time (`dt`) exponential smoothing and accumulator timers for jitter-free 144Hz+ rendering.
+- **High-refresh DXVK animation smoothing**: Delta-time (`dt`) exponential smoothing and accumulator timers for jitter-free DXVK frame pacing and smooth rendering.
 - **Exclusive C++ Hardware Timers**: `C_Timer.After` and `C_Timer.NewTicker` (custom pure-Lua timer loops are strictly forbidden).
 
 ### **Part E — Safety-Critical Matching & UI Filtering Rules**
@@ -101,18 +101,30 @@ The master prompt is structured into 8 core thematic sections:
 - If you run a Lua 5.1+ syntax checker as a backstop: since ClassicAPI's rewriter now handles `#` / `%` / `string.match`, a clean 5.1 parse is a genuinely closer approximation of what will actually run on the enhanced client — not the false "all clear" it used to be before ClassicAPI was mandatory.
 
 ### **Part H — Conventions, Workflow & Conflict Resolution**
-- OctoLauncher `.git` remote preservation (`https://github.com/Fostercare5988/<AddonName>.git`).
-- Pure English standard and clean `.toc` metadata (`## Interface: 11200` — the client API version, unrelated to and unaffected by content patches like 1.18.1).
-- Mandatory Read-Before-Write protocol for non-destructive system prompt updates, and a standing rule that direct in-game observation overrides a stale written rule.
+- **H1: OctoLauncher Remote Preservation**: `.git` remote synchronization against personal repository (`https://github.com/Fostercare5988/<AddonName>.git`).
+- **H2: Clean Canonical Naming & Pure English**: Strict 100% English code and UI, strictly NO `-Octo` or `[Octo]` suffixes in addon folder names or titles, and **NEVER put DLL names in `## Dependencies:`**.
+- **H3–H4: Read-Before-Write & Reality Precedence**: Direct verified client behavior always supersedes stale written rules.
+- **H5: Mandatory Automated README Delivery**: Every audit, refactor, or fix automatically generates/updates a standardized, badge-compliant `README.md`.
+- **H6: The Continuous Learning Feedback Protocol**: Self-annealing system prompt where newly solved bugs automatically feed forward into `OCTOWOW_SYSTEM_PROMPT.md` and `octowow_linter.py`.
+- **H7: Modular Addon Architecture**: Clean separation of concerns (Core combat engine in `<AddonName>.lua` vs. GUI in `<AddonName>Opt.lua`), and permanent eradication of legacy `Locales/` folder clutter.
 
 ### **Part I — Battle-Tested Anti-Patterns & Golden Fixes (Hall of Fame)**
-- Concrete, verified before/after diffs for real-world bugs discovered across the addon suite:
-  - Tooltip scraping vs. linear $O(n)$ slot-batching (`C_UnitAuras.GetAuraSlots`).
-  - Child cooldown click interception vs. explicit passthrough (`item.cooldown:EnableMouse(false)`).
-  - Temporary hierarchy table scraping vs. zero-GC register tail recursion.
-  - Slow 2006 nil loops vs. unconditional native C++ `table.wipe(t)`.
-  - Framerate-dependent steps vs. delta-time exponential smoothing (`dt * rate`).
-  - 2D map coordinate trigonometry vs. 3D Euclidean distances (`UnitXP("distance", unit)`).
+Concrete, verified before/after code diffs covering real-world architectural bugs across the addon suite:
+1. **Tooltip Scraping vs. Linear $O(n)$ Slot-Batching** (`C_UnitAuras.GetAuraSlots`).
+2. **Child Cooldown Click Interception vs. Explicit Passthrough** (`item.cooldown:EnableMouse(false)`).
+3. **Hierarchy Table Garbage Churn vs. Register Tail Recursion** (zero-GC inspection).
+4. **Legacy 2006 Nil-Loops vs. Unconditional C++ `table.wipe(t)`**.
+5. **Framerate-Dependent Steps vs. Delta-Time Exponential Smoothing** (`dt * rate`).
+6. **2D Map Coordinate Trig vs. Native 3D Euclidean Vector Distances** (`UnitXP("distance", unit)`).
+7. **Redundant Marketing Buzzwords vs. Clean Stack Standard Notation** (`DXVK`).
+8. **Global Pointer Hijacking vs. Non-Destructive `hooksecurefunc`**.
+9. **Hidden XML Tooltip Frames vs. Direct API Resolution** (`GetActionInfo`).
+10. **Pure-Lua OnUpdate Polling Frames vs. Native Hardware `C_Timer`** (`C_Timer.NewTicker`).
+11. **Retail Protected Action Lockdown vs. Unrestricted SuperWoW Targeting** (`TargetByName(name, true)`).
+12. **Broken Slash Command LoadOnDemand vs. Direct Unified Frame Toggling** (`if Frame:IsShown() then Frame:Hide() else Frame:Show() end`).
+13. **Loose Substring Keyword Matching vs. Exact Hash Set Isolation** (preventing relic/currency trashing).
+14. **Uncalled Colon References vs. Safe Method Lookup** (`f.Method and f:Method()`).
+15. **Nested SavedVariables Path Destruction vs. Safe Recursive Initialization** (`SetOptionFromVarPath`).
 
 ### **Part J — Dual-Mode Execution Framework**
 - **Mode A: Legacy Modernization Protocol**: 4-phase audit, bloat kill, DLL rewire, and linter-verified single-branch git commit.
