@@ -32,7 +32,7 @@ All modernized addons **strictly require** the full 4-DLL client extension stack
 | **SuperWoW** | [**balakethelock/SuperWoW**](https://github.com/balakethelock/SuperWoW) | `v2.2+` Mandatory DLL | GUID-based unit arguments on all unit functions, `RAW_COMBATLOG`, exact-name targeting `TargetByName(name, true)`, direct GUID targeting `TargetUnit(guid)`, `SetMouseoverUnit`, clickthrough modes. |
 | **NamPower** | [**Emyrk/nampower**](https://github.com/Emyrk/nampower) | `v4.6.2+` Mandatory DLL | Client-side spell-cast queueing (eliminates input latency), cooldown/aura/spell info (`SpellInfo`, `GetSpellNameAndRankForId`), binary combat event dispatches. |
 | **UnitXP SP3** | [**konaka/UnitXP_SP3**](https://codeberg.org/konaka/UnitXP_SP3) | `SP3` Mandatory DLL | Real-time uncapped raw numerical health (`UnitXP("health", unit)` / `UnitXP("maxhealth", unit)`), line-of-sight, distance calculation (`UnitXP("distance", unit)` / `UnitXP("distanceBetween", u1, u2)`), OS taskbar flashing (`FlashClientIcon()`), window foregrounding (`SetClientWindowForeground()`). |
-| **DXVK** | [**doitsujin/dxvk**](https://github.com/doitsujin/dxvk) | `v2.0+` Vulkan Layer | Direct3D 9 to Vulkan translation layer, high refresh rate frametime smoothing (144Hz/240Hz+), jitter eradication, GPU optimization. |
+| **DXVK** | [**doitsujin/dxvk**](https://github.com/doitsujin/dxvk) | `v2.0+` Vulkan Layer | Direct3D 9 to Vulkan translation layer, frametime pacing smoothing, jitter eradication, and GPU pipeline optimization. |
 | **VanillaFixes** | [**hannesmann/vanillafixes**](https://github.com/hannesmann/vanillafixes) | Client Patch | High refresh rate animation uncap, modern OS compatibility, raw mouse input fix. |
 
 ---
@@ -294,7 +294,7 @@ end
 - **Single-Pass String Parsing**: Replace multi-array string exploding with index-based `string.find` scanners.
 - **In-Place Sort Buffers**: Reusable array buffers must set bounds using `table.setn(buffer, count)` before calling `table.sort` to prevent memory thrashing.
 
-**D5. High-Refresh Rate & DXVK Smoothing (144Hz+)**
+**D5. High-Refresh Rate & DXVK Frame Pacing Smoothing**
 Never use hardcoded per-frame pixel steps (`step = 12`) or integer millisecond checks (`GetTime() * 1000`). Always smooth bar widths, transitions, and alpha fades using delta time (`arg1` / `dt`):
 - **Exponential Smoothing**: `current + (target - current) * math.min(1.0, dt * rate)`
 - **Accumulator Timers**: `this.elapsed = (this.elapsed or 0) + dt`
