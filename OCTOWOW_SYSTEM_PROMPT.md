@@ -470,6 +470,31 @@ Whenever any AI assistant or human engineer discovers a new bug, fixes an unhand
 4. **Synchronize & Push**: The assistant MUST commit and push the updated prompt and linter to the master GitHub repository (`OctoWoW-Addon-Modernization-Reverse-Engineering-System-Prompt`).
 5. **Universal AI Alignment**: Through this protocol, Claude, Antigravity, Cursor, and any other AI tool working on the suite continuously inherit collective wisdom across all sessions.
 
+**H7. Canonical Addon Architecture & Modular Directory Standards (Zero Monolithic Bloat)**
+Every modernized or greenfield addon in the OctoWoW suite must adhere to modern software architecture principles:
+1. **Separation of Concerns (Engine vs. GUI Separation)**:
+   - Combat event tracking, unit rendering, hardware timers, and SuperWoW targeting must NEVER be polluted by 3,000+ lines of visual GUI configuration widgets, sliders, and mock test routines in a single monolithic file.
+   - Any addon possessing a settings interface MUST cleanly separate responsibilities:
+     - `<AddonName>.lua`: Core high-performance engine, Rule B1 startup guard, frame creation, combat events, and hardware dispatchers.
+     - `<AddonName>Opt.lua` (or `<AddonName>_Options.lua`): Dedicated options panel, visual sliders, dropdown menus, UI templates, drag-and-drop logic, and test mode.
+     - Auxiliary modules when warranted (e.g. `DBUtils.lua`, `CombatHelper.lua`, `Recycler.lua`).
+2. **Eradication of `Locales/` Multi-File Clutter**:
+   - Legacy directories like `Locales/` with multiple separate files (e.g. `Addon-localization-deDE.lua`, `Addon-localized-bgnames.lua`, `Addon-localized-flag.lua`) are strictly banned.
+   - All string tables, localized battleground names, and game events must be consolidated into a single clean, 100% English **`Localization.lua`** in the root directory (or placed directly at the top of the core file if under 50 lines). The `Locales/` folder must be completely deleted.
+3. **Canonical Project Layout**:
+   ```text
+   <AddonName>/
+   ├── <AddonName>.toc              -- Clean load order and metadata
+   ├── Localization.lua             -- Unified 100% English dictionary
+   ├── <AddonName>.lua              -- Core combat engine & startup guard
+   ├── <AddonName>Opt.lua           -- Dedicated visual options & configuration GUI
+   ├── <Auxiliary>.lua              -- Optional dedicated helpers (e.g. DBUtils.lua)
+   ├── Textures/                    -- Clean textures, BLPs, and icons
+   ├── README.md                    -- Rule H5 compliant documentation
+   ├── .gitignore                   -- Privacy shield for AI directives
+   └── CLAUDE.md & AGENTS.md        -- Local private AI contracts
+   ```
+
 ---
 
 ## 🏛️ Part I — Battle-Tested Anti-Patterns & Golden Fixes (Hall of Fame)
@@ -650,6 +675,30 @@ local function OnEvent(a1, a2, a3, a4, a5)
     local arg1 = _G.arg1 or (self == a1 and a3 or a2)
     ...
 end
+```
+
+### Anti-Pattern 13: Monolithic Combat/GUI Bloat vs. Clean `<Addon>Opt.lua` & `Localization.lua` Segregation (Rule H7)
+```text
+-- ❌ BANNED (2006-2011 Legacy Clutter):
+MyAddon/
+├── MyAddon.lua                  -- 7,000-line monster mixing combat engine with 3,500 lines of GUI sliders!
+├── Locales/                     -- 15 different files with bloated 40-character names
+│   ├── MyAddon-localization-deDE.lua
+│   ├── MyAddon-localized-bgnames.lua
+│   └── ...
+└── MyAddon.toc
+
+-- ✅ GOLDEN (Modern Super-PvP Modular Architecture):
+MyAddon/
+├── MyAddon.toc                  -- Clean, canonical load order
+├── Localization.lua             -- Unified 100% English dictionary (0 foreign files, 0 Locales/ folder)
+├── MyAddon.lua                  -- Lean high-performance combat engine, startup guard & hardware timers
+├── MyAddonOpt.lua               -- Dedicated visual options panel, templates, sliders & test mode
+├── DBUtils.lua                  -- Optional clean data helpers
+├── Textures/                    -- Clean textures and BLPs
+├── README.md                    -- Rule H5 compliant documentation
+├── .gitignore                   -- Hides private AI contracts
+└── CLAUDE.md & AGENTS.md        -- Local private contracts
 ```
 
 ---
