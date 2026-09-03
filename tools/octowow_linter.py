@@ -226,6 +226,17 @@ class OctoWoWAuditor:
             if '144Hz+' in line or '144Hz/240Hz+' in line:
                 warnings.append(f"[Style - Redundant Marketing] Line {idx}: '144Hz+' string found. User prefers clean 'DXVK' or 'DXVK Vulkan'.")
 
+        # 7. Rule H2: Foreign Locale Spaghetti Check
+        for idx, line in enumerate(raw_lines, 1):
+            if re.search(r'GetLocale\(\)\s*==\s*["\'](deDE|frFR|esES|ruRU|zhCN|zhTW|koKR)["\']', line):
+                warnings.append(f"[Rule H2 - Foreign Locale Spaghetti] Line {idx}: Foreign locale condition detected. Code must be 100% English only.")
+
+        # 8. Rule B0: Obsolete 2006 Libraries (Ace, Babble, Dongle)
+        for idx, line in enumerate(raw_lines, 1):
+            for lib in ('AceLibrary', 'Babble-Spell', 'Babble-Zone', 'Dongle', 'Dewdrop-2.0', 'Tablet-2.0'):
+                if lib in line and not line.strip().startswith('--'):
+                    warnings.append(f"[Rule B0 - Obsolete Library Bloat] Line {idx}: Detected legacy 2006 library '{lib}'. Replace with ClassicAPI / NamPower.")
+
         return issues, warnings
 
     def audit_addon_dir(self, dir_path):
@@ -261,9 +272,12 @@ class OctoWoWAuditor:
                 if '144Hz+' in rm:
                     readme_warnings.append("[Style - Redundant Marketing] README.md contains '144Hz+'. Change to clean 'DXVK' / 'DXVK: Vulkan'.")
 
-        # Scan all Lua files
+        # Scan all files
         for root, _, files in os.walk(dir_path):
             for f in sorted(files):
+                if re.search(r'localization\.(de|fr|es|ru|zh|kr|cn)\.lua', f, re.IGNORECASE) or re.search(r'(deDE|frFR|ruRU|zhCN)\.lua', f, re.IGNORECASE):
+                    rel = os.path.relpath(os.path.join(root, f), dir_path)
+                    warnings.append(f"[Rule H2 - Foreign Locale File] '{rel}' is redundant foreign locale bloat. Eradicate file and enforce English only.")
                 if f.endswith('.lua'):
                     filepath = os.path.join(root, f)
                     rel = os.path.relpath(filepath, dir_path)
