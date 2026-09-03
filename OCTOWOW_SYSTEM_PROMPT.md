@@ -31,8 +31,8 @@ All modernized addons **strictly require** the full 4-DLL client extension stack
 | **ClassicAPI** | [**brues-code/ClassicAPI**](https://github.com/brues-code/ClassicAPI) | `v1.13.3+` Mandatory DLL | 550+ functions across ~60 modern retail-style `C_` namespaces — `C_Timer.After`/`NewTicker`, `UnitCastingInfo`/`UnitChannelInfo` (with same-spell re-channel fix), `C_NamePlate`, `C_UnitAuras` ($O(n)$ slot-batching via `GetAuraSlots`/`GetAuraDataBySlot`/`UnitAuraBySlot` & `AuraUtil.ForEachAura`), `FocusUnit`/`ClearFocus`, `C_Container`, `C_EncodingUtil` (Base64/Hex/JSON/CBOR), `C_GossipInfo`, `C_EquipmentSet`, `C_AddOns`, `INTERFACE_VERSION` global, modern EditBox API suite (`ClearHistory`, `SetHighlightColor`, cursor position/focus methods), Retail-like hot-reloading `/reload` (supporting new files, `.toc` metadata edits, and new addons without restarting), plus `hooksecurefunc`, `InCombatLockdown`, `table.wipe`, and an AST rewriter that compiles `#`, `%`, `string.match`/`str:method()` on the fly — full breakdown in Part A, B3, and B10. |
 | **SuperWoW** | [**balakethelock/SuperWoW**](https://github.com/balakethelock/SuperWoW) | `v2.2+` Mandatory DLL | GUID-based unit arguments on all unit functions, `RAW_COMBATLOG`, exact-name targeting `TargetByName(name, true)`, direct GUID targeting `TargetUnit(guid)`, `SetMouseoverUnit`, clickthrough modes. |
 | **NamPower** | [**Emyrk/nampower**](https://github.com/Emyrk/nampower) | `v4.6.2+` Mandatory DLL | Client-side spell-cast queueing (eliminates input latency), cooldown/aura/spell info (`SpellInfo`, `GetSpellNameAndRankForId`), binary combat event dispatches. |
-| **UnitXP SP3** | [**konaka/UnitXP_SP3**](https://codeberg.org/konaka/UnitXP_SP3) | `SP3` Mandatory DLL | Real-time uncapped raw numerical health (`UnitXP("health", unit)` / `UnitXP("maxhealth", unit)`), line-of-sight, distance calculation (`UnitXP("distance", unit)` / `UnitXP("distanceBetween", u1, u2)`), OS taskbar flashing (`FlashClientIcon()`), window foregrounding (`SetClientWindowForeground()`). |
-| **DXVK** | [**doitsujin/dxvk**](https://github.com/doitsujin/dxvk) | `v2.0+` Vulkan Layer | Direct3D 9 to Vulkan translation layer, frametime pacing smoothing, jitter eradication, and GPU pipeline optimization. |
+| **UnitXP SP3** | [**konaka/UnitXP_SP3**](https://codeberg.org/konaka/UnitXP_SP3) | `SP3 v89+` (Final Release) Mandatory DLL | Real-time uncapped raw numerical health (`UnitXP("health", unit)` / `UnitXP("maxhealth", unit)`), line-of-sight, distance calculation (`UnitXP("distance", unit)` / `UnitXP("distanceBetween", u1, u2)`), OS taskbar flashing (`FlashClientIcon()`), window foregrounding (`SetClientWindowForeground()`). |
+| **DXVK** | [**doitsujin/dxvk**](https://github.com/doitsujin/dxvk) | `v2.0+` (e.g. `v2.4+`, `v3.1`) Vulkan Layer | Direct3D 9 to Vulkan translation layer, frametime pacing smoothing, jitter eradication, and GPU pipeline optimization. |
 | **VanillaFixes** | [**hannesmann/vanillafixes**](https://github.com/hannesmann/vanillafixes) | Client Patch | High refresh rate animation uncap, modern OS compatibility, raw mouse input fix. |
 
 ---
@@ -461,6 +461,14 @@ Every single addon audit, modernization, refactor, or bugfix pass **MUST automat
   7. **Credits & Attribution**: Original author(s) and `Fostercare5988` (modernization & maintainer).
   8. **Changelog**: Detailed release notes for the new version.
 - **Strict Formatting**: 100% English, standard markdown, strictly NO WoW color codes (`|cff...|r`) in markdown or commit messages. Always commit and push the updated `README.md` alongside code updates.
+
+**H6. The Continuous Learning Feedback Protocol (Self-Annealing System Prompt)**
+Whenever any AI assistant or human engineer discovers a new bug, fixes an unhandled edge-case, eradicates a legacy 2006 idiom, or refines a performance pattern:
+1. **Never Stop at a Local Fix**: The assistant must NOT merely patch the single addon file and conclude the session.
+2. **Feed Forward into Master Authority**: The assistant MUST immediately open `OCTOWOW_SYSTEM_PROMPT.md` and append the new anti-pattern and verified solution to **Part I (Hall of Fame)**.
+3. **Automate the Check in the Linter**: The assistant MUST add an automated detection rule in `tools/octowow_linter.py` to ensure this exact issue can never slip into any repository again.
+4. **Synchronize & Push**: The assistant MUST commit and push the updated prompt and linter to the master GitHub repository (`OctoWoW-Addon-Modernization-Reverse-Engineering-System-Prompt`).
+5. **Universal AI Alignment**: Through this protocol, Claude, Antigravity, Cursor, and any other AI tool working on the suite continuously inherit collective wisdom across all sessions.
 
 ---
 
