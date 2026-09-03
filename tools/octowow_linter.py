@@ -209,10 +209,12 @@ class OctoWoWAuditor:
             if re.search(r'for\s+\w+\s+in\s+(?:pairs|__pairs)\s*\(\s*\w+\s*\)\s*do\s+\w+\[\w+\]\s*=\s*nil', line):
                 warnings.append(f"[Rule B10 - Obsolete Wipe Loop] Line {idx}: Detected 2006 manual nil loop. ClassicAPI v1.13.3+ provides native C++ 'table.wipe(t)'.")
 
-        # 4. Rule B3: Tooltip Scanning
+        # 4. Rule B3: Tooltip Scanning for Auras / Hidden Tooltip Scraping
         for idx, line in enumerate(raw_lines, 1):
-            if 'GameTooltip:SetAction' in line or 'GameTooltip:SetBagItem' in line:
-                warnings.append(f"[Rule B3 - Tooltip Scraping] Line {idx}: Detected legacy GameTooltip scraping. Use ClassicAPI C_UnitAuras or NamPower SpellInfo.")
+            if re.search(r'SetUnit(?:De)?buff|SetPlayerBuff', line) and re.search(r'[tT]ooltip', line):
+                warnings.append(f"[Rule B3 - Tooltip Scraping] Line {idx}: Detected legacy aura tooltip scraping. Use ClassicAPI C_UnitAuras.")
+            if re.search(r'(?:TooltipScan|ScanTooltip|ScanningTooltip)', line):
+                warnings.append(f"[Rule B3 - Tooltip Scraping] Line {idx}: Detected hidden scan tooltip usage. Use native ClassicAPI / SuperWoW APIs.")
 
         # 5. Rule D1 / D4: Table Instantiations in Iterations
         for idx, line in enumerate(raw_lines, 1):

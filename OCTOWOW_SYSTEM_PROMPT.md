@@ -569,6 +569,50 @@ DXVK 144Hz+ | DXVK (144Hz/240Hz+)
 DXVK | DXVK: Vulkan
 ```
 
+### Anti-Pattern 8: Global API Function Hijacking vs Non-Destructive `hooksecurefunc`
+```lua
+-- ❌ BANNED (Destructive Global Pointer Overwriting & Addon Taint):
+TrinketMenu.oldUseAction = UseAction
+UseAction = TrinketMenu.newUseAction
+TrinketMenu.oldUseInventoryItem = UseInventoryItem
+UseInventoryItem = TrinketMenu.newUseInventoryItem
+
+-- ✅ GOLDEN (ClassicAPI v1.13.3+ Non-Destructive Secure Hooking):
+hooksecurefunc("UseInventoryItem", function(slot)
+    if (slot == 13 or slot == 14) and not (MerchantFrame and MerchantFrame:IsVisible()) then
+        TrinketMenu.ReflectTrinketUse(slot)
+    end
+end)
+```
+
+### Anti-Pattern 9: Hidden XML Tooltip Scan Frames vs Direct API Resolution (Rule B3)
+```lua
+-- ❌ BANNED (Creating Hidden XML GameTooltips to Parse Action Bar Slots):
+<GameTooltip name="TrinketMenu_TooltipScan" inherits="GameTooltipTemplate" hidden="true"/>
+...
+TrinketMenu_TooltipScan:SetAction(slot)
+if GameTooltipTextLeft1:GetText() == trinketName then ... end
+
+-- ✅ GOLDEN (Direct ClassicAPI Action Info & Item Link Identification):
+local actionType, actionID = GetActionInfo(slot)
+if actionType == "item" and actionID then
+    -- Compare actionID directly against equipped item IDs with 0 text parsing!
+end
+```
+
+### Anti-Pattern 10: Pure-Lua OnUpdate Frame Polling vs Native Hardware `C_Timer` (Rule D6)
+```lua
+-- ❌ BANNED (2006 Lua Frame Polling Every Render Frame):
+<OnUpdate>
+    TrinketMenu.TimersFrame_OnUpdate() -- Loops and decrements elapsed - arg1
+</OnUpdate>
+
+-- ✅ GOLDEN (Native C++ Hardware Dispatchers):
+C_Timer.After(delay, Callback)
+C_Timer.NewTicker(interval, Callback)
+-- The OnUpdate script is completely deleted, dropping Lua CPU load to 0.
+```
+
 ---
 
 ## 🛠️ Part J — Dual-Mode Execution Framework
