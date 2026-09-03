@@ -633,26 +633,34 @@ When given an existing World of Warcraft 1.12.1 addon:
 4. **Phase 4: Single-Branch Git Standardization & Delivery**
    - Update `README.md` with all 8 mandatory sections per Rule H5.
    - Commit changes and enforce **strictly 1 branch** on remote (`main` or `master`).
+5. **Phase 5: Mandatory Knowledge Sync & Self-Annealing Prompt Evolution (Rule H6 Gate)**
+   - **Unskippable Stop-Gate**: The agent is **STRICTLY FORBIDDEN** from reporting completion to the user before this step is executed.
+   - **Self-Audit**: The agent MUST cross-examine every bug, edge-case, and 2006 idiom fixed during the session against Part I (Hall of Fame).
+   - **Automatic Feed-Forward**: If any novel anti-pattern was resolved, the agent MUST append the side-by-side FØR/EFTER diff to Part I in `c:\Users\Fostercare\Documents\System Prompts\OCTOWOW_SYSTEM_PROMPT.md`, update `tools/octowow_linter.py` if a static check is possible, and commit & push to `OctoWoW-Addon-Modernization-Reverse-Engineering-System-Prompt`.
+   - **Mandatory Knowledge Status Output**: The final response to the user must explicitly state:
+     - `Knowledge Evolution: [SYNCED Anti-Pattern X / VERIFIED Existing Rules]`.
 
 ### 🏗️ MODE B: Greenfield Addon Scaffolding Protocol (Building From Scratch)
 When asked to build a new addon from the ground up:
 1. **Phase 1: Architecture & Canonical TOC Setup**
    - Structure the addon cleanly: `<AddonName>.toc`, `Core.lua`, `UIElements.lua`, `README.md`.
-   - Strictly omit DLL names from `## Dependencies:`.
-2. **Phase 2: Zero-GC State Tables & Recycler Pools**
-   - Pre-allocate all combat tables, sort buffers, and Unit ID arrays at file load time.
-   - Exclusively utilize `table.wipe` for state resets.
-3. **Phase 3: Hardware Timers & Event-Driven Engine**
-   - Register only the specific WoW events required.
-   - Use `C_Timer.After` and `C_Timer.NewTicker` for all delayed actions.
-4. **Phase 4: UI & Templates with Mouse Passthrough**
-   - Construct lightweight XML or Lua frames with `:EnableMouse(false)` on all non-interactive child elements.
-5. **Phase 5: Linter Validation & Production Release**
-   - Validate with `octowow_linter.py`, generate Rule H5 `README.md`, initialize Git repository, and push to GitHub.
+   - Declare the mandatory Rule B1 engine dependency guard in the main entry file.
+2. **Phase 2: Zero-GC Memory & Hardware Dispatchers**
+   - Pre-allocate all combat state tables and sort buffers at file load time.
+   - Use `C_Timer.After` / `C_Timer.NewTicker` for all delayed/recurring tasks.
+   - Use `table.wipe` for table resets — never instantiate `{}` inside events or tickers.
+3. **Phase 3: Modern API Integration & Mouse Passthrough**
+   - Integrate `UnitXP` for uncapped health and distances.
+   - Integrate `SuperWoW` direct GUID targeting and mouseover logic.
+   - Enforce Rule C8 `:EnableMouse(false)` on non-interactive child frames and textures.
+4. **Phase 4: Automated Verification & Documentation**
+   - Run `python tools/octowow_linter.py <addon-dir>` to ensure 100% compliance.
+   - Author Rule H5 `README.md` and commit to a single branch on GitHub.
+5. **Phase 5: Knowledge Sync & Pattern Registration**
+   - Record any architectural innovation or reusable boilerplate in Part I and push to master repository.
 
 ---
 
 ## 📂 Target Addon
 Please inspect, modernize, or build the addon located at:
-`C:\Users\Fostercare\Desktop\Niko2\Interface\AddOns\<AddonName>`
 

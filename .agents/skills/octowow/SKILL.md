@@ -43,12 +43,14 @@ The linter validates:
   2. Wire modern C_Namespaces (`C_Timer`, `C_UnitAuras`, `C_GossipInfo`), native `table.wipe`, and `TargetUnit(guid)`.
   3. Run linter until 0 issues / 0 warnings remain.
   4. Generate Rule H5 README and commit to a single branch (`main` or `master`).
+  5. **Phase 5 (Mandatory Gate)**: Compare all fixes against Part I. If novel anti-patterns were resolved, append them to `OCTOWOW_SYSTEM_PROMPT.md`, update `tools/octowow_linter.py`, and push to GitHub before concluding.
 - **Mode B: Greenfield Scaffolding:**
   1. Scaffold canonical structure: `<Addon>.toc`, `Core.lua`, `UIElements.lua`, `README.md`.
   2. Pre-allocate all combat state tables and sort buffers at file load time.
   3. Use `C_Timer.After` / `C_Timer.NewTicker` for all delayed/recurring tasks.
   4. Build UI with `:EnableMouse(false)` on non-interactive children.
   5. Validate with linter and push to GitHub.
+  6. **Phase 6 (Mandatory Gate)**: Register new reusable patterns or boilerplate in Part I.
 
 ---
 
