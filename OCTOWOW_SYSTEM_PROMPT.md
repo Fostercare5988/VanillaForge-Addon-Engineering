@@ -464,6 +464,143 @@ Every single addon audit, modernization, refactor, or bugfix pass **MUST automat
 
 ---
 
+## 🏛️ Part I — Battle-Tested Anti-Patterns & Golden Fixes (Hall of Fame)
+
+The following battle-tested patterns were established during the real-world modernization of the core OctoWoW addon suite (`FosterFrames`, `AutoBG`, `AutoLazy`, `Bagnon`, `MikScrollingBattleText`, `TWThreat`). Every AI assistant must adhere strictly to these golden implementations:
+
+### Anti-Pattern 1: Tooltip Scraping vs Linear $O(n)$ Slot-Batching
+```lua
+-- ❌ BANNED (Legacy 2006 Tooltip Scraping):
+GameTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
+GameTooltip:SetUnitDebuff(unit, i)
+local text = GameTooltipTextLeft1:GetText()
+
+-- ✅ GOLDEN (ClassicAPI v1.13.3+ Slot-Batching):
+local slots = C_UnitAuras.GetAuraSlots(unit, "HARMFUL")
+if slots then
+    for _, slot in ipairs(slots) do
+        local aura = C_UnitAuras.GetAuraDataBySlot(unit, slot)
+        if aura and aura.name == "Mortal Strike" then
+            -- instantaneous O(1) attribute access without tooltip overhead
+        end
+    end
+end
+```
+
+### Anti-Pattern 2: Child Cooldown Mouse Capture vs Explicit Passthrough (Rule C8)
+```lua
+-- ❌ BANNED (Child Cooldown Intercepts Button Clicks):
+local itemBtn = CreateFrame("Button", "ItemSlot1", parent, "ItemButtonTemplate")
+itemBtn.cooldown = CreateFrame("Model", "$parentCooldown", itemBtn, "CooldownFrameTemplate")
+-- In 1.12.1, CooldownFrameTemplate can steal mouse clicks, creating dead zones!
+
+-- ✅ GOLDEN (Strict Mouse Passthrough on Cooldown Frames):
+if itemBtn.cooldown and itemBtn.cooldown.EnableMouse then
+    itemBtn.cooldown:EnableMouse(false)
+end
+-- 100% of clicks, right-clicks, and item drag-and-drops reach the parent button!
+```
+
+### Anti-Pattern 3: Garbage Collection Hierarchy Scraping vs Register Tail Recursion (Rule D1 & D4)
+```lua
+-- ❌ BANNED (Temporary Table Allocation Churn):
+local regions = { frame:GetRegions() }
+for _, r in ipairs(regions) do
+    if r.GetTexture then ... end
+end
+
+-- ✅ GOLDEN (Zero-GC Register-Based Tail Call Recursion):
+local function InspectRegions(frame, r1, ...)
+    if not r1 then return false end
+    if r1.GetTexture and r1:GetTexture() == targetTex then return true end
+    return InspectRegions(frame, ...)
+end
+InspectRegions(frame, frame:GetRegions())
+```
+
+### Anti-Pattern 4: Legacy 2006 Iterative Wipe vs Unconditional Native C++ `table.wipe` (Rule D4)
+```lua
+-- ❌ BANNED (2006 Slow Nil-Assignment Loop):
+for k, v in pairs(historyTable) do
+    historyTable[k] = nil
+end
+
+-- ✅ GOLDEN (ClassicAPI v1.13.3+ Native C++ Hardware Wipe):
+table.wipe(historyTable)
+```
+
+### Anti-Pattern 5: Framerate-Dependent Steps vs Delta-Time Exponential Smoothing (Rule D5)
+```lua
+-- ❌ BANNED (Hardcoded Pixel Steps Stutter at High Refresh Rates):
+cur = cur + 5
+
+-- ✅ GOLDEN (Delta-Time Decoupled Exponential Smoothing):
+local rate = math.min(1.0, dt * 15.0)
+local cur = cur + (target - cur) * rate
+```
+
+### Anti-Pattern 6: 2006 Map Coordinate Trigonometry vs Native 3D Euclidean Vector Distances (Rule F5)
+```lua
+-- ❌ BANNED (Inaccurate 2D Map Projections & Trig):
+local dx = (x2 - x1) * 1000
+local dy = (y2 - y1) * 1000
+local dist = math.sqrt(dx*dx + dy*dy)
+
+-- ✅ GOLDEN (UnitXP SP3 & SuperWoW 3D Euclidean Engine):
+local yards = UnitXP("distance", unit)
+-- Or between two Arbitrary Units:
+local yardsBetween = UnitXP("distanceBetween", unit1, unit2)
+```
+
+### Anti-Pattern 7: Redundant High-Refresh Marketing vs Clean Stack Standard Notation
+```markdown
+-- ❌ BANNED:
+DXVK 144Hz+ | DXVK (144Hz/240Hz+)
+
+-- ✅ GOLDEN:
+DXVK | DXVK: Vulkan
+```
+
+---
+
+## 🛠️ Part J — Dual-Mode Execution Framework
+
+Every coding assistant invoking this system prompt MUST identify whether the task is **MODE A (Modernization)** or **MODE B (Greenfield Development)**:
+
+### 🔄 MODE A: Legacy Addon Modernization Protocol
+When given an existing World of Warcraft 1.12.1 addon:
+1. **Phase 1: Deep Static Audit & Bloat Eradication**
+   - Run the automated linter: `python tools/octowow_linter.py <addon-dir>`
+   - Locate and eliminate all hidden tooltip scanning, combat log scraping, and frame `OnUpdate` polling loops.
+2. **Phase 2: Modern Enhanced Engine Stack Integration**
+   - Place the **Mandatory Addon Startup Guard** (`CLASSIC_API_VERSION and SUPERWOW_VERSION`) at the very first Lua entry point.
+   - Replace legacy loops with `table.wipe`, register tail recursion, and hardware `C_Timer` tickers.
+   - Implement Rule C8 mouse passthrough on all child cooldowns and artwork overlays.
+3. **Phase 3: Automated Linter & AST Verification**
+   - Re-run `python tools/octowow_linter.py <addon-dir>` until **0 issues and 0 warnings** remain.
+4. **Phase 4: Single-Branch Git Standardization & Delivery**
+   - Update `README.md` with all 8 mandatory sections per Rule H5.
+   - Commit changes and enforce **strictly 1 branch** on remote (`main` or `master`).
+
+### 🏗️ MODE B: Greenfield Addon Scaffolding Protocol (Building From Scratch)
+When asked to build a new addon from the ground up:
+1. **Phase 1: Architecture & Canonical TOC Setup**
+   - Structure the addon cleanly: `<AddonName>.toc`, `Core.lua`, `UIElements.lua`, `README.md`.
+   - Strictly omit DLL names from `## Dependencies:`.
+2. **Phase 2: Zero-GC State Tables & Recycler Pools**
+   - Pre-allocate all combat tables, sort buffers, and Unit ID arrays at file load time.
+   - Exclusively utilize `table.wipe` for state resets.
+3. **Phase 3: Hardware Timers & Event-Driven Engine**
+   - Register only the specific WoW events required.
+   - Use `C_Timer.After` and `C_Timer.NewTicker` for all delayed actions.
+4. **Phase 4: UI & Templates with Mouse Passthrough**
+   - Construct lightweight XML or Lua frames with `:EnableMouse(false)` on all non-interactive child elements.
+5. **Phase 5: Linter Validation & Production Release**
+   - Validate with `octowow_linter.py`, generate Rule H5 `README.md`, initialize Git repository, and push to GitHub.
+
+---
+
 ## 📂 Target Addon
-Please inspect, modernize, and clean up the addon located at:
+Please inspect, modernize, or build the addon located at:
 `C:\Users\Fostercare\Desktop\Niko2\Interface\AddOns\<AddonName>`
+

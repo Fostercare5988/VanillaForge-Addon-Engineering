@@ -33,7 +33,7 @@ All modernized addons **strictly require** the full 4-DLL client extension stack
 | **SuperWoW** | [**balakethelock/SuperWoW**](https://github.com/balakethelock/SuperWoW) | `v2.2+` **Mandatory DLL** | GUID-based unit arguments on all unit functions, `RAW_COMBATLOG`, exact-name targeting `TargetByName(name, true)`, direct GUID targeting `TargetUnit(guid)`, `SetMouseoverUnit`, clickthrough modes. |
 | **NamPower** | [**Emyrk/nampower**](https://github.com/Emyrk/nampower) | `v4.6.2+` **Mandatory DLL** | Client-side spell-cast queueing (eliminates input latency), cooldown/aura/spell info (`SpellInfo`, `GetSpellNameAndRankForId`), binary combat event dispatches. |
 | **UnitXP SP3** | [**konaka/UnitXP_SP3**](https://codeberg.org/konaka/UnitXP_SP3) | `SP3` **Mandatory DLL** | Real-time uncapped raw numerical health (`UnitXP("health", unit)` / `UnitXP("maxhealth", unit)`), line-of-sight, distance calculation (`UnitXP("distance", unit)` / `UnitXP("distanceBetween", u1, u2)`), OS taskbar flashing (`FlashClientIcon()`), window foregrounding (`SetClientWindowForeground()`). |
-| **DXVK** | [**doitsujin/dxvk**](https://github.com/doitsujin/dxvk) | `v2.0+` Vulkan Layer | Direct3D 9 to Vulkan translation layer, high refresh rate frametime smoothing (144Hz/240Hz+), jitter eradication, GPU optimization. |
+| **DXVK** | [**doitsujin/dxvk**](https://github.com/doitsujin/dxvk) | `v2.0+` Vulkan Layer | Direct3D 9 to Vulkan translation layer, frametime pacing smoothing, jitter eradication, GPU optimization. |
 | **VanillaFixes** | [**hannesmann/vanillafixes**](https://github.com/hannesmann/vanillafixes) | Latest Client Patch | High refresh rate animation uncap, modern OS compatibility, raw mouse input fix. |
 
 ---
@@ -105,14 +105,45 @@ The master prompt is structured into 8 core thematic sections:
 - Pure English standard and clean `.toc` metadata (`## Interface: 11200` — the client API version, unrelated to and unaffected by content patches like 1.18.1).
 - Mandatory Read-Before-Write protocol for non-destructive system prompt updates, and a standing rule that direct in-game observation overrides a stale written rule.
 
+### **Part I — Battle-Tested Anti-Patterns & Golden Fixes (Hall of Fame)**
+- Concrete, verified before/after diffs for real-world bugs discovered across the addon suite:
+  - Tooltip scraping vs. linear $O(n)$ slot-batching (`C_UnitAuras.GetAuraSlots`).
+  - Child cooldown click interception vs. explicit passthrough (`item.cooldown:EnableMouse(false)`).
+  - Temporary hierarchy table scraping vs. zero-GC register tail recursion.
+  - Slow 2006 nil loops vs. unconditional native C++ `table.wipe(t)`.
+  - Framerate-dependent steps vs. delta-time exponential smoothing (`dt * rate`).
+  - 2D map coordinate trigonometry vs. 3D Euclidean distances (`UnitXP("distance", unit)`).
+
+### **Part J — Dual-Mode Execution Framework**
+- **Mode A: Legacy Modernization Protocol**: 4-phase audit, bloat kill, DLL rewire, and linter-verified single-branch git commit.
+- **Mode B: Greenfield Scaffolding Protocol**: 5-phase ground-up architecture, pre-allocated zero-GC state tables, hardware timers, and production delivery.
+
+---
+
+## 🛠️ Automated OctoWoW Addon Linter & Auditor
+
+This repository bundles a high-speed Python-powered static analysis auditor located at:
+```bash
+python tools/octowow_linter.py <path_to_addon_or_file>
+```
+
+### Capabilities:
+- **AST Block-Nesting Syntax Verification**: Guarantees balanced blocks (`if/then/end`, `do/end`, `function/end`, `repeat/until`) and bracket parity.
+- **Rule B1 Guard Audit**: Ensures the mandatory startup dependency guard is present and checking `CLASSIC_API_VERSION` & `SUPERWOW_VERSION`.
+- **Rule A1 Syntax Crash Audit**: Detects illegal bare colon method lookups (`(frame:GetScript and ...)`) before they crash the Lua parser.
+- **Rule B10 & D4 Memory Audit**: Flags obsolete 2006 table wiping loops and recommends native C++ `table.wipe(t)`.
+- **Rule D1 Hierarchy Churn Audit**: Flags `{ f:GetRegions() }` and `{ parent:GetChildren() }` allocations in iterations.
+- **Rule H5 Documentation Audit**: Validates README compliance and flags raw in-game WoW color escape codes (`|cff...`).
+- **Style Audit**: Enforces clean DXVK notation without redundant marketing claims.
+
 ---
 
 ## 🚀 How to Use
 
 1. Open [`OCTOWOW_SYSTEM_PROMPT.md`](OCTOWOW_SYSTEM_PROMPT.md).
 2. Copy the contents into your AI coding assistant (Claude, Gemini, Antigravity, ChatGPT, Cursor, etc.) as a **System Prompt** or initial instruction context.
-3. Provide the path to the legacy Vanilla addon directory you wish to modernize (`C:\Users\Fostercare\Desktop\Niko2\Interface\AddOns\<AddonName>`).
-4. Let the agent execute the deep audit, refactor, and verification following the rules.
+3. Provide the path to the legacy Vanilla addon directory you wish to modernize (`C:\Users\Fostercare\Desktop\Niko2\Interface\AddOns\<AddonName>`), or specify the specifications for a new addon built from scratch.
+4. Run `python tools/octowow_linter.py <addon-path>` to automatically verify the addon with 0 issues.
 
 ---
 
