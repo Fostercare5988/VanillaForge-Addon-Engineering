@@ -723,10 +723,13 @@ When given an existing World of Warcraft 1.12.1 addon:
    - Commit changes and enforce **strictly 1 branch** on remote (`main` or `master`).
 5. **Phase 5: Mandatory Knowledge Sync & Self-Annealing Prompt Evolution (Rule H6 Gate)**
    - **Unskippable Stop-Gate**: The agent is **STRICTLY FORBIDDEN** from reporting completion to the user before this step is executed.
-   - **Self-Audit**: The agent MUST cross-examine every bug, edge-case, and 2006 idiom fixed during the session against Part I (Hall of Fame).
-   - **Automatic Feed-Forward**: If any novel anti-pattern was resolved, the agent MUST append the side-by-side FØR/EFTER diff to Part I in `c:\Users\Fostercare\Documents\System Prompts\OCTOWOW_SYSTEM_PROMPT.md`, update `tools/octowow_linter.py` if a static check is possible, and commit & push to `OctoWoW-Addon-Modernization-Reverse-Engineering-System-Prompt`.
-   - **Mandatory Knowledge Status Output**: The final response to the user must explicitly state:
-     - `Knowledge Evolution: [SYNCED Anti-Pattern X / VERIFIED Existing Rules]`.
+   - **Dual-Level Self-Audit (Macro Architecture + Micro Code)**:
+     1. **Macro Level (Section H)**: Did this session establish, refactor, or clarify a file structure, project layout, naming convention, or general standard requested by the user (e.g. modular file layout, folder purges)? If that exact requirement is not already an explicit numbered rule in Section H, the agent MUST write it into Section H immediately!
+     2. **Micro Level (Part I)**: Did this session encounter or fix any code pattern, bug, engine edge-case, or performance idiom? If not already documented with a side-by-side FØR/EFTER example in Part I, append it as Anti-Pattern X.
+     3. **Auditor Level (Linter)**: If the macro standard or micro pattern can be checked programmatically, update `tools/octowow_linter.py` immediately.
+   - **Banned Complacency**: The agent is **STRICTLY FORBIDDEN** from using `VERIFIED Existing Rules` as an easy out. If the user asked "shouldn't all our addons generally have X structure", X is by definition a NEW general standard that MUST be codified in Section H before concluding the turn.
+   - **Mandatory Push Before Answering**: Commit and push all prompt and linter changes to `OctoWoW-Addon-Modernization-Reverse-Engineering-System-Prompt` on GitHub BEFORE presenting the final answer to the user.
+   - **Mandatory Output Line**: `Knowledge Evolution: [SYNCED Rule HX & Anti-Pattern Y / VERIFIED Existing Rules (with line citation)]`.
 
 ### 🏗️ MODE B: Greenfield Addon Scaffolding Protocol (Building From Scratch)
 When asked to build a new addon from the ground up:
