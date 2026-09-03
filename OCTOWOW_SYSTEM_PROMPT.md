@@ -380,7 +380,14 @@ Whenever an audit or modernization request includes a specific bug, symptom, or 
 A modernization task is NOT complete unless the `.lua` source codebase demonstrates a verified net line reduction in `git diff --stat`. Documentation additions (e.g. `README.md`) must never mask an unoptimized or unpruned Lua codebase.
 > ⚠️ One risk worth naming: a hard numeric gate on *every* task can push toward hitting the number instead of the underlying goal — stripped comments, dropped safety guards, or exactly the kind of error-handling this document elsewhere requires (the Startup Guard in this file adds lines; a real `HasRenderableVisual`-style helper adds lines). Treat net reduction as the expected *outcome* of removing genuine 2006-era bloat, not a target to hit by any means. A task that legitimately adds lines — a real new feature, a safety guard, expanded error handling — is still complete; call that out explicitly rather than cutting something else to compensate.
 
+**F9. Mandatory Eradication of Non-English Locale Cruft & Obsolete Localization Files**
+Modern enhanced 1.12.1 environments run strictly on English (enUS/enGB) client builds. Legacy vanilla addons frequently carry hundreds of lines of obsolete multi-language baggage (e.g. `localization.de.lua`, `localization.fr.lua`, `localization.cn.lua`, `ruRU.lua`) and sprawling `if GetLocale() == "deDE"` / `"frFR"` conditional ladders.
+- **Physical File Deletion**: Every modernization pass MUST identify and permanently delete all non-English localization files, removing their references from `.toc` manifests and XML `<Include>` directives.
+- **Purge Foreign-Language Strings & Matching Checks**: Strip all hardcoded non-English game terms (e.g. German `"Unbekannt"`, French `"Inconnu"`, localized spell or unit names).
+- **Flatten Dictionary Tables**: Eliminate heavy multi-locale indirection tables (`L = ...`) where they only served to swap languages. Inline strings directly as clean English literals or consolidate them into a single, lean English constant table, cutting hundreds of dead lines.
+
 ---
+
 
 ## Part G — Static Verification Before Any Commit
 
@@ -392,6 +399,7 @@ Before concluding any refactor, scan every `.lua`, `.xml`, and `.toc` file to el
 - Hidden `GameTooltip` scanning hacks (must use `C_UnitAuras`).
 - Localized combat log string regex parsing for casts (must use `UnitCastingInfo`).
 - Custom `OnUpdate` timer schedulers (must use `C_Timer`).
+- Non-English locale files, `GetLocale()` branch ladders, and foreign-language matching strings (e.g. `deDE`, `frFR`, `"Unbekannt"`, `"Inconnu"` — see F9).
 - Orphaned legacy APIs (`UIParentLoadAddOn`, `SetSpell`, `CHAT_MSG_*`, deprecated libraries, unmapped slash commands, and orphaned variables).
 
 **G3. AST / Block-Level Structural Checks**
@@ -408,8 +416,9 @@ This flips now that ClassicAPI is mandatory. It used to be that a modern Lua 5.1
 OctoLauncher scans `.git` directories and syncs against `origin` when "Update All" is clicked. For all modernized/forked addons in `Niko2`, immediately verify or set the remote `origin` to the personal repository (`https://github.com/Fostercare5988/<AddonName>.git`) and push, preventing launcher updates from reverting local improvements.
 
 **H2. Pure English Standard, Clean Canonical Branding & No Buzzword Pollution**
-- **Strict 100% English**: All in-game text, UI labels, tooltips, chat logs, code comments, and documentation must be strictly in English.
+- **Strict 100% English & Multi-Locale Purge**: All in-game text, UI labels, tooltips, chat logs, code comments, and documentation must be strictly in English. **Never preserve or write foreign-language localization code** (e.g. `deDE`, `frFR`, `ruRU`, `zhCN`). Every refactor must actively delete non-English `.lua` locale files, remove their `.toc` and XML entries, and eradicate hardcoded foreign string checks (see F9).
 - **Clean Canonical Naming (Strictly NO "-Octo" or "[Octo]" Suffixes)**:
+
   - Addons must preserve their clean, original/canonical folder and title names. **Never rename addon folders or append `-Octo` or `|cffc79cff[Octo]|r` to titles or versions**.
   - **TOC File (.toc)**:
     - `## Interface: 11200` — confirmed correct client API version (1.12.x), independent of content patches like 1.18.1.
