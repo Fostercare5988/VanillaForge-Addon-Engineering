@@ -888,6 +888,34 @@ btn:SetScript("OnClick", function()
 end)
 ```
 
+### Anti-Pattern 20: Frame Default Visibility in Vanilla 1.12.1 & The 2x Toggle Bug
+```lua
+-- ❌ BANNED (Newly created Frame defaults to visible; first toggle inverts to hidden, requiring 2x clicks/commands):
+function Addon:CreateOptionsFrame()
+    local f = CreateFrame("Frame", "Addon_OptionsFrame", UIParent) -- Default is SHOWN (:IsShown() == true)!
+    ...
+end
+function Addon:ToggleOptions()
+    if not Addon_OptionsFrame then Addon:CreateOptionsFrame() end
+    Addon_OptionsFrame:SetShown(not Addon_OptionsFrame:IsShown()) -- Since frame was created shown, SetShown(false) HIDES it on 1st invocation!
+end
+
+-- ✅ GOLDEN (Explicit :Hide() Upon Creation & Direct Show/Hide Branching):
+function Addon:CreateOptionsFrame()
+    local f = CreateFrame("Frame", "Addon_OptionsFrame", UIParent)
+    f:Hide() -- Explicitly initialize in hidden state!
+    ...
+end
+function Addon:ToggleOptions()
+    if not Addon_OptionsFrame then Addon:CreateOptionsFrame() end
+    if Addon_OptionsFrame:IsShown() then
+        Addon_OptionsFrame:Hide()
+    else
+        Addon_OptionsFrame:Show() -- Cleanly and reliably opens on the very first invocation!
+    end
+end
+```
+
 ---
 
 ## 🛠️ Part J — Dual-Mode Execution Framework
