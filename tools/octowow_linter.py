@@ -3,7 +3,7 @@
 OctoWoW Addon Linter & Static Analysis Auditor
 Part of the OctoWoW Addon Modernization & Reverse Engineering System.
 Validates World of Warcraft 1.12.1 addons against the modern Enhanced Engine Stack:
-ClassicAPI v1.13.3+, SuperWoW v2.2+, NamPower v4.6.3+, UnitXP SP3, and DXVK.
+ClassicAPI v1.13.4+, SuperWoW v2.2+, NamPower v4.6.3+, UnitXP SP3, and DXVK.
 """
 
 import os
@@ -207,7 +207,7 @@ class OctoWoWAuditor:
         # 3. Rule B10: Obsolete 2006 Table Wipe Fallback
         for idx, line in enumerate(raw_lines, 1):
             if re.search(r'for\s+\w+\s+in\s+(?:pairs|__pairs)\s*\(\s*\w+\s*\)\s*do\s+\w+\[\w+\]\s*=\s*nil', line):
-                warnings.append(f"[Rule B10 - Obsolete Wipe Loop] Line {idx}: Detected 2006 manual nil loop. ClassicAPI v1.13.3+ provides native C++ 'table.wipe(t)'.")
+                warnings.append(f"[Rule B10 - Obsolete Wipe Loop] Line {idx}: Detected 2006 manual nil loop. ClassicAPI v1.13.4+ provides native C++ 'table.wipe(t)'.")
 
         # 4. Rule B3: Tooltip Scanning for Auras / Hidden Tooltip Scraping
         for idx, line in enumerate(raw_lines, 1):
@@ -358,7 +358,7 @@ def main():
 
         print("\n" + "=" * 60)
         if total_issues == 0 and total_warnings == 0:
-            print(f"{BOLD}{GREEN}ALL PASSED: Addon strictly adheres to OctoWoW & ClassicAPI v1.13.3+ specifications!{RESET}\n")
+            print(f"{BOLD}{GREEN}ALL PASSED: Addon strictly adheres to OctoWoW & ClassicAPI v1.13.4+ specifications!{RESET}\n")
             sys.exit(0)
         elif total_issues == 0:
             print(f"{BOLD}{YELLOW}PASSED WITH WARNINGS: {total_warnings} warning(s) detected. Code is syntactically sound.{RESET}\n")

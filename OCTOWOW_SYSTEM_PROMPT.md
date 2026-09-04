@@ -28,7 +28,7 @@ All modernized addons **strictly require** the full 4-DLL client extension stack
 | Layer | Component & Repository | Minimum Version | Key Capabilities & APIs |
 | :--- | :--- | :--- | :--- |
 | **Base Client** | World of Warcraft 1.12.1 | Build 5875 | Lua 5.0.2 engine, stock FrameXML UI, standard 1.12.1 client base. |
-| **ClassicAPI** | [**brues-code/ClassicAPI**](https://github.com/brues-code/ClassicAPI) | `v1.13.3+` Mandatory DLL | 550+ functions across ~60 modern retail-style `C_` namespaces — `C_Timer.After`/`NewTicker`, `UnitCastingInfo`/`UnitChannelInfo` (with same-spell re-channel fix), `C_NamePlate`, `C_UnitAuras` ($O(n)$ slot-batching via `GetAuraSlots`/`GetAuraDataBySlot`/`UnitAuraBySlot` & `AuraUtil.ForEachAura`), `FocusUnit`/`ClearFocus`, `C_Container`, `C_EncodingUtil` (Base64/Hex/JSON/CBOR), `C_GossipInfo`, `C_EquipmentSet`, `C_AddOns`, `INTERFACE_VERSION` global, modern EditBox API suite (`ClearHistory`, `SetHighlightColor`, cursor position/focus methods), Retail-like hot-reloading `/reload` (supporting new files, `.toc` metadata edits, and new addons without restarting), plus `hooksecurefunc`, `InCombatLockdown`, `table.wipe`, and an AST rewriter that compiles `#`, `%`, `string.match`/`str:method()` on the fly — full breakdown in Part A, B3, and B10. |
+| **ClassicAPI** | [**brues-code/ClassicAPI**](https://github.com/brues-code/ClassicAPI) | `v1.13.4+` Mandatory DLL | 550+ functions across ~60 modern retail-style `C_` namespaces — `C_Timer.After`/`NewTicker`, `UnitCastingInfo`/`UnitChannelInfo` (with same-spell re-channel fix), `C_NamePlate`, `C_UnitAuras` ($O(n)$ slot-batching via `GetAuraSlots`/`GetAuraDataBySlot`/`UnitAuraBySlot` & `AuraUtil.ForEachAura`), `FocusUnit`/`ClearFocus`, `C_Container`, `C_EncodingUtil` (Base64/Hex/JSON/CBOR), `C_GossipInfo`, `C_EquipmentSet`, `C_AddOns`, `INTERFACE_VERSION` global, modern EditBox API suite (`ClearHistory`, `SetHighlightColor`, cursor position/focus methods), Retail-like hot-reloading `/reload` (supporting new files, `.toc` metadata edits, and new addons without restarting), plus `hooksecurefunc`, `InCombatLockdown`, `table.wipe`, and an AST rewriter that compiles `#`, `%`, `string.match`/`str:method()` on the fly — full breakdown in Part A, B3, and B10. |
 | **SuperWoW** | [**balakethelock/SuperWoW**](https://github.com/balakethelock/SuperWoW) | `v2.2+` Mandatory DLL | GUID-based unit arguments on all unit functions, `RAW_COMBATLOG`, exact-name targeting `TargetByName(name, true)`, direct GUID targeting `TargetUnit(guid)`, `SetMouseoverUnit`, clickthrough modes. |
 | **NamPower** | [**Emyrk/nampower**](https://github.com/Emyrk/nampower) | `v4.6.3+` Mandatory DLL | Client-side spell-cast queueing (eliminates input latency), cooldown/aura/spell info (`SpellInfo`, `GetSpellNameAndRankForId`), binary combat event dispatches. |
 | **UnitXP SP3** | [**brues-code/UnitXP_SP3**](https://github.com/brues-code/UnitXP_SP3) | `v90+` Mandatory DLL | Real-time uncapped raw numerical health (`UnitXP("health", unit)` / `UnitXP("maxhealth", unit)`), line-of-sight, distance calculation (`UnitXP("distance", unit)` / `UnitXP("distanceBetween", u1, u2)`), OS taskbar flashing (`FlashClientIcon()`), window foregrounding (`SetClientWindowForeground()`). |
@@ -39,14 +39,14 @@ All modernized addons **strictly require** the full 4-DLL client extension stack
 
 ## 🛡️ Mandatory Addon Startup Guard
 
-Every modernized addon **MUST** declare a hard engine requirement check at initialization. All addons we build or modernize strictly require **ClassicAPI v1.13.3+** and **SuperWoW v2.2+**. Check the actual version globals each DLL exposes for exactly this purpose, rather than inferring presence indirectly from a function existing:
+Every modernized addon **MUST** declare a hard engine requirement check at initialization. All addons we build or modernize strictly require **ClassicAPI v1.13.4+** and **SuperWoW v2.2+**. Check the actual version globals each DLL exposes for exactly this purpose, rather than inferring presence indirectly from a function existing:
 - ClassicAPI → `CLASSIC_API_VERSION` / `INTERFACE_VERSION` (global constants, always present once the DLL has hooked the engine)
 - SuperWoW → `SUPERWOW_VERSION` / `SUPERWOW_STRING` (global constants; confirm these are still the correct names on your installed build — see B10)
 
 ```lua
--- Strict Engine Dependency Guard (Mandatory ClassicAPI v1.13.3+ & SuperWoW v2.2+)
+-- Strict Engine Dependency Guard (Mandatory ClassicAPI v1.13.4+ & SuperWoW v2.2+)
 if not (CLASSIC_API_VERSION and SUPERWOW_VERSION) then
-    DEFAULT_CHAT_FRAME:AddMessage("|cffff2020[Fatal Error]|r " .. (addonName or "Addon") .. " requires ClassicAPI.dll (v1.13.3+) & SuperWoW (v2.2+)! Please ensure both DLLs are loaded.", 1, 0.2, 0.2)
+    DEFAULT_CHAT_FRAME:AddMessage("|cffff2020[Fatal Error]|r " .. (addonName or "Addon") .. " requires ClassicAPI.dll (v1.13.4+) & SuperWoW (v2.2+)! Please ensure both DLLs are loaded.", 1, 0.2, 0.2)
     return
 end
 ```
@@ -92,7 +92,7 @@ Because ClassicAPI, SuperWoW, NamPower, and UnitXP are strictly required, **neve
   local name, text, texture, startTime, endTime, isTradeSkill, castID, notInterruptible = UnitCastingInfo(unit)
   local name, text, texture, startTime, endTime, isTradeSkill, notInterruptible = UnitChannelInfo(unit)
   ```
-- **Same-Spell Re-Channeling Engine (v1.13.3+)**: In ClassicAPI v1.13.3+, recasting a channeled spell while already channeling it (e.g. clipping *Mind Flay*, *Arcane Missiles*, *Drain Life*, or *Fishing*) cleanly fires `UNIT_SPELLCAST_CHANNEL_STOP` followed immediately by `UNIT_SPELLCAST_CHANNEL_START`. This permanently resolves the legacy 1.12.1 bug where re-channeling kept `channelSpellID` identical and left castbars frozen. Addon castbars and spell modules must listen for these standard events to reset their animation and timers cleanly.
+- **Same-Spell Re-Channeling Engine (v1.13.4+)**: In ClassicAPI v1.13.4+, recasting a channeled spell while already channeling it (e.g. clipping *Mind Flay*, *Arcane Missiles*, *Drain Life*, or *Fishing*) cleanly fires `UNIT_SPELLCAST_CHANNEL_STOP` followed immediately by `UNIT_SPELLCAST_CHANNEL_START`. This permanently resolves the legacy 1.12.1 bug where re-channeling kept `channelSpellID` identical and left castbars frozen. Addon castbars and spell modules must listen for these standard events to reset their animation and timers cleanly.
 - **STRICTLY FORBIDDEN:** Parsing localized combat log strings (`CHAT_MSG_SPELL_...`) with regexes to estimate castbars or haste.
 
 **B2. Modern Nameplate Architecture (`C_NamePlate`)**
@@ -107,7 +107,7 @@ Because ClassicAPI, SuperWoW, NamPower, and UnitXP are strictly required, **neve
 
 **B3. Structured Aura Engine & $O(n)$ Slot-Batching (`C_UnitAuras` & `AuraUtil`)**
 - **The $O(n^2)$ Quadratic Scanning Trap**: In 1.12.1, iterating unit auras using index-based getters (`GetAuraDataByIndex` / `UnitAura`) re-traverses the C++ aura array from slot 0 on *every single index query*, creating $O(n^2)$ quadratic performance bottlenecks when scanning full units (e.g. 16–32 buffs/debuffs across 40 raid members).
-- **Mandatory Linear $O(n)$ Slot-Batching (v1.13.3+)**: ClassicAPI v1.13.3+ backports the modern slot-batching API. Enumerate a unit's auras once into opaque slot IDs and fetch each by slot ID, walking the C++ array in linear $O(n)$ time:
+- **Mandatory Linear $O(n)$ Slot-Batching (v1.13.4+)**: ClassicAPI v1.13.4+ backports the modern slot-batching API. Enumerate a unit's auras once into opaque slot IDs and fetch each by slot ID, walking the C++ array in linear $O(n)$ time:
   ```lua
   -- Direct O(n) Slot-Batching:
   local slots = C_UnitAuras.GetAuraSlots(unit, filter)
@@ -127,7 +127,7 @@ Because ClassicAPI, SuperWoW, NamPower, and UnitXP are strictly required, **neve
   end)
   ```
 - **Single-Aura Queries**: For targeted checks of a single known spell, use direct lookups rather than scanning: `C_UnitAuras.GetUnitAuraBySpellID(unit, spellID)` / `GetPlayerAuraBySpellID(spellID)`. For single-slot queries, `C_UnitAuras.GetBuffDataByIndex(unit, index)` / `GetDebuffDataByIndex(unit, index)` remain available.
-- **Lazy Caster Matching & Duration Rules**: ClassicAPI v1.13.3+ defers caster matching until requested and guarantees duration rules reliably update auras created by their own triggers (e.g. multi-stage pet buffs and procs).
+- **Lazy Caster Matching & Duration Rules**: ClassicAPI v1.13.4+ defers caster matching until requested and guarantees duration rules reliably update auras created by their own triggers (e.g. multi-stage pet buffs and procs).
 - **STRICTLY FORBIDDEN:** Hidden `GameTooltip` tooltip scanning (`GameTooltipTextLeft1:GetText()`) and manual $O(n^2)$ quadratic index loops (`for i = 1, 32 do GetAuraDataByIndex(...)`).
 
 **B4. Native Focus Unit Token (`"focus"`)**
@@ -192,17 +192,17 @@ Because ClassicAPI, SuperWoW, NamPower, and UnitXP are strictly required, **neve
 ClassicAPI backports 550+ functions across ~60 namespaces (full reference: the project's `docs/API.md`); B1–B6 cover the ones your existing addons lean on most, but a few more are worth knowing exist before you reach for a hand-rolled workaround:
 - **`hooksecurefunc`** — real, backported. This is the standard modern way to observe a function without replacing it, and it's the single biggest quality-of-life gap in stock vanilla addon dev (the usual workaround — manually wrapping a global with `local orig = Func; Func = function(...) orig(...) ... end` — breaks the moment two addons do it to the same function). Prefer it over manual function wrapping everywhere.
 - **`InCombatLockdown`** — real, backported. Use it directly instead of tracking `PLAYER_REGEN_DISABLED`/`PLAYER_REGEN_ENABLED` yourself just to answer "am I in combat right now."
-- **`INTERFACE_VERSION` (v1.13.3+)** — real, backported global constant matching modern Blizzard interface numbering conventions. Provides a clean, version-gated way to detect engine capabilities without fragile string parsing.
-- **Modern EditBox API Suite (v1.13.3+)** — real, backported native C++ methods on all `EditBox` frames:
+- **`INTERFACE_VERSION` (v1.13.4+)** — real, backported global constant matching modern Blizzard interface numbering conventions. Provides a clean, version-gated way to detect engine capabilities without fragile string parsing.
+- **Modern EditBox API Suite (v1.13.4+)** — real, backported native C++ methods on all `EditBox` frames:
   - `editBox:ClearHistory()` — clears command/chat history buffer.
   - `editBox:SetHighlightColor(r, g, b[, a])` and `editBox:GetHighlightColor()` — sets custom text selection highlights.
   - `editBox:GetUTF8CursorPosition()` and `editBox:SetCursorPosition(pos)` / `editBox:GetCursorPosition()` — accurate multi-byte cursor positioning.
   - `editBox:ClearHighlightText()`, `editBox:HasFocus()`, `editBox:HasText()` — direct state query methods eliminating the need for custom Lua state flags.
-- **Retail-Like Hot-Reloading `/reload` (v1.13.3+)** — ClassicAPI hooks the client's `/reload` command to dynamically re-index newly added files, updated `##` metadata in `.toc` files (such as adding newly created lua files), new addon folders, and file deletions on the fly without closing or restarting the WoW 1.12.1 client.
+- **Retail-Like Hot-Reloading `/reload` (v1.13.4+)** — ClassicAPI hooks the client's `/reload` command to dynamically re-index newly added files, updated `##` metadata in `.toc` files (such as adding newly created lua files), new addon folders, and file deletions on the fly without closing or restarting the WoW 1.12.1 client.
 - **`C_AddOns`** (`DoesAddOnExist`, `IsAddOnLoaded`, `GetAddOnTitle`, `GetAddOnNotes`, `IsAddOnLoadable`, `GetAddOnName`, `GetAddOnSecurity`) — **this changes Part E.** For any addon that ships as a normal TOC entry, `C_AddOns.IsAddOnLoaded("AddonFolderName")` is a direct, reliable presence check — use it as the first choice for addon detection. Reserve the frame-name/minimap-substring whitelist approach in E2 for what it's actually needed for: things that *aren't* discoverable this way, like injected server UI (E3) or addons that create loose minimap buttons without you knowing their folder name in advance.
-- **`table.wipe` & Nil Append Fix** — real, backported, native C++. It's a faster, direct replacement for the manual `for k in pairs(t) do t[k] = nil end` wipe idiom in D4. Furthermore, v1.13.3+ ensures table length is preserved on deliberate single `nil` appends (`t[#t+1] = nil`), guaranteeing robust table writers.
+- **`table.wipe` & Nil Append Fix** — real, backported, native C++. It's a faster, direct replacement for the manual `for k in pairs(t) do t[k] = nil end` wipe idiom in D4. Furthermore, v1.13.4+ ensures table length is preserved on deliberate single `nil` appends (`t[#t+1] = nil`), guaranteeing robust table writers.
 - **Full namespaces also available** (see `docs/API.md` for exact signatures rather than guessing): `C_Spell` (spell info/cooldowns/school/usability — can replace a lot of hand-rolled spellbook scanning), `C_Item` (item info/quality/links/binding), `C_Loot` (`ScanNearbyLoot`, `GetNearbyLootableUnits`, `LootUnit` — batch/nearby-corpse looting, distinct from the roll system in B6), `C_QuestLog` (`GetQuestDetails`, `IsOnQuest`, `IsUnitOnQuest`), `C_Reputation` (faction standing/watch).
-- **Bundled Lua library (`!!!ClassicAPI`, loads automatically, no install step)** — gives you `Mixin`/`CreateFromMixins`, `TableUtil` (`tCompare`, `MergeTable`, `SafePack`), `MathUtil` (`Lerp`, `Clamp`, `CreateCounter`), `ColorMixin`/`CreateColor`, `EventUtil` (`ContinueOnAddOnLoaded`), `CallbackRegistryMixin`, `EventRegistry` (optimized with lightweight dispatch in v1.13.3+). Reach for these instead of hand-rolling the equivalent — directly relevant to the DRY mandate in Part F.
+- **Bundled Lua library (`!!!ClassicAPI`, loads automatically, no install step)** — gives you `Mixin`/`CreateFromMixins`, `TableUtil` (`tCompare`, `MergeTable`, `SafePack`), `MathUtil` (`Lerp`, `Clamp`, `CreateCounter`), `ColorMixin`/`CreateColor`, `EventUtil` (`ContinueOnAddOnLoaded`), `CallbackRegistryMixin`, `EventRegistry` (optimized with lightweight dispatch in v1.13.4+). Reach for these instead of hand-rolling the equivalent — directly relevant to the DRY mandate in Part F.
 - **Bundled `DebugTools` addon (loads automatically)** — `/dump <expr>` pretty-prints any value including multi-return tuples, `/etrace` is a live event tracer, `/framestack` (`/fstack`) shows the frame hierarchy under your cursor, `/luaerrors` shows a proper Lua error window. It also backports a real `print()` global (routes to the default chat frame). These are genuine debugging tools, not workarounds — use them as part of Part G verification instead of, or alongside, static analysis.
 - **Confirmed:** Modern enhanced 1.12.1 client builds frequently patch the quest log cap to 25 entries, up from vanilla's standard 20 (`MAX_QUEST_LOG_ENTRIES`), as a client-side change. If any addon hardcodes `20` as the quest log size — loop bounds, grid sizing, anything assuming the old constant — that's a real bug to fix now, not just something to watch for.
 
@@ -452,8 +452,8 @@ This document is a living record of verified client behaviors. If you observe di
 **H5. Mandatory Automated README.md Delivery & Synchronization**
 Every single addon audit, modernization, refactor, or bugfix pass **MUST automatically update or create the addon's `README.md`** before concluding the task, without the user ever having to prompt or ask for it.
 - **Mandatory Sections in Every `README.md`**:
-  1. **Header & Badges**: Version (`x.x.x`), Interface (`1.12.1 (Build 5875)`), Engine (`ClassicAPI v1.13.3+ | SuperWoW v2.2+ | NamPower v4.6.3+ | UnitXP SP3 | DXVK`), License (`MIT` or original).
-  2. **Description**: Concise summary of what the addon does and how it leverages the Enhanced 1.12.1 Engine Stack (**ClassicAPI v1.13.3+**, **SuperWoW v2.2+**, **NamPower 4.6.3+**, **UnitXP SP3**, **DXVK**).
+  1. **Header & Badges**: Version (`x.x.x`), Interface (`1.12.1 (Build 5875)`), Engine (`ClassicAPI v1.13.4+ | SuperWoW v2.2+ | NamPower v4.6.3+ | UnitXP SP3 | DXVK`), License (`MIT` or original).
+  2. **Description**: Concise summary of what the addon does and how it leverages the Enhanced 1.12.1 Engine Stack (**ClassicAPI v1.13.4+**, **SuperWoW v2.2+**, **NamPower 4.6.3+**, **UnitXP SP3**, **DXVK**).
   3. **Quick Start & Slash Commands**: All in-game slash commands and key shortcuts.
   4. **Core Features**: Bulleted overview of functionality.
   5. **Technical Architecture & Zero-Bloat Optimizations**: Exact architectural improvements, dead code removals, DRY consolidations, and event-driven replacements.
@@ -508,7 +508,7 @@ GameTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
 GameTooltip:SetUnitDebuff(unit, i)
 local text = GameTooltipTextLeft1:GetText()
 
--- ✅ GOLDEN (ClassicAPI v1.13.3+ Slot-Batching):
+-- ✅ GOLDEN (ClassicAPI v1.13.4+ Slot-Batching):
 local slots = C_UnitAuras.GetAuraSlots(unit, "HARMFUL")
 if slots then
     for _, slot in ipairs(slots) do
@@ -558,7 +558,7 @@ for k, v in pairs(historyTable) do
     historyTable[k] = nil
 end
 
--- ✅ GOLDEN (ClassicAPI v1.13.3+ Native C++ Hardware Wipe):
+-- ✅ GOLDEN (ClassicAPI v1.13.4+ Native C++ Hardware Wipe):
 table.wipe(historyTable)
 ```
 
@@ -602,7 +602,7 @@ UseAction = TrinketMenu.newUseAction
 TrinketMenu.oldUseInventoryItem = UseInventoryItem
 UseInventoryItem = TrinketMenu.newUseInventoryItem
 
--- ✅ GOLDEN (ClassicAPI v1.13.3+ Non-Destructive Secure Hooking):
+-- ✅ GOLDEN (ClassicAPI v1.13.4+ Non-Destructive Secure Hooking):
 hooksecurefunc("UseInventoryItem", function(slot)
     if (slot == 13 or slot == 14) and not (MerchantFrame and MerchantFrame:IsVisible()) then
         TrinketMenu.ReflectTrinketUse(slot)
