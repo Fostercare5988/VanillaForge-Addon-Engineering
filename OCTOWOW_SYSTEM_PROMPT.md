@@ -803,6 +803,91 @@ local function GetDistance(unit, flagType)
 end
 ```
 
+### Anti-Pattern 16: Naive `table.sort` on Pre-allocated Fixed-Size Buffers vs. Bounded Insertion Sort
+```lua
+-- ❌ BANNED (table.sort sorts the entire 40-slot buffer; empty/nil slots in 10v10 WSG or 15v15 AB get scrambled or crash):
+table.sort(roster, function(a, b) return a.name < b.name end) -- CRASHES or sorts empty slots above active players!
+
+-- ✅ GOLDEN (Zero-Allocation In-Place Insertion Sort Strictly Bounded to 1..activeCount):
+local function SortActiveRoster(comparator)
+    for i = 2, enemyCount do
+        local j = i
+        while j > 1 and comparator(roster[j], roster[j - 1]) do
+            roster[j], roster[j - 1] = roster[j - 1], roster[j]
+            j = j - 1
+        end
+    end
+end
+```
+
+### Anti-Pattern 17: Sticky Target/Focus Selection State (Missing Neutral Border Color Reset)
+```lua
+-- ❌ BANNED (Leaves gold or cyan highlight permanently stuck on deselected units):
+local function UpdateRowSelectionVisual(btn)
+    if UnitName("target") == btn.targetName then
+        SetBorderColor(btn, 1.0, 0.82, 0.20, 1.0)
+        btn.Selection:Show()
+    elseif UnitName("focus") == btn.targetName then
+        SetBorderColor(btn, 0.35, 0.75, 1.0, 1.0)
+        btn.Selection:Show()
+    else
+        btn.Selection:Hide() -- BUG: Never resets border color, so border remains yellow forever!
+    end
+end
+
+-- ✅ GOLDEN (Explicit Neutral Dark Reset in Else Branch):
+local function UpdateRowSelectionVisual(btn)
+    if UnitName("target") == btn.targetName then
+        SetBorderColor(btn, 1.0, 0.82, 0.20, 1.0)
+        btn.Selection:Show()
+    elseif UnitName("focus") == btn.targetName then
+        SetBorderColor(btn, 0.35, 0.75, 1.0, 1.0)
+        btn.Selection:Show()
+    else
+        SetBorderColor(btn, 0, 0, 0, 0.80) -- Golden reset to default dark/transparent border!
+        btn.Selection:Hide()
+    end
+end
+```
+
+### Anti-Pattern 18: Non-Interactive Container Frames Swallowing Mouse Clicks (Rule C8)
+```lua
+-- ❌ BANNED (Invisible header/container frame has permanent mouse enabled, blocking 3D clicks):
+local main = CreateFrame("Frame", "MyAddon_MainFrame", UIParent)
+main:SetHeight(20)
+main:EnableMouse(true) -- Invisible 150x20 box permanently swallows clicks above row 1 during combat!
+
+-- ✅ GOLDEN (Dynamic Mouse Enable Only During Configuration/Movement):
+main:EnableMouse(isConfig and true or false) -- In combat, clicks cleanly pass through to the 3D world!
+```
+
+### Anti-Pattern 19: Right-Click Focus Target Loss Glitch
+```lua
+-- ❌ BANNED (TargetLastTarget drops target if right-clicking the already-targeted enemy):
+btn:SetScript("OnClick", function()
+    if arg1 == "RightButton" then
+        TargetByName(name, true)
+        FocusUnit("target")
+        TargetLastTarget() -- BUG: Deselects enemy if you were already targeting them!
+    end
+end)
+
+-- ✅ GOLDEN (Target State Awareness with Direct Focus):
+btn:SetScript("OnClick", function()
+    if arg1 == "RightButton" then
+        local isCurrentTarget = UnitExists("target") and (UnitName("target") == name)
+        if isCurrentTarget then
+            FocusUnit("target")
+        else
+            local hadPriorTarget = UnitExists("target")
+            if guid then TargetUnit(guid) else TargetByName(name, true) end
+            if UnitExists("target") and UnitName("target") == name then FocusUnit("target") end
+            if hadPriorTarget then TargetLastTarget() else ClearTarget() end
+        end
+    end
+end)
+```
+
 ---
 
 ## 🛠️ Part J — Dual-Mode Execution Framework
