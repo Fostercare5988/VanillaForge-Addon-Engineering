@@ -732,6 +732,77 @@ frame:SetScript("OnLeave", function()
 end)
 ```
 
+### Anti-Pattern 15: The 3-Capture Regex Flag Trap & Missing Map Flag Coordinate Fallback
+```lua
+-- ❌ BANNED (3-Capture pattern with 2 return variables -> carrier name gets literal "flag" string!):
+local flag, carrier = msg:match("The (%a+) (%a+) was picked up by (%a+)!")
+-- Result: flag = "Horde", carrier = "flag"! UI displays "Flag", fails targeting & distance!
+-- Also misses "was returned to its base", leaving stale carrier state forever on screen.
+-- And missing battlefield map coordinate fallback when no raid member targets the carrier:
+for i = 1, #SCAN_UNITS do
+    if UnitName(SCAN_UNITS[i]) == carrierName then ... return end
+end
+frame.distText:SetText("? yd") -- Stuck on "? yd" even though carrier is active in WSG!
+
+-- ✅ GOLDEN (Robust 2-Capture Regex, Explicit Drop/Return/Reset Handlers & Map Coordinate Fallback):
+local function handleChatMessage(msg)
+    if not msg then return end
+    -- 1. Exact 2-capture pick up regex
+    local _, _, flag, carrier = string.find(msg, "The (%a+) [Ff]lag was picked up by ([^!%.]+)")
+    if flag and carrier then
+        flagCarriers[flag] = carrier
+        UpdateFlagUI()
+        return
+    end
+
+    -- 2. Explicit Drop and Return events
+    local _, _, dropped = string.find(msg, "The (%a+) [Ff]lag was dropped")
+    if dropped then flagCarriers[dropped] = nil; UpdateFlagUI(); return end
+
+    local _, _, returned = string.find(msg, "The (%a+) [Ff]lag was returned")
+    if returned then flagCarriers[returned] = nil; UpdateFlagUI(); return end
+
+    -- 3. Point capture or round reset
+    if string.find(msg, "captured the") or string.find(msg, "flags are now placed at their bases") then
+        table.wipe(flagCarriers)
+        UpdateFlagUI()
+        return
+    end
+end
+
+-- 4. 3-tier distance calculation (UnitXP -> SuperWoW 3D -> Battlefield Map Coordinate Fallback):
+local function GetDistance(unit, flagType)
+    if unit and UnitExists(unit) and UnitXP then
+        local ok, dist = pcall(UnitXP, "distance", unit)
+        if ok and dist and dist >= 0 then return math.floor(dist + 0.5) end
+    end
+    if unit and UnitExists(unit) and UnitPosition then
+        local ok1, px, py, pz = pcall(UnitPosition, "player")
+        local ok2, ux, uy, uz = pcall(UnitPosition, unit)
+        if ok1 and ok2 and px and py and ux and uy and type(px) == "number" and type(ux) == "number" then
+            local dx, dy = px - ux, py - uy
+            local dz = (pz and uz and type(pz) == "number" and type(uz) == "number") and (pz - uz) or 0
+            return math.floor(math.sqrt(dx * dx + dy * dy + dz * dz) + 0.5)
+        end
+    end
+    -- Battlefield Map Coordinates Fallback (WSG 515x685 yardage scaling when carrier is out of target range):
+    if flagType and GetPlayerMapPosition then
+        local px, py = GetPlayerMapPosition("player")
+        if px and py and (px > 0 or py > 0) then
+            local num = (GetNumBattlefieldFlagPositions and GetNumBattlefieldFlagPositions()) or 0
+            for i = 1, num do
+                local fx, fy, token = GetBattlefieldFlagPosition(i)
+                if fx and fy and (fx > 0 or fy > 0) and (not token or string.find(string.lower(token), string.lower(flagType))) then
+                    local dx, dy = (px - fx) * 515, (py - fy) * 685
+                    return math.floor(math.sqrt(dx * dx + dy * dy) + 0.5)
+                end
+            end
+        end
+    end
+    return nil
+end
+```
+
 ---
 
 ## 🛠️ Part J — Dual-Mode Execution Framework
