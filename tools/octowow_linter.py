@@ -3,7 +3,7 @@
 OctoWoW Addon Linter & Static Analysis Auditor
 Part of the OctoWoW Addon Modernization & Reverse Engineering System.
 Validates World of Warcraft 1.12.1 addons against the modern Enhanced Engine Stack:
-ClassicAPI v1.13.3+, SuperWoW v2.2+, NamPower v4.6.2+, UnitXP SP3, and DXVK.
+ClassicAPI v1.13.3+, SuperWoW v2.2+, NamPower v4.6.3+, UnitXP SP3, and DXVK.
 """
 
 import os

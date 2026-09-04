@@ -2,7 +2,7 @@
 name: octowow
 description: >-
   Autonomous agent skill for World of Warcraft 1.12.1 Enhanced Engine Addon Modernization and Greenfield Development.
-  Enforces ClassicAPI v1.13.3+, SuperWoW v2.2+, NamPower v4.6.2+, UnitXP SP3, DXVK frame pacing, zero-GC memory recycling,
+  Enforces ClassicAPI v1.13.3+, SuperWoW v2.2+, NamPower v4.6.3+, UnitXP SP3, DXVK frame pacing, zero-GC memory recycling,
   automated AST & static linting via tools/octowow_linter.py, and single-branch git standardization.
 ---
 

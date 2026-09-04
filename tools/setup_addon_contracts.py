@@ -31,7 +31,7 @@ Before analyzing, refactoring, editing, or committing code in this repository:
    All addons strictly require and leverage:
    - **ClassicAPI v1.13.3+** (C++ timers, native table.wipe, C_UnitAuras, modern EditBox API)
    - **SuperWoW v2.2+** (Direct GUID targeting TargetUnit(guid), SetMouseoverUnit)
-   - **NamPower v4.6.2+** (Zero-latency spell queue, binary combat log packets)
+   - **NamPower v4.6.3+** (Zero-latency spell queue, binary combat log packets)
    - **UnitXP SP3 v89+** (Final release: Uncapped 3D Euclidean distances and real HP integers)
    - **DXVK** (Vulkan frame pacing translation layer)
    - Never write 2006 legacy fallbacks, tooltip scans, or manual nil loops.
