@@ -244,6 +244,11 @@ class OctoWoWAuditor:
             if re.search(r'(?<!pcall\()\bSetMouseoverUnit\s*\(\s*[a-zA-Z0-9_\.]+\s*\)', line) and not 'pcall' in line and not line.strip().startswith('--'):
                 warnings.append(f"[Anti-Pattern 14 - Unchecked SetMouseoverUnit] Line {idx}: SetMouseoverUnit called directly without pcall or 0x GUID validation. SuperWoW crashes on unknown unit names.")
 
+        # 10. Anti-Pattern 16: Naive table.sort on fixed pre-allocated buffer
+        for idx, line in enumerate(raw_lines, 1):
+            if re.search(r'\btable\.sort\s*\(\s*(?:roster|buffer|enemies|units)\s*[,|\)]', line) and not 'active' in line.lower() and not line.strip().startswith('--'):
+                warnings.append(f"[Anti-Pattern 16 - Unbounded Buffer Sort] Line {idx}: 'table.sort' detected on fixed-size entity buffer. Fixed-capacity buffers sort empty/nil slots into active rows. Use bounded insertion sort.")
+
         return issues, warnings
 
     def audit_addon_dir(self, dir_path):
