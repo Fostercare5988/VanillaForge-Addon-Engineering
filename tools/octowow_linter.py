@@ -239,6 +239,11 @@ class OctoWoWAuditor:
                 if lib in line and not line.strip().startswith('--'):
                     warnings.append(f"[Rule B0 - Obsolete Library Bloat] Line {idx}: Detected legacy 2006 library '{lib}'. Replace with ClassicAPI / NamPower.")
 
+        # 9. Anti-Pattern 14: Unchecked SetMouseoverUnit without pcall or 0x GUID validation
+        for idx, line in enumerate(raw_lines, 1):
+            if re.search(r'(?<!pcall\()\bSetMouseoverUnit\s*\(\s*[a-zA-Z0-9_\.]+\s*\)', line) and not 'pcall' in line and not line.strip().startswith('--'):
+                warnings.append(f"[Anti-Pattern 14 - Unchecked SetMouseoverUnit] Line {idx}: SetMouseoverUnit called directly without pcall or 0x GUID validation. SuperWoW crashes on unknown unit names.")
+
         return issues, warnings
 
     def audit_addon_dir(self, dir_path):

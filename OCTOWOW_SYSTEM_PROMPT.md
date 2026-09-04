@@ -701,6 +701,37 @@ MyAddon/
 └── CLAUDE.md & AGENTS.md        -- Local private contracts
 ```
 
+### Anti-Pattern 14: Pseudo-GUID Name Fallbacks & Unchecked `SetMouseoverUnit` (C++ Unknown Unit Crash)
+```lua
+-- ❌ BANNED (Conflating GUID with Name & Calling SetMouseoverUnit without 0x Validation):
+local guid = UnitGUID(unit) or name
+playerList[name] = { name = name, guid = name } -- Dangerous pseudo-GUID!
+
+frame:SetScript("OnEnter", function()
+    if SetMouseoverUnit and frame.guid then
+        SetMouseoverUnit(frame.guid) -- CRASHES with "Unknown unit name: <Name>" if guid is not a valid 0x hex GUID!
+    end
+end)
+
+-- ✅ GOLDEN (Strict Hex 0x GUID Verification & pcall Guard):
+local guid = UnitGUID(unit)
+if not (guid and type(guid) == "string" and guid:sub(1, 2) == "0x") then
+    guid = nil
+end
+playerList[name] = { name = name, guid = nil } -- Real GUIDs only!
+
+frame:SetScript("OnEnter", function()
+    if SetMouseoverUnit and frame.guid and type(frame.guid) == "string" and frame.guid:sub(1, 2) == "0x" and not frame.guid:find("TEST") then
+        pcall(SetMouseoverUnit, frame.guid)
+    end
+end)
+frame:SetScript("OnLeave", function()
+    if SetMouseoverUnit then
+        pcall(SetMouseoverUnit)
+    end
+end)
+```
+
 ---
 
 ## 🛠️ Part J — Dual-Mode Execution Framework
