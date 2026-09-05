@@ -431,7 +431,7 @@ def main():
 
         print("\n" + "=" * 60)
         if total_errors == 0 and total_warnings == 0:
-            print(f"{BOLD}{GREEN}ALL PASSED: 100% compliant with OctoWoW v2 specifications!{RESET}\n")
+            print(f"{BOLD}{GREEN}ALL PASSED: 100% compliant with Enhanced Client Engine specifications!{RESET}\n")
             sys.exit(0)
         elif total_errors == 0:
             print(f"{BOLD}{YELLOW}PASSED: Zero critical errors ({total_warnings} advisory warning(s)).{RESET}\n")
