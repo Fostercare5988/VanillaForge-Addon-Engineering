@@ -262,6 +262,20 @@ Vanilla WoW group structures and raid frames are universally rooted in 5-player 
 - **Never Generate Arbitrary Ribbon Layouts**: Avoid monolithic 40-unit horizontal strips or arbitrary single-column towers that stretch across wide monitors.
 - **Bounded Container Sizing**: Container header/backdrop frames (`displayFrame:SetWidth(...)`) must calculate their dimensions based strictly on the *active* number of columns currently populated, never hardcoding maximum potential units (e.g. 40 units in open world). On a fresh login or in open world with 0–5 detected units, the container width must bound itself to 1 column (e.g. 150px), preventing empty black bars from stretching across the user's screen.
 
+**C11. Strict Layer Separation for Framing vs Content Textures (Draw-Order Occlusion Defense)**
+When a UI component has both a framing/background texture (e.g. solid black border or backdrop) and a content/icon texture on the same frame, **never create both textures on the same draw layer** (e.g. `"OVERLAY"`).
+In the 1.12.1 engine (especially with modern DXVK Vulkan frame-pacing and D3D9 hooks), same-layer draw order across dynamic Show/Hide passes is non-deterministic. A solid black background texture can be drawn on top of the icon, producing an opaque "black box" artifact where the icon appears completely blacked out.
+Always place background framing in `"BORDER"` or `"ARTWORK"`, and content/icon textures in `"OVERLAY"`:
+```lua
+-- Framing/Backdrop in ARTWORK (above health bars, below icons)
+btn.IconBg = btn:CreateTexture(nil, "ARTWORK")
+btn.IconBg:SetTexture(0, 0, 0, 1)
+
+-- Foreground Content/Icon strictly in OVERLAY
+btn.Icon = btn:CreateTexture(nil, "OVERLAY")
+```
+This guarantees mathematically that the backdrop will never occlude or clip the icon.
+
 ---
 
 
@@ -951,6 +965,53 @@ for i = 1, MAX_ENEMIES do
         end
     end
 end
+```
+
+### Anti-Pattern 23: Same-Layer Background/Icon Creation (The "Black Square" Texture Occlusion Trap)
+```lua
+-- ❌ BANNED (Both Background and Icon on OVERLAY layer -> background occludes icon on dynamic redraws):
+btn.StealthIconBg = btn:CreateTexture(nil, "OVERLAY")
+btn.StealthIconBg:SetTexture(0, 0, 0, 1)
+btn.StealthIcon = btn:CreateTexture(nil, "OVERLAY")
+-- In 1.12.1 + DXVK, StealthIconBg intermittently draws over StealthIcon, rendering as a solid black square!
+
+-- ✅ GOLDEN (Strict Layer Separation: ARTWORK Background, OVERLAY Content):
+btn.StealthIconBg = btn:CreateTexture(nil, "ARTWORK")
+btn.StealthIconBg:SetPoint("LEFT", btn, "LEFT", 1, 0)
+btn.StealthIconBg:SetTexture(0, 0, 0, 1)
+
+btn.StealthIcon = btn:CreateTexture(nil, "OVERLAY")
+btn.StealthIcon:SetPoint("LEFT", btn, "LEFT", 2, 0)
+btn.StealthIcon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+-- Guaranteed draw order: HealthBar (ARTWORK) < IconBg (ARTWORK) < Icon (OVERLAY)!
+```
+
+### Anti-Pattern 24: Small-Scale Downsampling Collapse & Fragile MPQ Icon Lookups (The Dark Icon Trap)
+```lua
+-- ❌ BANNED (Using dark 1.12 spellbook textures that collapse at 16x16 or fail across client MPQ locales):
+btn.StealthIcon:SetTexture("Interface\\Icons\\Ability_Vanish") -- 85%+ dark purple smoke; looks like a black square at 16x16!
+btn.StealthIcon:SetTexture("Interface\\Icons\\Ability_Druid_SupriseAttack") -- Missing/typo in some 1.12 client MPQs!
+
+-- ✅ GOLDEN (Curated High-Contrast Icons & Bundled 32-bit Addon Assets):
+-- 1. For Druid Prowl: Bundle an enhanced 64x64 TGA (+15% brightness/contrast) directly in Addon Textures:
+local PROWL_TEXTURE = [[Interface\AddOns\<AddonName>\Textures\prowl.tga]]
+btn.StealthIcon:SetTexture(PROWL_TEXTURE) -- Glowing yellow cat eyes pop vividly against dark bars, 100% reliable load!
+
+-- 2. For Rogue Vanish: Use high-visibility Ability_Stealth paired with a distinct VANISH badge:
+btn.StealthIcon:SetTexture("Interface\\Icons\\Ability_Stealth")
+btn.HealthText:SetText("|cffb0b0ffVANISH|r") -- Instantly distinguishable at a glance!
+```
+
+### Anti-Pattern 25: SuperWoW `SpellInfo` Return Arity Conflation
+```lua
+-- ❌ BANNED (Assuming SuperWoW SpellInfo mimics Retail/ClassicAPI GetSpellInfo with 7+ return values):
+local name, _, icon = SpellInfo(spellId)
+-- BUG: SuperWoW SpellInfo(spellId) in C++ returns ONLY 1 value (the spell name string)!
+-- Result: 'icon' is nil! Falling back to empty strings or broken lookups.
+
+-- ✅ GOLDEN (Direct Name Capture with Curated Local Texture Lookup):
+local spellName = (SpellInfo and SpellInfo(spellId)) or (STEALTH_SPELLS[spellId] and STEALTH_SPELLS[spellId].name)
+local spellTex = (spellName and STEALTH_NAMES[spellName] and STEALTH_NAMES[spellName].texture) or "Interface\\Icons\\Ability_Stealth"
 ```
 
 ---
