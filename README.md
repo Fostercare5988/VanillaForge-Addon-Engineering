@@ -1,161 +1,92 @@
-# World of Warcraft 1.12.1 Enhanced Engine — Addon Modernization & Architecture System Prompt
+# World of Warcraft 1.12.1 Enhanced Engine — OctoWoW Framework (v2.0)
 
 [![World of Warcraft 1.12.1](https://img.shields.io/badge/WoW-1.12.1%20(Vanilla)-blue.svg)](https://github.com/Fostercare5988/OctoWoW-Addon-Modernization-Reverse-Engineering-System-Prompt)
 [![Engine Stack](https://img.shields.io/badge/Engine-ClassicAPI%20%7C%20SuperWoW%20%7C%20NamPower%20%7C%20UnitXP%20%7C%20DXVK-green.svg)](https://github.com/Fostercare5988/OctoWoW-Addon-Modernization-Reverse-Engineering-System-Prompt)
-[![Lua Version](https://img.shields.io/badge/Lua-5.0%20Strict-orange.svg)](https://github.com/Fostercare5988/OctoWoW-Addon-Modernization-Reverse-Engineering-System-Prompt)
+[![Framework Version](https://img.shields.io/badge/OctoWoW-v2.0%20Canonical-brightgreen.svg)](https://github.com/Fostercare5988/OctoWoW-Addon-Modernization-Reverse-Engineering-System-Prompt)
 
-A battle-tested, high-precision system prompt designed for AI coding assistants and reverse engineers to modernize, refactor, and optimize legacy **World of Warcraft 1.12.1 (Vanilla)** addons for the **Enhanced World of Warcraft 1.12.1 Client Extension Stack**.
-
----
-
-## 🎯 Modernization Paradigm
-
-We **ONLY** build and modernize addons that strictly require and leverage the complete modern **Enhanced 1.12.1 Engine Stack** (including **ClassicAPI**, **SuperWoW**, **NamPower**, **UnitXP SP3**, and **DXVK**). We never write backwards-compatible 2006 fallback code, tooltip scanners, or combat log string parsers.
-
-### Why Legacy 1.12.1 Addons Lag vs. The Modern Stack:
-- **No Combat Log Parsing:** ClassicAPI provides native millisecond-accurate castbars (`UnitCastingInfo` / `UnitChannelInfo`), eradicating combat log text regexes and GC stutter.
-- **No Hidden Tooltip Scans:** Structured aura tables via `C_UnitAuras.GetAuraDataByIndex` replace slow hidden `GameTooltip` string reading.
-- **No `OnUpdate` Polling Loops:** Hardware-level timers (`C_Timer.After` / `C_Timer.NewTicker`) eliminate Lua frame polling.
-- **Native Nameplate System:** `C_NamePlate` replaces complex `WorldFrame` coordinate scraping.
-- **Native Focus Target:** True `"focus"` unit token (`FocusUnit` / `ClearFocus`).
-
-The [**`OCTOWOW_SYSTEM_PROMPT.md`**](OCTOWOW_SYSTEM_PROMPT.md) guarantees that refactored addons run with **zero runtime errors, zero layout glitches, and zero combat GC stutter**.
+A battle-tested, high-precision architectural framework and system prompt designed for AI coding assistants and reverse engineers to modernize, harden, and build addons natively for the **Enhanced World of Warcraft 1.12.1 Client Extension Stack**.
 
 ---
 
-## ⚡ The Mandatory Enhanced 1.12.1 Engine Stack
+## 🎯 OctoWoW v2.0 Architecture & Core Principles
 
-All modernized addons **strictly require** the full 4-DLL client extension stack:
+OctoWoW v2.0 replaces dogmatic, over-prescriptive rules with a **Capability-First**, **Execution-Tiered** engineering model:
 
-| Component | Official Repository | Minimum Version | Core Capability / Role |
-| :--- | :--- | :--- | :--- |
-| **ClassicAPI** | [**brues-code/ClassicAPI**](https://github.com/brues-code/ClassicAPI) | `v1.13.4+` **Mandatory DLL** | 550+ functions across ~60 modern retail-style `C_` namespaces (`C_Timer.After` / `NewTicker`, `UnitCastingInfo` / `UnitChannelInfo`, `C_NamePlate`, `C_UnitAuras`, `FocusUnit` / `ClearFocus`, `C_Container`, `C_EncodingUtil`, `C_GossipInfo`, `C_EquipmentSet`, `C_AddOns`), plus `hooksecurefunc`, `InCombatLockdown`, `table.wipe`, and a source-rewriter that makes modern Lua 5.1 syntax (`#`, `%`, `string.match`) compile on the 5.0 VM. |
-| **SuperWoW** | [**balakethelock/SuperWoW**](https://github.com/balakethelock/SuperWoW) | `v2.2+` **Mandatory DLL** | GUID-based unit arguments on all unit functions, `RAW_COMBATLOG`, exact-name targeting `TargetByName(name, true)`, direct GUID targeting `TargetUnit(guid)`, `SetMouseoverUnit`, clickthrough modes. |
-| **NamPower** | [**Emyrk/nampower**](https://github.com/Emyrk/nampower) | `v4.6.3+` **Mandatory DLL** | Client-side spell-cast queueing (eliminates input latency), cooldown/aura/spell info (`SpellInfo`, `GetSpellNameAndRankForId`), binary combat event dispatches. |
-| **UnitXP SP3** | [**brues-code/UnitXP_SP3**](https://github.com/brues-code/UnitXP_SP3) | `v90+` **Mandatory DLL** | Real-time uncapped raw numerical health (`UnitXP("health", unit)` / `UnitXP("maxhealth", unit)`), line-of-sight, distance calculation (`UnitXP("distance", unit)` / `UnitXP("distanceBetween", u1, u2)`), OS taskbar flashing (`FlashClientIcon()`), window foregrounding (`SetClientWindowForeground()`). |
-| **DXVK** | [**doitsujin/dxvk**](https://github.com/doitsujin/dxvk) | `v2.0+` Vulkan Layer | Direct3D 9 to Vulkan translation layer, frametime pacing smoothing, jitter eradication, GPU optimization. |
-| **VanillaFixes** | [**hannesmann/vanillafixes**](https://github.com/hannesmann/vanillafixes) | Latest Client Patch | High refresh rate animation uncap, modern OS compatibility, raw mouse input fix. |
+1. **Capability-First Development (Zero Artificial Bloat):**
+   - The modern stack is guaranteed to be installed.
+   - An addon MUST leverage a DLL capability when it delivers measurable improvement in **correctness**, **performance**, **safety**, or **architectural simplicity**.
+   - Never force NamPower or UnitXP dependencies into simple or UI-only addons merely to "use the stack."
+2. **Four-Tier Execution Performance Model:**
+   - **Tier 0 (Load-Time):** `PLAYER_LOGIN` & SavedVariables setup. Clarity & maintainability > micro-optimization.
+   - **Tier 1 (Cold Event):** Zone changes & UI toggles. Lightweight allocations permitted.
+   - **Tier 2 (Combat Hot Path):** `UNIT_HEALTH`, `UNIT_CASTEVENT`, combat log. Zero closure churn, minimal allocations.
+   - **Tier 3 (Per-Frame Path):** `OnUpdate` running 60–144+ FPS. Strict zero allocation. Allowed ONLY for visual interpolation, drag, or animations.
+3. **API Priority Ladder & Anti-Hallucination Mandate:**
+   - Native Events → Direct Unit Tokens (`target`, `focus`, `nameplateN`) → SuperWoW GUIDs → ClassicAPI C_ APIs → Stack DLL APIs → Cached State → C_Timer → Legacy 1.12 APIs.
+   - Absolute prohibition against inventing non-existent API functions or return signatures.
+4. **DXVK as Runtime Rendering Environment:**
+   - DXVK translates Direct3D 9 to Vulkan for smooth frame pacing and jitter eradication.
+   - Addons enforce frame-rate independent math (`elapsed`), explicit FrameXML draw layering (`BACKGROUND`, `BORDER`, `ARTWORK`, `OVERLAY`), and zero texture churn.
+
+---
+
+## ⚡ The Enhanced 1.12.1 Engine Stack
+
+| Component | Minimum Version | Core Capability / Role |
+| :--- | :--- | :--- |
+| **ClassicAPI** | `v1.13.4+` Mandatory DLL | 550+ functions across ~60 modern retail-style `C_` namespaces (`C_Timer`, `C_NamePlate`, `C_UnitAuras`, `FocusUnit`, `C_Container`), plus `hooksecurefunc`, `table.wipe`, `InCombatLockdown`, and automatic AST rewrites for `#`, `%`, string metatables. |
+| **SuperWoW** | `v2.2+` Mandatory DLL | GUID-based unit arguments on all unit functions, `TargetUnit(guid)`, exact-name targeting `TargetByName(name, true)`, `SetMouseoverUnit`, `RAW_COMBATLOG`. |
+| **NamPower** | `v4.6.3+` Opt-in DLL | Client-side spell queueing, DBC spell metadata (`GetSpellNameAndRankForId`), binary combat event dispatches. |
+| **UnitXP SP3** | `v90+` Opt-in DLL | Real-time uncapped raw numerical health (`UnitXP("health", unit)`), line-of-sight, distance calculation (`UnitXP("distance", unit)`), OS window foregrounding. |
+| **DXVK** | `v2.0+` Vulkan Layer | Direct3D 9 to Vulkan translation layer, frametime pacing smoothing, jitter eradication. |
+| **VanillaFixes** | Latest Client Patch | High refresh rate animation uncap, modern OS compatibility, raw mouse input fix. |
 
 ---
 
 ## 🛡️ Mandatory Addon Startup Guard
 
-Every modernized addon must declare an engine dependency check at initialization — checking the DLLs' own version globals, not inferring presence indirectly from a function existing:
+Every modernized addon must declare an engine dependency check at initialization:
 
 ```lua
--- Strict Engine Dependency Guard
-if not (CLASSIC_API_VERSION and SUPERWOW_VERSION) then
-    DEFAULT_CHAT_FRAME:AddMessage("|cffff2020[Fatal Error]|r " .. (addonName or "Addon") .. " requires ClassicAPI.dll & SuperWoW! Please ensure ClassicAPI.dll and SuperWoW are loaded.", 1, 0.2, 0.2)
+-- Strict Engine Dependency Guard (Mandatory ClassicAPI v1.13.4+ & SuperWoW v2.2+)
+local MIN_CLASSIC_API = 11304
+
+if not (CLASSIC_API_VERSION and SUPERWOW_VERSION) or 
+   (type(CLASSIC_API_VERSION) == "number" and CLASSIC_API_VERSION < MIN_CLASSIC_API) then
+    DEFAULT_CHAT_FRAME:AddMessage(
+        "|cffff2020[Fatal Error]|r " .. (addonName or "Addon") .. 
+        " requires ClassicAPI (v1.13.4+) & SuperWoW (v2.2+)! Please ensure both DLLs are loaded.", 
+        1, 0.2, 0.2
+    )
     return
 end
 ```
 
 ---
 
-## 📚 Core Architecture & Directives Overview
+## 🛠️ Automated Static Scanner & Linter (`octowow_linter.py`)
 
-The master prompt is structured into 10 core thematic sections (Parts A through J):
+The repository includes a fast Python heuristic structural and static analysis auditor:
 
-### **Part A — Lua Syntax: What ClassicAPI Rewrites, and What It Doesn't**
-- **No uncalled colon methods** — the one rule that never changes: `(f.GetScript and f:GetScript("OnClick"))` is required; `(f:GetScript ...)` alone crashes the Lua parser, in any Lua version. This is a parser rule, not a 5.0-vs-5.1 gap, so it's not something ClassicAPI's rewriter touches.
-- **`#` and `%` are safe to use directly** — confirmed in-client (`/run print(#{1,2,3})` → `3`). ClassicAPI's source-rewriter compiles modern Lua 5.1 syntax on the 1.12 Lua 5.0 VM before it reaches the compiler, so `#t` and `a % b` work normally now. `table.getn(t)`/`math.mod(a, b)` still work but are the legacy forms you'll meet in old or ported code, not something to write going forward.
-- **String metatables & `string.match` are safe to use directly** — `("str"):upper()`, `msg:match("^!(%w+)")` resolve through the rewriter the same way `string.find`/`string.sub`/`string.gsub` always have.
-
-### **Part B — Modern Engine Stack API Reference**
-- **Real-Time Castbars**: `UnitCastingInfo(unit)` / `UnitChannelInfo(unit)`.
-- **Modern Nameplates**: `C_NamePlate.GetNamePlates()`, `GetNamePlateForGUID()`, and `NAME_PLATE_UNIT_ADDED` / `REMOVED` events.
-- **Structured Auras**: `C_UnitAuras.GetAuraDataByIndex(unit, idx)`, plus the more direct `GetBuffDataByIndex` / `GetUnitAuraBySpellID` for single-aura lookups.
-- **Native Focus Unit**: `FocusUnit("target")`, `ClearFocus()`, `UnitHealth("focus")`.
-- **Native C++ Encodings**: `C_EncodingUtil` — Base64, Hex, and JSON/CBOR serialization (no MD5/SHA — corrected from an earlier draft that claimed hashing support that doesn't exist).
-- **Native Gossip**: `C_GossipInfo` (`GetActiveQuests`, `GetOptions`, `SelectOption`, …) replaces the old flat-vararg stock functions.
-- **Protocol 1.12.1 Specifications**: Exact 5-tuple loot roll returns, NamPower combat enums (`SMSG_SPELLLOGMISS`), and UnitXP SP3 uncapped health/distance engine.
-- **SuperWoW Hardware APIs**: `TargetByName(name, true)`, `TargetUnit(guid)`, and `FlashClientIcon()`.
-- **High-value primitives easy to miss**: `hooksecurefunc`, `InCombatLockdown`, `C_AddOns.IsAddOnLoaded()` (reliable addon detection — see Part E), `table.wipe`, plus a bundled Lua utility library (`Mixin`, `TableUtil`, `MathUtil`) and a bundled `DebugTools` addon (`/dump`, `/etrace`, `/framestack`, `/luaerrors`, real `print()`).
-
-### **Part C — FrameXML Layout & Event Rules**
-- **Deterministic anchoring**: Eliminates relative sibling load-time anchoring bugs.
-- **ESC closing & templates**: Native `UISpecialFrames` registration.
-- **Click & script safety**: Explicit right-click registration (`btn:RegisterForClicks("LeftButtonUp", "RightButtonUp")`) and `:GetScript("OnClick")` type-checking on `Button`/`CheckButton` frames.
-- **Global scope pollution defense**: Strict `local` scoping on all loop iterators and temporaries.
-
-### **Part D — Performance: Memory, Zero GC Churn & Frame Timing**
-- **Zero combat heap allocations**: No closures, temporary tables, or string concats inside combat/OnUpdate loops.
-- **Pre-allocated unit ID arrays & LRU item caches**: O(1) cached lookup efficiency.
-- **High-refresh DXVK animation smoothing**: Delta-time (`dt`) exponential smoothing and accumulator timers for jitter-free DXVK frame pacing and smooth rendering.
-- **Exclusive C++ Hardware Timers**: `C_Timer.After` and `C_Timer.NewTicker` (custom pure-Lua timer loops are strictly forbidden).
-
-### **Part E — Safety-Critical Matching & UI Filtering Rules**
-- **Check `C_AddOns.IsAddOnLoaded()` first**: reliable, direct addon-presence detection for anything with a normal TOC entry — no scanning needed.
-- **Currency protection**: Guards rare server currencies (e.g. `Fashion Coin`) and isolates token idols from equipable class relics.
-- **Zero-leak minimap tray discovery**: Whitelist-only addon button detection for what `C_AddOns` can't cover (loose minimap buttons, server-injected UI); strict exclusion of player WeakAuras, condition frames, and UI checkboxes; persistent registry retention; renderability validated with a hand-written helper (not a built-in function).
-- **Server UI suppression**: Explicit global frame lists and multi-layer `ARTWORK` region texture/FontString inspection for custom server radio buttons and LFG frames; reversible state preservation (`_alOrigState`).
-
-### **Part F — Zero-Bloat Aggressive Consolidation & DRY Architecture Mandate**
-- No superficial 1:1 API swaps: replacing `OnUpdate` with `C_Timer` while leaving the surrounding 2006-era bloat untouched doesn't count as done. Every touched file gets a full architectural diet.
-- Consolidate duplicate rendering pipelines and monolithic `if/elseif` chains into single parameterized, table-driven functions.
-- Any bugfix request triggers a full-codebase audit by default, not just a surgical patch — ask explicitly for a fast, scoped patch when you want one instead (mid-raid hotfixes, live testing).
-- Target: 30–60% net line reduction per modernization pass — treated as the *expected outcome* of removing genuine bloat, not a number to hit by stripping comments or safety guards. Legitimate new lines (a real feature, a safety guard) are fine; call them out rather than cutting something else to compensate.
-
-### **Part G — Static Verification Before Any Commit**
-- Pre-commit AST/closure verification, regex linting for bare colon methods, and automated eradication of 2006 dead code patterns (hidden tooltip scanning, combat log cast parsing, custom OnUpdate timers).
-- If you run a Lua 5.1+ syntax checker as a backstop: since ClassicAPI's rewriter now handles `#` / `%` / `string.match`, a clean 5.1 parse is a genuinely closer approximation of what will actually run on the enhanced client — not the false "all clear" it used to be before ClassicAPI was mandatory.
-
-### **Part H — Conventions, Workflow & Conflict Resolution**
-- **H1: OctoLauncher Remote Preservation**: `.git` remote synchronization against personal repository (`https://github.com/Fostercare5988/<AddonName>.git`).
-- **H2: Clean Canonical Naming & Pure English**: Strict 100% English code and UI, strictly NO `-Octo` or `[Octo]` suffixes in addon folder names or titles, and **NEVER put DLL names in `## Dependencies:`**.
-- **H3–H4: Read-Before-Write & Reality Precedence**: Direct verified client behavior always supersedes stale written rules.
-- **H5: Mandatory Automated README Delivery**: Every audit, refactor, or fix automatically generates/updates a standardized, badge-compliant `README.md`.
-- **H6: The Continuous Learning Feedback Protocol**: Self-annealing system prompt where newly solved bugs automatically feed forward into `OCTOWOW_SYSTEM_PROMPT.md` and `octowow_linter.py`.
-- **H7: Modular Addon Architecture**: Clean separation of concerns (Core combat engine in `<AddonName>.lua` vs. GUI in `<AddonName>Opt.lua`), and permanent eradication of legacy `Locales/` folder clutter.
-
-### **Part I — Battle-Tested Anti-Patterns & Golden Fixes (Hall of Fame)**
-Concrete, verified before/after code diffs covering real-world architectural bugs across the addon suite:
-1. **Tooltip Scraping vs. Linear $O(n)$ Slot-Batching** (`C_UnitAuras.GetAuraSlots`).
-2. **Child Cooldown Click Interception vs. Explicit Passthrough** (`item.cooldown:EnableMouse(false)`).
-3. **Hierarchy Table Garbage Churn vs. Register Tail Recursion** (zero-GC inspection).
-4. **Legacy 2006 Nil-Loops vs. Unconditional C++ `table.wipe(t)`**.
-5. **Framerate-Dependent Steps vs. Delta-Time Exponential Smoothing** (`dt * rate`).
-6. **2D Map Coordinate Trig vs. Native 3D Euclidean Vector Distances** (`UnitXP("distance", unit)`).
-7. **Redundant Marketing Buzzwords vs. Clean Stack Standard Notation** (`DXVK`).
-8. **Global Pointer Hijacking vs. Non-Destructive `hooksecurefunc`**.
-9. **Hidden XML Tooltip Frames vs. Direct API Resolution** (`GetActionInfo`).
-10. **Pure-Lua OnUpdate Polling Frames vs. Native Hardware `C_Timer`** (`C_Timer.NewTicker`).
-11. **Retail Protected Action Lockdown vs. Unrestricted SuperWoW Targeting** (`TargetByName(name, true)`).
-12. **Broken Slash Command LoadOnDemand vs. Direct Unified Frame Toggling** (`if Frame:IsShown() then Frame:Hide() else Frame:Show() end`).
-13. **Loose Substring Keyword Matching vs. Exact Hash Set Isolation** (preventing relic/currency trashing).
-14. **Uncalled Colon References vs. Safe Method Lookup** (`f.Method and f:Method()`).
-15. **Nested SavedVariables Path Destruction vs. Safe Recursive Initialization** (`SetOptionFromVarPath`).
-
-### **Part J — Dual-Mode Execution Framework**
-- **Mode A: Legacy Modernization Protocol**: 4-phase audit, bloat kill, DLL rewire, and linter-verified single-branch git commit.
-- **Mode B: Greenfield Scaffolding Protocol**: 5-phase ground-up architecture, pre-allocated zero-GC state tables, hardware timers, and production delivery.
-
----
-
-## 🛠️ Automated OctoWoW Addon Linter & Auditor
-
-This repository bundles a high-speed Python-powered static analysis auditor located at:
 ```bash
 python tools/octowow_linter.py <path_to_addon_or_file>
 ```
 
-### Capabilities:
-- **AST Block-Nesting Syntax Verification**: Guarantees balanced blocks (`if/then/end`, `do/end`, `function/end`, `repeat/until`) and bracket parity.
-- **Rule B1 Guard Audit**: Ensures the mandatory startup dependency guard is present and checking `CLASSIC_API_VERSION` & `SUPERWOW_VERSION`.
-- **Rule A1 Syntax Crash Audit**: Detects illegal bare colon method lookups (`(frame:GetScript and ...)`) before they crash the Lua parser.
-- **Rule B10 & D4 Memory Audit**: Flags obsolete 2006 table wiping loops and recommends native C++ `table.wipe(t)`.
-- **Rule D1 Hierarchy Churn Audit**: Flags `{ f:GetRegions() }` and `{ parent:GetChildren() }` allocations in iterations.
-- **Rule H5 Documentation Audit**: Validates README compliance and flags raw in-game WoW color escape codes (`|cff...`).
-- **Style Audit**: Enforces clean DXVK notation without redundant marketing claims.
+### Features:
+- **Heuristic Structural Scan:** Catches unclosed blocks (`if/end`, `do/end`, `function/end`, `repeat/until`) and bracket mismatches before launching the client.
+- **Severity Levels:** Classifies findings into `ERROR` (hard syntax traps / fatal bare colons), `WARNING` (suspect allocations, legacy APIs), and `INFO` (optimization hints).
+- **Inline Rule Suppression:** Suppress specific false positives using `-- octowow-ignore: <RULE_ID>` (e.g. `-- octowow-ignore: AP-24` or `-- octowow-ignore: all`).
+- **Strict Mode:** Pass `--strict` to treat warnings as errors.
 
 ---
 
-## 🚀 How to Use
+## 🚀 How to Use the System Prompt
 
-1. Open [`OCTOWOW_SYSTEM_PROMPT.md`](OCTOWOW_SYSTEM_PROMPT.md).
-2. Copy the contents into your AI coding assistant (Claude, Gemini, Antigravity, ChatGPT, Cursor, etc.) as a **System Prompt** or initial instruction context.
-3. Provide the path to the legacy Vanilla addon directory you wish to modernize (`C:\Users\Fostercare\Desktop\Niko2\Interface\AddOns\<AddonName>`), or specify the specifications for a new addon built from scratch.
-4. Run `python tools/octowow_linter.py <addon-path>` to automatically verify the addon with 0 issues.
+1. Open [`OCTOWOW_SYSTEM_PROMPT_v2.md`](OCTOWOW_SYSTEM_PROMPT_v2.md) (the canonical v2 prompt).
+2. Copy its contents into your AI coding assistant (Claude, ChatGPT, Antigravity, Cursor, Windsurf) as a **System Prompt** or project rule.
+3. Use the **10-Step Execution Protocol** to audit, refactor, or build your addon.
+4. Run `python tools/octowow_linter.py <addon_path>` to ensure clean structural compliance.
+5. In-game: Verify with `/reload`, `/luaerrors 1`, `/etrace`, and `/framestack`.
 
 ---
 

@@ -2,58 +2,55 @@
 name: octowow
 description: >-
   Autonomous agent skill for World of Warcraft 1.12.1 Enhanced Engine Addon Modernization and Greenfield Development.
-  Enforces ClassicAPI v1.13.4+, SuperWoW v2.2+, NamPower v4.6.3+, UnitXP SP3, DXVK frame pacing, zero-GC memory recycling,
-  automated AST & static linting via tools/octowow_linter.py, and single-branch git standardization.
+  Enforces OctoWoW v2.0 standards: Capability-First Architecture, 4-Tier Execution Performance Model, ClassicAPI v1.13.4+,
+  SuperWoW v2.2+, NamPower v4.6.3+, UnitXP SP3, DXVK Vulkan runtime environment, heuristic static scanning via tools/octowow_linter.py,
+  and dual static/runtime verification pipeline.
 ---
 
-# OctoWoW Addon Modernization & Greenfield Development Skill
+# OctoWoW Addon Modernization & Greenfield Development Skill (v2.0)
 
 Use this skill whenever:
 - Modernizing a legacy 2006 World of Warcraft 1.12.1 addon.
-- Building a new 1.12.1 addon from scratch using modern engine capabilities.
+- Building a new 1.12.1 addon natively for the enhanced engine stack.
 - Auditing an existing addon for memory leaks, GC churn, or compatibility.
-- Synchronizing an addon with the latest ClassicAPI / SuperWoW DLL updates.
+- Diagnosing event timing, FrameXML draw layering, or targeting bugs.
 
-Master System Prompt: [`OCTOWOW_SYSTEM_PROMPT.md`](../../OCTOWOW_SYSTEM_PROMPT.md)
-Automated Static Auditor: `python tools/octowow_linter.py <target_path>`
+Master System Prompt: [`OCTOWOW_SYSTEM_PROMPT_v2.md`](../../OCTOWOW_SYSTEM_PROMPT_v2.md)
+Heuristic Static Scanner: `python tools/octowow_linter.py <target_path>`
 
 ---
 
-## 1. Automated Static Linting (The Gatekeeper)
-Before modifying or after touching any Lua file, run the automated OctoWoW linter:
+## 1. Core Operating Philosophy (v2.0)
+1. **Capability-First Model:** Addons assume the modern stack is present, but consume a DLL capability ONLY when it provides measurable improvements in correctness, performance, safety, or architecture. Never introduce a DLL dependency merely to use it.
+2. **Execution Tiers (Hot Path vs Cold Path):**
+   - **Tier 0 (Load-Time):** `PLAYER_LOGIN` & SavedVariables. Readability > micro-optimization.
+   - **Tier 1 (Cold Event):** Zone changes & UI toggles. Lightweight allocations allowed.
+   - **Tier 2 (Combat Hot Path):** `UNIT_HEALTH`, `UNIT_CASTEVENT`, combat log. Zero closure churn, minimal allocations.
+   - **Tier 3 (Per-Frame Path):** `OnUpdate` running 60–144+ FPS. Strict zero allocation. Allowed ONLY for visual interpolation, drag, or animations.
+3. **API Priority Ladder:** Native Events → Direct Unit Tokens (`target`, `focus`, `nameplateN`) → SuperWoW GUIDs → ClassicAPI C_ APIs → Stack DLL APIs → Cached State → C_Timer → Legacy 1.12 APIs.
+4. **Anti-Hallucination Mandate:** Never invent API functions, event names, or version signatures.
+
+---
+
+## 2. 10-Step Execution Protocol
+1. **Inventory:** Inspect TOC, Lua files, SavedVariables, and dependencies.
+2. **Classify Subsystems:** Mark each component as `KEEP`, `PATCH`, `REFACTOR`, or `REWRITE`.
+3. **Capability Map:** Map required features to the highest available API tier.
+4. **Hot Path Map:** Identify Tiers 0–3 execution paths.
+5. **Change Plan:** Formulate minimal-diff plan before editing.
+6. **Implement:** Execute deterministic, self-contained edits.
+7. **Static Scan:** Run `python tools/octowow_linter.py <path>`.
+8. **Runtime Diagnostics:** Verify in-client using `/reload`, `/luaerrors 1`, `/etrace`, and `/framestack`.
+9. **PvP Stress Test:** Test in 10/15/40-man battlegrounds, target spamming, and roster shrink.
+10. **Final Audit:** Confirm zero global leaks, explicit draw layering, and no stale fixed-array bleed.
+
+---
+
+## 3. Static Heuristic Scanning
+Run the automated OctoWoW scanner:
 ```bash
 python "c:\Users\Fostercare\Documents\System Prompts\tools\octowow_linter.py" "<addon_directory>"
 ```
-The linter validates:
-- Lua AST syntax & block nesting balance (`if/end`, `do/end`, `function/end`, `repeat/until`).
-- Rule B1 Mandatory Startup Guard (`CLASSIC_API_VERSION and SUPERWOW_VERSION`).
-- Rule A1 bare colon method prevention (`f:GetScript` crash protection).
-- Rule B3 tooltip scraping elimination.
-- Rule B10 unconditional native C++ `table.wipe` enforcement.
-- Rule C8 mouse passthrough on child cooldown models and textures.
-- Rule D1 zero-GC register tail recursion hierarchy scanning.
-- Rule H5 README documentation compliance & raw WoW color escape code eradication.
-- Rule H7 modular directory architecture (eradication of legacy Locales/ folders & separation of <Addon>Opt.lua).
-- Clean DXVK standard notation without redundant "144Hz+" marketing buzzwords.
-
----
-
-## 2. Mode Identification (Part J)
-- **Mode A: Legacy Modernization:**
-  1. Deep audit & kill 2006 bloat (tooltip scanning, chat regexes, OnUpdate polling).
-  2. Wire modern C_Namespaces (`C_Timer`, `C_UnitAuras`, `C_GossipInfo`), native `table.wipe`, and `TargetUnit(guid)`.
-  3. Run linter until 0 issues / 0 warnings remain.
-  4. Generate Rule H5 README and commit to a single branch (`main` or `master`).
-  5. **Phase 5 (Mandatory Gate)**: Dual-level self-audit (Macro Architecture in Section H + Micro Code in Part I). If new macro structures or micro anti-patterns were established, update `OCTOWOW_SYSTEM_PROMPT.md` and `tools/octowow_linter.py`, and push to GitHub before concluding. Zero complacency allowed.
-- **Mode B: Greenfield Scaffolding:**
-  1. Scaffold canonical structure: `<Addon>.toc`, `Core.lua`, `UIElements.lua`, `README.md`.
-  2. Pre-allocate all combat state tables and sort buffers at file load time.
-  3. Use `C_Timer.After` / `C_Timer.NewTicker` for all delayed/recurring tasks.
-  4. Build UI with `:EnableMouse(false)` on non-interactive children.
-  5. Validate with linter and push to GitHub.
-  6. **Phase 6 (Mandatory Gate)**: Register new reusable patterns or boilerplate in Part I.
-
----
-
-## 3. Golden Anti-Patterns & Battle-Tested Diffs (Part I)
-- Always refer to Part I in `OCTOWOW_SYSTEM_PROMPT.md` for verified code templates.
+- **Exit code 0:** All critical errors passed.
+- **Strict Mode (`--strict`):** Treats advisory warnings as errors.
+- **Inline Suppression:** Add `-- octowow-ignore: <RULE_ID>` (e.g. `-- octowow-ignore: AP-24`) to suppress verified exceptions.
