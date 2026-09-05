@@ -266,6 +266,16 @@ class OctoWoWAuditor:
             if re.search(r'\btable\.sort\s*\(\s*(?:roster|buffer|enemies|units)\s*[,|\)]', line) and not 'active' in line.lower() and not line.strip().startswith('--'):
                 warnings.append(f"[Anti-Pattern 16 - Unbounded Buffer Sort] Line {idx}: 'table.sort' detected on fixed-size entity buffer. Fixed-capacity buffers sort empty/nil slots into active rows. Use bounded insertion sort.")
 
+        # 11. Anti-Pattern 23 / Rule C11: Same-Layer Background/Icon Occlusion Trap
+        for idx, line in enumerate(raw_lines, 1):
+            if re.search(r'CreateTexture\s*\(\s*nil\s*,\s*["\']OVERLAY["\']\s*\)', line) and re.search(r'(?:[Bb]g|[Bb]ackground)\b', line) and not line.strip().startswith('--'):
+                warnings.append(f"[Rule C11 - Same-Layer Occlusion Risk] Line {idx}: Background backdrop texture created on 'OVERLAY' layer. Place backdrops in 'BACKGROUND', 'BORDER', or 'ARTWORK' to prevent occluding foreground icons.")
+
+        # 12. Anti-Pattern 25: SuperWoW SpellInfo Return Arity Assumption
+        for idx, line in enumerate(raw_lines, 1):
+            if re.search(r'local\s+[^=]+,\s*[^=]+,\s*icon\s*=\s*SpellInfo\s*\(', line) and not line.strip().startswith('--'):
+                warnings.append(f"[Anti-Pattern 25 - SuperWoW SpellInfo Arity] Line {idx}: SuperWoW 'SpellInfo(spellId)' returns only 1 value (name). 3rd return value 'icon' will be nil. Use curated texture tables or ClassicAPI GetSpellInfo.")
+
         return issues, warnings
 
     def audit_addon_dir(self, dir_path):
