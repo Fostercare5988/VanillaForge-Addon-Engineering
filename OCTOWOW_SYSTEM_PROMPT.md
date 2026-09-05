@@ -916,6 +916,19 @@ function Addon:ToggleOptions()
 end
 ```
 
+### Anti-Pattern 21: Scoreboard Return Value Mismatch in Vanilla 1.12.1 (`GetBattlefieldScore` 9th vs 10th Return Value)
+```lua
+-- ❌ BANNED (Skipping return value 9 with extra '_' looking for retail/TBC classToken at 10):
+local name, _, _, _, _, faction, _, _, _, classToken = GetBattlefieldScore(i)
+-- In 1.12.1, return 9 is 'class' (e.g. 'Druid', 'Priest'). Return 10 is 'stat1' (number, e.g. 0) or nil!
+-- Result: classToken is nil -> 'classToken or "WARRIOR"' turns EVERY player in the BG into a brown Warrior!
+
+-- ✅ GOLDEN (Capturing 9th 'class' string with Canonical Token Resolver):
+local name, _, _, _, _, faction, _, _, class, classToken = GetBattlefieldScore(i)
+local rawClass = (type(classToken) == "string" and classToken) or (type(class) == "string" and class)
+local token = ResolveClassToken(rawClass) -- Resolves 'Druid' -> 'DRUID', 'Priester' -> 'PRIEST', etc.
+```
+
 ---
 
 ## 🛠️ Part J — Dual-Mode Execution Framework
