@@ -228,10 +228,27 @@ class OctoWoWAuditor:
             if '144Hz+' in line or '144Hz/240Hz+' in line:
                 warnings.append(f"[Style - Redundant Marketing] Line {idx}: '144Hz+' string found. User prefers clean 'DXVK' or 'DXVK Vulkan'.")
 
-        # 7. Rule H2: Foreign Locale Spaghetti Check
+        # 7. Rule H2: Foreign Locale Spaghetti & Non-English Bloat Check
+        FOREIGN_TERMS = [
+            r'\b(?:KRIEGER|JÄGER|JAEGER|SCHURKE|PRIESTER|SCHAMANE|MAGIER|HEXENMEISTER)\b',
+            r'\b(?:GUERRIER|CHASSEUR|VOLEUR|PRÊTRE|PRETRE|CHAMAN|DÉMONISTE|DEMONISTE)\b',
+            r'\b(?:GUERRERO|CAZADOR|PÍCARO|PICARO|SACERDOTE|CHAMÁN|BRUJO|DRUIDA)\b',
+            r'\b(?:Kriegshymnen|Goulet|Auge|Oeil)\b',
+        ]
         for idx, line in enumerate(raw_lines, 1):
             if re.search(r'GetLocale\(\)\s*==\s*["\'](deDE|frFR|esES|ruRU|zhCN|zhTW|koKR)["\']', line):
                 warnings.append(f"[Rule H2 - Foreign Locale Spaghetti] Line {idx}: Foreign locale condition detected. Code must be 100% English only.")
+            for pattern in FOREIGN_TERMS:
+                if re.search(pattern, line, re.IGNORECASE) and not line.strip().startswith('--'):
+                    warnings.append(f"[Rule H2 - Foreign Localization Bloat] Line {idx}: Non-English term detected in '{line.strip()[:60]}...'. Enforce 100% English only.")
+                    break
+
+        # 8. Rule A3 / A4: Obsolete Lua 5.0 Constructs (table.getn / math.mod)
+        for idx, line in enumerate(raw_lines, 1):
+            if re.search(r'\btable\.getn\s*\(', line) and not line.strip().startswith('--'):
+                warnings.append(f"[Rule A3 - Legacy table.getn] Line {idx}: 'table.getn(t)' detected. Use modern '#' length operator.")
+            if re.search(r'\bmath\.mod\s*\(', line) and not line.strip().startswith('--'):
+                warnings.append(f"[Rule A4 - Legacy math.mod] Line {idx}: 'math.mod(a, b)' detected. Use modern '%' modulo operator.")
 
         # 8. Rule B0: Obsolete 2006 Libraries (Ace, Babble, Dongle)
         for idx, line in enumerate(raw_lines, 1):
