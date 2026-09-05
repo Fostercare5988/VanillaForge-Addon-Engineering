@@ -450,6 +450,8 @@ OctoLauncher scans `.git` directories and syncs against `origin` when "Update Al
   - Be canonical in architecture, structure, and naming, but **do NOT plaster the literal word "Canonical" onto titles, descriptions, or commit messages**.
   - Standard Release Commit Format: `<AddonName> v<Version>: World of Warcraft 1.12.1 Enhanced Engine Modernization`
 - **Markdown & GitHub (README.md, Commits, PRs)**:
+  - **Zero "Octo" Branding on GitHub**: NEVER mention "Octo", "OctoWoW", or custom private server names on GitHub in addon repo names, `.toc` notes, README titles/descriptions, badges, commits, releases, or PRs. Present all addons neutrally and professionally as engineered for the **"World of Warcraft 1.12.1 Enhanced Client"** or **"Enhanced 1.12.1 Engine Stack (ClassicAPI, SuperWoW, DXVK)"**.
+  - **Battleground Suite Conventions**: 1.12.1 battlegrounds are Warsong Gulch (10v10), Arathi Basin / Thorn Gorge (15v15), and Alterac Valley (40v40). There is **no "Eye of the Storm"** (a TBC battleground); modern enhanced Vanilla environments feature **Thorn Gorge** for the 15v15 bracket. Never reference "Eye of the Storm".
   - **NEVER use WoW color codes** (`|cff...|r`) in markdown or git messages.
   - **Title Format**: `# <AddonName>`
   - **Version Badges**: `x.x.x` (standard semver).

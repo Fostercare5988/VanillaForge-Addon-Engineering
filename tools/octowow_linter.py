@@ -331,6 +331,18 @@ class OctoWoWAuditor:
                     readme_warnings.append("[Rule H5 - Raw WoW Colors] README.md contains raw WoW color codes (|cff.../|r). Clean to standard Markdown.")
                 if '144Hz+' in rm:
                     readme_warnings.append("[Style - Redundant Marketing] README.md contains '144Hz+'. Change to clean 'DXVK'.")
+                if 'Eye of the Storm' in rm:
+                    readme_warnings.append("[Rule H2 - Invalid BG] README.md contains 'Eye of the Storm'. Replace with 'Thorn Gorge'.")
+                if 'OctoWoW' in rm or '-Octo' in rm or '[Octo]' in rm:
+                    readme_warnings.append("[Rule H2 - Octo Branding Leak] README.md contains 'Octo' branding. Keep GitHub addon repos neutral.")
+
+        # Check TOC file for Octo branding leaks
+        for f in os.listdir(dir_path):
+            if f.endswith('.toc'):
+                with open(os.path.join(dir_path, f), 'r', encoding='utf-8', errors='replace') as tf:
+                    tc = tf.read()
+                    if 'OctoWoW' in tc or '[Octo]' in tc or '-Octo' in tc:
+                        readme_warnings.append(f"[Rule H2 - Octo Branding Leak] '{f}' contains 'Octo' branding in metadata. Keep GitHub addon repos neutral.")
 
         # Check Rule H7: Locales directory bloat
         locales_dir = os.path.join(dir_path, 'Locales')
