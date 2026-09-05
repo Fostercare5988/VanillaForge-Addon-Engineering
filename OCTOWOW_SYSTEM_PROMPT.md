@@ -929,6 +929,30 @@ local rawClass = (type(classToken) == "string" and classToken) or (type(class) =
 local token = ResolveClassToken(rawClass) -- Resolves 'Druid' -> 'DRUID', 'Priester' -> 'PRIEST', etc.
 ```
 
+### Anti-Pattern 22: Fixed-Array Row Bleed (Looping `1..currentSize` vs `1..MAX_ENTITIES` in Render Routines)
+```lua
+-- ❌ BANNED (Iterating only up to current bracket size leaves buttons from larger brackets/config visible):
+for i = 1, currentSize do -- If currentSize is 10 (WSG) or 15 (AB), buttons 16..40 are NEVER hidden!
+    local btn = TargetButton[i]
+    if i <= displayCount then btn:Show() else btn:Hide() end
+end
+-- Result: Stale preview/AV frames (Target16-Realm..Target40-Realm) remain stuck on screen permanently!
+
+-- ✅ GOLDEN (Iterating Full Capacity 1..MAX_ENEMIES & Clean Config Mode Teardown):
+for i = 1, MAX_ENEMIES do
+    local btn = TargetButton[i]
+    if btn then
+        if i <= displayCount then
+            btn:Show()
+        else
+            btn.targetName = nil
+            btn.targetGUID = nil
+            btn:Hide() -- Reliably clears and hides every single button beyond the active roster!
+        end
+    end
+end
+```
+
 ---
 
 ## 🛠️ Part J — Dual-Mode Execution Framework
