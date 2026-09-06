@@ -126,7 +126,7 @@ Rather than an impractical "zero tables anywhere" dogma, classify all execution 
 │                        World of Warcraft 1.12.1                        │
 ├──────────────────┬──────────────────┬────────────────┬─────────────────┤
 │    ClassicAPI    │     SuperWoW     │    NamPower    │    UnitXP SP3   │
-│ (v1.13.4+ DLL)   │   (v2.2+ DLL)    │ (v4.6.3+ DLL)  │   (v90+ DLL)    │
+│ (v1.14.0+ DLL)   │   (v2.2+ DLL)    │ (v4.6.3+ DLL)  │   (v90+ DLL)    │
 │ Modern C_ APIs,  │ GUIDs, Mouseover │ Spell Queues,  │ Raw HP, LoS,    │
 │ Syntax Rewrites  │ Targeting, Cast  │ Binary Combat  │ Distance, Audio │
 ├──────────────────┴──────────────────┴────────────────┴─────────────────┤
@@ -136,7 +136,7 @@ Rather than an impractical "zero tables anywhere" dogma, classify all execution 
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 1. ClassicAPI (`v1.13.4+`) — The Modern Core
+### 1. ClassicAPI (`v1.14.0+`) — The Modern Core
 - **Syntax Rewrites (TOC Files):** Modern syntax is compiled on the fly by ClassicAPI's rewriter:
   - `#t` length operator `[EMPIRICALLY VERIFIED]` (do not write `table.getn`).
   - `a % b` modulo operator (do not write `math.mod`).
@@ -149,7 +149,10 @@ Rather than an impractical "zero tables anywhere" dogma, classify all execution 
   - `C_NamePlate`: `GetNamePlates()`, `GetNamePlateForUnit(unit)`, `GetNamePlateForGUID(guid)`. Events: `NAME_PLATE_UNIT_ADDED`, `NAME_PLATE_UNIT_REMOVED`.
   - `C_UnitAuras`: Linear $O(n)$ slot-batching via `GetAuraSlots(unit, filter)` & `GetAuraDataBySlot(unit, slot)` or `AuraUtil.ForEachAura`. Avoid quadratic $O(n^2)$ index looping.
   - `C_Container`: Modern container queries (`GetContainerNumFreeSlots`, `SwapItems`, etc.).
-  - `C_AddOns`: `IsAddOnLoaded(name)`, `GetAddOnMetadata(name, field)`.
+  - `C_Texture` (v1.14.0+): Texture Atlas & SpriteSheet engine (`texture:SetAtlas`, `C_Texture.GetAtlasInfo`, `texture:SetSpriteSheetCell`, `|A:name:h:w|a` markup, NPOT texture support).
+  - `C_Map` (v1.14.0+): 3-Tier engine: `GetPlayerMapPosition`, `GetWorldPosFromMapPos`, `GetMapInfo`, User Waypoints (`SetUserWaypoint`, `GetUserWaypoint`, `USER_WAYPOINT_UPDATED`).
+  - `C_Reputation` (v1.14.0+): `GetFactionDataByID`, `SetSelectedFactionByID`, `ToggleFactionAtWarByID`.
+  - `C_AddOns`: `IsAddOnLoaded(name)` (v1.14.0+ accurate load-state stack), `GetAddOnMetadata(name, field)`.
 - **Core Primitives:**
   - `hooksecurefunc`: Securely observe Blizzard functions without replacing the global.
   - `InCombatLockdown()`: Direct combat check (replaces manual regen tracking).
@@ -193,14 +196,14 @@ Rather than an impractical "zero tables anywhere" dogma, classify all execution 
 Every modernized addon must declare an engine guard at initialization:
 
 ```lua
--- Strict Engine Dependency Guard (Mandatory ClassicAPI v1.13.4+ & SuperWoW v2.2+)
-local MIN_CLASSIC_API = 11304
+-- Strict Engine Dependency Guard (Mandatory ClassicAPI v1.14.0+ & SuperWoW v2.2+)
+local MIN_CLASSIC_API = 11400
 
 if not (CLASSIC_API_VERSION and SUPERWOW_VERSION) or 
    (type(CLASSIC_API_VERSION) == "number" and CLASSIC_API_VERSION < MIN_CLASSIC_API) then
     DEFAULT_CHAT_FRAME:AddMessage(
         "|cffff2020[Fatal Error]|r " .. (addonName or "Addon") .. 
-        " requires ClassicAPI (v1.13.4+) & SuperWoW (v2.2+)! Please ensure both DLLs are loaded.", 
+        " requires ClassicAPI (v1.14.0+) & SuperWoW (v2.2+)! Please ensure both DLLs are loaded.", 
         1, 0.2, 0.2
     )
     return

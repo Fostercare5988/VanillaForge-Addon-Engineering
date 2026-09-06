@@ -34,7 +34,7 @@ OctoWoW v2.0 replaces dogmatic, over-prescriptive rules with a **Capability-Firs
 
 | Component | Minimum Version | Core Capability / Role |
 | :--- | :--- | :--- |
-| **ClassicAPI** | `v1.13.4+` Mandatory DLL | 550+ functions across ~60 modern retail-style `C_` namespaces (`C_Timer`, `C_NamePlate`, `C_UnitAuras`, `FocusUnit`, `C_Container`), plus `hooksecurefunc`, `table.wipe`, `InCombatLockdown`, and automatic AST rewrites for `#`, `%`, string metatables. |
+| **ClassicAPI** | `v1.14.0+` Mandatory DLL | 570+ functions across ~60 modern retail-style `C_` namespaces (NPOT texture engine, `C_Texture` atlases/spritesheets, `C_Map` 3-tier coordinate/waypoint engine, `C_Timer`, `C_NamePlate`, `C_UnitAuras`, `FocusUnit`, `C_Container`, `C_Reputation`), plus `hooksecurefunc`, `table.wipe`, `InCombatLockdown`, `-config` launch profiles, and automatic AST rewrites for `#`, `%`, string metatables. |
 | **SuperWoW** | `v2.2+` Mandatory DLL | GUID-based unit arguments on all unit functions, `TargetUnit(guid)`, exact-name targeting `TargetByName(name, true)`, `SetMouseoverUnit`, `RAW_COMBATLOG`. |
 | **NamPower** | `v4.6.3+` Opt-in DLL | Client-side spell queueing, DBC spell metadata (`GetSpellNameAndRankForId`), binary combat event dispatches. |
 | **UnitXP SP3** | `v90+` Opt-in DLL | Real-time uncapped raw numerical health (`UnitXP("health", unit)`), line-of-sight, distance calculation (`UnitXP("distance", unit)`), OS window foregrounding. |
@@ -48,14 +48,14 @@ OctoWoW v2.0 replaces dogmatic, over-prescriptive rules with a **Capability-Firs
 Every modernized addon must declare an engine dependency check at initialization:
 
 ```lua
--- Strict Engine Dependency Guard (Mandatory ClassicAPI v1.13.4+ & SuperWoW v2.2+)
-local MIN_CLASSIC_API = 11304
+-- Strict Engine Dependency Guard (Mandatory ClassicAPI v1.14.0+ & SuperWoW v2.2+)
+local MIN_CLASSIC_API = 11400
 
 if not (CLASSIC_API_VERSION and SUPERWOW_VERSION) or 
    (type(CLASSIC_API_VERSION) == "number" and CLASSIC_API_VERSION < MIN_CLASSIC_API) then
     DEFAULT_CHAT_FRAME:AddMessage(
         "|cffff2020[Fatal Error]|r " .. (addonName or "Addon") .. 
-        " requires ClassicAPI (v1.13.4+) & SuperWoW (v2.2+)! Please ensure both DLLs are loaded.", 
+        " requires ClassicAPI (v1.14.0+) & SuperWoW (v2.2+)! Please ensure both DLLs are loaded.", 
         1, 0.2, 0.2
     )
     return

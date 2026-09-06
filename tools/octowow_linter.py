@@ -3,7 +3,7 @@
 OctoWoW Addon Linter & Heuristic Static Analysis Scanner (v2.0)
 Part of the OctoWoW Addon Modernization & Reverse Engineering Framework.
 Validates World of Warcraft 1.12.1 addons against the modern Enhanced Engine Stack:
-ClassicAPI v1.13.4+, SuperWoW v2.2+, NamPower v4.6.3+, UnitXP SP3, and DXVK.
+ClassicAPI v1.14.0+, SuperWoW v2.2+, NamPower v4.6.3+, UnitXP SP3, and DXVK.
 """
 
 import os
@@ -309,6 +309,7 @@ class OctoWoWAuditor:
 
         # Check for Rule B1 Startup Guard in entry files
         has_startup_guard = False
+        outdated_guard = False
         for root, _, files in os.walk(dir_path):
             for f in files:
                 if f.endswith('.lua'):
@@ -317,6 +318,9 @@ class OctoWoWAuditor:
                         c = lf.read()
                         if 'CLASSIC_API_VERSION' in c and 'SUPERWOW_VERSION' in c:
                             has_startup_guard = True
+                            m = re.search(r'MIN_CLASSIC_API\s*=\s*(\d+)', c)
+                            if m and int(m.group(1)) < 11400:
+                                outdated_guard = True
                             break
             if has_startup_guard:
                 break
@@ -324,6 +328,8 @@ class OctoWoWAuditor:
         # Check README & Directory Standards
         readme_path = os.path.join(dir_path, 'README.md')
         readme_warnings = []
+        if outdated_guard:
+            readme_warnings.append("[Rule B1 - Outdated Startup Guard] Addon uses MIN_CLASSIC_API < 11400. Update requirement to ClassicAPI v1.14.0+ (11400).")
         if os.path.exists(readme_path):
             with open(readme_path, 'r', encoding='utf-8', errors='replace') as f:
                 rm = f.read()
