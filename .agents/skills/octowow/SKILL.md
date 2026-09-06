@@ -2,7 +2,7 @@
 name: octowow
 description: >-
   Autonomous agent skill for World of Warcraft 1.12.1 Enhanced Engine Addon Modernization and Greenfield Development.
-  Enforces OctoWoW v2.0 standards: Capability-First Architecture, 4-Tier Execution Performance Model, ClassicAPI v1.13.4+,
+  Enforces OctoWoW v2.0 standards: Capability-First Architecture, 4-Tier Execution Performance Model, ClassicAPI v1.14.0+,
   SuperWoW v2.2+, NamPower v4.6.3+, UnitXP SP3, DXVK Vulkan runtime environment, heuristic static scanning via tools/octowow_linter.py,
   and dual static/runtime verification pipeline.
 ---
