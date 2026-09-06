@@ -45,6 +45,11 @@ AI models run across diverse environments (terminal/tool-equipped vs. chat-only)
 6. **Battleground Suite Conventions:**
    - Supported 1.12.1 PvP battlegrounds are Warsong Gulch (10v10), Arathi Basin / Thorn Gorge (15v15), and Alterac Valley (40v40).
    - Note: There is **no "Eye of the Storm"** in this client (a 2.0 TBC battleground); modern enhanced Vanilla environments feature **Thorn Gorge** for the 15v15 bracket. Never reference "Eye of the Storm".
+   - **Warsong Gulch (WSG) Flag Carrier Attribution:**
+     In WoW 1.12.1 WSG event messages:
+     - `"The Horde flag was picked up by <Player>!"` $\implies$ picked up by an **Alliance** player. The carrier is holding the enemy flag and must be tracked in the friendly Alliance flag carrier frame.
+     - `"The Alliance flag was picked up by <Player>!"` $\implies$ picked up by a **Horde** player. The carrier is tracked in the Horde flag carrier frame.
+     *Bug Trap:* Confusing the captured flag identity with the carrier's faction inverts carrier frames, target macros, and map pins. Always attribute the carrier to the opposing faction of the captured flag.
 
 ---
 
@@ -353,7 +358,7 @@ The Anti-Pattern list is maintained via the Rule H6 continuous learning protocol
 | **AP-19** | Double Toggle State Desync | Toggle button inverting state twice | Window refuses to open or closes instantly | Synchronize visibility via single authoritative flag. |
 | **AP-20** | Scoreboard Index Shift | Hardcoding return indices from `GetBattlefieldScore` | Wrong HK/damage stats displayed | Use documented index offsets or key mapping table. |
 | **AP-21** | Hardcoded 20 Quest Log Limit | Assuming `MAX_QUEST_LOG_ENTRIES = 20` | UI clips on 25-quest engine patches | Query `GetNumQuestLogEntries()` dynamically. |
-| **AP-22** | Manual Closure Re-creation | Creating closures inside `OnUpdate` | Massive GC pressure and stutter | Bind static functions or pass module tables. |
+| **AP-22** | High-Frequency Ticker Allocations | Creating closures or anonymous tables (`{...}`) inside `OnUpdate` / `C_Timer` tickers | Massive GC churn (up to 5,400+ allocs/min) and frame stutter | Pre-allocate static package/module tables, static test rows, or bound functions; allocate zero tables in tickers. |
 | **AP-23** | Texture Layer Inversion on Reset | Changing texture path without restoring layer | Icon renders behind status bar | Maintain explicit `SetDrawLayer` during texture updates. |
 | **AP-24** | Verbose Time Strings in Unit Rows | Using `"Just now"` in 170px bars | Violent text collision with HP tags | Use compact format: `0s`, `15s`, `2m`. |
 | **AP-25** | Unchecked SuperWoW Version Format | Hardcoding numeric `SUPERWOW_VERSION < 202` | False positive engine rejection | Check presence and confirmed type before numeric math. |
