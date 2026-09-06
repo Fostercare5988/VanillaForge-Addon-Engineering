@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-OctoWoW Addon Linter & Heuristic Static Analysis Scanner (v2.0)
+OctoWoW Addon Linter & Heuristic Static Analysis Scanner (v2.1)
 Part of the OctoWoW Addon Modernization & Reverse Engineering Framework.
 Validates World of Warcraft 1.12.1 addons against the modern Enhanced Engine Stack:
 ClassicAPI v1.14.0+, SuperWoW v2.2+, NamPower v4.6.3+, UnitXP SP3, and DXVK.
@@ -277,6 +277,8 @@ class OctoWoWAuditor:
             if not self._is_suppressed(line, "A3") and not is_comment:
                 if re.search(r'\btable\.getn\s*\(', line):
                     warnings.append(f"[Rule A3 - Legacy table.getn] Line {idx}: 'table.getn(t)' detected. Use modern '#' length operator.")
+                if re.search(r'\btable\.setn\s*\(', line):
+                    warnings.append(f"[Rule A3 - Legacy table.setn] Line {idx}: 'table.setn(t, n)' is obsolete Lua 5.0 code. Use direct array assignment or native table sizing.")
             if not self._is_suppressed(line, "A4") and not is_comment:
                 if re.search(r'\bmath\.mod\s*\(', line):
                     warnings.append(f"[Rule A4 - Legacy math.mod] Line {idx}: 'math.mod(a, b)' detected. Use modern '%' modulo operator.")
@@ -287,10 +289,13 @@ class OctoWoWAuditor:
                     if lib in line:
                         warnings.append(f"[Rule B0 - Obsolete Library Bloat] Line {idx}: Legacy 2006 library '{lib}' detected. Modernize with ClassicAPI / NamPower.")
 
-            # 10. AP-09 / Rule C11: Same-Layer Background/Icon Occlusion Risk
+            # 10. AP-09 / Rule C11: Same-Layer Background/Icon Occlusion Risk & Child Mouse Interception
             if not self._is_suppressed(line, "C11") and not is_comment:
                 if re.search(r'CreateTexture\s*\(\s*nil\s*,\s*["\']OVERLAY["\']\s*\)', line) and re.search(r'(?:[Bb]g|[Bb]ackground)\b', line):
                     warnings.append(f"[Rule C11 - Same-Layer Occlusion Risk] Line {idx}: Background texture created on 'OVERLAY' layer. Place in 'BACKGROUND' or 'BORDER'.")
+            if not self._is_suppressed(line, "AP-09") and not is_comment:
+                if re.search(r'\b(?:bar|statusbar|icon|cooldown)\w*:EnableMouse\s*\(\s*true\s*\)', line, re.IGNORECASE):
+                    warnings.append(f"[Rule C3 / AP-09 - Child Mouse Interception] Line {idx}: Child element explicitly enabled mouse. Only parent Button should receive clicks to prevent dead zones.")
 
             # 11. AP-24: Verbose Time Strings in Compact Rows
             if not self._is_suppressed(line, "AP-24") and not is_comment:
@@ -301,6 +306,11 @@ class OctoWoWAuditor:
             if not self._is_suppressed(line, "AP-16") and not is_comment:
                 if re.search(r'\btable\.sort\s*\(\s*(?:roster|buffer|enemies|units)\s*[,|\)]', line) and not 'active' in line.lower():
                     warnings.append(f"[Anti-Pattern 16 - Unbounded Buffer Sort] Line {idx}: 'table.sort' detected on entity buffer. Use bounded active sort.")
+
+            # 13. AP-22: Inline Closures in High-Frequency Tickers
+            if not self._is_suppressed(line, "AP-22") and not is_comment:
+                if re.search(r'C_Timer\.NewTicker\s*\([^,]+,\s*function\b', line):
+                    warnings.append(f"[Anti-Pattern 22 - Inline Ticker Closure] Line {idx}: Inline closure passed to C_Timer.NewTicker. Bind a static function or method to avoid GC churn.")
 
         return errors, warnings, infos
 
