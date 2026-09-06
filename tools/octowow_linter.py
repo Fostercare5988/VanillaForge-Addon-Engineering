@@ -38,7 +38,10 @@ class HeuristicStructuralScanner:
     Performs fast heuristic structural scanning of Lua source files.
     Note: This is a lexical/structural scanner designed to catch unmatched blocks,
     brackets, and syntax traps early—not a full Lua compiler or AST parser.
+    Supports Lua 5.1/ClassicAPI leveled long brackets ([=[ ... ]=], [==[ ... ]==]).
     """
+    LONG_BRACKET_OPEN = re.compile(r'\[(=*)\[')
+
     @classmethod
     def check_structure(cls, filepath):
         errors = []
@@ -52,6 +55,7 @@ class HeuristicStructuralScanner:
         
         in_block_comment = False
         in_block_string = False
+        block_level = 0  # number of '=' in the currently-open long bracket
 
         block_stack = []      # (type, line_number)
         bracket_stack = []    # (char, line_number)
@@ -68,34 +72,33 @@ class HeuristicStructuralScanner:
             n = len(line)
 
             while i < n:
-                if in_block_comment:
-                    if line[i:i+2] == ']]':
+                if in_block_comment or in_block_string:
+                    closer = ']' + ('=' * block_level) + ']'
+                    if line[i:i + len(closer)] == closer:
+                        i += len(closer)
                         in_block_comment = False
-                        i += 2
-                    else:
-                        i += 1
-                    continue
-
-                if in_block_string:
-                    if line[i:i+2] == ']]':
                         in_block_string = False
-                        i += 2
+                        block_level = 0
                     else:
                         i += 1
                     continue
 
-                # Check comments
-                if line[i:i+4] == '--[[':
-                    in_block_comment = True
-                    i += 4
-                    continue
-                if line[i:i+2] == '--':
-                    break
+                # Long-bracket comment: --[[ ... ]]  /  --[=[ ... ]=]  / etc.
+                if line[i:i + 2] == '--':
+                    m = cls.LONG_BRACKET_OPEN.match(line, i + 2)
+                    if m:
+                        in_block_comment = True
+                        block_level = len(m.group(1))
+                        i = m.end()
+                        continue
+                    break  # plain '--' line comment: rest of the line is a comment
 
-                # Check block string
-                if line[i:i+2] == '[[':
+                # Long-bracket string: [[ ... ]]  /  [=[ ... ]=]  / etc.
+                m = cls.LONG_BRACKET_OPEN.match(line, i)
+                if m:
                     in_block_string = True
-                    i += 2
+                    block_level = len(m.group(1))
+                    i = m.end()
                     continue
 
                 # Check string literals
@@ -350,17 +353,18 @@ class OctoWoWAuditor:
                     if 'OctoWoW' in tc or '[Octo]' in tc or '-Octo' in tc:
                         readme_warnings.append(f"[Rule H2 - Octo Branding Leak] '{f}' contains 'Octo' branding in metadata. Keep GitHub addon repos neutral.")
 
-        # Check Rule H7: Locales directory bloat
+        # Check Rule H7 / H2: directory- and filename-level structure issues
+        structure_warnings = []
         locales_dir = os.path.join(dir_path, 'Locales')
         if os.path.isdir(locales_dir):
-            readme_warnings.append("[Rule H7 - Legacy Locales Directory] Addon contains legacy 'Locales/' folder. Consolidate into 'Localization.lua'.")
+            structure_warnings.append("[Rule H7 - Legacy Locales Clutter] Addon contains legacy 'Locales/' folder. Consolidate into 'Localization.lua'.")
 
         # Scan all Lua files
         for root, _, files in os.walk(dir_path):
             for f in sorted(files):
                 if re.search(r'localization\.(de|fr|es|ru|zh|kr|cn)\.lua', f, re.IGNORECASE) or re.search(r'(deDE|frFR|ruRU|zhCN)\.lua', f, re.IGNORECASE):
                     rel = os.path.relpath(os.path.join(root, f), dir_path)
-                    readme_warnings.append(f"[Rule H2 - Foreign Locale File] '{rel}' is redundant foreign locale bloat.")
+                    structure_warnings.append(f"[Rule H2 - Foreign Locale File] '{rel}' is redundant foreign locale bloat. Eradicate file and enforce English only.")
                 if f.endswith('.lua'):
                     filepath = os.path.join(root, f)
                     rel = os.path.relpath(filepath, dir_path)
@@ -370,11 +374,11 @@ class OctoWoWAuditor:
                     total_warnings += len(warns)
                     total_infos += len(infs)
 
-        return results, has_startup_guard, readme_warnings, total_errors, total_warnings, total_infos
+        return results, has_startup_guard, readme_warnings, structure_warnings, total_errors, total_warnings, total_infos
 
 
 def main():
-    parser = argparse.ArgumentParser(description="OctoWoW Addon Linter & Heuristic Static Analysis Scanner (v2.0)")
+    parser = argparse.ArgumentParser(description="OctoWoW Addon Linter & Heuristic Static Analysis Scanner (v2.1)")
     parser.add_argument("target", help="Path to Lua file or AddOn directory")
     parser.add_argument("--strict", action="store_true", help="Treat warnings as errors (exit code 1 on warnings)")
     parser.add_argument("--ignore", nargs="*", default=[], help="Global rules to suppress (e.g. --ignore A3 D1)")
@@ -407,7 +411,7 @@ def main():
 
     elif os.path.isdir(target):
         print(f"\n{BOLD}{CYAN}=== Auditing Addon: {os.path.basename(target)} ==={RESET}\n")
-        results, has_guard, readme_warnings, total_errors, total_warnings, total_infos = auditor.audit_addon_dir(target)
+        results, has_guard, readme_warnings, structure_warnings, total_errors, total_warnings, total_infos = auditor.audit_addon_dir(target)
 
         if has_guard:
             print(f"  {PASS_BADGE} Startup Guard: Present & Validated (CLASSIC_API_VERSION & SUPERWOW_VERSION)")
@@ -417,10 +421,15 @@ def main():
 
         if readme_warnings:
             for rw in readme_warnings:
-                print(f"  {WARN_BADGE} Addon Structure: {rw}")
+                print(f"  {WARN_BADGE} README Check: {rw}")
                 total_warnings += 1
         else:
-            print(f"  {PASS_BADGE} Addon Structure: README.md and files comply with clean standards")
+            print(f"  {PASS_BADGE} Rule H5 Documentation: README.md complies with clean standards")
+
+        if structure_warnings:
+            for sw in structure_warnings:
+                print(f"  {WARN_BADGE} Structure Check: {sw}")
+                total_warnings += 1
 
         print(f"\n{BOLD}File Diagnostics:{RESET}")
         for rel_file, (errors, warnings, infos) in results.items():
