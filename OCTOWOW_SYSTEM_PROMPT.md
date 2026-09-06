@@ -309,6 +309,45 @@ end
 ### Rule C9: Global Scope Pollution Defense
 NEVER declare loop iterators (`i`, `k`, `v`) or scratch tables in the global scope. Always declare them with `local`.
 
+### Rule C12: WoW 1.12.1 Event & XML Parameter Shadowing Trap (Mandatory Dual-Mode Signature)
+In World of Warcraft 1.12.1:
+- When an `<OnEvent>` script is declared in XML as `<OnEvent>Handler(event);</OnEvent>`, the engine calls the Lua function with **only one argument** (`event`). The payload arguments (`arg1`, `arg2`, `arg3`, etc.) are placed into the global namespace `_G.arg1`, `_G.arg2`, etc.
+- When an `<OnEvent>` script is registered via Lua `:SetScript("OnEvent", handler)`, the 1.12.1 engine invokes it with **zero arguments**, placing `this`, `event`, and `arg1`..`arg9` in `_G`.
+- **THE FATAL TRAP (Parameter Shadowing):**
+  If a developer or AI modernizes an event handler by declaring:
+  ```lua
+  function MyAddon_OnEvent(self, event, arg1, ...) -- ❌ LETHAL IN 1.12.1!
+  ```
+  When invoked from XML with 1 argument (`event`) or from 1.12.1 `:SetScript` with 0 arguments:
+  1. `self` receives the event string or `nil`.
+  2. The local parameters `event` and `arg1` are initialized to `nil` by Lua.
+  3. **Local parameters shadow the globals `_G.event` and `_G.arg1` with `nil`!**
+  4. Any check like `if event == "ADDON_LOADED" and arg1 == "MyAddon"` evaluates `nil == "MyAddon"` (`false`).
+  5. The addon fails to initialize, hooks are never installed, SavedVariables are never loaded, and the addon is completely bricked!
+
+- **MANDATORY CANONICAL PATTERN:**
+  Event handlers MUST use neutral parameter names that never shadow `_G.event` or `_G.arg1`, resolving both XML, 1.12.1 0-arg, and modern 3-arg conventions:
+  ```lua
+  function MyAddon_OnEvent(arg1_param, arg2_param, arg3_param)
+      local f, ev, a1
+      if type(arg1_param) == "table" then
+          -- Modern :SetScript(self, event, arg1) convention
+          f = arg1_param
+          ev = arg2_param or event
+          a1 = arg3_param or arg1
+      else
+          -- XML 1-arg <OnEvent>Handler(event);</OnEvent> OR 1.12.1 0-arg SetScript convention
+          f = this or MyAddon
+          ev = (type(arg1_param) == "string" and arg1_param) or arg2_param or event
+          a1 = (type(arg1_param) == "string" and (arg2_param or arg1)) or arg3_param or arg1
+      end
+
+      if ev == "ADDON_LOADED" and a1 == "MyAddon" then
+          -- Safe, bulletproof initialization
+      end
+  end
+  ```
+
 ---
 
 ## 10. Entity Lifecycle & Memory Safety
@@ -333,7 +372,7 @@ The Anti-Pattern list is maintained via the Rule H6 continuous learning protocol
 2. **Promote Proven Patterns Upward:** When a pattern appears repeatedly, promote its core directive into Sections 8–10 as an architectural rule.
 3. **Periodic Consolidation:** Maintain the active catalog at $\le 25$ high-signal patterns. Obsolete or niche entries are consolidated or archived.
 
-### The 25-Point Anti-Pattern Matrix
+### The 26-Point Anti-Pattern Matrix
 
 | ID | Anti-Pattern Name | Root Cause | Impact | Verified Fix |
 | :--- | :--- | :--- | :--- | :--- |
@@ -362,6 +401,7 @@ The Anti-Pattern list is maintained via the Rule H6 continuous learning protocol
 | **AP-23** | Texture Layer Inversion on Reset | Changing texture path without restoring layer | Icon renders behind status bar | Maintain explicit `SetDrawLayer` during texture updates. |
 | **AP-24** | Verbose Time Strings in Unit Rows | Using `"Just now"` in 170px bars | Violent text collision with HP tags | Use compact format: `0s`, `15s`, `2m`. |
 | **AP-25** | Unchecked SuperWoW Version Format | Hardcoding numeric `SUPERWOW_VERSION < 202` | False positive engine rejection | Check presence and confirmed type before numeric math. |
+| **AP-26** | 1.12.1 Event Parameter Shadowing | Declaring `(self, event, arg1)` on event handlers | Unpassed parameters evaluate to `nil` and shadow globals `_G.event` / `_G.arg1`; `ADDON_LOADED` fails, completely bricking addon | Use neutral parameter names (`arg1_param, arg2_param, arg3_param`) with dual-convention fallback to `_G.event` and `_G.arg1` (Rule C12). |
 
 ---
 

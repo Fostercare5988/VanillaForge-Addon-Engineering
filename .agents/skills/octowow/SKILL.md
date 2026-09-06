@@ -31,6 +31,7 @@ Heuristic Static Scanner: `python tools/octowow_linter.py <target_path>`
 4. **Anti-Hallucination Mandate:** Never invent API functions, event names, or version signatures.
 5. **Zero "Octo" Branding on GitHub & End-Addons (Stealth Rule):** NEVER mention "Octo", "OctoWoW", "OctoWoW v2", or custom private server names in end-addons, git commits, PRs, or public repos. Commits must use clean, neutral technical phrasing.
 6. **1.12.1 Client vs. 1.18.1 Content Patch:** The client and Lua API is ALWAYS strictly 1.12.1. 1.18.1 is only server-side content; never gate addon logic on 1.18.1.
+7. **Event Parameter Shadowing Trap (Rule C12 / AP-26):** NEVER declare `(self, event, arg1)` on event handlers. In WoW 1.12.1 XML (`<OnEvent>Func(event);</OnEvent>`) and `:SetScript("OnEvent")` (0-arg), unpassed parameters evaluate to `nil` and shadow globals `_G.event` and `_G.arg1`, silently bricking `ADDON_LOADED` initialization. Always use neutral parameter names (`arg1_param, arg2_param, arg3_param`) with dual-convention fallback.
 
 ---
 

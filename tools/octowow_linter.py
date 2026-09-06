@@ -312,6 +312,13 @@ class OctoWoWAuditor:
                 if re.search(r'C_Timer\.NewTicker\s*\([^,]+,\s*function\b', line):
                     warnings.append(f"[Anti-Pattern 22 - Inline Ticker Closure] Line {idx}: Inline closure passed to C_Timer.NewTicker. Bind a static function or method to avoid GC churn.")
 
+            # 14. Rule C12 / AP-26: 1.12.1 Event Parameter Shadowing Trap
+            if not self._is_suppressed(line, "C12") and not self._is_suppressed(line, "AP-26") and not is_comment:
+                if re.search(r'function\s+[a-zA-Z0-9_.:]*[oO]n[eE]vent\s*\(\s*(?:self\s*,\s*event|[^)]*\barg1\b)', line, re.IGNORECASE):
+                    errors.append(f"[Rule C12 / AP-26 - Event Parameter Shadowing] Line {idx}: Event handler declares 'event' or 'arg1' in parameter list. In WoW 1.12.1, unpassed parameters evaluate to nil and shadow globals _G.event/_G.arg1 under 0-arg or 1-arg XML dispatches. Use neutral parameter names (e.g. arg1_param, arg2_param, arg3_param) per Rule C12.")
+                elif re.search(r'local\s+\w+\s*=\s*(event|arg1|arg2)\s+or\s+\1\b', line):
+                    errors.append(f"[Rule C12 / AP-26 - Event Parameter Shadowing] Line {idx}: Tautological fallback 'local x = var or var' detected for event/arg1. The parameter shadows the global with nil. Use neutral parameter names (e.g. arg1_param) per Rule C12.")
+
         return errors, warnings, infos
 
     def audit_addon_dir(self, dir_path):
