@@ -64,6 +64,7 @@ fi
 
 def main():
     print("=== Deploying OctoWoW AI Contracts & Git Hooks ===\n")
+    succeeded = 0
     for addon_path in ADDONS:
         name = os.path.basename(addon_path)
         if not os.path.isdir(addon_path):
@@ -80,16 +81,21 @@ def main():
         with open(agents_path, "w", encoding="utf-8") as f:
             f.write(CONTRACT_CONTENT)
 
-        # Install pre-commit hook
+        # Install pre-commit hook - only possible if this is actually a git repo
         git_hooks_dir = os.path.join(addon_path, ".git", "hooks")
-        if os.path.isdir(git_hooks_dir):
+        hook_installed = os.path.isdir(git_hooks_dir)
+        if hook_installed:
             hook_file = os.path.join(git_hooks_dir, "pre-commit")
             with open(hook_file, "w", encoding="utf-8", newline="\n") as f:
                 f.write(HOOK_CONTENT)
 
-        print(f"[SUCCESS] Installed AI contracts (CLAUDE.md, AGENTS.md) and pre-commit hook in: {name}")
+        succeeded += 1
+        if hook_installed:
+            print(f"[SUCCESS] Installed AI contracts (CLAUDE.md, AGENTS.md) and pre-commit hook in: {name}")
+        else:
+            print(f"[PARTIAL] Installed AI contracts (CLAUDE.md, AGENTS.md) in: {name} — no .git/hooks found, pre-commit hook NOT installed")
 
-    print("\nAll 6 addons are now fortified with universal AI contracts and Git pre-commit enforcement!")
+    print(f"\n{succeeded}/{len(ADDONS)} addons fortified with AI contracts — check any [SKIP] or [PARTIAL] lines above before assuming full coverage.")
 
 if __name__ == "__main__":
     main()
