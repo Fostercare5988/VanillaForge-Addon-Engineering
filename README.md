@@ -84,6 +84,7 @@ python tools/octowow_linter.py <path_to_addon_or_file>
 - **Rule A1 Syntax Crash Audit:** Detects illegal bare colon method lookups (`f:GetScript and ...`) before they crash the Lua parser.
 - **Rule B10 & D4 Memory Audit:** Flags obsolete 2006 table wiping loops and recommends native C++ `table.wipe(t)`.
 - **Rule D1 Hierarchy Churn Audit:** Flags `{ f:GetRegions() }` and `{ parent:GetChildren() }` allocations in iterations.
+- **Rule C12 & AP-26 Event Parameter Shadowing Audit:** Catches dangerous `(self, event, arg1)` signatures on event handlers that shadow `_G.event` / `_G.arg1` under 0-arg and 1-arg calling conventions, preventing silent addon initialization failures.
 - **Rule H2 & H5 Documentation & Branding Audit:** Enforces neutral branding (no "Octo" leaks on GitHub), validates README compliance, and flags raw in-game WoW color escape codes (`|cff...`).
 - **Strict Mode & Rule Suppression:** Pass `--strict` to treat warnings as fatal errors; suppress verified exceptions with `-- octowow-ignore: <RULE_ID>`.
 
