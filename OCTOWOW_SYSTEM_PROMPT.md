@@ -28,7 +28,7 @@ All modernized addons **strictly require** the full 4-DLL client extension stack
 | Layer | Component & Repository | Minimum Version | Key Capabilities & APIs |
 | :--- | :--- | :--- | :--- |
 | **Base Client** | World of Warcraft 1.12.1 | Build 5875 | Lua 5.0.2 engine, stock FrameXML UI, standard 1.12.1 client base. |
-| **ClassicAPI** | [**brues-code/ClassicAPI**](https://github.com/brues-code/ClassicAPI) | `v1.13.4+` Mandatory DLL | 550+ functions across ~60 modern retail-style `C_` namespaces — `C_Timer.After`/`NewTicker`, `UnitCastingInfo`/`UnitChannelInfo` (with same-spell re-channel fix), `C_NamePlate`, `C_UnitAuras` ($O(n)$ slot-batching via `GetAuraSlots`/`GetAuraDataBySlot`/`UnitAuraBySlot` & `AuraUtil.ForEachAura`), `FocusUnit`/`ClearFocus`, `C_Container`, `C_EncodingUtil` (Base64/Hex/JSON/CBOR), `C_GossipInfo`, `C_EquipmentSet`, `C_AddOns`, `INTERFACE_VERSION` global, modern EditBox API suite (`ClearHistory`, `SetHighlightColor`, cursor position/focus methods), Retail-like hot-reloading `/reload` (supporting new files, `.toc` metadata edits, and new addons without restarting), plus `hooksecurefunc`, `InCombatLockdown`, `table.wipe`, and an AST rewriter that compiles `#`, `%`, `string.match`/`str:method()` on the fly — full breakdown in Part A, B3, and B10. |
+| **ClassicAPI** | [**brues-code/ClassicAPI**](https://github.com/brues-code/ClassicAPI) | `v1.14.0+` Mandatory DLL | 570+ functions across modern retail-style `C_` namespaces — NPOT texture engine (`DimensionGate`) with dynamic decode scratch buffer (`_classicapi_TextureLimits()`), full Texture Atlas & SpriteSheet engine (`C_Texture`, `texture:SetAtlas`, `texture:SetSpriteSheetCell`, `|A...|a` markup), modern 3-Tier `C_Map` system (coordinate transforms, map hierarchy/art, and user waypoints with `USER_WAYPOINT_UPDATED`), `C_Reputation` by-ID extensions, accurate `C_AddOns` load-state stack, `C_Timer.After`/`NewTicker`, `UnitCastingInfo`/`UnitChannelInfo`, `C_NamePlate`, `C_UnitAuras` ($O(n)$ slot-batching), `FocusUnit`/`ClearFocus`, `C_Container`, `INTERFACE_VERSION`, modern EditBox suite, `-config` WTF launcher profiles, hot-reloading `/reload`, `hooksecurefunc`, `table.wipe`, and AST rewriter — full breakdown in Part A, B3, and B10. |
 | **SuperWoW** | [**balakethelock/SuperWoW**](https://github.com/balakethelock/SuperWoW) | `v2.2+` Mandatory DLL | GUID-based unit arguments on all unit functions, `RAW_COMBATLOG`, exact-name targeting `TargetByName(name, true)`, direct GUID targeting `TargetUnit(guid)`, `SetMouseoverUnit`, clickthrough modes. |
 | **NamPower** | [**Emyrk/nampower**](https://github.com/Emyrk/nampower) | `v4.6.3+` Mandatory DLL | Client-side spell-cast queueing (eliminates input latency), cooldown/aura/spell info (`SpellInfo`, `GetSpellNameAndRankForId`), binary combat event dispatches. |
 | **UnitXP SP3** | [**brues-code/UnitXP_SP3**](https://github.com/brues-code/UnitXP_SP3) | `v90+` Mandatory DLL | Real-time uncapped raw numerical health (`UnitXP("health", unit)` / `UnitXP("maxhealth", unit)`), line-of-sight, distance calculation (`UnitXP("distance", unit)` / `UnitXP("distanceBetween", u1, u2)`), OS taskbar flashing (`FlashClientIcon()`), window foregrounding (`SetClientWindowForeground()`). |
@@ -39,14 +39,17 @@ All modernized addons **strictly require** the full 4-DLL client extension stack
 
 ## 🛡️ Mandatory Addon Startup Guard
 
-Every modernized addon **MUST** declare a hard engine requirement check at initialization. All addons we build or modernize strictly require **ClassicAPI v1.13.4+** and **SuperWoW v2.2+**. Check the actual version globals each DLL exposes for exactly this purpose, rather than inferring presence indirectly from a function existing:
-- ClassicAPI → `CLASSIC_API_VERSION` / `INTERFACE_VERSION` (global constants, always present once the DLL has hooked the engine)
+Every modernized addon **MUST** declare a hard engine requirement check at initialization. All addons we build or modernize strictly require **ClassicAPI v1.14.0+** (`MIN_CLASSIC_API = 11400`) and **SuperWoW v2.2+**. Check the actual version globals each DLL exposes for exactly this purpose, with strict numeric boundary validation rather than inferring presence indirectly from a function existing:
+- ClassicAPI → `CLASSIC_API_VERSION` (`11400` for v1.14.0+) / `INTERFACE_VERSION` (global constants, always present once the DLL has hooked the engine)
 - SuperWoW → `SUPERWOW_VERSION` / `SUPERWOW_STRING` (global constants; confirm these are still the correct names on your installed build — see B10)
 
 ```lua
--- Strict Engine Dependency Guard (Mandatory ClassicAPI v1.13.4+ & SuperWoW v2.2+)
-if not (CLASSIC_API_VERSION and SUPERWOW_VERSION) then
-    DEFAULT_CHAT_FRAME:AddMessage("|cffff2020[Fatal Error]|r " .. (addonName or "Addon") .. " requires ClassicAPI.dll (v1.13.4+) & SuperWoW (v2.2+)! Please ensure both DLLs are loaded.", 1, 0.2, 0.2)
+-- Strict Engine Dependency Guard (Mandatory ClassicAPI v1.14.0+ & SuperWoW v2.2+)
+local MIN_CLASSIC_API = 11400
+
+if not (CLASSIC_API_VERSION and SUPERWOW_VERSION) or 
+   (type(CLASSIC_API_VERSION) == "number" and CLASSIC_API_VERSION < MIN_CLASSIC_API) then
+    DEFAULT_CHAT_FRAME:AddMessage("|cffff2020[Fatal Error]|r " .. (addonName or "Addon") .. " requires ClassicAPI (v1.14.0+) & SuperWoW (v2.2+)! Please ensure both DLLs are loaded.", 1, 0.2, 0.2)
     return
 end
 ```
@@ -198,6 +201,21 @@ ClassicAPI backports 550+ functions across ~60 namespaces (full reference: the p
   - `editBox:SetHighlightColor(r, g, b[, a])` and `editBox:GetHighlightColor()` — sets custom text selection highlights.
   - `editBox:GetUTF8CursorPosition()` and `editBox:SetCursorPosition(pos)` / `editBox:GetCursorPosition()` — accurate multi-byte cursor positioning.
   - `editBox:ClearHighlightText()`, `editBox:HasFocus()`, `editBox:HasText()` — direct state query methods eliminating the need for custom Lua state flags.
+- **Texture Engine & NPOT Architecture (v1.14.0+)** — Native support for Non-Power-of-Two (NPOT) textures (`DimensionGate`). The 1.12.1 hardcoded scratch decode buffer expands dynamically on demand up to hardware GPU limits (e.g. 16384x16384) instead of crashing when loading high-res textures (>512x512 stock, >1024x1024 with VanillaHelpers). Eliminates legacy texture size crashes (including oversized TGA and BLP async fallback overflow crashes) and eliminates memory corruption on `/reload` when freeing textures larger than 1024x1024. Read runtime limits via `_classicapi_TextureLimits()`.
+- **Texture Atlas & SpriteSheet Suite (`C_Texture`) (v1.14.0+)** — Full modern texture atlas pipeline:
+  - `texture:SetAtlas(atlas [, useAtlasSize])` & `texture:GetAtlas()` — binds textures by atlas name with automatic UV cropping and optional original aspect/size application.
+  - `C_Texture.GetAtlasInfo(name)`, `C_Texture.GetAtlasExists(name)`, `C_Texture.RegisterAtlas(...)` — lookup and custom atlas registration.
+  - Inline FontString atlas markup: `|A:atlasName:height:width|a` and `CreateAtlasMarkup()`. Built-in atlases for raid target markers (`UI-RaidTargetingIcons.blp`) and chat button highlights.
+  - `texture:SetSpriteSheetCell(cell, numRows, numColumns)` — direct 1-based grid slicing for sprite sheets without manual texcoord arithmetic.
+- **Modern `C_Map` 3-Tier Navigation & User Waypoints (v1.14.0+)**:
+  - **Tier 1 (Coordinate Transforms)**: `C_Map.GetPlayerMapPosition(uiMapID, unitToken)` returning a `Vector2DMixin` (x, y), `C_Map.GetWorldPosFromMapPos`, `C_Map.GetMapPosFromWorldPos`, `C_Map.GetMapRectOnMap`.
+  - **Tier 2 (Hierarchy & Tiles)**: `C_Map.GetMapInfo(uiMapID)`, `C_Map.GetMapChildrenInfo(uiMapID)`, `C_Map.GetMapInfoAtPosition`, `C_Map.GetFallbackWorldMapID()`, `C_Map.MapHasArt(uiMapID)`, `C_Map.GetMapArtLayers`, `C_Map.GetMapArtLayerTextures`.
+  - **Tier 3 (User Waypoints & Hyperlinks)**: `C_Map.SetUserWaypoint(uiMapPoint)`, `C_Map.GetUserWaypoint()`, `C_Map.HasUserWaypoint()`, `C_Map.ClearUserWaypoint()`, `C_Map.GetUserWaypointPositionForMap(uiMapID)`, `C_Map.GetUserWaypointHyperlink()`, `C_Map.GetUserWaypointFromHyperlink(link)`, `C_Map.CanSetUserWaypointOnMap(uiMapID)`. Fires `USER_WAYPOINT_UPDATED`.
+- **`C_Reputation` Faction Expansion (v1.14.0+)** — Direct ID-based operations bypassing displayed-list sort order: `C_Reputation.GetFactionDataByID(factionID)` (works even on unencountered factions), `C_Reputation.SetSelectedFactionByID(factionID)`, `C_Reputation.ToggleFactionAtWarByID(factionID)`, `C_Reputation.IsFactionActive`, `C_Reputation.SetFactionActiveByID(factionID)` / `SetFactionInactiveByID(factionID)`.
+- **Accurate AddOn Load-State Stack (`C_AddOns`) (v1.14.0+)** — `IsAddOnLoaded(name)` now tracks an internal loading stack so in-flight dependencies correctly return `(loadedOrLoading=true, loaded=false)` rather than prematurely reporting loaded before files finish executing.
+- **Client Configuration Profiles (`-config`) (v1.14.0+)** — Command-line switch `-config <file.wtf>` allows running multiple independent client configuration profiles from the same game directory.
+- **Aura Polarity Isolation (v1.14.0+)** — Distinguishes Turtle WoW aura polarity flags from stock vmangos/vanilla flags, preventing standard buffs from being misidentified as debuffs.
+- **Script Arguments Compatibility (`CAPI_VanillaScriptArgsCompat`) (v1.14.0+)** — Fixes legacy handlers (e.g. LunaUnitFrames) where functions act as both direct helpers and `OnEvent` handlers without crashing on injected `self`.
 - **Retail-Like Hot-Reloading `/reload` (v1.13.4+)** — ClassicAPI hooks the client's `/reload` command to dynamically re-index newly added files, updated `##` metadata in `.toc` files (such as adding newly created lua files), new addon folders, and file deletions on the fly without closing or restarting the WoW 1.12.1 client.
 - **`C_AddOns`** (`DoesAddOnExist`, `IsAddOnLoaded`, `GetAddOnTitle`, `GetAddOnNotes`, `IsAddOnLoadable`, `GetAddOnName`, `GetAddOnSecurity`) — **this changes Part E.** For any addon that ships as a normal TOC entry, `C_AddOns.IsAddOnLoaded("AddonFolderName")` is a direct, reliable presence check — use it as the first choice for addon detection. Reserve the frame-name/minimap-substring whitelist approach in E2 for what it's actually needed for: things that *aren't* discoverable this way, like injected server UI (E3) or addons that create loose minimap buttons without you knowing their folder name in advance.
 - **`table.wipe` & Nil Append Fix** — real, backported, native C++. It's a faster, direct replacement for the manual `for k in pairs(t) do t[k] = nil end` wipe idiom in D4. Furthermore, v1.13.4+ ensures table length is preserved on deliberate single `nil` appends (`t[#t+1] = nil`), guaranteeing robust table writers.
@@ -468,8 +486,8 @@ This document is a living record of verified client behaviors. If you observe di
 **H5. Mandatory Automated README.md Delivery & Synchronization**
 Every single addon audit, modernization, refactor, or bugfix pass **MUST automatically update or create the addon's `README.md`** before concluding the task, without the user ever having to prompt or ask for it.
 - **Mandatory Sections in Every `README.md`**:
-  1. **Header & Badges**: Version (`x.x.x`), Interface (`1.12.1 (Build 5875)`), Engine (`ClassicAPI v1.13.4+ | SuperWoW v2.2+ | NamPower v4.6.3+ | UnitXP SP3 | DXVK`), License (`MIT` or original).
-  2. **Description**: Concise summary of what the addon does and how it leverages the Enhanced 1.12.1 Engine Stack (**ClassicAPI v1.13.4+**, **SuperWoW v2.2+**, **NamPower 4.6.3+**, **UnitXP SP3**, **DXVK**).
+  1. **Header & Badges**: Version (`x.x.x`), Interface (`1.12.1 (Build 5875)`), Engine (`ClassicAPI v1.14.0+ | SuperWoW v2.2+ | NamPower v4.6.3+ | UnitXP SP3 | DXVK`), License (`MIT` or original).
+  2. **Description**: Concise summary of what the addon does and how it leverages the Enhanced 1.12.1 Engine Stack (**ClassicAPI v1.14.0+**, **SuperWoW v2.2+**, **NamPower 4.6.3+**, **UnitXP SP3**, **DXVK**).
   3. **Quick Start & Slash Commands**: All in-game slash commands and key shortcuts.
   4. **Core Features**: Bulleted overview of functionality.
   5. **Technical Architecture & Zero-Bloat Optimizations**: Exact architectural improvements, dead code removals, DRY consolidations, and event-driven replacements.
@@ -524,7 +542,7 @@ GameTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
 GameTooltip:SetUnitDebuff(unit, i)
 local text = GameTooltipTextLeft1:GetText()
 
--- ✅ GOLDEN (ClassicAPI v1.13.4+ Slot-Batching):
+-- ✅ GOLDEN (ClassicAPI v1.14.0+ Slot-Batching):
 local slots = C_UnitAuras.GetAuraSlots(unit, "HARMFUL")
 if slots then
     for _, slot in ipairs(slots) do
@@ -574,7 +592,7 @@ for k, v in pairs(historyTable) do
     historyTable[k] = nil
 end
 
--- ✅ GOLDEN (ClassicAPI v1.13.4+ Native C++ Hardware Wipe):
+-- ✅ GOLDEN (ClassicAPI v1.14.0+ Native C++ Hardware Wipe):
 table.wipe(historyTable)
 ```
 
@@ -618,7 +636,7 @@ UseAction = TrinketMenu.newUseAction
 TrinketMenu.oldUseInventoryItem = UseInventoryItem
 UseInventoryItem = TrinketMenu.newUseInventoryItem
 
--- ✅ GOLDEN (ClassicAPI v1.13.4+ Non-Destructive Secure Hooking):
+-- ✅ GOLDEN (ClassicAPI v1.14.0+ Non-Destructive Secure Hooking):
 hooksecurefunc("UseInventoryItem", function(slot)
     if (slot == 13 or slot == 14) and not (MerchantFrame and MerchantFrame:IsVisible()) then
         TrinketMenu.ReflectTrinketUse(slot)

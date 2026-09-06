@@ -29,7 +29,7 @@ Before analyzing, refactoring, editing, or committing code in this repository:
 
 2. **Mandatory Client Extension Stack**:
    All addons strictly require and leverage:
-   - **ClassicAPI v1.13.4+** (C++ timers, native table.wipe, C_UnitAuras, modern EditBox API)
+   - **ClassicAPI v1.14.0+** (C++ timers, native table.wipe, C_UnitAuras, modern EditBox API, C_Map, C_Texture)
    - **SuperWoW v2.2+** (Direct GUID targeting TargetUnit(guid), SetMouseoverUnit)
    - **NamPower v4.6.3+** (Zero-latency spell queue, binary combat log packets)
    - **UnitXP SP3 v89+** (Final release: Uncapped 3D Euclidean distances and real HP integers)
