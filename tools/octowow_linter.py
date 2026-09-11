@@ -200,6 +200,8 @@ class OctoWoWAuditor:
         if 'ALL' in self.global_ignores or rule_id.upper() in self.global_ignores:
             return True
         ignore_match = re.search(r'--\s*octowow-ignore:\s*([a-zA-Z0-9_\-,\s]+)', line, re.IGNORECASE)
+        if not ignore_match:
+            ignore_match = re.search(r'<!--\s*octowow-ignore:\s*([a-zA-Z0-9_\-,\s]+)\s*-->', line, re.IGNORECASE)
         if ignore_match:
             rules = [r.strip().upper() for r in ignore_match.group(1).split(',')]
             if 'ALL' in rules or rule_id.upper() in rules:
@@ -217,14 +219,23 @@ class OctoWoWAuditor:
         except Exception as e:
             return [f"Cannot read file: {e}"], [], []
 
-        # 1. Heuristic Structural & Syntax Scan
-        structural_errors = HeuristicStructuralScanner.check_structure(filepath)
-        for err in structural_errors:
-            errors.append(f"[STRUCTURAL ERROR] {err}")
+        # 1. Heuristic Structural & Syntax Scan (Lua only)
+        if filepath.endswith('.lua'):
+            structural_errors = HeuristicStructuralScanner.check_structure(filepath)
+            for err in structural_errors:
+                errors.append(f"[STRUCTURAL ERROR] {err}")
 
+        current_button_name = ""
         for idx, line in enumerate(raw_lines, 1):
             stripped = line.strip()
-            is_comment = stripped.startswith('--')
+            is_comment = stripped.startswith('--') or stripped.startswith('<!--') or stripped.startswith('-->')
+
+            if filepath.endswith('.xml'):
+                btn_match = re.search(r'<(?:Button|CheckButton)\b[^>]*\bname\s*=\s*["\']([^"\']+)["\']', line)
+                if btn_match:
+                    current_button_name = btn_match.group(1)
+                elif '</Button>' in line or '</CheckButton>' in line:
+                    current_button_name = ""
 
             # 2. Rule A1: Bare colon method lookup (f:GetScript ...)
             if not self._is_suppressed(line, "A1") and not is_comment:
@@ -324,6 +335,31 @@ class OctoWoWAuditor:
                 if re.search(r'PickupContainerItem\s*\(', line) and re.search(r'for\s+\w+\s*=', line):
                     warnings.append(f"[Anti-Pattern 27 - Legacy Manual Bag Sort Loop] Line {idx}: Manual item pickup loop detected. Use native C_Container.SortBags() / SortBankBags() coroutine.")
 
+            # 16. Rule C13 / AP-28: Title-Bar Action Button Standards & Highlight Trap
+            if not self._is_suppressed(line, "C13") and not self._is_suppressed(line, "AP-28") and not is_comment:
+                # Detect ButtonHilight-Square on window chrome / title bar action buttons
+                if 'ButtonHilight-Square' in line:
+                    if re.search(r'(?:Sort|Title|Header|Close|Settings|Options)', current_button_name, re.IGNORECASE) or 'Frame.xml' in filepath:
+                        warnings.append(f"[Rule C13 / AP-28 - Chrome Highlight Mismatch] Line {idx}: 'ButtonHilight-Square' detected on '{current_button_name or 'window chrome'}'. Window chrome buttons must use soft circular highlights ('UI-Panel-MinimizeButton-Highlight' or 'UI-Common-MouseHilight').")
+
+                # In XML, detect custom button textures defined without setAllPoints="true"
+                if filepath.endswith('.xml') and re.search(r'<(?:Normal|Pushed|Highlight)Texture\b[^>]*file\s*=\s*["\'][^"\']*(?:assets|AddOns)[^"\']*["\']', line):
+                    if 'setAllPoints="true"' not in line and "setAllPoints='true'" not in line:
+                        warnings.append(f"[Rule C13 / AP-28 - Unscaled Texture Crop Risk] Line {idx}: Custom texture file defined without 'setAllPoints=\"true\"'. In WoW 1.12.1 FrameXML, omitting setAllPoints causes unscaled top-left pixel crops.")
+
+                # In XML, detect static TOPRIGHT offset guessing relative to CloseButton
+                if re.search(r'relativeTo\s*=\s*["\']\$parentCloseButton["\']', line) and re.search(r'relativePoint\s*=\s*["\']TOPRIGHT["\']', line):
+                    warnings.append(f"[Rule C13 / AP-28 - Title-Bar Offset Guessing] Line {idx}: Static TOPRIGHT offset guessing detected for close button sibling. Anchor using 'point=\"CENTER\" relativeTo=\"$parentCloseButton\" relativePoint=\"CENTER\"' with y=\"0\" per Rule C13.")
+
+            # 17. Rule C14 / AP-29: In-Game Notification Tone & Developer Meta-Jargon
+            if not self._is_suppressed(line, "C14") and not self._is_suppressed(line, "AP-29") and not is_comment:
+                # Check for developer implementation jargon in player messages / localizations
+                if re.search(r'(?:AddMessage|UIErrorsFrame|Print|L\["[^"]+"\]\s*=|L\[\'[^\']+\'\]\s*=).*["\'][^"\']*\b(?:C\+\+|coroutine)\b', line, re.IGNORECASE) or re.search(r'["\'][^"\']*\b(?:via C\+\+|with C\+\+|C\+\+ engine|via ClassicAPI C\+\+)\b', line, re.IGNORECASE):
+                    warnings.append(f"[Rule C14 / AP-29 - Developer Meta-Jargon in UI] Line {idx}: Developer meta-jargon ('C++', 'coroutine') detected in user-facing text. Communicate state changes cleanly without implementation details.")
+                # Check for progressive waiting ellipsis in UI messages (e.g. "Sorting bags...", "Scanning...")
+                if re.search(r'["\'](?:Sorting|Cleaning|Filtering|Processing)(?:\s+bags|\s+items|\s+bank)?\.\.\.["\']', line, re.IGNORECASE):
+                    warnings.append(f"[Rule C14 / AP-29 - Progressive Ellipsis in UI] Line {idx}: Progressive waiting ellipsis detected in player-facing string. Modern client actions must use instant past-tense confirmations (e.g. 'Bags sorted.').")
+
         return errors, warnings, infos
 
     def audit_addon_dir(self, dir_path):
@@ -381,13 +417,13 @@ class OctoWoWAuditor:
         if os.path.isdir(locales_dir):
             structure_warnings.append("[Rule H7 - Legacy Locales Clutter] Addon contains legacy 'Locales/' folder. Consolidate into 'Localization.lua'.")
 
-        # Scan all Lua files
+        # Scan all Lua and XML files
         for root, _, files in os.walk(dir_path):
             for f in sorted(files):
                 if re.search(r'localization\.(de|fr|es|ru|zh|kr|cn)\.lua', f, re.IGNORECASE) or re.search(r'(deDE|frFR|ruRU|zhCN)\.lua', f, re.IGNORECASE):
                     rel = os.path.relpath(os.path.join(root, f), dir_path)
                     structure_warnings.append(f"[Rule H2 - Foreign Locale File] '{rel}' is redundant foreign locale bloat. Eradicate file and enforce English only.")
-                if f.endswith('.lua'):
+                if f.endswith('.lua') or f.endswith('.xml'):
                     filepath = os.path.join(root, f)
                     rel = os.path.relpath(filepath, dir_path)
                     errs, warns, infs = self.audit_file(filepath)
