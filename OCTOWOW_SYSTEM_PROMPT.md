@@ -353,6 +353,24 @@ In World of Warcraft 1.12.1:
   end
   ```
 
+### Rule C13: Header & Title-Bar Action Button Standards (Alignment, Sizing & Shaders)
+When adding action buttons (e.g. Sort, Settings, Search, Mode toggles) to frame title bars alongside standard Blizzard buttons like `UIPanelCloseButton`:
+1. **Mathematical Centerline Alignment:** NEVER eyeball arbitrary static `TOPRIGHT` offsets (e.g. `x="-26" y="-7"`). Always anchor relative to the adjacent sibling:
+   ```xml
+   <Anchor point="CENTER" relativeTo="$parentCloseButton" relativePoint="CENTER">
+       <Offset x="-23" y="0"/>
+   </Anchor>
+   ```
+   Setting `y="0"` relative to `CENTER` mathematically locks the button to the exact same vertical horizontal axis as the close button, dropdown button, and title text, preventing vertical drift and crooked alignment.
+2. **Mandatory Texture Scaling (`setAllPoints="true"`):** In WoW 1.12.1 FrameXML, omitting `setAllPoints="true"` on `<NormalTexture>`, `<PushedTexture>`, or `<HighlightTexture>` prevents the engine from scaling the texture to the button size; instead, it renders an unscaled top-left pixel crop, making centered icons appear blank or clipped. Always declare `setAllPoints="true"`.
+3. **Context-Appropriate Highlight Shaders:** NEVER use `ButtonHilight-Square` on title-bar or circular window buttons. `ButtonHilight-Square` is an aggressive cyan rectangular neon box designed exclusively for square action-bar slots. For title bars and circular chrome buttons, always use `Interface\Buttons\UI-Panel-MinimizeButton-Highlight` or `Interface\Buttons\UI-Common-MouseHilight`.
+4. **Button Housing & Bezel Standard:** Custom action buttons must be styled as complete, tactile UI controls with an authentic circular or beveled metallic frame/bezel and distinct Normal and Pushed states, never raw floating pixels against dark frame backdrops.
+
+### Rule C14: In-Game Notification Tone & Messaging Standard (No Progressive Ellipsis, No Technical Jargon)
+When providing player feedback in chat or tooltips:
+1. **Instant Action Confirmation (Past-Tense):** Because modern DLL enhancements (ClassicAPI, SuperWoW) execute asynchronously in C++ in milliseconds, NEVER use progressive ellipsis (e.g. `"Sorting bags..."`, `"Scanning..."`, `"Updating..."`), which falsely implies slow, lagging 2006 Lua loops. Use crisp, completed action phrasing: `"Bagnon: Bags sorted."`, `"AutoBG: Queue confirmed."`.
+2. **Zero Technical & Developer Meta-Jargon:** NEVER output developer, implementation, or engine terms (such as `"C++"`, `"ClassicAPI"`, `"DLL"`, `"coroutine"`, `"thread"`, `"hook"`, `"memory"`) in player-facing in-game chat messages, combat log strings, or standard tooltips. Keep in-game text 100% immersive, natural, and player-oriented. Developer details belong exclusively in `README.md`, codebase docs, and slash command `/dump` debugging tools.
+
 ---
 
 ## 10. Entity Lifecycle & Memory Safety
@@ -377,7 +395,7 @@ The Anti-Pattern list is maintained via the Rule H6 continuous learning protocol
 2. **Promote Proven Patterns Upward:** When a pattern appears repeatedly, promote its core directive into Sections 8–10 as an architectural rule.
 3. **Periodic Consolidation:** Maintain the active catalog at $\le 25$ high-signal patterns. Obsolete or niche entries are consolidated or archived.
 
-### The 27-Point Anti-Pattern Matrix
+### The 29-Point Anti-Pattern Matrix
 
 | ID | Anti-Pattern Name | Root Cause | Impact | Verified Fix |
 | :--- | :--- | :--- | :--- | :--- |
@@ -408,6 +426,8 @@ The Anti-Pattern list is maintained via the Rule H6 continuous learning protocol
 | **AP-25** | Unchecked SuperWoW Version Format | Hardcoding numeric `SUPERWOW_VERSION < 202` | False positive engine rejection | Check presence and confirmed type before numeric math. |
 | **AP-26** | 1.12.1 Event Parameter Shadowing | Declaring `(self, event, arg1)` on event handlers | Unpassed parameters evaluate to `nil` and shadow globals `_G.event` / `_G.arg1`; `ADDON_LOADED` fails, completely bricking addon | Use neutral parameter names (`arg1_param, arg2_param, arg3_param`) with dual-convention fallback to `_G.event` and `_G.arg1` (Rule C12). |
 | **AP-27** | Reentrant Container Sorting / Unprotected Sort Spam | Triggering manual item sorting loops on rapid item events or invoking container sorts while a sort coroutine is active, on offline cached characters, or away from bank tellers | Container state desync, locked bag slots, cursor item drops, and transaction corruption | Use native `C_Container.SortBags()` / `C_Container.SortBankBags()`; verify frame is not cached (`Bagnon_IsCachedFrame`) and player is physically at bank (`bgn_atBank`); leverage ClassicAPI's native C++ coroutine reentrancy lock; defer UI updates until `BAG_UPDATE_DELAYED`. |
+| **AP-28** | Title-Bar Offset Guessing & Texture Crop Trap | Eyeballing static `TOPRIGHT` offsets next to Blizzard standard buttons (e.g. `UIPanelCloseButton`) and omitting `setAllPoints="true"` on `<NormalTexture>` | Buttons sit 3–5px off-center vertically, collide with close button hitboxes, and render unscaled top-left texture corners (making centered icons appear blank/invisible) | Anchor `point="CENTER" relativeTo="$parentCloseButton" relativePoint="CENTER"` with `y="0"`, maintain a $\ge 4\text{px}$ gap, enforce `setAllPoints="true"`, and use soft circular highlight (`UI-Panel-MinimizeButton-Highlight`). (Rule C13) |
+| **AP-29** | Developer Meta-Jargon & Progressive Ellipsis in Player UI | Displaying progressive waiting text (`"Sorting..."`) or leaking technical implementation details (`"C++"`, `"ClassicAPI"`, `"coroutine"`) into in-game player chat or tooltips | Breaks game immersion, clutters chat logs with developer noise, and misleads players into expecting sluggish processing delays | Output clean, immersive past-tense confirmations (`"Bagnon: Bags sorted."`) with zero technical jargon. Reserve architecture and engine terms for documentation and technical commands. (Rule C14) |
 
 ---
 
