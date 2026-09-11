@@ -3,7 +3,7 @@
 OctoWoW Addon Linter & Heuristic Static Analysis Scanner (v2.1)
 Part of the OctoWoW Addon Modernization & Reverse Engineering Framework.
 Validates World of Warcraft 1.12.1 addons against the modern Enhanced Engine Stack:
-ClassicAPI v1.14.0+, SuperWoW v2.2+, NamPower v4.6.3+, UnitXP SP3, and DXVK.
+ClassicAPI v1.15.0+ (v1.14.0+ baseline), SuperWoW v2.2+, NamPower v4.6.3+, UnitXP SP3, and DXVK.
 """
 
 import os
@@ -318,6 +318,11 @@ class OctoWoWAuditor:
                     errors.append(f"[Rule C12 / AP-26 - Event Parameter Shadowing] Line {idx}: Event handler declares 'event' or 'arg1' in parameter list. In WoW 1.12.1, unpassed parameters evaluate to nil and shadow globals _G.event/_G.arg1 under 0-arg or 1-arg XML dispatches. Use neutral parameter names (e.g. arg1_param, arg2_param, arg3_param) per Rule C12.")
                 elif re.search(r'local\s+\w+\s*=\s*(event|arg1|arg2)\s+or\s+\1\b', line):
                     errors.append(f"[Rule C12 / AP-26 - Event Parameter Shadowing] Line {idx}: Tautological fallback 'local x = var or var' detected for event/arg1. The parameter shadows the global with nil. Use neutral parameter names (e.g. arg1_param) per Rule C12.")
+
+            # 15. AP-27: Legacy Manual Bag Sort Loops / Reentrant Container Sorting
+            if not self._is_suppressed(line, "AP-27") and not is_comment:
+                if re.search(r'PickupContainerItem\s*\(', line) and re.search(r'for\s+\w+\s*=', line):
+                    warnings.append(f"[Anti-Pattern 27 - Legacy Manual Bag Sort Loop] Line {idx}: Manual item pickup loop detected. Use native C_Container.SortBags() / SortBankBags() coroutine.")
 
         return errors, warnings, infos
 

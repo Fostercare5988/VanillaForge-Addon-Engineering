@@ -159,7 +159,7 @@ Classify all execution paths into **Four Execution Tiers**:
 │                        World of Warcraft 1.12.1                        │
 ├──────────────────┬──────────────────┬────────────────┬─────────────────┤
 │    ClassicAPI    │     SuperWoW     │    NamPower    │    UnitXP SP3   │
-│ (v1.14.0+ DLL)   │   (v2.2+ DLL)    │ (v4.6.3+ DLL)  │  (Unpacked DLL) │
+│ (v1.15.0+ DLL)   │   (v2.2+ DLL)    │ (v4.6.3+ DLL)  │  (Unpacked DLL) │
 │ Modern C_ APIs,  │ GUIDs, Mouseover │ Spell Queues,  │ Raw HP, LoS,    │
 │ Syntax Rewrites  │ Targeting, Cast  │ Binary Combat  │ Distance, Audio │
 ├──────────────────┴──────────────────┴────────────────┴─────────────────┤
@@ -169,7 +169,7 @@ Classify all execution paths into **Four Execution Tiers**:
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 1. ClassicAPI (`v1.14.0+` installed / `v1.13.4+` baseline) — The Modern Core
+### 1. ClassicAPI (`v1.15.0+` installed / `v1.14.0+` baseline) — The Modern Core
 - **Syntax Rewrites:** Modern Lua 5.1 syntax is rewritten on the fly before compilation on the 5.0 VM:
   - `#t` length operator `[EMPIRICALLY VERIFIED]` (do not write `table.getn`).
   - `a % b` modulo operator (do not write `math.mod`).
@@ -181,7 +181,12 @@ Classify all execution paths into **Four Execution Tiers**:
   - `C_Timer.After(seconds, func)` & `C_Timer.NewTicker(seconds, func, iterations)`
   - `C_NamePlate`: `GetNamePlates()`, `GetNamePlateForUnit(unit)`, `GetNamePlateForGUID(guid)`. Events: `NAME_PLATE_UNIT_ADDED`, `NAME_PLATE_UNIT_REMOVED`.
   - `C_UnitAuras`: Linear $O(n)$ slot-batching via `GetAuraSlots(unit, filter)` & `GetAuraDataBySlot(unit, slot)` or `AuraUtil.ForEachAura`. Avoid quadratic $O(n^2)$ index looping.
-  - `C_Container`: Modern container queries (`GetContainerNumFreeSlots`, `SwapItems`, etc.).
+  - `C_Container`: Comprehensive modern container API suite:
+    - **Native Coroutine Sorting:** `C_Container.SortBags()` and `C_Container.SortBankBags()`. Executes asynchronous, non-blocking coroutine-driven container sorting with internal C++ reentrancy locking (mutex flag at `0x101501D4`), yielding between swaps to prevent frame freezes.
+    - **Sort Direction & Preferences:** `C_Container.SetSortBagsRightToLeft(bool)` and `C_Container.GetSortBagsRightToLeft()` for bidirectional sorting; `C_Container.SetBackpackAutosortDisabled(bool)`, `C_Container.GetBackpackAutosortDisabled()`, `C_Container.SetBankAutosortDisabled(bool)`, and `C_Container.GetBankAutosortDisabled()`.
+    - **Container Item Operations:** `C_Container.MoveItem(bag, slot, targetBag, targetSlot)`, `C_Container.SwapItems(bag, slot, targetBag, targetSlot)`, `C_Container.AutoStoreItem(bag, slot)`.
+    - **Slot & Item Queries:** `C_Container.GetContainerNumFreeSlots(bag)`, `C_Container.GetContainerFreeSlots(bag)`, `C_Container.GetContainerItemInfo(bag, slot)`, `C_Container.HasContainerItem(bag, slot)`, `C_Container.GetContainerItemQuestInfo(bag, slot)`, `C_Container.GetContainerItemEquipmentSetInfo(bag, slot)`.
+    - **Container Events:** Backports modern `BAG_UPDATE_DELAYED` (dispatched after full sort coroutine or swap batch finishes) and `BAG_NEW_ITEMS_UPDATED`.
   - `C_Texture`: Texture Atlas & SpriteSheet engine (`texture:SetAtlas`, `C_Texture.GetAtlasInfo`, `texture:SetSpriteSheetCell`, `|A:name:h:w|a` markup, NPOT texture support).
   - `C_Map`: 3-Tier engine: `GetPlayerMapPosition`, `GetWorldPosFromMapPos`, `GetMapInfo`, User Waypoints (`SetUserWaypoint`, `GetUserWaypoint`, `USER_WAYPOINT_UPDATED`).
   - `C_Reputation`: `GetFactionDataByID`, `SetSelectedFactionByID`, `ToggleFactionAtWarByID`.
@@ -372,7 +377,7 @@ The Anti-Pattern list is maintained via the Rule H6 continuous learning protocol
 2. **Promote Proven Patterns Upward:** When a pattern appears repeatedly, promote its core directive into Sections 8–10 as an architectural rule.
 3. **Periodic Consolidation:** Maintain the active catalog at $\le 25$ high-signal patterns. Obsolete or niche entries are consolidated or archived.
 
-### The 26-Point Anti-Pattern Matrix
+### The 27-Point Anti-Pattern Matrix
 
 | ID | Anti-Pattern Name | Root Cause | Impact | Verified Fix |
 | :--- | :--- | :--- | :--- | :--- |
@@ -402,6 +407,7 @@ The Anti-Pattern list is maintained via the Rule H6 continuous learning protocol
 | **AP-24** | Verbose Time Strings in Unit Rows | Using `"Just now"` in 170px bars | Violent text collision with HP tags | Use compact format: `0s`, `15s`, `2m`. |
 | **AP-25** | Unchecked SuperWoW Version Format | Hardcoding numeric `SUPERWOW_VERSION < 202` | False positive engine rejection | Check presence and confirmed type before numeric math. |
 | **AP-26** | 1.12.1 Event Parameter Shadowing | Declaring `(self, event, arg1)` on event handlers | Unpassed parameters evaluate to `nil` and shadow globals `_G.event` / `_G.arg1`; `ADDON_LOADED` fails, completely bricking addon | Use neutral parameter names (`arg1_param, arg2_param, arg3_param`) with dual-convention fallback to `_G.event` and `_G.arg1` (Rule C12). |
+| **AP-27** | Reentrant Container Sorting / Unprotected Sort Spam | Triggering manual item sorting loops on rapid item events or invoking container sorts while a sort coroutine is active, on offline cached characters, or away from bank tellers | Container state desync, locked bag slots, cursor item drops, and transaction corruption | Use native `C_Container.SortBags()` / `C_Container.SortBankBags()`; verify frame is not cached (`Bagnon_IsCachedFrame`) and player is physically at bank (`bgn_atBank`); leverage ClassicAPI's native C++ coroutine reentrancy lock; defer UI updates until `BAG_UPDATE_DELAYED`. |
 
 ---
 
