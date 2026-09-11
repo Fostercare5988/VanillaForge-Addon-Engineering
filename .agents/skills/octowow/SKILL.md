@@ -2,7 +2,7 @@
 name: octowow
 description: >-
   Autonomous agent skill for World of Warcraft 1.12.1 Enhanced Engine Addon Modernization and Greenfield Development.
-  Enforces OctoWoW v2.1 standards: Capability-First Architecture, 4-Tier Execution Performance Model, ClassicAPI v1.14.0+,
+  Enforces OctoWoW v2.1 standards: Capability-First Architecture, 4-Tier Execution Performance Model, ClassicAPI v1.15.0+ (v1.14.0+ baseline),
   SuperWoW v2.2+, NamPower v4.6.3+, UnitXP SP3, DXVK Vulkan runtime environment, heuristic static scanning via tools/octowow_linter.py,
   and dual static/runtime verification pipeline.
 ---
@@ -27,7 +27,7 @@ Heuristic Static Scanner: `python tools/octowow_linter.py <target_path>`
    - **Tier 1 (Cold Event):** Zone changes & UI toggles. Lightweight allocations allowed.
    - **Tier 2 (Combat Hot Path):** `UNIT_HEALTH`, `UNIT_CASTEVENT`, combat log. Zero closure churn, minimal allocations.
    - **Tier 3 (Per-Frame Path):** `OnUpdate` running 60–144+ FPS. Strict zero allocation. Allowed ONLY for visual interpolation, drag, or animations.
-3. **API Priority Ladder:** Native Events → Direct Unit Tokens (`target`, `focus`, `nameplateN`) → SuperWoW GUIDs → ClassicAPI C_ APIs → Stack DLL APIs → Cached State → C_Timer → Legacy 1.12 APIs.
+3. **API Priority Ladder:** Native Events → Direct Unit Tokens (`target`, `focus`, `nameplateN`) → SuperWoW GUIDs → ClassicAPI C_ APIs (including `C_Container` sorting in v1.15.0+) → Stack DLL APIs → Cached State → C_Timer → Legacy 1.12 APIs.
 4. **Anti-Hallucination Mandate:** Never invent API functions, event names, or version signatures.
 5. **Zero "Octo" Branding on GitHub & End-Addons (Stealth Rule):** NEVER mention "Octo", "OctoWoW", "OctoWoW v2", or custom private server names in end-addons, git commits, PRs, or public repos. Commits must use clean, neutral technical phrasing.
 6. **1.12.1 Client vs. 1.18.1 Content Patch:** The client and Lua API is ALWAYS strictly 1.12.1. 1.18.1 is only server-side content; never gate addon logic on 1.18.1.
