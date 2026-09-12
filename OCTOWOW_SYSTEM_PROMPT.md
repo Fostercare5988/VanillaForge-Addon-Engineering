@@ -169,14 +169,18 @@ Classify all execution paths into **Four Execution Tiers**:
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 1. ClassicAPI (`v1.15.3+` installed / `v1.14.0+` baseline) — The Modern Core
-- **Syntax Rewrites:** Modern Lua 5.1 syntax is rewritten on the fly before compilation on the 5.0 VM:
+### 1. ClassicAPI (`v1.15.5+` installed / `v1.14.0+` baseline) — The Modern Core
+- **Syntax Rewrites & Transpiler Engine:** Modern Lua 5.1 syntax is rewritten on the fly before compilation on the 5.0 VM:
   - `#t` length operator `[EMPIRICALLY VERIFIED]` (do not write `table.getn`).
   - `a % b` modulo operator (do not write `math.mod`).
   - String metatable methods: `("str"):upper()`, `msg:match(...)`.
   - Leveled long brackets `[=[ ]=]` and `0x` hex literals.
   - Per-file vararg scoping: `local addonName, addonTable = ...`.
-- **Fatal Syntax Exception (Not Rewritten):** `obj:Method` without immediate parentheses is an unrecoverable parser crash in Lua 5.0 and 5.1. Always write `obj.Method` or `function() obj:Method() end`.
+  - **Allocation-Free Single-Pass Lexer (v1.15.4+):** `Lex<Sink>` with `FlagSink` checks if modern tokens exist outside strings and comments in one pass, eliminating token vector allocation for chunks with only formatting `%` or prose `...`. Transpile time benchmarked at only 39 ms across 40,921 chunks at login.
+  - **Fatal Syntax Exception (Not Rewritten):** `obj:Method` without immediate parentheses is an unrecoverable parser crash in Lua 5.0 and 5.1. Always write `obj.Method` or `function() obj:Method() end`.
+- **Engine-Native Spell Usability (`IsUsableSpell` in v1.15.5+):**
+  - ClassicAPI binds `IsUsableSpell(spellName/ID)` directly to the engine's internal `FUN_SPELL_IS_USABLE (0x006E3D60)` and `FUN_PET_ACTIONS_USABLE`.
+  - Accurately checks stance/form (e.g. Warrior Whirlwind/Overpower, Druid forms, Rogue Stealth), spell knowledge gate, and power (mana/rage/energy), returning `(isUsable, notEnoughMana)` without confusing cooldown with usability.
 - **C_ Namespaces:**
   - `C_Timer.After(seconds, func)` & `C_Timer.NewTicker(seconds, func, iterations)`
   - `C_NamePlate`: `GetNamePlates()`, `GetNamePlateForUnit(unit)`, `GetNamePlateForGUID(guid)`. Events: `NAME_PLATE_UNIT_ADDED`, `NAME_PLATE_UNIT_REMOVED`.
@@ -191,6 +195,14 @@ Classify all execution paths into **Four Execution Tiers**:
     - `C_Item.GetItemTempEnchantInfo(itemLocation)`: Reads temporary weapon enchants (poisons, sharpening stones, mana oils) directly on weapons inside bags without equipping them, returning `(hasEnchant, expirationMs, charges, enchantID)`.
     - `C_Item.GetWeaponEnchantInfo()`: Equipped weapon temporary enchants.
     - `C_Item.GetItemInfo(itemID)`, `C_Item.GetItemCount(itemID)`.
+  - `C_Sound` (v1.15.4+ Modern Sound Engine):
+    - `C_Sound.PlaySound(soundKitID, channel, forceNoDuplicates, runFinishCallback)`: Plays by numeric SoundKit ID (e.g. 850 `igMainMenuOpen`, 8959 `RaidWarning`, 8960 `ReadyCheck`), returning `willPlay, soundHandle`. Global `PlaySound` widened to accept numeric SoundKit IDs directly.
+    - `C_Sound.PlayItemSound(item, soundType)` & `Enum.ItemSoundType`: Plays native item handling audio (`Pickup = 0`, `Drop = 1`) via `ItemGroupSounds.dbc` using itemID, link, or location.
+    - `C_Sound.PlayVocalErrorSound(errorID)` & `Enum.Vocalerrorsounds`: Plays the player character's voice error complaints ("Inventory full", "Out of mana") across 68 enum values mapped to player race and sex.
+    - `C_Sound.PlaySoundWithOptions(params)` & `C_Sound.GetSoundScaledVolume(handle)`: Supports dynamic `volumeOverride`.
+    - `MuteSoundFile(path)` & `UnmuteSoundFile(path)`: Suppresses audio at the FMOD stream-open level with zero decoding overhead.
+    - `C_Sound.GetRecentSoundFiles()`: Returns the last 64 played audio files with timestamps and muted state.
+    - `SOUNDKIT_FINISHED`: World-tick event dispatched when a sound played with `runFinishCallback` ends.
   - `C_Macro`: Modern macro inspection & programmatic display:
     - `C_Macro.GetMacroIcon(macroIndex)`: Reads the active icon resolved by the engine's `#showtooltip` evaluation without altering the stored icon. (Standard `GetMacroInfo(macroIndex)` returns the stored icon, preserving Macro UI picker grids).
     - `C_Macro.SetMacroDisplay(macroIndex, spellID or false)`: Allows external macro addons to publish dynamic icons/tooltips.
@@ -203,13 +215,16 @@ Classify all execution paths into **Four Execution Tiers**:
 - **Core Primitives & Invariants:**
   - **The `_G.ClassicAPI` Namespace Mirror (Anti-Tamper Invariant):** All 637+ in-game functions and namespaces are mirrored by value into `_G.ClassicAPI` (e.g. `ClassicAPI.GetServerTime`, `ClassicAPI.C_Item.*`, `ClassicAPI.C_Container.*`). Guarantees tamper-proof C++ access if server FrameXML or third-party addons clobber globals in `_G`. Doubles as an instant clobber detector: `if GetServerTime ~= ClassicAPI.GetServerTime then ... end`.
   - **True UTC Server Time Sync:** `GetServerTime()`, `ClassicAPI.GetServerTime()`, and `GetSecondsUntilDailyReset()` derive from the engine's internal `CMSG_QUERY_TIME` delta (`VAR_SERVER_TIME_DELTA`), delivering true UTC epoch seconds unaffected by client timezone drift or zone map time offsets (e.g. Kalimdor vs Eastern Kingdoms). Display time (`GetServerTimeLocal()`, `GetCurrentCalendarTime()`) tracks realm display clock (`RealmClockEpoch`).
+  - **Table Optimization (v1.15.4+):** `table.insert` registered directly over `luaB_tinsert` (eliminating MinHook detour). Length healing for `#` and `luaL_getn` uses doubling-then-bisecting ($O(\log n)$), allowing thousands of reads on cleared tables with zero GC hitch.
+  - **Contested Slash Command Protection (v1.15.4+):** Snapshots registered command handlers to ensure third-party macro addons do not break core slash aliases (`/cancelaura`, `/petattack`).
   - **Frame Method Type Safety Gate (`IsA` vtable+0x10):** All 45 ClassicAPI frame methods validate `self` against the engine's native `IsA(typeId)` vtable check, safely raising `"Wrong object type for member function"` rather than corrupting memory when passed an invalid frame type.
-  - **Macro Directives & Quiet Coexistence:** `#showtooltip spell:<id>` or `#showtooltip <id>` queries `Spell.dbc` directly to show unlearned abilities. `SecureCmdOptionParse` quietly bypasses foreign macro conditions (e.g. SuperCleveRoidMacros `[alive]`), and contested slash commands automatically yield back to pre-existing addon handlers.
+  - **Macro Directives & Quiet Coexistence:** `#showtooltip spell:<id>` or `#showtooltip <id>` queries `Spell.dbc` directly to show unlearned abilities. `SecureCmdOptionParse` quietly bypasses foreign macro conditions (e.g. SuperCleveRoidMacros `[alive]`).
   - `hooksecurefunc`: Securely observe Blizzard functions without replacing the global.
   - `InCombatLockdown()`: Direct combat check (replaces manual regen tracking).
   - `table.wipe(t)`: Native C++ memory wipe.
   - Retail-like `/reload`: Reloads TOC edits, new files, and metadata without restarting client.
   - Bundled `DebugTools`: `/dump`, `/etrace`, `/framestack` (`/fstack`), `/luaerrors`.
+  - `ExportSoundFiles`: Audio asset extractor sweeping all 10 MPQ archive selectors into `BlizzardSound/`.
 
 ### 2. SuperWoW (`v2.2+`) — Entity Identity & Targeting
 - **GUID Unit Tokens:** Any function accepting a unit token accepts a 64-bit GUID string (e.g. `UnitName("0x000000000012ABCD")`).

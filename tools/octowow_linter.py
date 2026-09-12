@@ -3,7 +3,7 @@
 OctoWoW Addon Linter & Heuristic Static Analysis Scanner (v2.1)
 Part of the OctoWoW Addon Modernization & Reverse Engineering Framework.
 Validates World of Warcraft 1.12.1 addons against the modern Enhanced Engine Stack:
-ClassicAPI v1.15.3+ (v1.14.0+ baseline), SuperWoW v2.2+, NamPower v4.6.3+, UnitXP SP3, and DXVK.
+ClassicAPI v1.15.5+ (v1.14.0+ baseline), SuperWoW v2.2+, NamPower v4.6.3+, UnitXP SP3, and DXVK.
 """
 
 import os
