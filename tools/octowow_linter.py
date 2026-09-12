@@ -199,9 +199,9 @@ class OctoWoWAuditor:
     def _is_suppressed(self, line, rule_id):
         if 'ALL' in self.global_ignores or rule_id.upper() in self.global_ignores:
             return True
-        ignore_match = re.search(r'--\s*octowow-ignore:\s*([a-zA-Z0-9_\-,\s]+)', line, re.IGNORECASE)
+        ignore_match = re.search(r'--\s*(?:octowow|linter|engine)-ignore:\s*([a-zA-Z0-9_\-,\s]+)', line, re.IGNORECASE)
         if not ignore_match:
-            ignore_match = re.search(r'<!--\s*octowow-ignore:\s*([a-zA-Z0-9_\-,\s]+)\s*-->', line, re.IGNORECASE)
+            ignore_match = re.search(r'<!--\s*(?:octowow|linter|engine)-ignore:\s*([a-zA-Z0-9_\-,\s]+)\s*-->', line, re.IGNORECASE)
         if ignore_match:
             rules = [r.strip().upper() for r in ignore_match.group(1).split(',')]
             if 'ALL' in rules or rule_id.upper() in rules:
