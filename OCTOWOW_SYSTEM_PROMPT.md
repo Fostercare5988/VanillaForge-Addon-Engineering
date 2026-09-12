@@ -90,9 +90,9 @@ When modernizing, refactoring, or auditing an existing legacy addon:
    - `REFACTOR`: Repeated patterns, poorly structured frames, or leaky tables.
    - `REWRITE`: Broken architecture, quadratic loops, or legacy 2006 workarounds.
 3. **Step 3: Capability Map** — For each requirement, select the optimal native stack capability (see *API Priority Ladder*).
-4. **Step 4: Hot Path Map** — Categorize execution into performance tiers (Tiers 0–3).
+4. **Step 4: Hot Path Map** — Categorize execution into performance tiers (Tiers 0–3). Identify and flag all per-frame polling loops, un-gated tickers on hidden containers, and layout thrashing.
 5. **Step 5: Change Plan** — Formulate a concise, minimal-diff modification plan before touching code.
-6. **Step 6: Implement** — Apply small, deterministic edits. Maintain documentation integrity.
+6. **Step 6: Implement (Mandatory Rule C15 Modernization Pass)** — Apply small, deterministic edits. Automatically enforce **Rule C15**: insert visibility short-circuit guards on all periodic routines, implement mutation diff caching (anchors, fontstrings, statusbars, colors), migrate 144 FPS `OnUpdate` polling to hardware timers (`C_Timer.NewTicker`), and centralize unit event fanout into $O(1)$ dispatch tables. Maintain documentation integrity.
 7. **Step 7: Static Heuristic Scan** — Run `python tools/octowow_linter.py <AddonPath>` to verify structural syntax and rules.
 8. **Step 8: Runtime Diagnostics** — Verify in-client using `/reload`, `/luaerrors 1`, `/framestack`, `/etrace`, and `/dump`.
 9. **Step 9: PvP Stress Test** — Test in dynamic scenarios: empty world, 10-man WSG, 15-man AB, 40-man AV, rapid target swapping, stealth alerts, and roster shrink.
@@ -397,6 +397,31 @@ When providing player feedback in chat or tooltips:
 1. **Instant Action Confirmation (Past-Tense):** Because modern DLL enhancements (ClassicAPI, SuperWoW) execute asynchronously in C++ in milliseconds, NEVER use progressive ellipsis (e.g. `"Sorting bags..."`, `"Scanning..."`, `"Updating..."`), which falsely implies slow, lagging 2006 Lua loops. Use crisp, completed action phrasing: `"Bagnon: Bags sorted."`, `"AutoBG: Queue confirmed."`.
 2. **Zero Technical & Developer Meta-Jargon:** NEVER output developer, implementation, or engine terms (such as `"C++"`, `"ClassicAPI"`, `"DLL"`, `"coroutine"`, `"thread"`, `"hook"`, `"memory"`) in player-facing in-game chat messages, combat log strings, or standard tooltips. Keep in-game text 100% immersive, natural, and player-oriented. Developer details belong exclusively in `README.md`, codebase docs, and slash command `/dump` debugging tools.
 
+### Rule C15: Zero-Thrash Event-Driven Modernization (Visibility Gating, Draw Mutation Caching & Layout De-Thrashing)
+Every legacy or modernized module must automatically enforce five anti-stutter mandates to eliminate micro-stutters and frame pacing jitter:
+1. **Visibility Short-Circuiting (Occlusion Gating):**
+   Any periodic ticker or render script monitoring frames or world states (WorldMap, BattlefieldMinimap, RaidFrames, Bags) MUST immediately exit at the top of the function if the parent container is hidden:
+   ```lua
+   if not ((WorldMapFrame and WorldMapFrame:IsShown()) or (BattlefieldMinimap and BattlefieldMinimap:IsShown())) then
+       return
+   end
+   ```
+   Zero loops, zero table traversals, zero `UnitName`/`UnitExists` checks, and zero string allocations may occur while the UI element is closed.
+2. **Mutation Diff Caching (Draw Call & Layout Invalidation Elimination):**
+   NEVER repeatedly call layout-invalidating or draw-mutating engine methods inside render loops or high-frequency tickers when values have not changed. Always cache previous state:
+   - **Anchors & Layout:** NEVER call `:ClearAllPoints()` and `:SetPoint()` unconditionally on every tick (causes continuous C++ UI frame tree layout invalidation). Cache `frame.lastYOffset` and mutate points ONLY upon real anchor condition shifts.
+   - **FontStrings:** Cache `frame.lastText`. Call `:SetText(newText)` ONLY when text actually changes. Skip `string.format` and layout recalculations when static or stationary.
+   - **StatusBars & Colors:** Cache `frame.lastValue`, `frame.lastMax`, `frame.lastClass`, `frame.lastPowerType`. Call `:SetStatusBarColor()`, `:SetMinMaxValues()`, and `:SetValue()` ONLY upon state diffs, never repeatedly in combat.
+   - **Textures & Alpha:** Cache `frame.lastTexture`, `frame.lastAlpha`, and `frame.lastInRange`.
+3. **Event Fanout Elimination ($O(1)$ Hash Routing):**
+   NEVER register unit-specific events (`UNIT_HEALTH`, `UNIT_MANA`, `UNIT_AURA`, `UNIT_COMBAT`) across dozens of individual unit frames (e.g. 40 raid frames $\times$ 15 events = 600 engine hooks, generating 40 Lua dispatches per damage event).
+   Instead, centralize unit event registration onto a single master controller frame and dispatch directly to the exact target frame in $O(1)$ via a pre-indexed `unitToFrame[unitstr]` lookup table.
+4. **Hardware Timer Migration:**
+   NEVER use 144 FPS `OnUpdate` polling frames with software elapsed counters (`elapsed = elapsed + arg1; if elapsed > 1 then ... end`) for periodic tasks (clocks, range checks, visibility sync, coordinate polling).
+   Migrate all periodic tasks to native hardware timers (`C_Timer.NewTicker(interval, callback)` with automated fallback).
+5. **Preallocated Registries & Lookup Hashes:**
+   Preallocate button name-to-unit mapping tables at file load time. Replace nested $O(N \times M)$ group search loops with $O(1)$ membership lookup hashes (`myPartyNames[name]`) populated once per tick.
+
 ---
 
 ## 10. Entity Lifecycle & Memory Safety
@@ -455,6 +480,7 @@ The Anti-Pattern list is maintained via the Rule H6 continuous learning protocol
 | **AP-28** | Title-Bar Offset Guessing & Texture Crop Trap | Eyeballing static `TOPRIGHT` offsets next to Blizzard standard buttons (e.g. `UIPanelCloseButton`) and omitting `setAllPoints="true"` on `<NormalTexture>` | Buttons sit 3–5px off-center vertically, collide with close button hitboxes, and render unscaled top-left texture corners (making centered icons appear blank/invisible) | Anchor `point="CENTER" relativeTo="$parentCloseButton" relativePoint="CENTER"` with `y="0"`, maintain a $\ge 4\text{px}$ gap, enforce `setAllPoints="true"`, and use soft circular highlight (`UI-Panel-MinimizeButton-Highlight`). (Rule C13) |
 | **AP-29** | Developer Meta-Jargon & Progressive Ellipsis in Player UI | Displaying progressive waiting text (`"Sorting..."`) or leaking technical implementation details (`"C++"`, `"ClassicAPI"`, `"coroutine"`) into in-game player chat or tooltips | Breaks game immersion, clutters chat logs with developer noise, and misleads players into expecting sluggish processing delays | Output clean, immersive past-tense confirmations (`"Bagnon: Bags sorted."`) with zero technical jargon. Reserve architecture and engine terms for documentation and technical commands. (Rule C14) |
 | **AP-30** | Global Clobber Vulnerability & Unprotected Time Queries | Relying on naked `_G.GetServerTime` or checking `GetMacroInfo` for dynamic `#showtooltip` icons | Client FrameXML or dirty addons overwrite globals; inaccurate epoch timestamps across zone ports; macro popup icon selector grids break | Call `ClassicAPI.GetServerTime()` for true UTC epoch; query dynamic macro icons via `C_Macro.GetMacroIcon()`; leverage `_G.ClassicAPI` mirror for tamper-proof C++ API access. |
+| **AP-31** | Per-Frame Layout & Draw Mutation Thrashing | Calling `:ClearAllPoints()`, `:SetPoint()`, `:SetText()`, `:SetStatusBarColor()`, or running loops on hidden frames every render tick | Continuous C++ UI frame tree invalidation, font glyph recalculations, severe micro-stutter (144 FPS frame drops) | Add instant visibility short-circuit guards; cache previous values (`lastText`, `lastYOffset`, `lastClass`, `lastInRange`); mutate UI elements ONLY on state diffs; centralize unit event dispatching to $O(1)$ lookup (Rule C15). |
 
 ---
 

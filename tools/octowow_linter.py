@@ -360,6 +360,11 @@ class OctoWoWAuditor:
                 if re.search(r'["\'](?:Sorting|Cleaning|Filtering|Processing)(?:\s+bags|\s+items|\s+bank)?\.\.\.["\']', line, re.IGNORECASE):
                     warnings.append(f"[Rule C14 / AP-29 - Progressive Ellipsis in UI] Line {idx}: Progressive waiting ellipsis detected in player-facing string. Modern client actions must use instant past-tense confirmations (e.g. 'Bags sorted.').")
 
+            # 18. Rule C15 / AP-31: Zero-Thrash Event-Driven Modernization (Layout & Render Thrashing)
+            if not self._is_suppressed(line, "C15") and not self._is_suppressed(line, "AP-31") and not is_comment:
+                if re.search(r':ClearAllPoints\s*\(\s*\)', line) and re.search(r':SetPoint\s*\(', line):
+                    warnings.append(f"[Rule C15 / AP-31 - Layout Thrashing] Line {idx}: Inline ClearAllPoints + SetPoint detected. Cache anchor offsets and mutate points only on state diffs to avoid C++ UI frame tree recalculations.")
+
         return errors, warnings, infos
 
     def audit_addon_dir(self, dir_path):
