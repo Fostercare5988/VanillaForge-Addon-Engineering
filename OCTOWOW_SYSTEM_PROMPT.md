@@ -169,7 +169,7 @@ Classify all execution paths into **Four Execution Tiers**:
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 1. ClassicAPI (`v1.15.0+` installed / `v1.14.0+` baseline) — The Modern Core
+### 1. ClassicAPI (`v1.15.3+` installed / `v1.14.0+` baseline) — The Modern Core
 - **Syntax Rewrites:** Modern Lua 5.1 syntax is rewritten on the fly before compilation on the 5.0 VM:
   - `#t` length operator `[EMPIRICALLY VERIFIED]` (do not write `table.getn`).
   - `a % b` modulo operator (do not write `math.mod`).
@@ -187,13 +187,24 @@ Classify all execution paths into **Four Execution Tiers**:
     - **Container Item Operations:** `C_Container.MoveItem(bag, slot, targetBag, targetSlot)`, `C_Container.SwapItems(bag, slot, targetBag, targetSlot)`, `C_Container.AutoStoreItem(bag, slot)`.
     - **Slot & Item Queries:** `C_Container.GetContainerNumFreeSlots(bag)`, `C_Container.GetContainerFreeSlots(bag)`, `C_Container.GetContainerItemInfo(bag, slot)`, `C_Container.HasContainerItem(bag, slot)`, `C_Container.GetContainerItemQuestInfo(bag, slot)`, `C_Container.GetContainerItemEquipmentSetInfo(bag, slot)`.
     - **Container Events:** Backports modern `BAG_UPDATE_DELAYED` (dispatched after full sort coroutine or swap batch finishes) and `BAG_NEW_ITEMS_UPDATED`.
+  - `C_Item`: Modern item query suite:
+    - `C_Item.GetItemTempEnchantInfo(itemLocation)`: Reads temporary weapon enchants (poisons, sharpening stones, mana oils) directly on weapons inside bags without equipping them, returning `(hasEnchant, expirationMs, charges, enchantID)`.
+    - `C_Item.GetWeaponEnchantInfo()`: Equipped weapon temporary enchants.
+    - `C_Item.GetItemInfo(itemID)`, `C_Item.GetItemCount(itemID)`.
+  - `C_Macro`: Modern macro inspection & programmatic display:
+    - `C_Macro.GetMacroIcon(macroIndex)`: Reads the active icon resolved by the engine's `#showtooltip` evaluation without altering the stored icon. (Standard `GetMacroInfo(macroIndex)` returns the stored icon, preserving Macro UI picker grids).
+    - `C_Macro.SetMacroDisplay(macroIndex, spellID or false)`: Allows external macro addons to publish dynamic icons/tooltips.
   - `C_Texture`: Texture Atlas & SpriteSheet engine (`texture:SetAtlas`, `C_Texture.GetAtlasInfo`, `texture:SetSpriteSheetCell`, `|A:name:h:w|a` markup, NPOT texture support).
   - `C_Map`: 3-Tier engine: `GetPlayerMapPosition`, `GetWorldPosFromMapPos`, `GetMapInfo`, User Waypoints (`SetUserWaypoint`, `GetUserWaypoint`, `USER_WAYPOINT_UPDATED`).
   - `C_Reputation`: `GetFactionDataByID`, `SetSelectedFactionByID`, `ToggleFactionAtWarByID`.
   - `C_AddOns`: `IsAddOnLoaded(name)` (accurate load-state stack), `GetAddOnMetadata(name, field)`.
   - `C_EncodingUtil`: Base64, Hex, JSON/CBOR encoding and decoding (no hashing).
   - `C_GossipInfo`: Modern gossip quest/option inspection.
-- **Core Primitives:**
+- **Core Primitives & Invariants:**
+  - **The `_G.ClassicAPI` Namespace Mirror (Anti-Tamper Invariant):** All 637+ in-game functions and namespaces are mirrored by value into `_G.ClassicAPI` (e.g. `ClassicAPI.GetServerTime`, `ClassicAPI.C_Item.*`, `ClassicAPI.C_Container.*`). Guarantees tamper-proof C++ access if server FrameXML or third-party addons clobber globals in `_G`. Doubles as an instant clobber detector: `if GetServerTime ~= ClassicAPI.GetServerTime then ... end`.
+  - **True UTC Server Time Sync:** `GetServerTime()`, `ClassicAPI.GetServerTime()`, and `GetSecondsUntilDailyReset()` derive from the engine's internal `CMSG_QUERY_TIME` delta (`VAR_SERVER_TIME_DELTA`), delivering true UTC epoch seconds unaffected by client timezone drift or zone map time offsets (e.g. Kalimdor vs Eastern Kingdoms). Display time (`GetServerTimeLocal()`, `GetCurrentCalendarTime()`) tracks realm display clock (`RealmClockEpoch`).
+  - **Frame Method Type Safety Gate (`IsA` vtable+0x10):** All 45 ClassicAPI frame methods validate `self` against the engine's native `IsA(typeId)` vtable check, safely raising `"Wrong object type for member function"` rather than corrupting memory when passed an invalid frame type.
+  - **Macro Directives & Quiet Coexistence:** `#showtooltip spell:<id>` or `#showtooltip <id>` queries `Spell.dbc` directly to show unlearned abilities. `SecureCmdOptionParse` quietly bypasses foreign macro conditions (e.g. SuperCleveRoidMacros `[alive]`), and contested slash commands automatically yield back to pre-existing addon handlers.
   - `hooksecurefunc`: Securely observe Blizzard functions without replacing the global.
   - `InCombatLockdown()`: Direct combat check (replaces manual regen tracking).
   - `table.wipe(t)`: Native C++ memory wipe.
@@ -395,7 +406,7 @@ The Anti-Pattern list is maintained via the Rule H6 continuous learning protocol
 2. **Promote Proven Patterns Upward:** When a pattern appears repeatedly, promote its core directive into Sections 8–10 as an architectural rule.
 3. **Periodic Consolidation:** Maintain the active catalog at $\le 25$ high-signal patterns. Obsolete or niche entries are consolidated or archived.
 
-### The 29-Point Anti-Pattern Matrix
+### The 30-Point Anti-Pattern Matrix
 
 | ID | Anti-Pattern Name | Root Cause | Impact | Verified Fix |
 | :--- | :--- | :--- | :--- | :--- |
@@ -428,6 +439,7 @@ The Anti-Pattern list is maintained via the Rule H6 continuous learning protocol
 | **AP-27** | Reentrant Container Sorting / Unprotected Sort Spam | Triggering manual item sorting loops on rapid item events or invoking container sorts while a sort coroutine is active, on offline cached characters, or away from bank tellers | Container state desync, locked bag slots, cursor item drops, and transaction corruption | Use native `C_Container.SortBags()` / `C_Container.SortBankBags()`; verify frame is not cached (`Bagnon_IsCachedFrame`) and player is physically at bank (`bgn_atBank`); leverage ClassicAPI's native C++ coroutine reentrancy lock; defer UI updates until `BAG_UPDATE_DELAYED`. |
 | **AP-28** | Title-Bar Offset Guessing & Texture Crop Trap | Eyeballing static `TOPRIGHT` offsets next to Blizzard standard buttons (e.g. `UIPanelCloseButton`) and omitting `setAllPoints="true"` on `<NormalTexture>` | Buttons sit 3–5px off-center vertically, collide with close button hitboxes, and render unscaled top-left texture corners (making centered icons appear blank/invisible) | Anchor `point="CENTER" relativeTo="$parentCloseButton" relativePoint="CENTER"` with `y="0"`, maintain a $\ge 4\text{px}$ gap, enforce `setAllPoints="true"`, and use soft circular highlight (`UI-Panel-MinimizeButton-Highlight`). (Rule C13) |
 | **AP-29** | Developer Meta-Jargon & Progressive Ellipsis in Player UI | Displaying progressive waiting text (`"Sorting..."`) or leaking technical implementation details (`"C++"`, `"ClassicAPI"`, `"coroutine"`) into in-game player chat or tooltips | Breaks game immersion, clutters chat logs with developer noise, and misleads players into expecting sluggish processing delays | Output clean, immersive past-tense confirmations (`"Bagnon: Bags sorted."`) with zero technical jargon. Reserve architecture and engine terms for documentation and technical commands. (Rule C14) |
+| **AP-30** | Global Clobber Vulnerability & Unprotected Time Queries | Relying on naked `_G.GetServerTime` or checking `GetMacroInfo` for dynamic `#showtooltip` icons | Client FrameXML or dirty addons overwrite globals; inaccurate epoch timestamps across zone ports; macro popup icon selector grids break | Call `ClassicAPI.GetServerTime()` for true UTC epoch; query dynamic macro icons via `C_Macro.GetMacroIcon()`; leverage `_G.ClassicAPI` mirror for tamper-proof C++ API access. |
 
 ---
 

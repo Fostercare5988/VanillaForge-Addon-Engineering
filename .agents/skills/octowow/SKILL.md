@@ -2,7 +2,7 @@
 name: octowow
 description: >-
   Autonomous agent skill for World of Warcraft 1.12.1 Enhanced Engine Addon Modernization and Greenfield Development.
-  Enforces OctoWoW v2.1 standards: Capability-First Architecture, 4-Tier Execution Performance Model, ClassicAPI v1.15.0+ (v1.14.0+ baseline),
+  Enforces OctoWoW v2.1 standards: Capability-First Architecture, 4-Tier Execution Performance Model, ClassicAPI v1.15.3+ (v1.14.0+ baseline),
   SuperWoW v2.2+, NamPower v4.6.3+, UnitXP SP3, DXVK Vulkan runtime environment, heuristic static scanning via tools/octowow_linter.py,
   and dual static/runtime verification pipeline.
 ---
@@ -27,13 +27,14 @@ Heuristic Static Scanner: `python tools/octowow_linter.py <target_path>`
    - **Tier 1 (Cold Event):** Zone changes & UI toggles. Lightweight allocations allowed.
    - **Tier 2 (Combat Hot Path):** `UNIT_HEALTH`, `UNIT_CASTEVENT`, combat log. Zero closure churn, minimal allocations.
    - **Tier 3 (Per-Frame Path):** `OnUpdate` running 60–144+ FPS. Strict zero allocation. Allowed ONLY for visual interpolation, drag, or animations.
-3. **API Priority Ladder:** Native Events → Direct Unit Tokens (`target`, `focus`, `nameplateN`) → SuperWoW GUIDs → ClassicAPI C_ APIs (including `C_Container` sorting in v1.15.0+) → Stack DLL APIs → Cached State → C_Timer → Legacy 1.12 APIs.
+3. **API Priority Ladder:** Native Events → Direct Unit Tokens (`target`, `focus`, `nameplateN`) → SuperWoW GUIDs → ClassicAPI C_ APIs (including `_G.ClassicAPI` anti-tamper mirror, `C_Container` sorting, and `C_Item` bagged enchants) → Stack DLL APIs → Cached State → C_Timer → Legacy 1.12 APIs.
 4. **Anti-Hallucination Mandate:** Never invent API functions, event names, or version signatures.
 5. **Zero "Octo" Branding on GitHub & End-Addons (Stealth Rule):** NEVER mention "Octo", "OctoWoW", "OctoWoW v2", or custom private server names in end-addons, git commits, PRs, or public repos. Commits must use clean, neutral technical phrasing.
 6. **1.12.1 Client vs. 1.18.1 Content Patch:** The client and Lua API is ALWAYS strictly 1.12.1. 1.18.1 is only server-side content; never gate addon logic on 1.18.1.
 7. **Event Parameter Shadowing Trap (Rule C12 / AP-26):** NEVER declare `(self, event, arg1)` on event handlers. In WoW 1.12.1 XML (`<OnEvent>Func(event);</OnEvent>`) and `:SetScript("OnEvent")` (0-arg), unpassed parameters evaluate to `nil` and shadow globals `_G.event` and `_G.arg1`, silently bricking `ADDON_LOADED` initialization. Always use neutral parameter names (`arg1_param, arg2_param, arg3_param`) with dual-convention fallback.
 8. **Title-Bar Button Geometry & Texture Scaling (Rule C13 / AP-28):** Header action buttons (e.g. Sort, Settings) must anchor relative to sibling controls via `point="CENTER" relativeTo="<SiblingButton>" relativePoint="CENTER"` with `y="0"` and an explicit horizontal gap ($\ge 4\text{px}$)—never eyeballed static `TOPRIGHT` offsets. Buttons must enforce `setAllPoints="true"` on `<NormalTexture>` and `<PushedTexture>` to prevent unscaled 1.12.1 corner clipping, use circular highlights (`UI-Panel-MinimizeButton-Highlight`), and provide distinct tactile metallic bezels.
 9. **In-Game Notification Tone & Zero Meta-Jargon (Rule C14 / AP-29):** Modern DLL actions execute in milliseconds. Never use progressive ellipsis (`"Sorting..."`) which implies slow 2006 Lua loops; use direct past-tense confirmation (`"Bagnon: Bags sorted."`). Never leak technical implementation or developer terms (`"C++"`, `"ClassicAPI"`, `"coroutine"`, `"DLL"`) into player-facing chat or tooltips.
+10. **Anti-Tamper & Clean Time Sourcing (AP-30):** Always prefer `ClassicAPI.GetServerTime()` for true UTC epoch time calculations synced via `CMSG_QUERY_TIME`. When running in hostile or non-standard client environments where FrameXML or rogue addons clobber globals in `_G`, call the un-hijackable `_G.ClassicAPI` namespace mirror. Use `C_Macro.GetMacroIcon` rather than `GetMacroInfo` for dynamic macro icon display.
 
 ---
 
