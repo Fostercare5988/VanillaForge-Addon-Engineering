@@ -159,7 +159,7 @@ Classify all execution paths into **Four Execution Tiers**:
 │                        World of Warcraft 1.12.1                        │
 ├──────────────────┬──────────────────┬────────────────┬─────────────────┤
 │    ClassicAPI    │     SuperWoW     │    NamPower    │    UnitXP SP3   │
-│ (v1.15.0+ DLL)   │   (v2.2+ DLL)    │ (v4.6.3+ DLL)  │  (Unpacked DLL) │
+│ (v1.15.5+ DLL)   │   (v2.2+ DLL)    │ (v4.6.2+ DLL)  │  (Unpacked DLL) │
 │ Modern C_ APIs,  │ GUIDs, Mouseover │ Spell Queues,  │ Raw HP, LoS,    │
 │ Syntax Rewrites  │ Targeting, Cast  │ Binary Combat  │ Distance, Audio │
 ├──────────────────┴──────────────────┴────────────────┴─────────────────┤
@@ -422,6 +422,54 @@ Every legacy or modernized module must automatically enforce five anti-stutter m
 5. **Preallocated Registries & Lookup Hashes:**
    Preallocate button name-to-unit mapping tables at file load time. Replace nested $O(N \times M)$ group search loops with $O(1)$ membership lookup hashes (`myPartyNames[name]`) populated once per tick.
 
+### Rule C16: Cooldown Framing, 3D Model Layering & Timestamp Wrapping (The WoWUIBugs #47 & Model Occlusion Mandate)
+Every cooldown counter module (action buttons, bags, buff/debuff timers, pet frames) must adhere to the following four engine-layering and timing invariants:
+1. **Dual-Epoch Timestamp Resolution (WoWUIBugs #47 & Floating-Point Drift):**
+   In vanilla WoW 1.12.1 under certain system uptimes, client restarts, or DXVK Vulkan runtime initializations, `GetActionCooldown` and `GetContainerItemCooldown` return `start` timestamps based on a 32-bit millisecond tick counter that can exceed `GetTime()` (or drift slightly ahead due to sub-second floating-point rounding when spell cast packets return before local frame updates).
+   NEVER compute `remaining = duration - (GetTime() - start)` without guarding against `start > GetTime()`:
+   ```lua
+   local now = GetTime()
+   local remaining
+   if start <= now then
+       remaining = duration - (now - start)
+   elseif (start - now) < 1.0 then
+       -- Sub-second floating point jitter at moment of cast
+       remaining = duration
+   else
+       -- 32-bit millisecond / reboot epoch wrap (WoWUIBugs #47)
+       local wallTime = time()
+       local startupTime = wallTime - now
+       local cdTime = (2 ^ 32) / 1000 - start
+       local cdStartTime = startupTime - cdTime
+       local cdEndTime = cdStartTime + duration
+       remaining = cdEndTime - wallTime
+   end
+   ```
+   Omitting this wrap calculation causes cooldown timers to display astronomical values (e.g. `4d`, `5d`) on short 10s–5m abilities or hide countdown text prematurely.
+2. **3D `<Model>` Cooldown Frame Level Elevation:**
+   In FrameXML, `CooldownFrameTemplate` is a 3D `<Model>` frame child of the button (e.g. `ActionButton1Cooldown`). Parenting a 2D fontstring or text frame to `cooldown` with an un-elevated frame level (`cooldown:GetFrameLevel() + 1` or lower) allows button overlays, normal textures, and hotkey fontstrings to occlude the countdown text.
+   Always elevate the text frame's frame level explicitly above both the parent button and the cooldown model:
+   ```lua
+   local parentLevel = (parent.GetFrameLevel and parent:GetFrameLevel()) or 1
+   local cdLevel = (cooldown.GetFrameLevel and cooldown:GetFrameLevel()) or parentLevel
+   local frameLevel = (cdLevel > parentLevel and cdLevel or parentLevel) + 2
+   cooldown.cooldowntext:SetFrameLevel(frameLevel)
+   ```
+3. **Safe Alpha Inheritance Chain:**
+   In WoW 1.12.1, setting alpha on a parent button (e.g. `ActionButton1:SetAlpha(0.4)` when out-of-range or out-of-mana) does not alter the child's `GetAlpha()` return value, and calling `:GetAlpha()` on some custom frames can return `nil`. Passing `nil` to `:SetAlpha(nil)` throws an unrecoverable Lua error that halts render loops.
+   Always resolve alpha safely up the parent chain with numeric fallback:
+   ```lua
+   local button = parent:GetParent()
+   local alpha = (button and button.GetAlpha and button:GetAlpha()) or (parent.GetAlpha and parent:GetAlpha()) or 1
+   if this.lastAlpha ~= alpha then
+       this.lastAlpha = alpha
+       this:SetAlpha(alpha)
+   end
+   ```
+4. **Universal Hooking via `CooldownFrame_SetTimer`:**
+   In WoW 1.12.1 Vanilla, there is no generic `Cooldown:SetCooldown` method (which was introduced in TBC 2.0). All cooldown sweeping across action buttons, pet buttons, shapeshift buttons, bags, and third-party addons (Bagnon, TrinketMenu, ItemRack) routes through the global FrameXML function `CooldownFrame_SetTimer(this, start, duration, enable)`.
+   Always hook `CooldownFrame_SetTimer` via `hooksecurefunc("CooldownFrame_SetTimer", SetCooldown)`.
+
 ---
 
 ## 10. Entity Lifecycle & Memory Safety
@@ -481,6 +529,7 @@ The Anti-Pattern list is maintained via the Rule H6 continuous learning protocol
 | **AP-29** | Developer Meta-Jargon & Progressive Ellipsis in Player UI | Displaying progressive waiting text (`"Sorting..."`) or leaking technical implementation details (`"C++"`, `"ClassicAPI"`, `"coroutine"`) into in-game player chat or tooltips | Breaks game immersion, clutters chat logs with developer noise, and misleads players into expecting sluggish processing delays | Output clean, immersive past-tense confirmations (`"Bagnon: Bags sorted."`) with zero technical jargon. Reserve architecture and engine terms for documentation and technical commands. (Rule C14) |
 | **AP-30** | Global Clobber Vulnerability & Unprotected Time Queries | Relying on naked `_G.GetServerTime` or checking `GetMacroInfo` for dynamic `#showtooltip` icons | Client FrameXML or dirty addons overwrite globals; inaccurate epoch timestamps across zone ports; macro popup icon selector grids break | Call `ClassicAPI.GetServerTime()` for true UTC epoch; query dynamic macro icons via `C_Macro.GetMacroIcon()`; leverage `_G.ClassicAPI` mirror for tamper-proof C++ API access. |
 | **AP-31** | Per-Frame Layout & Draw Mutation Thrashing | Calling `:ClearAllPoints()`, `:SetPoint()`, `:SetText()`, `:SetStatusBarColor()`, or running loops on hidden frames every render tick | Continuous C++ UI frame tree invalidation, font glyph recalculations, severe micro-stutter (144 FPS frame drops) | Add instant visibility short-circuit guards; cache previous values (`lastText`, `lastYOffset`, `lastClass`, `lastInRange`); mutate UI elements ONLY on state diffs; centralize unit event dispatching to $O(1)$ lookup (Rule C15). |
+| **AP-32** | Cooldown Start Timestamp Wrap & Model Occlusion | `GetActionCooldown` returning 32-bit millisecond tick counters exceeding `GetTime()` (WoWUIBugs #47), parenting fontstrings to 3D `Model` frames without explicit frame level elevation, and calling `parent:GetAlpha()` on frames returning `nil` | Action button cooldown countdown numbers display astronomical values (e.g. `5d`), disappear instantly, or render underneath button overlays / at zero alpha | Implement dual-epoch timestamp resolution (`remaining = duration - (now - start)` for `start <= now`, floating-point drift clamp for `start - now < 1.0`, and `startupTime - ((2^32)/1000 - start) + duration - time` for 32-bit epoch wrap); parent cooldown fontstrings with frame level `parent:GetFrameLevel() + 2` or higher; resolve alpha safely from `button:GetAlpha() or parent:GetAlpha() or 1` (Rule C16). |
 
 ---
 
