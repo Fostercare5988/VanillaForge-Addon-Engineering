@@ -422,53 +422,70 @@ Every legacy or modernized module must automatically enforce five anti-stutter m
 5. **Preallocated Registries & Lookup Hashes:**
    Preallocate button name-to-unit mapping tables at file load time. Replace nested $O(N \times M)$ group search loops with $O(1)$ membership lookup hashes (`myPartyNames[name]`) populated once per tick.
 
-### Rule C16: Cooldown Framing, 3D Model Layering & Timestamp Wrapping (The WoWUIBugs #47 & Model Occlusion Mandate)
-Every cooldown counter module (action buttons, bags, buff/debuff timers, pet frames) must adhere to the following four engine-layering and timing invariants:
-1. **Dual-Epoch Timestamp Resolution (WoWUIBugs #47 & Floating-Point Drift):**
-   In vanilla WoW 1.12.1 under certain system uptimes, client restarts, or DXVK Vulkan runtime initializations, `GetActionCooldown` and `GetContainerItemCooldown` return `start` timestamps based on a 32-bit millisecond tick counter that can exceed `GetTime()` (or drift slightly ahead due to sub-second floating-point rounding when spell cast packets return before local frame updates).
-   NEVER compute `remaining = duration - (GetTime() - start)` without guarding against `start > GetTime()`:
+### Rule C16: Cooldown Framing, Button Parenting & Clock Synchronization (The 3D Occlusion & Login Sync Mandate)
+Every cooldown counter module (action buttons, bags, buff/debuff timers, pet frames) must adhere to the following five engine-layering and timing invariants:
+1. **Robust Remaining Duration & Clock Drift Clamping:**
+   NEVER use arbitrary sub-second threshold cutoffs (`elseif (start - now) < 1.0 then remaining = duration else epoch_wrap`) when evaluating cooldowns. If `start` is slightly ahead of `GetTime()` by $\ge 1.0\text{s}$ (due to server clock sync, spell latency, or frame delays), an unconstrained `else` branch triggers the 49.7-day epoch wrap calculation erroneously, producing $-4,294,666\text{s}$ and permanently hiding the cooldown frame.
+   Always calculate remaining duration directly, clamp forward drift, and isolate the true 49.7-day wrap ($2^{32}/1000\text{s}$) to high-uptime conditions:
    ```lua
    local now = GetTime()
-   local remaining
-   if start <= now then
-       remaining = duration - (now - start)
-   elseif (start - now) < 1.0 then
-       -- Sub-second floating point jitter at moment of cast
-       remaining = duration
-   else
-       -- 32-bit millisecond / reboot epoch wrap (WoWUIBugs #47)
-       local wallTime = time()
-       local startupTime = wallTime - now
+   local remaining = (start + duration) - now
+
+   -- True 32-bit millisecond reboot epoch wrap (49.7 days uptime boundary)
+   if remaining < 0 and start > 4000000 and now < 100000 then
        local cdTime = (2 ^ 32) / 1000 - start
-       local cdStartTime = startupTime - cdTime
-       local cdEndTime = cdStartTime + duration
-       remaining = cdEndTime - wallTime
+       remaining = (duration - cdTime) - now
+   end
+
+   -- Clamp forward drift from server latency / clock sync jitter
+   if remaining > duration then
+       remaining = duration
    end
    ```
-   Omitting this wrap calculation causes cooldown timers to display astronomical values (e.g. `4d`, `5d`) on short 10s–5m abilities or hide countdown text prematurely.
-2. **3D `<Model>` Cooldown Frame Level Elevation:**
-   In FrameXML, `CooldownFrameTemplate` is a 3D `<Model>` frame child of the button (e.g. `ActionButton1Cooldown`). Parenting a 2D fontstring or text frame to `cooldown` with an un-elevated frame level (`cooldown:GetFrameLevel() + 1` or lower) allows button overlays, normal textures, and hotkey fontstrings to occlude the countdown text.
-   Always elevate the text frame's frame level explicitly above both the parent button and the cooldown model:
+2. **Mandatory Button Parenting (Preventing 3D `<Model>` Occlusion):**
+   In FrameXML, `CooldownFrameTemplate` is a 3D `<Model>` frame child of the button (e.g. `ActionButton1Cooldown`). Parenting a 2D fontstring or text frame to `cooldown` directly is hazardous under Direct3D9 / DXVK because the 3D model pass can clear or depth-clip child 2D canvases.
+   Always parent the text frame directly to the **button** (`cooldown:GetParent()`), anchor to `cooldown` via `:SetAllPoints(cooldown)`, inherit the button's strata, and elevate its frame level explicitly above the button and model:
    ```lua
-   local parentLevel = (parent.GetFrameLevel and parent:GetFrameLevel()) or 1
-   local cdLevel = (cooldown.GetFrameLevel and cooldown:GetFrameLevel()) or parentLevel
-   local frameLevel = (cdLevel > parentLevel and cdLevel or parentLevel) + 2
-   cooldown.cooldowntext:SetFrameLevel(frameLevel)
+   local parent = cooldown:GetParent() -- The Button
+   cooldown.cooldowntext = CreateFrame("Frame", parentname .. "CooldownText", parent)
+   cooldown.cooldowntext:SetAllPoints(cooldown)
+   cooldown.cooldowntext:SetFrameStrata(parent:GetFrameStrata() or "MEDIUM")
+   cooldown.cooldowntext:SetFrameLevel(parent:GetFrameLevel() + 5)
    ```
-3. **Safe Alpha Inheritance Chain:**
-   In WoW 1.12.1, setting alpha on a parent button (e.g. `ActionButton1:SetAlpha(0.4)` when out-of-range or out-of-mana) does not alter the child's `GetAlpha()` return value, and calling `:GetAlpha()` on some custom frames can return `nil`. Passing `nil` to `:SetAlpha(nil)` throws an unrecoverable Lua error that halts render loops.
-   Always resolve alpha safely up the parent chain with numeric fallback:
+3. **Safe Alpha Inheritance from Button:**
+   Always inherit alpha directly from the parent button with numeric fallback:
    ```lua
-   local button = parent:GetParent()
-   local alpha = (button and button.GetAlpha and button:GetAlpha()) or (parent.GetAlpha and parent:GetAlpha()) or 1
+   local button = this:GetParent()
+   local alpha = (button.GetAlpha and button:GetAlpha()) or 1
    if this.lastAlpha ~= alpha then
        this.lastAlpha = alpha
        this:SetAlpha(alpha)
    end
    ```
 4. **Universal Hooking via `CooldownFrame_SetTimer`:**
-   In WoW 1.12.1 Vanilla, there is no generic `Cooldown:SetCooldown` method (which was introduced in TBC 2.0). All cooldown sweeping across action buttons, pet buttons, shapeshift buttons, bags, and third-party addons (Bagnon, TrinketMenu, ItemRack) routes through the global FrameXML function `CooldownFrame_SetTimer(this, start, duration, enable)`.
+   In WoW 1.12.1 Vanilla, all cooldown sweeping across action buttons, pet buttons, shapeshift buttons, bags, and third-party addons routes through the global FrameXML function `CooldownFrame_SetTimer(this, start, duration, enable)`.
    Always hook `CooldownFrame_SetTimer` via `hooksecurefunc("CooldownFrame_SetTimer", SetCooldown)`.
+5. **Initial Active Cooldown Sweep on Addon Load:**
+   FrameXML initializes action buttons and triggers `CooldownFrame_SetTimer` during button load before addons finish loading on `VARIABLES_LOADED`. Without an active cooldown sweep, any ability already on cooldown when logging in or reloading UI (`/console reloadui`) will have an active 3D model sweep but no text until re-cast.
+   In `module.enable`, always sweep all visible action bars (`ActionButton`, `BonusActionButton`, `MultiBarBottomLeftButton`, `MultiBarBottomRightButton`, `MultiBarRightButton`, `MultiBarLeftButton`) using `GetActionCooldown(slot)` and initialize their timers immediately.
+
+### Rule C17: Enhanced Client FrameXML TargetFrame Dual-String Suppression (`TargetHPText` / `TargetHPPercText`)
+In enhanced client distributions (such as Turtle WoW `patch-3.mpq`), native FrameXML introduces dual status text fontstrings on `TargetFrameTextureFrame`:
+- `TargetHPText` (anchored `RIGHT`, displaying formatted current health)
+- `TargetHPPercText` (anchored `LEFT`, displaying health percentage)
+In FrameXML's `TargetHealthCheck()`, which runs on every `OnValueChanged` of `TargetFrameHealthBar`, whenever the CVar `statusBarText` is `"1"`, the engine explicitly calls:
+```lua
+TargetHPText:Show()
+TargetHPPercText:Show()
+TargetHPText:SetText(TargetFrame_FormatHealth(UnitHealth("target")))
+TargetHPPercText:SetText(math.floor(UnitHealth("target") / UnitHealthMax("target") * 100) .. "%")
+```
+When an addon creates its own status text string (e.g. `TargetFrameHealthBar.TextString`), failure to permanently suppress these native elements causes both the native dual strings and the custom centered string to render simultaneously, creating severe visual noise and double percentages (`80% 4510 - 80% 3510`).
+**Mandatory Suppression Protocol:**
+1. Hide `TargetHPText` and `TargetHPPercText` immediately on module enable.
+2. Override their `:Show()` methods to no-ops (`TargetHPText.Show = function() return end`, `TargetHPPercText.Show = function() return end`) so `TargetHealthCheck()` cannot re-display them.
+3. Wrap `TargetHealthCheck` to ensure they remain hidden.
+4. Hide pre-existing FrameXML fontstrings (`TargetFrameHealthBarText:Hide()`) and use a unique, non-colliding fontstring name (e.g. `"FCTweaksTargetHealthBarText"`) for the replacement string.
 
 ---
 
@@ -529,7 +546,8 @@ The Anti-Pattern list is maintained via the Rule H6 continuous learning protocol
 | **AP-29** | Developer Meta-Jargon & Progressive Ellipsis in Player UI | Displaying progressive waiting text (`"Sorting..."`) or leaking technical implementation details (`"C++"`, `"ClassicAPI"`, `"coroutine"`) into in-game player chat or tooltips | Breaks game immersion, clutters chat logs with developer noise, and misleads players into expecting sluggish processing delays | Output clean, immersive past-tense confirmations (`"Bagnon: Bags sorted."`) with zero technical jargon. Reserve architecture and engine terms for documentation and technical commands. (Rule C14) |
 | **AP-30** | Global Clobber Vulnerability & Unprotected Time Queries | Relying on naked `_G.GetServerTime` or checking `GetMacroInfo` for dynamic `#showtooltip` icons | Client FrameXML or dirty addons overwrite globals; inaccurate epoch timestamps across zone ports; macro popup icon selector grids break | Call `ClassicAPI.GetServerTime()` for true UTC epoch; query dynamic macro icons via `C_Macro.GetMacroIcon()`; leverage `_G.ClassicAPI` mirror for tamper-proof C++ API access. |
 | **AP-31** | Per-Frame Layout & Draw Mutation Thrashing | Calling `:ClearAllPoints()`, `:SetPoint()`, `:SetText()`, `:SetStatusBarColor()`, or running loops on hidden frames every render tick | Continuous C++ UI frame tree invalidation, font glyph recalculations, severe micro-stutter (144 FPS frame drops) | Add instant visibility short-circuit guards; cache previous values (`lastText`, `lastYOffset`, `lastClass`, `lastInRange`); mutate UI elements ONLY on state diffs; centralize unit event dispatching to $O(1)$ lookup (Rule C15). |
-| **AP-32** | Cooldown Start Timestamp Wrap & Model Occlusion | `GetActionCooldown` returning 32-bit millisecond tick counters exceeding `GetTime()` (WoWUIBugs #47), parenting fontstrings to 3D `Model` frames without explicit frame level elevation, and calling `parent:GetAlpha()` on frames returning `nil` | Action button cooldown countdown numbers display astronomical values (e.g. `5d`), disappear instantly, or render underneath button overlays / at zero alpha | Implement dual-epoch timestamp resolution (`remaining = duration - (now - start)` for `start <= now`, floating-point drift clamp for `start - now < 1.0`, and `startupTime - ((2^32)/1000 - start) + duration - time` for 32-bit epoch wrap); parent cooldown fontstrings with frame level `parent:GetFrameLevel() + 2` or higher; resolve alpha safely from `button:GetAlpha() or parent:GetAlpha() or 1` (Rule C16). |
+| **AP-32** | Cooldown Model Occlusion & Clock Drift Epoch Trap | Parenting cooldown text to 3D `<Model>` frames directly, applying arbitrary sub-second cutoff branches (`elseif (start - now) < 1.0 then remaining = duration else epoch_wrap`) that falsely trigger the 49.7-day wrap on normal forward clock drift, and failing to sweep active action bar cooldowns on login/reload | Cooldown numbers occlude behind 3D spirals in Direct3D9/DXVK, disappear prematurely after computing $-4,294,666\text{s}$, or remain invisible on login/reload until abilities are cast again | Parent text frame directly to button (`cooldown:GetParent()`), elevate frame level (`parent:GetFrameLevel() + 5`), inherit strata; calculate remaining time directly `(start + duration) - now` and clamp forward drift; sweep active cooldowns on `module.enable` via `GetActionCooldown` (Rule C16). |
+| **AP-33** | Enhanced Client FrameXML TargetFrame Dual-String Overlap | Adding custom target status text without suppressing native `TargetHPText` and `TargetHPPercText` created in `patch-3.mpq` on `TargetFrameTextureFrame` when `statusBarText` CVar is `"1"` | Target health bar displays duplicate, overlapping strings (`80% 4510 - 80% 3510`) as `TargetHealthCheck()` repeatedly re-shows native elements on value changes | Permanently hide and stub `:Show()` methods on `TargetHPText` and `TargetHPPercText` (`obj.Show = function() return end`); wrap `TargetHealthCheck` to keep them hidden; hide `TargetFrameHealthBarText` (Rule C17). |
 
 ---
 
