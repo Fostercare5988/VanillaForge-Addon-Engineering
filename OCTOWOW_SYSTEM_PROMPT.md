@@ -41,7 +41,7 @@ AI models run across diverse environments (terminal/tool-equipped vs. chat-only)
      - ✅ `feat(v3.5.0): modernize engine startup guards and dependency validation`
      - ✅ `feat(v3.3.0): eliminate string overlap, compact PvP timers, and modernize engine startup guards`
      - ❌ `feat(v3.5.0): modernize for OctoWoW v2` (STRICTLY FORBIDDEN)
-   - Present all addons neutrally as engineered for the **"World of Warcraft 1.12.1 Enhanced Client"** or **"Enhanced 1.12.1 Engine Stack (ClassicAPI, SuperWoW, DXVK)"**.
+   - Present all addons neutrally as engineered for the **"World of Warcraft 1.12.1 Enhanced Client"** or **"Enhanced 1.12.1 Engine Stack (ClassicAPI, SuperWoW)"**.
 6. **Battleground Suite Conventions:**
    - Supported 1.12.1 PvP battlegrounds are Warsong Gulch (10v10), Arathi Basin / Thorn Gorge (15v15), and Alterac Valley (40v40).
    - Note: There is **no "Eye of the Storm"** in this client (a 2.0 TBC battleground); modern enhanced Vanilla environments feature **Thorn Gorge** for the 15v15 bracket. Never reference "Eye of the Storm".
@@ -50,6 +50,12 @@ AI models run across diverse environments (terminal/tool-equipped vs. chat-only)
      - `"The Horde flag was picked up by <Player>!"` $\implies$ picked up by an **Alliance** player. The carrier is holding the enemy flag and must be tracked in the friendly Alliance flag carrier frame.
      - `"The Alliance flag was picked up by <Player>!"` $\implies$ picked up by a **Horde** player. The carrier is tracked in the Horde flag carrier frame.
      *Bug Trap:* Confusing the captured flag identity with the carrier's faction inverts carrier frames, target macros, and map pins. Always attribute the carrier to the opposing faction of the captured flag.
+7. **Accurate DLL Documentation Standard (Rule H8):**
+   In public GitHub projects and READMEs, write ONLY the `.dll`s that the addon actively consumes:
+   - Only list `ClassicAPI.dll`, `SuperWoW.dll`, `NamPower.dll`, or `UnitXP.dll` if the addon consumes their specific API functions or events.
+   - **Never list DXVK as an addon dependency:** DXVK is a client-level DirectX-to-Vulkan translation layer for frame pacing and rendering, not a Lua addon API.
+   - **Never list NamPower** unless the addon actively invokes NamPower routines (e.g. spell queues, DBC lookups).
+   - If an optional DLL (like `UnitXP`) provides enhanced functionality (e.g. uncapped health numbers) with fallback to native APIs, mark it clearly as `optional`.
 
 ---
 
@@ -234,7 +240,7 @@ Classify all execution paths into **Four Execution Tiers**:
   - `SetMouseoverUnit(guid)`: Hardware mouseover injection.
 - **Combat Events:** `UNIT_CASTEVENT` provides binary cast triggers with GUIDs and spell IDs. `RAW_COMBATLOG` provides binary combat packet stream.
 
-### 3. NamPower (`v4.6.3+`) — Spell Intelligence & DBC Metadata (Opt-in)
+### 3. NamPower (`v4.6.2+`) — Spell Intelligence & DBC Metadata (Opt-in)
 - **Role:** Spell queues, DBC metadata, and binary combat log packets.
 - **Policy:** Use when the addon requires spell queue status, DBC spell rank resolution (`GetSpellNameAndRankForId`), or low-latency combat event parsing. Do NOT add as a dependency for pure UI addons.
 
@@ -487,6 +493,16 @@ When an addon creates its own status text string (e.g. `TargetFrameHealthBar.Tex
 3. Wrap `TargetHealthCheck` to ensure they remain hidden.
 4. Hide pre-existing FrameXML fontstrings (`TargetFrameHealthBarText:Hide()`) and use a unique, non-colliding fontstring name (e.g. `"FCTweaksTargetHealthBarText"`) for the replacement string.
 
+### Rule C18: Nameplate Class Color Mutation Guard & Anti-Red-Reset Protocol
+In WoW 1.12.1, native Blizzard `WorldFrame` `OnUpdate` combat and reaction handlers continuously call `healthbar:SetStatusBarColor(r, g, b)` on unit health changes, damage events, or threat shifts. On hostile player nameplates, this routinely clobbers custom class colors and resets the bar to native red (`1, 0, 0`).
+Furthermore, nameplates are recycled dynamically across WorldFrame children, meaning GUIDs and unit identities shift rapidly as units enter and leave render range.
+**Mandatory Nameplate Class Coloring Protocol:**
+1. **Recursion-Safe Color Guard:** Hook `plate.healthbar:SetStatusBarColor` or provide a secure post-hook with a re-entrancy flag (`this.settingColor = true ... this.settingColor = nil`) so that when native code resets the color to red/yellow, our handler immediately re-applies the unit's class color without infinite recursion.
+2. **Strict Player-Only Gate (`isPlayer`):** NEVER apply class colors to NPCs or pets. Ensure `plate.isPlayer` is true or confirmed via `UnitIsPlayer(guid)`.
+3. **SuperWoW Single-Return GUID Token:** When resolving unit class via `UnitClass(guid)`, SuperWoW returns `c1` as localized class or token; inspect `(type(c2) == "string" and c2 ~= "" and c2) or (type(c1) == "string" and c1 ~= "" and c1)`.
+4. **Target Synchronization:** On `PLAYER_TARGET_CHANGED`, immediately verify if `UnitIsPlayer("target")` and sync `plate.class = select(2, UnitClass("target"))` for the active target plate.
+5. **Mutation Diff Caching:** Never call `:SetStatusBarColor()` if `plate.lastR == r and plate.lastG == g and plate.lastB == b` to eliminate per-frame C++ draw state thrashing (Rule C15).
+
 ---
 
 ## 10. Entity Lifecycle & Memory Safety
@@ -548,6 +564,7 @@ The Anti-Pattern list is maintained via the Rule H6 continuous learning protocol
 | **AP-31** | Per-Frame Layout & Draw Mutation Thrashing | Calling `:ClearAllPoints()`, `:SetPoint()`, `:SetText()`, `:SetStatusBarColor()`, or running loops on hidden frames every render tick | Continuous C++ UI frame tree invalidation, font glyph recalculations, severe micro-stutter (144 FPS frame drops) | Add instant visibility short-circuit guards; cache previous values (`lastText`, `lastYOffset`, `lastClass`, `lastInRange`); mutate UI elements ONLY on state diffs; centralize unit event dispatching to $O(1)$ lookup (Rule C15). |
 | **AP-32** | Cooldown Model Occlusion & Clock Drift Epoch Trap | Parenting cooldown text to 3D `<Model>` frames directly, applying arbitrary sub-second cutoff branches (`elseif (start - now) < 1.0 then remaining = duration else epoch_wrap`) that falsely trigger the 49.7-day wrap on normal forward clock drift, and failing to sweep active action bar cooldowns on login/reload | Cooldown numbers occlude behind 3D spirals in Direct3D9/DXVK, disappear prematurely after computing $-4,294,666\text{s}$, or remain invisible on login/reload until abilities are cast again | Parent text frame directly to button (`cooldown:GetParent()`), elevate frame level (`parent:GetFrameLevel() + 5`), inherit strata; calculate remaining time directly `(start + duration) - now` and clamp forward drift; sweep active cooldowns on `module.enable` via `GetActionCooldown` (Rule C16). |
 | **AP-33** | Enhanced Client FrameXML TargetFrame Dual-String Overlap | Adding custom target status text without suppressing native `TargetHPText` and `TargetHPPercText` created in `patch-3.mpq` on `TargetFrameTextureFrame` when `statusBarText` CVar is `"1"` | Target health bar displays duplicate, overlapping strings (`80% 4510 - 80% 3510`) as `TargetHealthCheck()` repeatedly re-shows native elements on value changes | Permanently hide and stub `:Show()` methods on `TargetHPText` and `TargetHPPercText` (`obj.Show = function() return end`); wrap `TargetHealthCheck` to keep them hidden; hide `TargetFrameHealthBarText` (Rule C17). |
+| **AP-34** | Nameplate Class Color Desync & Native Red Resets | Native Blizzard `WorldFrame` combat/reaction handlers call `healthbar:SetStatusBarColor` on health/combat updates, resetting class colors back to red/yellow on hostile units and pets | Hostile enemy player nameplates flash class color momentarily and then reset to red when attacked or damaged; performance drops from un-cached color changes | Intercept `healthbar:SetStatusBarColor` with recursion guard (`this.settingColor`) or securely post-hook to re-apply class color ONLY when `plate.isPlayer` is true; resolve class cleanly via SuperWoW single-return GUID token (`c1 or c2`) or `UnitClass("target")` sync; diff-cache colors to prevent redundant C++ draw state changes (Rule C18). |
 
 ---
 
