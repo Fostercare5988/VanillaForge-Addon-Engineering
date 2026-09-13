@@ -16,7 +16,8 @@ ADDONS = [
     r"C:\Users\Fostercare\Desktop\Niko2\Interface\AddOns\MikScrollingBattleText",
     r"C:\Users\Fostercare\Desktop\Niko2\Interface\AddOns\TWThreat",
     r"C:\Users\Fostercare\Desktop\Niko2\Interface\AddOns\TrinketMenu",
-    r"C:\Users\Fostercare\Desktop\Niko2\Interface\AddOns\BattlegroundTargets"
+    r"C:\Users\Fostercare\Desktop\Niko2\Interface\AddOns\BattlegroundTargets",
+    r"C:\Users\Fostercare\Desktop\Niko2\Interface\AddOns\FostercareTweaks"
 ]
 
 CONTRACT_CONTENT = """# Mandatory AI Directives for OctoWoW Addon Development
@@ -31,9 +32,9 @@ Before analyzing, refactoring, editing, or committing code in this repository:
    All addons strictly require and leverage:
    - **ClassicAPI v1.15.0+** (v1.14.0+ baseline: C++ timers, native table.wipe, C_UnitAuras, C_Container native coroutine sorting, modern EditBox API, C_Map, C_Texture)
    - **SuperWoW v2.2+** (Direct GUID targeting TargetUnit(guid), SetMouseoverUnit)
-   - **NamPower v4.6.3+** (Zero-latency spell queue, binary combat log packets)
+   - **NamPower v4.6.2+** (Zero-latency spell queue, binary combat log packets)
    - **UnitXP SP3 v89+** (Final release: Uncapped 3D Euclidean distances and real HP integers)
-   - **DXVK** (Vulkan frame pacing translation layer)
+   - In READMEs and documentation, write ONLY which .dlls are needed if the addon uses them (never list DXVK as a dependency; omit unused DLLs).
    - Never write 2006 legacy fallbacks, tooltip scans, or manual nil loops.
 
 3. **Mandatory Automated Static Linter Gatekeeper**:

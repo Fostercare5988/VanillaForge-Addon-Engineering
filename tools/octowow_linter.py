@@ -3,7 +3,7 @@
 OctoWoW Addon Linter & Heuristic Static Analysis Scanner (v2.1)
 Part of the OctoWoW Addon Modernization & Reverse Engineering Framework.
 Validates World of Warcraft 1.12.1 addons against the modern Enhanced Engine Stack:
-ClassicAPI v1.15.5+ (v1.14.0+ baseline), SuperWoW v2.2+, NamPower v4.6.3+, UnitXP SP3, and DXVK.
+ClassicAPI v1.15.5+ (v1.14.0+ baseline), SuperWoW v2.2+, NamPower v4.6.2+, UnitXP SP3, and DXVK.
 """
 
 import os
@@ -407,6 +407,8 @@ class OctoWoWAuditor:
                     readme_warnings.append("[Rule H2 - Invalid BG] README.md contains 'Eye of the Storm'. Replace with 'Thorn Gorge'.")
                 if 'OctoWoW' in rm or '-Octo' in rm or '[Octo]' in rm:
                     readme_warnings.append("[Rule H2 - Octo Branding Leak] README.md contains 'Octo' branding. Keep GitHub addon repos neutral.")
+                if re.search(r'(?:prerequisite|requirement|dependency|dependencies).*?(dxvk)', rm, re.IGNORECASE):
+                    readme_warnings.append("[Rule H8 - Gratuitous DLL Requirement] README.md lists 'DXVK' as an addon dependency. DXVK is a client rendering translation layer, not an addon API requirement. Remove it.")
 
         # Check TOC file for Octo branding leaks
         for f in os.listdir(dir_path):

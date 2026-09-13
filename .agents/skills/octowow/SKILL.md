@@ -3,7 +3,7 @@ name: octowow
 description: >-
   Autonomous agent skill for World of Warcraft 1.12.1 Enhanced Engine Addon Modernization and Greenfield Development.
   Enforces OctoWoW v2.1 standards: Capability-First Architecture, 4-Tier Execution Performance Model, ClassicAPI v1.15.5+ (v1.14.0+ baseline),
-  SuperWoW v2.2+, NamPower v4.6.3+, UnitXP SP3, DXVK Vulkan runtime environment, heuristic static scanning via tools/octowow_linter.py,
+  SuperWoW v2.2+, NamPower v4.6.2+, UnitXP SP3, DXVK Vulkan runtime environment, heuristic static scanning via tools/octowow_linter.py,
   and dual static/runtime verification pipeline.
 ---
 
@@ -38,6 +38,8 @@ Heuristic Static Scanner: `python tools/octowow_linter.py <target_path>`
 11. **Zero-Thrash Event-Driven Modernization (Rule C15 / AP-31):** Automatically enforce visibility short-circuiting on all periodic routines (zero operations when UI is closed), mutation diff caching (never call `:SetPoint()`, `:SetText()`, `:SetStatusBarColor()`, or `:SetAlpha()` when values have not changed), event fanout elimination (single master router with $O(1)$ unit lookup instead of $N$ frames listening to global events), and hardware timer migration (`C_Timer.NewTicker` instead of 144 FPS `OnUpdate` polling).
 12. **Cooldown Framing, Button Parenting & Login Sync (Rule C16 / AP-32):** Parent cooldown text frames directly to the button (`cooldown:GetParent()`), anchor with `:SetAllPoints(cooldown)`, elevate frame level (`parent:GetFrameLevel() + 5`), and inherit strata to prevent 3D `<Model>` viewport occlusion in Direct3D9/DXVK. Calculate remaining time directly `(start + duration) - now` and clamp forward clock drift instead of applying fragile sub-second threshold cutoffs that erroneously trigger 49.7-day epoch wraps (computing $-4,294,666\text{s}$). In `module.enable`, sweep all visible action bars using `GetActionCooldown(slot)` to immediately initialize active cooldowns on login/reload.
 13. **TargetFrame Dual-String Suppression (Rule C17 / AP-33):** In enhanced client distributions (e.g. Turtle WoW `patch-3.mpq`), native FrameXML creates `TargetHPText` and `TargetHPPercText` on `TargetFrameTextureFrame` and calls `:Show()` on every value change when `statusBarText` is `"1"`. Addons creating custom target health strings must permanently hide both elements, stub their `:Show()` methods to no-ops (`obj.Show = function() return end`), wrap `TargetHealthCheck`, and hide `TargetFrameHealthBarText` to prevent overlapping duplicated text strings (`80% 4510 - 80% 3510`).
+14. **Accurate DLL Documentation Standard (Rule H8):** In GitHub projects and READMEs, write ONLY which `.dll`s are needed if the addon actively uses them. Never list DXVK as an addon dependency or prerequisite in READMEs; never list NamPower or UnitXP unless the addon consumes their specific APIs.
+15. **Nameplate Class Color Mutation Guard & Anti-Red-Reset Protocol (Rule C18 / AP-34):** Intercept `healthbar:SetStatusBarColor` or hook securely with `this.settingColor` recursion guards so native Blizzard `WorldFrame` combat/reaction handlers cannot clobber enemy player class colors and turn them red when damaged. Strictly gate on `plate.isPlayer`, resolve class cleanly via SuperWoW single-return GUID tokens (`c1 or c2`) or `UnitClass("target")` sync, and diff-cache colors to prevent redundant C++ draw state changes.
 
 ---
 
