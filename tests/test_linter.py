@@ -62,18 +62,18 @@ local function broken()
 
     def test_long_bracket_content_does_not_confuse_scanner(self):
         source = (
-            "local text = [=[\\n"
-            "if function then\\n"
-            "    { [ (\\n"
-            "end\\n"
-            "]=]\\n"
-            "--[==[\\n"
-            "function fake()\\n"
-            "    if true then\\n"
-            "]==]\\n"
-            "local function real()\\n"
-            "    return text\\n"
-            "end\\n"
+            "local text = [=[\n"
+            "if function then\n"
+            "    { [ (\n"
+            "end\n"
+            "]=]\n"
+            "--[==[\n"
+            "function fake()\n"
+            "    if true then\n"
+            "]==]\n"
+            "local function real()\n"
+            "    return text\n"
+            "end\n"
         )
         self.assertEqual(self.scan(source), [])
 
@@ -95,31 +95,31 @@ frame:SetScript("OnEvent", function(self, event, ...)
     print(event)
 end)
 ''')
-        joined = "\\n".join(errors + warnings + infos)
+        joined = "\n".join(errors + warnings + infos)
         self.assertNotIn("Event Parameter Shadowing", joined)
         self.assertEqual(errors, [])
 
     def test_table_getn_is_reported(self):
-        errors, warnings, _ = self.audit("local count = table.getn(items)\\n")
+        errors, warnings, _ = self.audit("local count = table.getn(items)\n")
         self.assertEqual(errors, [])
         self.assertTrue(any("Legacy table.getn" in warning for warning in warnings))
 
     def test_manual_wipe_is_reported(self):
         errors, warnings, _ = self.audit(
-            "for k in pairs(cache) do cache[k] = nil end\\n"
+            "for k in pairs(cache) do cache[k] = nil end\n"
         )
         self.assertEqual(errors, [])
         self.assertTrue(any("Obsolete Wipe Loop" in warning for warning in warnings))
 
     def test_vanillaforge_inline_suppression_works(self):
         _, warnings, _ = self.audit(
-            "local count = table.getn(items) -- vanillaforge-ignore: A3\\n"
+            "local count = table.getn(items) -- vanillaforge-ignore: A3\n"
         )
         self.assertFalse(any("Legacy table.getn" in warning for warning in warnings))
 
     def test_legacy_octowow_suppression_remains_compatible(self):
         _, warnings, _ = self.audit(
-            "local count = table.getn(items) -- octowow-ignore: A3\\n"
+            "local count = table.getn(items) -- octowow-ignore: A3\n"
         )
         self.assertFalse(any("Legacy table.getn" in warning for warning in warnings))
 
@@ -129,7 +129,7 @@ if GetLocale() == "deDE" then
     PLAYER_CLASS = "KRIEGER"
 end
 ''')
-        joined = "\\n".join(errors + warnings + infos)
+        joined = "\n".join(errors + warnings + infos)
         self.assertNotIn("Foreign Locale", joined)
         self.assertNotIn("Foreign Localization", joined)
 
@@ -142,9 +142,9 @@ class AddonDirectoryPolicyTests(unittest.TestCase):
             addon = Path(tmp) / "MinimalAddon"
             addon.mkdir()
             (addon / "MinimalAddon.lua").write_text(
-                'local addonName = "MinimalAddon"\\n', encoding="utf-8"
+                'local addonName = "MinimalAddon"\n', encoding="utf-8"
             )
-            (addon / "README.md").write_text("# MinimalAddon\\n", encoding="utf-8")
+            (addon / "README.md").write_text("# MinimalAddon\n", encoding="utf-8")
 
             result = auditor.audit_addon_dir(str(addon))
             has_guard = result[1]
@@ -164,13 +164,13 @@ class AddonDirectoryPolicyTests(unittest.TestCase):
             addon = Path(tmp) / "GuardedAddon"
             addon.mkdir()
             (addon / "GuardedAddon.lua").write_text(
-                "local MIN_CLASSIC_API = 11400\\n"
-                "if not CLASSIC_API_VERSION then\\n"
-                "    return\\n"
-                "end\\n",
+                "local MIN_CLASSIC_API = 11400\n"
+                "if not CLASSIC_API_VERSION then\n"
+                "    return\n"
+                "end\n",
                 encoding="utf-8",
             )
-            (addon / "README.md").write_text("# GuardedAddon\\n", encoding="utf-8")
+            (addon / "README.md").write_text("# GuardedAddon\n", encoding="utf-8")
 
             result = auditor.audit_addon_dir(str(addon))
             self.assertTrue(result[1])
