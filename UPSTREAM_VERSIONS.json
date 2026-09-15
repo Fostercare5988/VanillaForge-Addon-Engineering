@@ -1,0 +1,19 @@
+{
+  "classicapi": {
+    "minimum_version": "1.15.8",
+    "reference_version": "1.15.8",
+    "repository": "brues-code/ClassicAPI",
+    "reference_commit": "<sha>"
+  },
+  "superwow": {
+    "minimum_version": "2.2",
+    "repository": "balakethelock/SuperWoW"
+  },
+  "nampower": {
+    "minimum_version": "4.6.2",
+    "repository": "Emyrk/nampower"
+  },
+  "unitxp_sp3": {
+    "minimum_version": "90"
+  }
+}

@@ -1,0 +1,60 @@
+name: VanillaForge validation
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vanillaforge-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate framework
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out VanillaForge
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Compile Python tools
+        run: |
+          python -m py_compile tools/vanillaforge_linter.py
+          python -m py_compile tools/check_upstream.py
+          python -m py_compile tests/test_linter.py
+
+      - name: Validate upstream configuration JSON
+        run: |
+          python -m json.tool UPSTREAM_VERSIONS.json > /dev/null
+
+      - name: Verify canonical framework files
+        run: |
+          test -f VANILLAFORGE_SYSTEM_PROMPT.md
+          test -f CLASSICAPI_MASTER_REFERENCE.md
+          test -f ENGINE_REFERENCE.md
+          test -f KNOWN_PATTERNS.md
+          test -f README.md
+          test -f UPSTREAM_VERSIONS.json
+          test -f tools/vanillaforge_linter.py
+          test -f tools/check_upstream.py
+          test -f tests/test_linter.py
+
+      - name: Reject stale framework filenames
+        run: |
+          test ! -e OCTOWOW_SYSTEM_PROMPT.md
+          test ! -e OCTOWOW_SYSTEM_PROMPT_V3.md
+          test ! -e tools/octowow_linter.py
+
+      - name: Run VanillaForge regression tests
+        run: |
+          python -m unittest discover -s tests -p "test_*.py" -v
