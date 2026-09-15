@@ -62,18 +62,18 @@ local function broken()
 
     def test_long_bracket_content_does_not_confuse_scanner(self):
         source = (
-            "local text = [=[\\n"
-            "if function then\\n"
-            "    { [ (\\n"
-            "end\\n"
-            "]=]\\n"
-            "--[==[\\n"
-            "function fake()\\n"
-            "    if true then\\n"
-            "]==]\\n"
-            "local function real()\\n"
-            "    return text\\n"
-            "end\\n"
+            "local text = [=[\n"
+            "if function then\n"
+            "    { [ (\n"
+            "end\n"
+            "]=]\n"
+            "--[==[\n"
+            "function fake()\n"
+            "    if true then\n"
+            "]==]\n"
+            "local function real()\n"
+            "    return text\n"
+            "end\n"
         )
         self.assertEqual(self.scan(source), [])
 
