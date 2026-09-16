@@ -3,9 +3,9 @@
 ## Enhanced WoW 1.12.1 Addon Engineering Framework
 
 [![WoW](https://img.shields.io/badge/WoW-1.12.1%20Build%205875-blue.svg)](https://github.com/Fostercare5988/VanillaForge-Addon-Engineering)
-[![ClassicAPI](https://img.shields.io/badge/ClassicAPI-v1.15.8%2B-brightgreen.svg)](https://github.com/brues-code/ClassicAPI)
+[![ClassicAPI](https://img.shields.io/badge/ClassicAPI-v1.15.9%2B-brightgreen.svg)](https://github.com/brues-code/ClassicAPI)
 [![SuperWoW](https://img.shields.io/badge/SuperWoW-v2.2%2B-green.svg)](https://github.com/balakethelock/SuperWoW)
-[![Framework](https://img.shields.io/badge/VanillaForge-v3-informational.svg)](VANILLAFORGE_SYSTEM_PROMPT.md)
+[![Framework](https://img.shields.io/badge/VanillaForge-v3.1-informational.svg)](VANILLAFORGE_SYSTEM_PROMPT.md)
 
 A local knowledge base, system prompt, and static-analysis toolkit for building and
 modernizing addons specifically for an **enhanced World of Warcraft 1.12.1 client**.
@@ -36,7 +36,7 @@ not to the framework identity.
 
 | Component | Baseline | Role |
 | --- | --- | --- |
-| [ClassicAPI](https://github.com/brues-code/ClassicAPI) | **v1.15.8+** | Modern/backported WoW API, Lua compatibility, events, unit tokens, secure-style helpers, timers and modern client behavior |
+| [ClassicAPI](https://github.com/brues-code/ClassicAPI) | **v1.15.9+** | Modern/backported WoW API, Lua compatibility, events, unit tokens, secure-style helpers, timers and modern client behavior |
 | [SuperWoW](https://github.com/balakethelock/SuperWoW) | **v2.2+** | GUID-aware identity/targeting, structured events and additional client/UI extensions |
 | [NamPower](https://github.com/Emyrk/nampower) | **v4.6.2+** | Spell queue/quickcast behavior plus native spell, unit, DBC and event APIs |
 | [UnitXP SP3](https://github.com/brues-code/UnitXP_SP3) | **v90+** | Raw telemetry, distance/LOS and selected client/window utilities |

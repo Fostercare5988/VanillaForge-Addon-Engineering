@@ -174,7 +174,7 @@ class AddonDirectoryPolicyTests(unittest.TestCase):
 
             result = auditor.audit_addon_dir(str(addon))
             self.assertTrue(result[1])
-            self.assertTrue(any("11508" in warning for warning in result[2]), result[2])
+            self.assertTrue(any("11509" in warning for warning in result[2]), result[2])
 
 
 class TocManifestTests(unittest.TestCase):
@@ -271,6 +271,38 @@ class TocManifestTests(unittest.TestCase):
             result = self.auditor.audit_addon_dir(str(addon))
             self.assertEqual(result[4], 0)
             self.assertTrue(any("Bootstrap.lua" in w for w in result[3]))
+
+    def test_root_bindings_xml_is_not_reported_as_orphan(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            addon = self.make_addon(tmp)
+            (addon / "Core.lua").write_text("return\n", encoding="utf-8")
+            (addon / "Bindings.xml").write_text(
+                '<Bindings><Binding name="TEST_ACTION">TestAction()</Binding></Bindings>\n',
+                encoding="utf-8",
+            )
+            (addon / "ManifestAddon.toc").write_text("Core.lua\n", encoding="utf-8")
+            result = self.auditor.audit_addon_dir(str(addon))
+            self.assertFalse(any("Bindings.xml" in w for w in result[3]), result[3])
+
+    def test_unlisted_root_lua_still_reports_orphan(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            addon = self.make_addon(tmp)
+            (addon / "Core.lua").write_text("return\n", encoding="utf-8")
+            (addon / "Dormant.lua").write_text("return\n", encoding="utf-8")
+            (addon / "ManifestAddon.toc").write_text("Core.lua\n", encoding="utf-8")
+            result = self.auditor.audit_addon_dir(str(addon))
+            self.assertTrue(any("Dormant.lua" in w for w in result[3]), result[3])
+
+    def test_unlisted_nested_bindings_xml_still_reports_orphan(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            addon = self.make_addon(tmp)
+            (addon / "Core.lua").write_text("return\n", encoding="utf-8")
+            sub = addon / "Sub"
+            sub.mkdir()
+            (sub / "Bindings.xml").write_text("<Bindings></Bindings>\n", encoding="utf-8")
+            (addon / "ManifestAddon.toc").write_text("Core.lua\n", encoding="utf-8")
+            result = self.auditor.audit_addon_dir(str(addon))
+            self.assertTrue(any("Bindings.xml" in w for w in result[3]), result[3])
 
 
 if __name__ == "__main__":

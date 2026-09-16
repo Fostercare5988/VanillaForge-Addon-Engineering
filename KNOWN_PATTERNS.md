@@ -690,6 +690,127 @@ conflict.
 
 ------------------------------------------------------------------------
 
+### KP-47 --- Asynchronous Request Ownership
+
+**Problem:** Event, timer, queue, or combat-deferred multi-stage operations
+can be corrupted by duplicate, late, or out-of-order events.
+
+**Action:**
+- Assign explicit transaction ownership to the active request.
+- Prevent duplicate or stale events from advancing newer requests.
+- Keep transient runtime scratch state out of persistent `SavedVariables`.
+- Publish completion only after authoritative runtime state verification.
+- Define explicit success, abort, supersession, and timeout paths.
+- Ensure transaction cleanup does not delete independent queued/manual work.
+- Invalidate callbacks and timers belonging to superseded transactions.
+- Test supersession, duplicate events, late events, timeout recovery, and retry safety.
+
+------------------------------------------------------------------------
+
+### KP-48 --- Root Bindings.xml and Advisory Manifest Orphan Warnings
+
+**Problem:** Static analysis flags `Bindings.xml` as an unreferenced runtime
+file because it is not listed in the addon's `.toc`.
+
+**Cause:** In WoW 1.12.1, root `Bindings.xml` is client-managed binding metadata
+automatically discovered and loaded by the client engine. It is intentionally
+not an ordinary TOC runtime entry.
+
+**Action:**
+- Never add root `Bindings.xml` to the TOC merely to silence an advisory orphan warning.
+- For other unlisted Lua/XML files, inspect whether the file is client-managed,
+  standalone tooling, dormant/dead code, or genuinely omitted runtime code before
+  modifying the manifest.
+
+------------------------------------------------------------------------
+
+### KP-49 --- Enhanced Stack Availability vs Declared Addon Dependencies
+
+**Problem:** Addon metadata or README files declare DLL dependencies simply
+because the full enhanced stack is installed in the client.
+
+**Action:**
+- Distinguish between environment availability and actual addon dependency.
+- An addon should declare dependencies only for components whose APIs it directly consumes.
+- UnitXP SP3 may be documented as optional/recommended when core functionality works
+  without it but distance, LOS, raw health, or fallback telemetry improves with it.
+- DXVK is D3D9-to-Vulkan translation runtime infrastructure, never a Lua addon API or dependency.
+
+------------------------------------------------------------------------
+
+### KP-50 --- Obsolete Local Git Hooks and Release Discipline
+
+**Problem:** Addon repositories may have obsolete local release/pre-commit hooks
+(e.g. in `.git/hooks` or configured via `core.hooksPath`) referencing historical
+tooling paths or frameworks that fail during release.
+
+**Action:**
+- Inspect `.git/hooks`, `git config --get core.hooksPath`, and any wrappers.
+- Never use `git commit --no-verify` or `git push --no-verify` merely to bypass validation.
+- Repair obsolete hook paths to the canonical VanillaForge linter:
+  `C:\Users\Fostercare\Documents\VanillaForge\tools\vanillaforge_linter.py`
+- Keep local `.git/hooks` modifications out of public addon commits.
+- Rerun validation via the hook before completing a release.
+
+------------------------------------------------------------------------
+
+### KP-51 --- Performance Claim Discipline
+
+**Problem:** Statically removing a known allocation (e.g. replacing a loop with `table.wipe`
+or passing reusable tables) leads to unsubstantiated claims of "zero allocations" or "zero GC".
+
+**Action:**
+- Do not make absolute runtime performance claims without empirical profiling.
+- Use narrow, evidence-matched statements such as "eliminated transient table allocation in this path."
+
+------------------------------------------------------------------------
+
+### KP-52 --- Loss of Control Event Diffing & School Lockout Expiry
+
+**Problem:** An addon attempts to track school lockout expiration by caching timestamps
+from `LOSS_OF_CONTROL_ADDED` or `LOSS_OF_CONTROL_UPDATE` events.
+
+**Cause:** In ClassicAPI, these events are triggered by a diff of which effects are
+active. Re-interrupting an already-locked school extends its duration (`endMs`) without
+firing either event.
+
+**Action:**
+- Do not cache school lockout expiration from event timestamps alone.
+- Query `C_LossOfControl.GetSchoolLockout()` directly when the current duration or
+  lockout state is needed.
+- `GetSchoolLockout` queries internal `g_schoolLock` directly without Lua allocations or
+  debuff scanning, making it suitable for per-frame or high-frequency polling.
+
+------------------------------------------------------------------------
+
+### KP-53 --- Macro Button Click Context in State Drivers and #showtooltip
+
+**Problem:** A macro conditional `[button:N]` / `[btn:N]` behaves unexpectedly when
+evaluated by a state driver or `#showtooltip`.
+
+**Cause:** Outside an active user mouse click, there is no active click event for
+`GetMouseButtonClicked()` to report.
+
+**Action:**
+- Outside a click context, `[button:N]` defaults to `"LeftButton"` (`1`).
+- Design macros knowing that `#showtooltip` displays the resting state (button 1)
+  at rest, matching standard client `Button:Click()` semantics.
+
+------------------------------------------------------------------------
+
+### KP-54 --- Macro Icon Out-of-Range Return Handling
+
+**Problem:** Code calling `GetMacroIconInfo(index)` assumes `nil` is returned when
+the index is out of bounds.
+
+**Cause:** In the 1.12 client engine, `Script_GetMacroIconInfo` pushes `""` (empty string)
+rather than `nil` for invalid or out-of-range indices.
+
+**Action:**
+- Check for `icon and icon ~= ""` rather than checking for `icon ~= nil` alone.
+
+------------------------------------------------------------------------
+
 ## 11. Pattern Governance
 
 This file should remain useful rather than becoming a landfill.

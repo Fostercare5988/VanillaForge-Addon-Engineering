@@ -1,9 +1,13 @@
 {
   "classicapi": {
-    "minimum_version": "1.15.8",
-    "reference_version": "1.15.8",
+    "minimum_version": "1.15.9",
+    "reference_version": "1.15.9",
     "repository": "brues-code/ClassicAPI",
-    "reference_commit": "<sha>"
+    "reference_commit": "dfbba225d21d75676088414a6ae7acbfccfc7598",
+    "file_shas": {
+      "docs/API.md": "7290a5c9158f736cf7136b23b66178648b57a9c1",
+      "README.md": "4fb394deec36eb4949ee148c93ef308a6e5c8070"
+    }
   },
   "superwow": {
     "minimum_version": "2.2",

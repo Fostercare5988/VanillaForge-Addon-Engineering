@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-VanillaForge Addon Linter & Heuristic Static Analysis Scanner (v3.0)
+VanillaForge Addon Linter & Heuristic Static Analysis Scanner (v3.1)
 Part of the VanillaForge Enhanced WoW 1.12.1 Addon Engineering Framework.
 Targets World of Warcraft 1.12.1 Build 5875 / Interface 11200 with an enhanced-client baseline:
-ClassicAPI v1.15.8+, SuperWoW v2.2+, NamPower v4.6.2+, UnitXP SP3 v90+, and DXVK runtime.
+ClassicAPI v1.15.9+, SuperWoW v2.2+, NamPower v4.6.2+, UnitXP SP3 v90+, and DXVK runtime.
 The full environment may be installed, but individual addons only depend on components they actually consume.
 """
 
@@ -13,8 +13,8 @@ import re
 import argparse
 from pathlib import Path
 
-LINTER_VERSION = "3.0"
-MIN_CLASSIC_API = 11508  # ClassicAPI v1.15.8
+LINTER_VERSION = "3.1"
+MIN_CLASSIC_API = 11509  # ClassicAPI v1.15.9
 
 
 # Ensure standard output can print utf-8 characters on Windows consoles
@@ -458,7 +458,7 @@ class VanillaForgeAuditor:
         readme_path = os.path.join(dir_path, 'README.md')
         readme_warnings = []
         if outdated_guard:
-            readme_warnings.append("[Dependency Guard - Outdated ClassicAPI Minimum] Addon uses MIN_CLASSIC_API < 11508. VanillaForge baseline is ClassicAPI v1.15.8+ (11508).")
+            readme_warnings.append("[Dependency Guard - Outdated ClassicAPI Minimum] Addon uses MIN_CLASSIC_API < 11509. VanillaForge baseline is ClassicAPI v1.15.9+ (11509).")
         if os.path.exists(readme_path):
             with open(readme_path, 'r', encoding='utf-8', errors='replace') as f:
                 rm = f.read()
@@ -500,6 +500,8 @@ class VanillaForgeAuditor:
 
         # Reverse manifest integrity is advisory. Unlisted runtime-looking files
         # can be intentional, so never turn this into an automatic ERROR.
+        # Root Bindings.xml is client-managed binding metadata in WoW 1.12.1
+        # and is intentionally not an ordinary TOC runtime entry.
         excluded_roots = {
             'test', 'tests', 'tool', 'tools', 'script', 'scripts',
             'example', 'examples', 'docs', 'doc', '.git', '.github'
@@ -515,6 +517,12 @@ class VanillaForgeAuditor:
                         continue
                     filepath = os.path.join(root, f)
                     rel = os.path.normcase(os.path.relpath(filepath, dir_path))
+                    if (
+                        os.path.normcase(os.path.abspath(root))
+                        == os.path.normcase(os.path.abspath(dir_path))
+                        and f.lower() == 'bindings.xml'
+                    ):
+                        continue
                     if rel not in declared_runtime_files:
                         structure_warnings.append(
                             f"[Possible Orphan Runtime File] '{os.path.relpath(filepath, dir_path)}' "
@@ -537,7 +545,7 @@ class VanillaForgeAuditor:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="VanillaForge Addon Linter & Heuristic Static Analysis Scanner (v3.0)")
+    parser = argparse.ArgumentParser(description="VanillaForge Addon Linter & Heuristic Static Analysis Scanner (v3.1)")
     parser.add_argument("target", help="Path to Lua file or AddOn directory")
     parser.add_argument("--strict", action="store_true", help="Treat warnings as errors (exit code 1 on warnings)")
     parser.add_argument("--ignore", nargs="*", default=[], help="Global rules to suppress (e.g. --ignore A3 D1)")

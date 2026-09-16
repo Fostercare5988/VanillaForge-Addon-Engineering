@@ -6,7 +6,7 @@
 >
 > Source basis: `brues-code/ClassicAPI`, default branch `master`, official `README.md`, official `docs/API.md`, and selected implementation/source references.
 >
-> Snapshot baseline used by VanillaForge: **ClassicAPI v1.15.8+**.
+> Snapshot baseline used by VanillaForge: **ClassicAPI v1.15.9+**.
 >
 > IMPORTANT: ClassicAPI is actively developed. This document is a local snapshot, not a claim that future versions cannot add or change functionality. If installed ClassicAPI is newer and a task depends on newly added behavior not present here, inspect the installed/current source and update this reference deliberately.
 
@@ -53,12 +53,13 @@ Therefore:
 
 ```text
 v1.15.8 -> 11508
+v1.15.9 -> 11509
 ```
 
 The VanillaForge framework baseline is:
 
 ```text
-ClassicAPI v1.15.8+
+ClassicAPI v1.15.9+
 ```
 
 Do not assume a future version's new API exists solely because a similarly named Retail API exists.
@@ -474,6 +475,20 @@ Supported concepts include:
 @cursor
 target=Name
 ```
+
+Supported conditions include standard macro conditionals:
+`[combat]`, `[nocombat]`, `[stealth]`, `[mounted]`, `[swimming]`, `[indoors]`,
+`[outdoors]`, `[stance:N]` / `[form:N]`, `[mod:shift|ctrl|alt]`, `[pet:name]`,
+`[button:N]` / `[btn:N]`, `[actionbar:N]`, and the ClassicAPI extension `[known:spellID|name]`.
+
+#### `[button:N]` / `[btn:N]` Click-Context Evaluation (v1.15.9+)
+
+`[button:N]` reads the mouse button of the click the macro is executing inside, matching what `GetMouseButtonClicked()` returns.
+
+- **Button Numbers**: Follows modern API ordering — `1` (Left), `2` (Right), `3` (Middle), `4` (Button4), `5` (Button5). This is deliberately distinct from the 1.12 engine's internal bitmask (where 2 is middle); that bitmask never reaches Lua.
+- **Button Names**: Case-insensitive string names match their numeric equivalents (`[button:rightbutton]` is identical to `[button:2]`; `[button:leftbutton]` is `[button:1]`).
+- **Resting / Non-Click Context**: When evaluated outside an active mouse click (such as during a state-driver poll or during the periodic re-evaluation behind a macro's `#showtooltip` display), `[button:N]` answers as `"LeftButton"` (`1`). This ensures `#showtooltip` displays the resting left-button icon at rest and matches the engine's default `Button:Click()`.
+- **Call Chain**: The click context reliably survives through `OnClick` -> attribute macro -> `EXECUTE_CHAT_LINE` -> `SlashCmdList` -> `SecureCmdOptionParse`.
 
 ### 14.1 `#showtooltip`
 
@@ -1352,10 +1367,41 @@ LOOT_HISTORY_FULL_UPDATE
 ## 51. Loss of Control — `C_LossOfControl`
 
 ```lua
-C_LossOfControl.GetActiveLossOfControlData
-C_LossOfControl.GetActiveLossOfControlDataCount
-C_LossOfControl.GetSchoolLockout
+C_LossOfControl.GetActiveLossOfControlData(index)
+C_LossOfControl.GetActiveLossOfControlDataCount()
+C_LossOfControl.GetSchoolLockout([filterMask])
 ```
+
+### `C_LossOfControl.GetSchoolLockout([filterMask])` (v1.15.9+)
+
+Returns the school-interrupt lockout state directly without building the full
+active effect list:
+
+```lua
+local lockedMask, secondsRemaining = C_LossOfControl.GetSchoolLockout([filterMask])
+```
+
+- **`lockedMask`** (`number`): Bitwise OR of all currently locked spell schools,
+  shaped as `1 << schoolIndex` (physical=1, holy=2, fire=4, nature=8, frost=16,
+  shadow=32, arcane=64). Returns `0` when no school is locked. Multiple schools
+  can be locked concurrently (each `SMSG_SPELL_COOLDOWN` batch locks one).
+- **`secondsRemaining`** (`number` or `nil`): Time in seconds until all schools in
+  `lockedMask` are clear (the lockout ending last). Returns `nil` when `lockedMask == 0`.
+- **`filterMask`** (`number`, optional): Narrows the scan to specified schools
+  (e.g. `C_LossOfControl.GetSchoolLockout(4)` queries Fire alone). Omitted or `0`
+  evaluates all schools.
+
+**Performance & Architecture:**
+`GetSchoolLockout` reads internal `g_schoolLock` tick pairs directly:
+- Allocates zero Lua tables (unlike `GetActiveLossOfControlData`).
+- Skips the 16-slot debuff/aura scan that `GetActiveLossOfControlData` executes.
+- Efficient enough to call per-frame inside macro conditionals or combat timers.
+
+**Event Diffing Behavior:**
+`LOSS_OF_CONTROL_ADDED` and `LOSS_OF_CONTROL_UPDATE` fire only when the set of
+active effects changes. Re-locking an already-locked school extends its duration
+(`endMs`) without firing either event. Always query remaining time directly rather
+than caching expiry on event timestamps.
 
 Related events:
 
@@ -1370,12 +1416,38 @@ Useful for PvP CC / school lockout addons.
 
 ## 52. Macro — `C_Macro`
 
-Important documented capabilities include:
-
 ```lua
 C_Macro.GetMacroIcon
 C_Macro.SetMacroDisplay
+C_Macro.CreateMacro
+C_Macro.EditMacro
 ```
+
+Global macro icon enumeration helpers:
+
+```lua
+GetMacroIcons(iconList)
+GetMacroItemIcons(itemList)
+GetLooseMacroIcons(iconList)
+GetLooseMacroItemIcons(itemList)
+```
+
+### Macro Icon Enumeration Architecture (v1.15.9+)
+
+ClassicAPI categorizes macro icons across two dimensions:
+1. **Origin**: `loose` (custom icons placed by the user on disk in `Interface\Icons\`) vs `mpq` (shipped inside the client MPQ archives).
+2. **Category**: `Spell` (basenames beginning with `Ability_*` or `Spell_*`) vs `Item` (basenames beginning with `INV_*`).
+
+**Engine Loader & Filter Details:**
+- The engine's internal icon loader (`FUN_LOAD_MACRO_ICONS`) runs three passes:
+  - **Pass 1** (MPQ archive walk): Prefix-filtered for `Ability_*` / `Spell_*`.
+  - **Pass 2** (Disk walk): Prefix-filtered for `Ability_*` / `Spell_*` in `<basePath>\Interface\Icons\`.
+  - **Pass 3** (Disk walk): Extension-only filter (`.blp`/`.tga`) for `Interface\Icons\`.
+- In a stock client install, disk folder `Interface\Icons\` is empty, so pass 3 discovers nothing. Consequently, the engine's built-in array (`GetNumMacroIcons() == 746`) contains only `Ability_*`/`Spell_*` icons.
+- Putting custom `INV_*.blp` files directly into `Interface\Icons\` allows them to enter the engine's list via pass 3 after restarting the client.
+- The ~5,226 `INV_*` icons shipped inside MPQs are rejected by pass 1 prefix filtering. ClassicAPI hooks all three enumeration callbacks at their entry point, capturing these archive item icons into a separate list for `GetMacroItemIcons`.
+- `GetMacroIconInfo(index)` returns `""` (empty string) rather than `nil` when queried with an out-of-bounds index.
+- Only `GetNumMacroIcons()` triggers the engine's lazy icon array build (gated on `count == 0`).
 
 Also inspect `/classicapi` for the complete current Macro namespace.
 
@@ -1939,6 +2011,12 @@ LOSS_OF_CONTROL_ADDED
 LOSS_OF_CONTROL_UPDATE
 ```
 
+> **Event Diffing Behavior**: These events fire when the active set of loss-of-control
+> effects changes. Re-locking an already-locked school (e.g. via an interrupt while
+> already locked) extends `endMs` without firing either event. Do not rely on caching
+> expiration time from event timestamps; query `C_LossOfControl.GetSchoolLockout()`
+> directly when current status is needed.
+
 ---
 
 ## 77. Nameplate / Focus
@@ -2331,15 +2409,17 @@ This document was built from the official repository:
 
 ```text
 brues-code/ClassicAPI
-branch: master
+release: v1.15.9
+commit:  dfbba225d21d75676088414a6ae7acbfccfc7598
+branch:  master
 ```
 
 Official source files used as primary reference:
 
 ```text
-README.md
-docs/API.md
-selected src/ implementation files
+README.md (blob: 4fb394deec36eb4949ee148c93ef308a6e5c8070)
+docs/API.md (blob: 7290a5c9158f736cf7136b23b66178648b57a9c1)
+selected src/ implementation files (Info.cpp, Icons.cpp, Offsets.h, MacroOptions.lua)
 ```
 
 At document creation, the official API reference file observed had blob SHA:
