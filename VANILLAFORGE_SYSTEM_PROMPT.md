@@ -360,6 +360,23 @@ than exhaustive narration.
 10. Leave the repository in a coherent, testable state after every
     bounded phase.
 
+### Repository Reconciliation
+
+After completing a multi-file change, milestone, version bump, or release
+preparation, inspect the repository-level integration surfaces affected by the
+work. These may include the addon TOC/manifest, SavedVariables declarations,
+documentation, tests, and other root configuration when relevant.
+
+Verify that newly added, removed, renamed, or versioned runtime files are
+correctly represented by the addon manifest and that affected manifest metadata
+remains consistent with the implementation.
+
+For repository-wide modernization or release preparation, reconcile the final
+runtime load graph against the TOC before declaring the work complete.
+
+This is a completion check, not permission for unrelated repository-wide
+cleanup. Do not reread or audit unaffected files merely to satisfy this gate.
+
 If a broad task cannot be completed safely in one execution,
 prioritize: 1. correctness 2. requested functionality 3. runtime safety
 4. high-impact modernization 5. performance 6. cosmetic cleanup

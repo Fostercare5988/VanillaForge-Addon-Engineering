@@ -11,6 +11,7 @@ import os
 import sys
 import re
 import argparse
+from pathlib import Path
 
 LINTER_VERSION = "3.0"
 MIN_CLASSIC_API = 11508  # ClassicAPI v1.15.8
@@ -361,6 +362,74 @@ class VanillaForgeAuditor:
 
         return errors, warnings, infos
 
+    @staticmethod
+    def _normalize_toc_entry(entry):
+        """Normalize a TOC runtime entry to the host platform."""
+        return entry.replace('\\', os.sep).replace('/', os.sep)
+
+    def audit_toc_file(self, toc_path, addon_dir):
+        """Audit a WoW TOC as a first-class addon manifest."""
+        errors, warnings, infos = [], [], []
+        declared = set()
+
+        try:
+            with open(toc_path, 'r', encoding='utf-8', errors='replace') as tf:
+                raw_lines = tf.readlines()
+        except Exception as e:
+            return [f"[TOC Read Error] Cannot read manifest: {e}"], [], [], declared
+
+        dependency_fields = {
+            'dependencies', 'dependency', 'requireddeps', 'requireddep',
+            'optionaldeps', 'optionaldep'
+        }
+        addon_abs = os.path.abspath(addon_dir)
+
+        for idx, raw_line in enumerate(raw_lines, 1):
+            stripped = raw_line.strip()
+            if not stripped:
+                continue
+
+            if stripped.startswith('##'):
+                meta = re.match(r'^##\s*([^:]+)\s*:\s*(.*)$', stripped)
+                if meta:
+                    key = meta.group(1).strip().lower()
+                    value = meta.group(2).strip()
+                    if key in dependency_fields and re.search(r'\bdxvk\b', value, re.IGNORECASE):
+                        warnings.append(
+                            f"[Rule H8 - Invalid Addon Dependency] Line {idx}: "
+                            "DXVK appears in TOC dependency metadata. DXVK is runtime/rendering "
+                            "infrastructure, not a Lua addon dependency."
+                        )
+                continue
+
+            if stripped.startswith('#'):
+                continue
+
+            # Conservative manifest validation: Lua/XML are known runtime entries.
+            if not re.search(r'\.(?:lua|xml)$', stripped, re.IGNORECASE):
+                continue
+
+            normalized = self._normalize_toc_entry(stripped)
+            declared_path = os.path.abspath(os.path.normpath(os.path.join(addon_dir, normalized)))
+            rel = os.path.normcase(os.path.relpath(declared_path, addon_dir))
+            declared.add(rel)
+
+            try:
+                inside_addon = os.path.commonpath([addon_abs, declared_path]) == addon_abs
+            except ValueError:
+                inside_addon = False
+
+            if not inside_addon:
+                errors.append(
+                    f"[TOC Manifest Error] Line {idx}: Runtime entry escapes addon root: '{stripped}'"
+                )
+            elif not os.path.isfile(declared_path):
+                errors.append(
+                    f"[TOC Manifest Error] Line {idx}: Declared runtime file does not exist: '{stripped}'"
+                )
+
+        return errors, warnings, infos, declared
+
     def audit_addon_dir(self, dir_path):
         results = {}
         total_errors = 0
@@ -402,16 +471,55 @@ class VanillaForgeAuditor:
                 if re.search(r'(?:prerequisite|requirement|dependency|dependencies).*?(dxvk)', rm, re.IGNORECASE):
                     readme_warnings.append("[Rule H8 - Gratuitous DLL Requirement] README.md lists 'DXVK' as an addon dependency. DXVK is a client rendering translation layer, not an addon API requirement. Remove it.")
 
-        # Check TOC file for Octo branding leaks
-        for f in os.listdir(dir_path):
-            if f.endswith('.toc'):
-                with open(os.path.join(dir_path, f), 'r', encoding='utf-8', errors='replace') as tf:
-                    tc = tf.read()
-                    if 'VanillaForge' in tc or '[Octo]' in tc or '-Octo' in tc:
-                        readme_warnings.append(f"[Branding - Legacy Server/Framework Name] '{f}' contains legacy 'Octo' branding in metadata. Keep public addon metadata server-neutral unless intentional.")
-
         # Project structure diagnostics. Kept intentionally conservative.
         structure_warnings = []
+
+        # Treat root TOC files as first-class addon manifests.
+        declared_runtime_files = set()
+        toc_files = sorted(
+            f for f in os.listdir(dir_path)
+            if f.lower().endswith('.toc') and os.path.isfile(os.path.join(dir_path, f))
+        )
+        for f in toc_files:
+            toc_path = os.path.join(dir_path, f)
+            toc_errors, toc_warnings, toc_infos, declared = self.audit_toc_file(toc_path, dir_path)
+            declared_runtime_files.update(declared)
+
+            with open(toc_path, 'r', encoding='utf-8', errors='replace') as tf:
+                tc = tf.read()
+            if 'VanillaForge' in tc or '[Octo]' in tc or '-Octo' in tc:
+                toc_warnings.append(
+                    "[Branding - Legacy Server/Framework Name] TOC contains internal "
+                    "framework/server branding. Keep public addon metadata server-neutral unless intentional."
+                )
+
+            results[f] = (toc_errors, toc_warnings, toc_infos)
+            total_errors += len(toc_errors)
+            total_warnings += len(toc_warnings)
+            total_infos += len(toc_infos)
+
+        # Reverse manifest integrity is advisory. Unlisted runtime-looking files
+        # can be intentional, so never turn this into an automatic ERROR.
+        excluded_roots = {
+            'test', 'tests', 'tool', 'tools', 'script', 'scripts',
+            'example', 'examples', 'docs', 'doc', '.git', '.github'
+        }
+        if toc_files:
+            for root, _, files in os.walk(dir_path):
+                rel_root = os.path.relpath(root, dir_path)
+                parts = [] if rel_root == '.' else [p.lower() for p in Path(rel_root).parts]
+                if any(part in excluded_roots for part in parts):
+                    continue
+                for f in files:
+                    if not f.lower().endswith(('.lua', '.xml')):
+                        continue
+                    filepath = os.path.join(root, f)
+                    rel = os.path.normcase(os.path.relpath(filepath, dir_path))
+                    if rel not in declared_runtime_files:
+                        structure_warnings.append(
+                            f"[Possible Orphan Runtime File] '{os.path.relpath(filepath, dir_path)}' "
+                            "is not referenced by a root TOC. This may be intentional; inspect before changing."
+                        )
 
         # Scan all Lua and XML files
         for root, _, files in os.walk(dir_path):
