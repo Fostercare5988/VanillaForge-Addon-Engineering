@@ -6,7 +6,7 @@
 >
 > Source basis: `brues-code/ClassicAPI`, default branch `master`, official `README.md`, official `docs/API.md`, and selected implementation/source references.
 >
-> Snapshot baseline used by VanillaForge: **ClassicAPI v1.15.9+**.
+> Snapshot baseline used by VanillaForge: **ClassicAPI v1.15.10+**.
 >
 > IMPORTANT: ClassicAPI is actively developed. This document is a local snapshot, not a claim that future versions cannot add or change functionality. If installed ClassicAPI is newer and a task depends on newly added behavior not present here, inspect the installed/current source and update this reference deliberately.
 
@@ -54,12 +54,13 @@ Therefore:
 ```text
 v1.15.8 -> 11508
 v1.15.9 -> 11509
+v1.15.10 -> 11510
 ```
 
 The VanillaForge framework baseline is:
 
 ```text
-ClassicAPI v1.15.9+
+ClassicAPI v1.15.10+
 ```
 
 Do not assume a future version's new API exists solely because a similarly named Retail API exists.
@@ -1634,7 +1635,24 @@ GetSheathState
 
 ---
 
-## 58. System
+## 58. Swing Timer — `C_SwingTimer`
+
+`[EMPIRICALLY VERIFIED]` for range check and 2D geometry; `[SOURCE-VERIFIED]` for API contract.
+
+Reports auto-attack range state for melee and ranged weapons against the current target.
+
+```lua
+C_SwingTimer.EnableRangeCheck(swingType, enable)
+C_SwingTimer.IsTargetWithinSwingRange(swingType)
+```
+
+- `EnableRangeCheck(swingType, enable)`: Turns `PLAYER_SWING_RANGE_UPDATE` dispatching on or off for `swingType` (`Enum.PlayerSwingType`). Seeds internal range state without an immediate event fire. Call `IsTargetWithinSwingRange` once after enabling to read the baseline state.
+- `IsTargetWithinSwingRange(swingType)`: Returns `true` (in range), `false` (out of range), or `nil` (no check possible).
+- **Critical Semantic:** A `nil` return occurs when there is no target, the target cannot be attacked, or no weapon is equipped for that swing type. `nil` must **never** be treated as out of range. Auto-attacks apply strictly to `"target"`.
+
+---
+
+## 59. System
 
 ```lua
 GetPhysicalScreenSize
@@ -1643,7 +1661,7 @@ CopyToClipboard
 
 ---
 
-## 59. Talent
+## 60. Talent
 
 ```lua
 GetTalentSpellID
@@ -1652,7 +1670,7 @@ GetTalentIDByIndex
 
 ---
 
-## 60. Targeting
+## 61. Targeting
 
 ```lua
 GetPlayerFacing
@@ -1665,7 +1683,7 @@ TargetNearestFriendPlayer
 
 ---
 
-## 61. Taxi Map — `C_TaxiMap`
+## 62. Taxi Map — `C_TaxiMap`
 
 ```lua
 C_TaxiMap.GetTaxiNodesForMap
@@ -1677,7 +1695,7 @@ C_TaxiMap.GetTaxiRoute
 
 ---
 
-## 62. Texture — `C_Texture`
+## 63. Texture — `C_Texture`
 
 ```lua
 C_Texture.GetAtlasInfo
@@ -1700,7 +1718,7 @@ Atlas markup is supported in text.
 
 ---
 
-## 63. Time — `C_Timer` / `C_DateAndTime`
+## 64. Time — `C_Timer` / `C_DateAndTime`
 
 Timers:
 
@@ -1729,7 +1747,7 @@ This should be checked before writing custom timer queues or home-grown server-t
 
 ---
 
-## 64. Totems
+## 65. Totems
 
 ```lua
 GetTotemInfo
@@ -1746,7 +1764,7 @@ PLAYER_TOTEM_UPDATE
 
 ---
 
-## 65. Tracking
+## 66. Tracking
 
 ```lua
 GetNumTrackingTypes
@@ -1756,7 +1774,7 @@ SetTracking
 
 ---
 
-## 66. TradeSkillUI — `C_TradeSkillUI`
+## 67. TradeSkillUI — `C_TradeSkillUI`
 
 ```lua
 C_TradeSkillUI.GetTradeSkillListLink
@@ -1766,7 +1784,7 @@ C_TradeSkillUI.GetTradeSkillListRecipes
 
 ---
 
-## 67. UIColor — `C_UIColor`
+## 68. UIColor — `C_UIColor`
 
 ```lua
 C_UIColor.GetColors
@@ -1774,7 +1792,7 @@ C_UIColor.GetColors
 
 ---
 
-## 68. Unit
+## 69. Unit
 
 Identity/token helpers:
 
@@ -1844,7 +1862,7 @@ ClassicAPI should be consulted before adding custom GUID-to-token registries, di
 
 ---
 
-## 69. Unit Auras — `C_UnitAuras`
+## 70. Unit Auras — `C_UnitAuras`
 
 This is a major modernization API.
 
@@ -1901,9 +1919,20 @@ For high-frequency aura scanning, this can be preferable to constructing a Lua t
 
 This namespace should replace legacy hidden tooltip aura scanners.
 
+### Aura Filter Tokens
+
+`C_UnitAuras` functions accepting a filter string (`"HELPFUL"`, `"HARMFUL"`, etc.) support:
+
+- `HELPFUL` / `HARMFUL`: Filter buffs or debuffs by polarity.
+- `PLAYER` / `!PLAYER`: `[EMPIRICALLY VERIFIED]` for player/pet inclusion; `[SOURCE-VERIFIED]` for attribution and cache semantics (`src/aura/Data.h`).
+  - `PLAYER` matches only auras attributable to the local player or the player's pet (`PlayerGuid()` or `VAR_PET_GUID`), matching modern `AuraUtil.AuraFilters.Player`. Auras whose caster is unknown or unresolved (e.g. cache misses, or auras predating observation this session) are excluded. (In v1.15.9 and earlier, `PLAYER` tested only `PlayerGuid()`, which silently dropped pet auras such as Hunter pet Scorpid Poison because `SMSG_SPELL_GO` attributes pet casts to the pet's GUID).
+  - `!PLAYER` is the strict complement: it matches auras attributable to other casters AND any aura whose caster is unknown or unresolved due to missing cache attribution. Because unobserved casts lack caster data, `!PLAYER` must **not** be treated as proof that an aura was cast by a confirmed third party.
+- `DISPELLABLE` / `!DISPELLABLE`: Filter by whether the aura can be dispelled, purged, or stolen.
+- `CROWD_CONTROL` / `!CROWD_CONTROL`: Filter by crowd-control mechanic flags.
+
 ---
 
-## 70. Voice Chat / Text-to-Speech
+## 71. Voice Chat / Text-to-Speech
 
 ```lua
 C_VoiceChat.GetTtsVoices
@@ -1932,9 +1961,13 @@ VOICE_CHAT_TTS_PLAYBACK_FAILED
 VOICE_CHAT_TTS_VOICES_UPDATE
 ```
 
+### Event Reservation Stability Note
+
+- `VOICE_CHAT_TTS_VOICES_UPDATE`: `[SOURCE-VERIFIED]` In `src/event/Custom.cpp` (commit `6812771a896f8c7b3b5c97686c518266085f2d8f`), the custom event reservation ceiling `MAX_RESERVED` was raised from 64 to 96, removing the reservation-ceiling overflow condition. ClassicAPI v1.15.9 had 63 reservations (under the 64-slot ceiling). During development toward v1.15.10, the addition of the two swing events brought the count to 65 (60 file-scope plus 5 lazy TTS reservations on clients without VanillaTTS), causing the 65th reservation (`VOICE_CHAT_TTS_VOICES_UPDATE`) to exceed the 64-slot ceiling (`Slot()` stayed -1 and `Fire()` no-opped). Raising `MAX_RESERVED` to 96 resolved this overflow and accommodates subsequent additions (66 reservations in v1.15.10 after `WEAPON_SLOT_CHANGED`).
+
 ---
 
-## 71. XML Utilities — `C_XMLUtil`
+## 72. XML Utilities — `C_XMLUtil`
 
 ```lua
 C_XMLUtil.DoesTemplateExist
@@ -1948,7 +1981,7 @@ C_XMLUtil.GetTemplates
 
 The official README snapshot documents the following ClassicAPI-added or enhanced events.
 
-## 72. Inventory / Equipment
+## 73. Inventory / Equipment
 
 ```text
 BAG_NEW_ITEMS_UPDATED
@@ -1960,11 +1993,55 @@ EQUIPMENT_SETS_CHANGED
 EQUIPMENT_SWAP_PENDING
 EQUIPMENT_SWAP_FINISHED
 HEARTHSTONE_BOUND
+WEAPON_SLOT_CHANGED
 ```
+
+### `WEAPON_SLOT_CHANGED` event
+
+- **Status:** `[UNVERIFIED - TEST FIRST]` Built and deployed upstream; not verified in-game.
+- **Payload:** *(none)*
+- **Semantics:** Fires when the item in weapon slot 16 (main hand), 17 (off hand), or 18 (ranged) changes (equip, unequip, swap).
+- **Coalescing:** Coalesced on `WorldTick` to at most one fire per frame. A single action changing two weapon slots (e.g. equipping a 2H weapon replacing 1H + off-hand) fires the event once.
+- **Relic Exemption:** Slot 18 is exempted for classes with a relic slot (Paladin, Shaman, Druid) via live check of `ChrClasses.dbc` (`OFF_CHRCLASSES_RELIC_SLOT`). Relic swaps never trigger the event.
+- **System:** Filed under `PaperDollInfo` as a `UniqueEvent`. Prefer this over filtering `PLAYER_EQUIPMENT_CHANGED` in Lua across 19 slots when only weapon changes matter.
 
 ---
 
-## 73. Input / Cursor
+## 74. Combat / Swing Events
+
+```text
+PLAYER_SWING
+PLAYER_SWING_RANGE_UPDATE
+```
+
+### `PLAYER_SWING` event
+
+- **Status:** `[EMPIRICALLY VERIFIED]` for swing detection, extra attacks coalescing, cast-time resets, dual-wield, and melee range gating. `[UNVERIFIED - TEST FIRST]` for Turtle WoW Slam override.
+- **Payload:** `swingDuration, swingType`
+  - `swingDuration` (number): seconds from now until the next swing of this type.
+  - `swingType` (`Enum.PlayerSwingType`): `0` (`MainHand`), `1` (`OffHand`), `2` (`Ranged`).
+- **Semantics:**
+  - Fires each time an attack timer resets: landed white hit (`SMSG_ATTACKERSTATEUPDATE`), on-next-swing ability replacement (Heroic Strike, Maul via `SPELL_ATTR_ON_NEXT_SWING`), non-triggered cast-time spell interrupt (`SPELL_INTERRUPT_FLAG_AUTOATTACK`), ranged autorepeat wind-up (`SMSG_SPELL_GO` with `SPELL_ATTR_EX2_AUTOREPEAT_FLAG` minus cast time), fresh melee attack-start (`SMSG_ATTACKSTART` off-hand, gated by melee range), weapon swaps in combat, and parry haste.
+  - **Coalescing:** Coalesced on `WorldTick` to at most once per swing type per frame. Multiple hits at the exact same moment (e.g. Windfury, Sword Specialization) collapse into one event with the latest remaining time.
+  - **Parry Haste:** Cuts delay to 20% of unhasted delay if remaining time was between 20% and 60%, or subtracts 40% if > 60%. Left alone if < 20%.
+  - **Range Gating:** Does not fire on attack-start if declared while out of melee range; fires only once in reach.
+  - **Turtle WoW Slam Override:** Registers 11 player-castable Slam ranks (`1464`, `8820`, `11430`, `11604`, `11605`, `45599`, `45960`, `45961`, `45963`, `45964`, `53214`) because Turtle WoW's server resets swing timers on Slam despite client `Spell.dbc` attributes.
+
+### `PLAYER_SWING_RANGE_UPDATE` event
+
+- **Status:** `[EMPIRICALLY VERIFIED]` for 2D melee range geometry and attack-start range gate.
+- **Payload:** `swingType, isInRange, checksRange`
+  - `swingType` (`Enum.PlayerSwingType`): `0` (`MainHand`), `1` (`OffHand`), `2` (`Ranged`).
+  - `isInRange`: `1` when target is in range, `nil` when out of range (ignore if `checksRange` is `nil`).
+  - `checksRange`: `1` when range check was possible, `nil` when not possible (no target, untargetable, no weapon).
+- **Semantics:**
+  - Fires on `WorldTick` when the current target enters or leaves range for a swing type enabled via `C_SwingTimer.EnableRangeCheck`.
+  - **Melee Geometry:** Computes pure 2D distance (X/Y plane) via `Combat::Swing::InMeleeRange`, reading engine reach constants `VAR_MELEE_REACH_LEEWAY` and `VAR_MELEE_REACH_MIN` to match server reach rules and ignore terrain Z-axis elevation.
+  - **Ranged Geometry:** Uses full 3D distance via `Spell::Range::PlayerVsUnit`.
+
+---
+
+## 75. Input / Cursor
 
 ```text
 CURSOR_CHANGED
@@ -1981,7 +2058,7 @@ PLAYER_STOPPED_TURNING
 
 ---
 
-## 74. Faction / Quest
+## 76. Faction / Quest
 
 ```text
 FACTION_STANDING_CHANGED
@@ -1993,7 +2070,7 @@ QUEST_TURNED_IN
 
 ---
 
-## 75. Loot
+## 77. Loot
 
 ```text
 LOOT_HISTORY_ROLL_CHANGED
@@ -2004,7 +2081,7 @@ LOOT_SCAN_COMPLETED
 
 ---
 
-## 76. Loss of Control
+## 78. Loss of Control
 
 ```text
 LOSS_OF_CONTROL_ADDED
@@ -2019,7 +2096,7 @@ LOSS_OF_CONTROL_UPDATE
 
 ---
 
-## 77. Nameplate / Focus
+## 79. Nameplate / Focus
 
 ```text
 NAME_PLATE_CREATED
@@ -2030,7 +2107,7 @@ PLAYER_FOCUS_CHANGED
 
 ---
 
-## 78. Spellcast Events
+## 80. Spellcast Events
 
 ```text
 UNIT_SPELLCAST_SENT
@@ -2063,7 +2140,7 @@ Use `/classicapi` for exact current payload order if implementation depends on i
 
 ---
 
-## 79. Misc Events
+## 81. Misc Events
 
 ```text
 LEARNED_SPELL_IN_SKILL_LINE
@@ -2079,7 +2156,7 @@ USER_WAYPOINT_UPDATED
 
 # PART VI — GLOBALS AND ENUMS
 
-## 80. Version Globals
+## 82. Version Globals
 
 ```lua
 CLASSIC_API_VERSION
@@ -2088,7 +2165,7 @@ INTERFACE_VERSION
 
 ---
 
-## 81. Expansion Constants
+## 83. Expansion Constants
 
 ```text
 LE_EXPANSION_LEVEL_CURRENT
@@ -2100,7 +2177,7 @@ The official documentation includes later expansion enum constants for compatibi
 
 ---
 
-## 82. Enums
+## 84. Enums
 
 Documented enum families include:
 
@@ -2110,10 +2187,16 @@ Enum.PowerType
 Enum.InventoryType
 Enum.ItemClass
 Enum.ItemQuality
+Enum.PlayerSwingType
 Enum.UICursorType
 Enum.SpellBookSpellBank
 Enum.SpellBookItemType
 ```
+
+`Enum.PlayerSwingType`:
+- `MainHand = 0`: Main-hand melee weapon.
+- `OffHand = 1`: Off-hand melee weapon.
+- `Ranged = 2`: Ranged weapon (bow, gun, crossbow, wand).
 
 Use `/classicapi` for exact values when numeric identity matters.
 
@@ -2121,7 +2204,7 @@ Use `/classicapi` for exact values when numeric identity matters.
 
 # PART VII — GLUEXML / LOGIN-SCREEN API
 
-## 83. Account Storage
+## 85. Account Storage
 
 GlueXML-only:
 
@@ -2140,7 +2223,7 @@ These APIs are not ordinary in-world addon APIs.
 
 ---
 
-## 84. Character List
+## 86. Character List
 
 GlueXML-only:
 
@@ -2151,7 +2234,7 @@ SetSavedCharacterOrder(realm, order)
 
 ---
 
-## 85. Glue-State Mirrored Functions
+## 87. Glue-State Mirrored Functions
 
 The project documentation also mirrors selected helpers onto the glue Lua state, including:
 
@@ -2175,7 +2258,7 @@ Keep GlueXML and in-world addon design separate.
 
 # PART VIII — DEBUGGING / DEVELOPMENT
 
-## 86. DebugTools Companion
+## 88. DebugTools Companion
 
 The repository includes a DebugTools addon providing:
 
@@ -2199,7 +2282,7 @@ tostringall(...)
 
 ---
 
-## 87. Recommended Verification Workflow
+## 89. Recommended Verification Workflow
 
 For an uncertain ClassicAPI behavior:
 
@@ -2221,7 +2304,7 @@ Examples:
 
 # PART IX — MODERNIZATION DECISION GUIDE
 
-## 88. Replace Legacy Tooltip Aura Scanning
+## 90. Replace Legacy Tooltip Aura Scanning
 
 Prefer:
 
@@ -2239,7 +2322,7 @@ localized aura text parsing
 
 ---
 
-## 89. Replace Combat-Log String Castbars
+## 91. Replace Combat-Log String Castbars
 
 Prefer:
 
@@ -2253,7 +2336,7 @@ when they provide the needed source of truth.
 
 ---
 
-## 90. Replace Fake Focus
+## 92. Replace Fake Focus
 
 Prefer:
 
@@ -2266,7 +2349,7 @@ focustarget
 
 ---
 
-## 91. Replace Nameplate WorldFrame Scraping
+## 93. Replace Nameplate WorldFrame Scraping
 
 Prefer:
 
@@ -2278,7 +2361,7 @@ nameplateN
 
 ---
 
-## 92. Replace Manual Bag Sorting
+## 94. Replace Manual Bag Sorting
 
 Prefer:
 
@@ -2292,7 +2375,7 @@ when appropriate.
 
 ---
 
-## 93. Replace Manual Item Metadata Scraping
+## 95. Replace Manual Item Metadata Scraping
 
 Check:
 
@@ -2305,7 +2388,7 @@ before scraping item tooltips.
 
 ---
 
-## 94. Replace Manual Timers
+## 96. Replace Manual Timers
 
 Check:
 
@@ -2319,7 +2402,7 @@ before implementing an `OnUpdate` timer queue.
 
 ---
 
-## 95. Replace Home-Grown Spell Metadata Tables
+## 97. Replace Home-Grown Spell Metadata Tables
 
 Check:
 
@@ -2332,7 +2415,7 @@ before duplicating spell DBC metadata in Lua.
 
 ---
 
-## 96. Replace Manual Range / Position Helpers
+## 98. Replace Manual Range / Position Helpers
 
 Check:
 
@@ -2352,7 +2435,7 @@ Remember that UnitXP may still be preferable when the addon specifically needs U
 
 # PART X — IMPORTANT CAVEATS
 
-## 97. ClassicAPI Is Not Retail
+## 99. ClassicAPI Is Not Retail
 
 A Retail function name is not proof that ClassicAPI implements it.
 
@@ -2365,7 +2448,7 @@ Use only:
 
 ---
 
-## 98. Bundled Lua Helpers vs DLL Functions
+## 100. Bundled Lua Helpers vs DLL Functions
 
 Some functionality comes from the embedded `!!!ClassicAPI` addon rather than a direct C++ Lua binding.
 
@@ -2373,7 +2456,7 @@ For addon authors this may be operationally transparent, but it matters when dia
 
 ---
 
-## 99. Hot-Path Choice Matters
+## 101. Hot-Path Choice Matters
 
 Modern API does not automatically mean the table-returning form is the fastest form.
 
@@ -2383,7 +2466,7 @@ For high-frequency scanning, prefer the documented zero-allocation path where ap
 
 ---
 
-## 100. Do Not Preserve Obsolete Vanilla Workarounds by Default
+## 102. Do Not Preserve Obsolete Vanilla Workarounds by Default
 
 When ClassicAPI provides an authoritative replacement, old compatibility mechanisms should normally be deleted rather than retained behind fallback branches in enhanced-client-only addons.
 
@@ -2403,36 +2486,36 @@ WorldFrame nameplate scraping
 
 # PART XI — REFERENCE MAINTENANCE
 
-## 101. Source Snapshot
+## 103. Source Snapshot
 
 This document was built from the official repository:
 
 ```text
 brues-code/ClassicAPI
-release: v1.15.9
-commit:  dfbba225d21d75676088414a6ae7acbfccfc7598
+release: v1.15.10
+commit:  bbefdb847d5d48a06fabca250e8a205b05ebab18
 branch:  master
 ```
 
 Official source files used as primary reference:
 
 ```text
-README.md (blob: 4fb394deec36eb4949ee148c93ef308a6e5c8070)
-docs/API.md (blob: 7290a5c9158f736cf7136b23b66178648b57a9c1)
-selected src/ implementation files (Info.cpp, Icons.cpp, Offsets.h, MacroOptions.lua)
+README.md (blob: 7611ff488b103ed6cda3258343e85cc5ccdef8ba)
+docs/API.md (blob: ee441d9ce1c67fc86ea0c3bb02da80d4f3ba49de)
+selected src/ implementation files (Swing.cpp, SwingRange.cpp, Equipment.cpp, Data.cpp, Custom.cpp, Offsets.h)
 ```
 
 At document creation, the official API reference file observed had blob SHA:
 
 ```text
-7290a5c9158f736cf7136b23b66178648b57a9c1
+ee441d9ce1c67fc86ea0c3bb02da80d4f3ba49de
 ```
 
 This is useful for deciding whether the upstream reference changed.
 
 ---
 
-## 102. Refresh Protocol
+## 104. Refresh Protocol
 
 When updating this master reference:
 
@@ -2452,7 +2535,7 @@ When updating this master reference:
 
 ---
 
-## 103. Authority Order for AI
+## 105. Authority Order for AI
 
 When sources disagree:
 
@@ -2469,7 +2552,7 @@ Never allow old framework notes to override newer ClassicAPI behavior.
 
 # PART XII — QUICK LOOKUP
 
-## 104. Most Important Modernization APIs
+## 106. Most Important Modernization APIs
 
 For general addon modernization, check these first:
 
@@ -2488,6 +2571,7 @@ C_Macro
 C_LossOfControl
 C_EquipmentSet
 C_Reputation
+C_SwingTimer
 C_AddOns
 C_APIDocumentation
 ```
@@ -2515,6 +2599,9 @@ Important modern events:
 UNIT_SPELLCAST_*
 NAME_PLATE_*
 PLAYER_FOCUS_CHANGED
+PLAYER_SWING
+PLAYER_SWING_RANGE_UPDATE
+WEAPON_SLOT_CHANGED
 BAG_UPDATE_DELAYED
 LOSS_OF_CONTROL_*
 ITEM_DATA_LOAD_RESULT
@@ -2534,7 +2621,7 @@ Important developer tools:
 
 ---
 
-## 105. Final Rule
+## 107. Final Rule
 
 Before writing a workaround for a limitation commonly associated with stock WoW 1.12.1, search this reference.
 

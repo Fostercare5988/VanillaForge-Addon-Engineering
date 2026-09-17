@@ -811,6 +811,31 @@ rather than `nil` for invalid or out-of-range indices.
 
 ------------------------------------------------------------------------
 
+### KP-55 --- Combat Swing & Weapon Delay Reconstruction
+
+**Problem:** Addons scrape combat-log text (`CHAT_MSG_COMBAT_SELF_HITS`), hook spell
+casts, poll inventory slots, or run high-frequency `OnUpdate` estimation loops to
+reconstruct weapon swing timers, parry haste, extra attacks, and weapon-swap delays.
+
+**Risk:** Localization fragility, chat-message latency, incorrect dual-wield
+desynchronization tracking, parry-haste drift, and unnecessary Lua CPU and
+garbage generation in combat hot paths.
+
+**Action / Preferred Hierarchy:**
+- Prefer authoritative `PLAYER_SWING` for weapon swing-reset and timing state
+  (main-hand, off-hand, ranged).
+- Use `C_SwingTimer` and `PLAYER_SWING_RANGE_UPDATE` only when swing-range state
+  is actually required.
+- Use `WEAPON_SLOT_CHANGED` when the addon independently needs to react to
+  weapon-slot identity or equipment changes (slots 16, 17, 18).
+- Do not reconstruct swing cadence from combat-log text, spell hooks, equipment
+  polling, or high-frequency `OnUpdate` sampling when ClassicAPI v1.15.10+ provides
+  the required state.
+- Keep the pattern capability-based: register and consume only the specific
+  events or APIs the addon's feature set actually requires.
+
+------------------------------------------------------------------------
+
 ## 11. Pattern Governance
 
 This file should remain useful rather than becoming a landfill.
