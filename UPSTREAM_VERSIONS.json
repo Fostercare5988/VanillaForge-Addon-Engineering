@@ -1,12 +1,12 @@
 {
   "classicapi": {
-    "minimum_version": "1.15.9",
-    "reference_version": "1.15.9",
+    "minimum_version": "1.15.10",
+    "reference_version": "1.15.10",
     "repository": "brues-code/ClassicAPI",
-    "reference_commit": "dfbba225d21d75676088414a6ae7acbfccfc7598",
+    "reference_commit": "bbefdb847d5d48a06fabca250e8a205b05ebab18",
     "file_shas": {
-      "docs/API.md": "7290a5c9158f736cf7136b23b66178648b57a9c1",
-      "README.md": "4fb394deec36eb4949ee148c93ef308a6e5c8070"
+      "docs/API.md": "ee441d9ce1c67fc86ea0c3bb02da80d4f3ba49de",
+      "README.md": "7611ff488b103ed6cda3258343e85cc5ccdef8ba"
     }
   },
   "superwow": {

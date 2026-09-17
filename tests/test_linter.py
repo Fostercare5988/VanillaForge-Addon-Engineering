@@ -174,7 +174,7 @@ class AddonDirectoryPolicyTests(unittest.TestCase):
 
             result = auditor.audit_addon_dir(str(addon))
             self.assertTrue(result[1])
-            self.assertTrue(any("11509" in warning for warning in result[2]), result[2])
+            self.assertTrue(any("11510" in warning for warning in result[2]), result[2])
 
 
 class TocManifestTests(unittest.TestCase):

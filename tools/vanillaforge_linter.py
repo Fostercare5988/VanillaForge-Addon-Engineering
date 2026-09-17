@@ -3,7 +3,7 @@
 VanillaForge Addon Linter & Heuristic Static Analysis Scanner (v3.1)
 Part of the VanillaForge Enhanced WoW 1.12.1 Addon Engineering Framework.
 Targets World of Warcraft 1.12.1 Build 5875 / Interface 11200 with an enhanced-client baseline:
-ClassicAPI v1.15.9+, SuperWoW v2.2+, NamPower v4.6.2+, UnitXP SP3 v90+, and DXVK runtime.
+ClassicAPI v1.15.10+, SuperWoW v2.2+, NamPower v4.6.2+, UnitXP SP3 v90+, and DXVK runtime.
 The full environment may be installed, but individual addons only depend on components they actually consume.
 """
 
@@ -14,7 +14,7 @@ import argparse
 from pathlib import Path
 
 LINTER_VERSION = "3.1"
-MIN_CLASSIC_API = 11509  # ClassicAPI v1.15.9
+MIN_CLASSIC_API = 11510  # ClassicAPI v1.15.10
 
 
 # Ensure standard output can print utf-8 characters on Windows consoles
@@ -458,7 +458,7 @@ class VanillaForgeAuditor:
         readme_path = os.path.join(dir_path, 'README.md')
         readme_warnings = []
         if outdated_guard:
-            readme_warnings.append("[Dependency Guard - Outdated ClassicAPI Minimum] Addon uses MIN_CLASSIC_API < 11509. VanillaForge baseline is ClassicAPI v1.15.9+ (11509).")
+            readme_warnings.append("[Dependency Guard - Outdated ClassicAPI Minimum] Addon uses MIN_CLASSIC_API < 11510. VanillaForge baseline is ClassicAPI v1.15.10+ (11510).")
         if os.path.exists(readme_path):
             with open(readme_path, 'r', encoding='utf-8', errors='replace') as f:
                 rm = f.read()
