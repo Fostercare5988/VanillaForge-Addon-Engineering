@@ -3,7 +3,7 @@
 VanillaForge Addon Linter & Heuristic Static Analysis Scanner (v3.1)
 Part of the VanillaForge Enhanced WoW 1.12.1 Addon Engineering Framework.
 Targets World of Warcraft 1.12.1 Build 5875 / Interface 11200 with an enhanced-client baseline:
-ClassicAPI v1.15.10+, SuperWoW v2.2+, NamPower v4.6.2+, UnitXP SP3 v90+, and DXVK runtime.
+ClassicAPI v1.15.12+, SuperWoW v2.2+, NamPower v4.6.2+, UnitXP SP3 v90+, and DXVK runtime.
 The full environment may be installed, but individual addons only depend on components they actually consume.
 """
 
@@ -14,7 +14,6 @@ import argparse
 from pathlib import Path
 
 LINTER_VERSION = "3.1"
-MIN_CLASSIC_API = 11510  # ClassicAPI v1.15.10
 
 
 # Ensure standard output can print utf-8 characters on Windows consoles
@@ -281,12 +280,9 @@ class VanillaForgeAuditor:
             # VanillaForge v3 does not treat localization support as a defect.
             # Remove unused localization only when project scope explicitly calls for it.
 
-            # 8. Rule A3 / A4: Obsolete Lua 5.0 Constructs
-            if not self._is_suppressed(line, "A3") and not is_comment:
-                if re.search(r'\btable\.getn\s*\(', line):
-                    warnings.append(f"[Rule A3 - Legacy table.getn] Line {idx}: 'table.getn(t)' detected. Use modern '#' length operator.")
-                if re.search(r'\btable\.setn\s*\(', line):
-                    warnings.append(f"[Rule A3 - Legacy table.setn] Line {idx}: 'table.setn(t, n)' is obsolete Lua 5.0 code. Use direct array assignment or native table sizing.")
+            # 8. Rule A4: Obsolete Lua 5.0 Constructs
+            # A3 retired: getn/setn preserve intentional stored-length contracts,
+            # including weak-valued pools. Syntax alone cannot justify replacement.
             if not self._is_suppressed(line, "A4") and not is_comment:
                 if re.search(r'\bmath\.mod\s*\(', line):
                     warnings.append(f"[Rule A4 - Legacy math.mod] Line {idx}: 'math.mod(a, b)' detected. Use modern '%' modulo operator.")
@@ -440,7 +436,6 @@ class VanillaForgeAuditor:
         # VanillaForge v3 does NOT require every addon to guard every installed DLL.
         # Environment availability is not the same thing as per-addon dependency.
         has_startup_guard = False
-        outdated_guard = False
         for root, _, files in os.walk(dir_path):
             for f in files:
                 if not f.endswith('.lua'):
@@ -450,15 +445,12 @@ class VanillaForgeAuditor:
                     c = lf.read()
                 if 'CLASSIC_API_VERSION' in c or 'MIN_CLASSIC_API' in c:
                     has_startup_guard = True
-                    m = re.search(r'MIN_CLASSIC_API\s*=\s*(\d+)', c)
-                    if m and int(m.group(1)) < MIN_CLASSIC_API:
-                        outdated_guard = True
 
         # Check README & Directory Standards
         readme_path = os.path.join(dir_path, 'README.md')
         readme_warnings = []
-        if outdated_guard:
-            readme_warnings.append("[Dependency Guard - Outdated ClassicAPI Minimum] Addon uses MIN_CLASSIC_API < 11510. VanillaForge baseline is ClassicAPI v1.15.10+ (11510).")
+        # An older minimum is not a defect without evidence that a consumed API
+        # or semantic fix requires a later version than the addon declares.
         if os.path.exists(readme_path):
             with open(readme_path, 'r', encoding='utf-8', errors='replace') as f:
                 rm = f.read()
@@ -581,7 +573,7 @@ def main():
         results, has_guard, readme_warnings, structure_warnings, total_errors, total_warnings, total_infos = auditor.audit_addon_dir(target)
 
         if has_guard:
-            print(f"  {INFO_BADGE} Dependency Guard: ClassicAPI guard detected; configured minimum inspected")
+            print(f"  {INFO_BADGE} Dependency Guard: ClassicAPI guard detected; minimum requires capability-specific review")
         else:
             print(f"  {INFO_BADGE} Dependency Guard: None detected (optional; dependencies are capability-driven)")
 

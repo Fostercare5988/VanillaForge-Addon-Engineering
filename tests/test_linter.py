@@ -99,10 +99,25 @@ end)
         self.assertNotIn("Event Parameter Shadowing", joined)
         self.assertEqual(errors, [])
 
-    def test_table_getn_is_reported(self):
-        errors, warnings, _ = self.audit("local count = table.getn(items)\\n")
+    def test_stored_table_length_contract_is_not_flagged_as_obsolete(self):
+        errors, warnings, _ = self.audit('''
+local cache = setmetatable({}, { __mode = "v" })
+table.insert(cache, {})
+local count = table.getn(cache)
+table.setn(cache, count)
+''')
         self.assertEqual(errors, [])
-        self.assertTrue(any("Legacy table.getn" in warning for warning in warnings))
+        self.assertEqual(warnings, [])
+
+    def test_explicit_count_and_nil_append_are_not_flagged_as_obsolete(self):
+        errors, warnings, _ = self.audit('''
+local args = { n = 3 }
+table.setn(args, 3)
+local count = table.getn(args)
+table.insert(args, nil)
+''')
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
 
     def test_manual_wipe_is_reported(self):
         errors, warnings, _ = self.audit(
@@ -113,15 +128,19 @@ end)
 
     def test_vanillaforge_inline_suppression_works(self):
         _, warnings, _ = self.audit(
-            "local count = table.getn(items) -- vanillaforge-ignore: A3\\n"
+            "local remainder = math.mod(5, 2) -- vanillaforge-ignore: A4\n"
         )
-        self.assertFalse(any("Legacy table.getn" in warning for warning in warnings))
+        self.assertFalse(any("Legacy math.mod" in warning for warning in warnings))
 
     def test_legacy_octowow_suppression_remains_compatible(self):
         _, warnings, _ = self.audit(
-            "local count = table.getn(items) -- octowow-ignore: A3\\n"
+            "local remainder = math.mod(5, 2) -- octowow-ignore: A4\n"
         )
-        self.assertFalse(any("Legacy table.getn" in warning for warning in warnings))
+        self.assertFalse(any("Legacy math.mod" in warning for warning in warnings))
+
+    def test_unsuppressed_math_mod_is_still_reported(self):
+        _, warnings, _ = self.audit("local remainder = math.mod(5, 2)\n")
+        self.assertTrue(any("Legacy math.mod" in warning for warning in warnings))
 
     def test_localization_is_not_treated_as_a_defect(self):
         errors, warnings, infos = self.audit('''
@@ -157,24 +176,26 @@ class AddonDirectoryPolicyTests(unittest.TestCase):
             self.assertEqual(readme_warnings, [])
             self.assertEqual(structure_warnings, [])
 
-    def test_outdated_classicapi_guard_is_reported(self):
+    def test_addon_minimum_is_not_forced_to_framework_baseline(self):
         auditor = LINTER.VanillaForgeAuditor()
 
         with tempfile.TemporaryDirectory() as tmp:
             addon = Path(tmp) / "GuardedAddon"
             addon.mkdir()
-            (addon / "GuardedAddon.lua").write_text(
-                "local MIN_CLASSIC_API = 11400\\n"
-                "if not CLASSIC_API_VERSION then\\n"
-                "    return\\n"
-                "end\\n",
-                encoding="utf-8",
-            )
-            (addon / "README.md").write_text("# GuardedAddon\\n", encoding="utf-8")
-
-            result = auditor.audit_addon_dir(str(addon))
-            self.assertTrue(result[1])
-            self.assertTrue(any("11510" in warning for warning in result[2]), result[2])
+            (addon / "README.md").write_text("# GuardedAddon\n", encoding="utf-8")
+            for minimum in (11400, 11510, 11511, 11512):
+                with self.subTest(minimum=minimum):
+                    (addon / "GuardedAddon.lua").write_text(
+                        f"local MIN_CLASSIC_API = {minimum}\n"
+                        "if not CLASSIC_API_VERSION or CLASSIC_API_VERSION < MIN_CLASSIC_API then\n"
+                        "    return\n"
+                        "end\n",
+                        encoding="utf-8",
+                    )
+                    result = auditor.audit_addon_dir(str(addon))
+                    self.assertTrue(result[1])
+                    self.assertEqual(result[2], [])
+                    self.assertEqual(result[4], 0)
 
 
 class TocManifestTests(unittest.TestCase):

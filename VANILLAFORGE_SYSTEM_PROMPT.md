@@ -53,7 +53,7 @@ Never infer client/API capabilities from a server/content version number.
 
 Canonical minimum environment:
 
--   ClassicAPI `v1.15.10+`
+-   ClassicAPI `v1.15.12+`
 -   SuperWoW `v2.2+`
 -   NamPower `v4.6.2+`
 -   UnitXP SP3 `v90+`
@@ -191,6 +191,11 @@ actually consumes.
 
 Do not claim a DLL dependency merely because it is installed in the
 user's client.
+
+The current framework baseline is not every addon's minimum version.
+Set an addon's `MIN_CLASSIC_API` from the verified capabilities and fixes
+it actually requires; a framework baseline refresh alone does not require
+raising existing addon guards.
 
 ------------------------------------------------------------------------
 

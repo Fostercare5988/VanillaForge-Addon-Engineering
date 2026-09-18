@@ -9,7 +9,7 @@
 > **Canonical enhanced-client baseline**
 >
 > - World of Warcraft 1.12.1, Build 5875, `Interface: 11200`
-> - ClassicAPI v1.15.10+
+> - ClassicAPI v1.15.12+
 > - SuperWoW v2.2+
 > - NamPower v4.6.2+
 > - UnitXP SP3 v90+
@@ -136,6 +136,12 @@ by default for handlers that declare parameters. Legacy globals remain available
 Therefore, old blanket rules that treat every `(self, event, ...)` handler as invalid
 are obsolete. The actual registration/call path still matters, especially for legacy
 XML or manually invoked handlers.
+
+ClassicAPI's table-length behavior also preserves some Lua 5.0 contracts. In
+v1.15.12, weak-valued tables retain their stored length after GC clears values.
+Do not infer stale writer state from a nil final slot or mechanically replace
+`table.getn` / `table.setn`; see the source-verified rules in
+[ClassicAPI table lengths](CLASSICAPI_MASTER_REFERENCE.md#46-table-lengths-and-weak-values).
 
 ---
 

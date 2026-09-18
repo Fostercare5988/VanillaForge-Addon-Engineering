@@ -1,12 +1,21 @@
 {
   "classicapi": {
-    "minimum_version": "1.15.10",
-    "reference_version": "1.15.10",
+    "minimum_version": "1.15.12",
+    "minimum_version_scope": "framework environment, not every addon's dependency guard",
+    "reference_version": "1.15.12",
     "repository": "brues-code/ClassicAPI",
-    "reference_commit": "bbefdb847d5d48a06fabca250e8a205b05ebab18",
+    "reference_commit": "fde3beca9dba18e7327802eb094b5bff81f39d47",
     "file_shas": {
-      "docs/API.md": "ee441d9ce1c67fc86ea0c3bb02da80d4f3ba49de",
+      "docs/API.md": "0ab67379ec55e5e9ebe92595b40611cc5d482164",
       "README.md": "7611ff488b103ed6cda3258343e85cc5ccdef8ba"
+    },
+    "release_provenance": {
+      "tag": "v1.15.12",
+      "tag_object": "a7719ec901b8a232e9c52330fdb387fe800904c3",
+      "published_at": "2026-09-18T04:44:15Z",
+      "dll_asset_id": 571828024,
+      "dll_size_bytes": 1437184,
+      "dll_sha256": "a2034799f5c03bb5e2ec9a0721a31b2dd024e7cd90bd9c56248383a948495677"
     }
   },
   "superwow": {
