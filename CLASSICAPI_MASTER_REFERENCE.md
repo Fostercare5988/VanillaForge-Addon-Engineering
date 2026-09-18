@@ -6,7 +6,7 @@
 >
 > Source basis: `brues-code/ClassicAPI`, default branch `master`, official `README.md`, official `docs/API.md`, and selected implementation/source references.
 >
-> Snapshot baseline used by VanillaForge: **ClassicAPI v1.15.10+**.
+> Snapshot baseline used by VanillaForge: **ClassicAPI v1.15.12+**.
 >
 > IMPORTANT: ClassicAPI is actively developed. This document is a local snapshot, not a claim that future versions cannot add or change functionality. If installed ClassicAPI is newer and a task depends on newly added behavior not present here, inspect the installed/current source and update this reference deliberately.
 
@@ -55,15 +55,21 @@ Therefore:
 v1.15.8 -> 11508
 v1.15.9 -> 11509
 v1.15.10 -> 11510
+v1.15.11 -> 11511
+v1.15.12 -> 11512
 ```
 
 The VanillaForge framework baseline is:
 
 ```text
-ClassicAPI v1.15.10+
+ClassicAPI v1.15.12+
 ```
 
 Do not assume a future version's new API exists solely because a similarly named Retail API exists.
+
+This environment/reference baseline does not mandate `MIN_CLASSIC_API=11512` in
+every addon. Declare the minimum required by the capabilities and semantic fixes
+the addon actually consumes.
 
 ---
 
@@ -193,6 +199,45 @@ string.reverse
 ```
 
 and other helpers documented under the official Lua section.
+
+### 4.6 Table lengths and weak values
+
+[SOURCE-VERIFIED] ClassicAPI v1.15.12's `src/table/Length.cpp` hooks the stored-length
+reader used by `table.getn`, `table.insert`, `table.remove`, `table.concat`,
+`table.sort`, `table.foreachi`, and `unpack`. For ordinary tables whose stored final
+slot is nil, it can heal the answer to a border. A border is not necessarily the
+highest populated index in a sparse table.
+
+The existing contracts remain: explicit numeric `t.n` preserves the count;
+two-argument `table.insert(t, nil)` marks an intentional trailing nil reservation
+(positional nil insertion does not); `table.setn` remains supported. A populated
+stored final slot keeps the original length. Healing is a read-time answer, not
+a write-back of the stored count.
+
+**New in v1.15.12:** when the metatable's raw string `__mode` contains `"v"`
+(including `"v"` and `"kv"`), the reader preserves the stored length even if the
+stored final slot is nil. GC can clear weak values without any writer changing
+the length; that nil therefore does not prove stale writer state. This exception
+precedes the trailing-nil mark and border healing. Weak keys alone (`"k"`) do not
+qualify. It does not make the length a count of live entries, and it does not keep
+weak values alive.
+
+This fixes the documented Compost-2.0 recycling case: GC clears slots 1 and 3 of
+a three-slot weak-value pool while slot 2 remains live. Previously, healing could
+return border 0, making `table.remove(cache, 2)` return no value and the caller
+fail with `table index is nil`. The stored length now remains 3 so removal can
+return the live value.
+
+Do not mechanically replace `table.getn` with `#` or remove `table.setn` in code
+that depends on these contracts. The transpiled `#` uses a separate border path;
+the weak-value exception here concerns the stored-length reader.
+
+Evidence: [v1.15.12 source/docs commit](https://github.com/brues-code/ClassicAPI/commit/fde3beca9dba18e7327802eb094b5bff81f39d47).
+The maintainer reports in-game verification of the three-slot case and disappearance
+of Compost errors in that commit. That is **upstream-reported empirical evidence**,
+not Niko-local or VanillaForge runtime verification. [UNVERIFIED - TEST FIRST]
+for reproduction in the user's installed client. Full provenance is in
+[the release-range audit](docs/CLASSICAPI_1.15.12_AUDIT.md).
 
 ---
 
@@ -515,6 +560,40 @@ API for addon-controlled macro display:
 C_Macro.SetMacroDisplay(...)
 C_Macro.GetMacroIcon(...)
 ```
+
+[SOURCE-VERIFIED] The established display contract remains: `#showtooltip` supplies
+the resolved tooltip, whereas `#show` keeps the macro-name tooltip; a chosen icon
+stays chosen, and a question-mark icon follows the resolution. `GetMacroInfo`
+returns the stored icon; `C_Macro.GetMacroIcon` returns the displayed icon. Explicit
+spell IDs can display unlearned spells (unusable); the bare directive derives its
+answer from cast/use lines. Unknown foreign conditions are left to their owning
+macro addon. `C_Macro.SetMacroDisplay(slot, value)` publishes an external answer;
+`false` claims an unmatched display and `nil` releases ownership. These are
+pre-v1.15.11 behaviors, not new APIs in this refresh.
+
+**Spell-unlearn cleanup (v1.15.11+, retained in v1.15.12):** [SOURCE-VERIFIED]
+the engine's spell-unlearn sweep must not remove a managed macro from an action-bar
+slot merely because its display cache names the unlearned spell. Such removal
+would otherwise be sent to the server and persist; this concerns the action-bar
+placement, not deletion of the saved macro definition.
+
+The fix covers both ClassicAPI-managed directives (`#showtooltip` / `#show`, with
+parsed options and no foreign conditions) and externally published displays.
+It temporarily hides their primary-spell caches from the sweep, prevents reentrant
+`ACTIONBAR_SLOT_CHANGED` readers from repopulating those caches mid-sweep, then
+restores them without an extra repaint. Subsequent directive evaluation catches
+up with changed spell knowledge. External publishers still own updating their
+published answer.
+
+A bare managed `#showtooltip` macro also survives when its own `/cast` spell is
+unlearned; this deliberately differs from stock cleanup. Unmanaged macros retain
+stock behavior; a macro without a directive is protected only if externally
+managed. This is not a blanket promise that every macro survives every removal.
+
+Evidence: [v1.15.11 macro source and offsets](https://github.com/brues-code/ClassicAPI/commit/452f3c14fc3270420355edecd82e27868fc19d63).
+The complete range contains this one macro implementation commit and no further
+macro change in v1.15.12; see the [full audit](docs/CLASSICAPI_1.15.12_AUDIT.md)
+for the earlier macro lineage and unchanged KP-53/KP-54 contracts.
 
 ### 14.2 Conditional slash-command families
 
@@ -2492,8 +2571,8 @@ This document was built from the official repository:
 
 ```text
 brues-code/ClassicAPI
-release: v1.15.10
-commit:  bbefdb847d5d48a06fabca250e8a205b05ebab18
+release: v1.15.12
+commit:  fde3beca9dba18e7327802eb094b5bff81f39d47
 branch:  master
 ```
 
@@ -2501,17 +2580,23 @@ Official source files used as primary reference:
 
 ```text
 README.md (blob: 7611ff488b103ed6cda3258343e85cc5ccdef8ba)
-docs/API.md (blob: ee441d9ce1c67fc86ea0c3bb02da80d4f3ba49de)
-selected src/ implementation files (Swing.cpp, SwingRange.cpp, Equipment.cpp, Data.cpp, Custom.cpp, Offsets.h)
+docs/API.md (blob: 0ab67379ec55e5e9ebe92595b40611cc5d482164)
+src/macro/ShowTooltip.cpp (blob: 24a8aa1158c5c93754b10e4d263c3dd6a90047e0)
+src/table/Length.cpp (blob: 5c3f9dfdbedd34ae016caefd038e3003facf6b28)
+Earlier verified source knowledge retained (Swing.cpp, SwingRange.cpp, Equipment.cpp, Data.cpp, Custom.cpp, Offsets.h)
 ```
 
-At document creation, the official API reference file observed had blob SHA:
+The v1.15.10/v1.15.11 API reference blob was:
 
 ```text
 ee441d9ce1c67fc86ea0c3bb02da80d4f3ba49de
 ```
 
-This is useful for deciding whether the upstream reference changed.
+The full `v1.15.10...v1.15.12` review found no new addon-facing functions or events.
+The API documentation delta only adds the weak-value stored-length exception;
+the macro fix is source-documented. README is unchanged. See
+[the audit](docs/CLASSICAPI_1.15.12_AUDIT.md) for tag objects, release timestamps,
+all seven commits, source blobs, and the independently downloaded DLL hash.
 
 ---
 
