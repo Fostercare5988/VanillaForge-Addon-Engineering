@@ -36,7 +36,7 @@ Use after complex multi-phase, state-machine, persistence, ownership or cross-mo
 Use `agent/REVIEW_TEMPLATE.md`.
 
 ## 8. Repository Reconciliation
-At completion check files added/deleted/renamed, TOC, root client-managed `Bindings.xml`, SavedVariables, dependencies, affected versions/docs, tests/linter, scratch artifacts, and git status/diff.
+At completion check files added/deleted/renamed, TOC, root client-managed `Bindings.xml`, SavedVariables, dependencies, affected versions/docs, tests/linter, scratch artifacts, and git status/diff. Remove temporary diagnostic slash commands and debug instrumentation.
 
 For a release/commit, follow `docs/RELEASE_WORKFLOW.md`.
 
