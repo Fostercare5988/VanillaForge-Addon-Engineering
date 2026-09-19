@@ -71,6 +71,24 @@ Therefore:
 - never gate client API logic on a server content version number
 - never assume a later content number supplies a later Blizzard addon API
 
+### Custom content provenance and spell mechanics
+
+Custom or server-modified spells, talents, and mechanics (such as custom rogue
+talents or rebalanced abilities) must be verified against deployed server/client
+data rather than inferred from Retail or later-expansion databases:
+
+1. active deployed client/server source or data files
+2. active local DBC/MPQ data (`Spell.dbc`, local client tables)
+3. verified runtime behavior (tooltips, combat log, `/dump`)
+4. project-specific documentation
+5. external version-specific references
+6. inference
+
+*Example:* In custom content, a talent like Blackjack may apply an 8-second,
+-10% damage debuff (`spellId 52533`) rather than Retail's 5-second, 70% reduction.
+Never infer custom spell duration or values from Retail based on matching spell
+names or icons.
+
 ---
 
 ## 3. Stack Architecture
@@ -650,6 +668,22 @@ When matching existing controls:
 
 Exact Blizzard texture paths are project-specific, not universal framework rules.
 
+### 12.7 Recycled button and aura frame lifecycle
+
+Recycling composite UI frames (such as aura icons, action buttons, or raid-frame
+status indicators) requires a comprehensive reset path. Partial resets or merely
+hiding the button frequently leave ghost visual artifacts upon reuse, such as
+persisting cooldown sweeps, leftover duration text, or stale borders across
+target switches and slot shifts.
+
+When recycling or hiding an aura or cooldown frame, execute an explicit reset:
+- frame visibility (`button:Hide()`) and script handlers (`button:SetScript("OnUpdate", nil)`)
+- identity bindings (`unit`, `auraIndex`, `spellId`)
+- duration/expiration timestamps (and reject expired timed auras where `expirationTime > 0 and expirationTime <= GetTime()`)
+- text labels (`countText:SetText("")`, `durationText:SetText("")`)
+- cooldown animation model (`cooldown:SetCooldown(0, 0)`)
+- texture asset, vertex color, alpha (`button:SetAlpha(1.0)`), and border overlay (`border:Hide()`)
+
 ---
 
 ## 13. Runtime Diagnostics
@@ -679,6 +713,14 @@ Use them to verify:
 - frame ownership
 - strata/frame levels
 - hidden Lua errors
+
+### Native DLL reload boundary
+
+`/reload` (`ConsoleExec('reloadui')`) reinitializes the Lua VM, XML templates, and
+addon files. It does **not** reload or reinitialize native DLL binaries
+(`ClassicAPI.dll`, `SuperWoW.dll`, `NamPower.dll`, `UnitXP_SP3.dll`, etc.). After
+updating or replacing any native engine DLL, the game client process must be
+completely restarted.
 
 Never claim runtime verification unless it was actually performed.
 

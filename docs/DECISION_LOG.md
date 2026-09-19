@@ -45,3 +45,14 @@ Reason: Large fixed context costs more and may over-constrain exploration.
 Evidence: `VANILLAFORGE_SYSTEM_PROMPT.md` §18 requires selective reference retrieval.
 
 Consequences: `AGENTS.md` routes context; the system prompt is the active contract and detailed references are retrieved on demand.
+
+## 2026-09-19 — Custom content provenance beats external inference
+Status: ACTIVE
+
+Decision: For server-specific or custom-content spell behavior, talents, and mechanics, agents must verify semantics against deployed client/server source files, local DBC/MPQ data, or in-client inspection rather than inferring from Retail or later-expansion databases.
+
+Reason: Custom servers frequently rebalance, redesign, or introduce spells and talents sharing identical names or icons with Retail spells, but having completely different values, durations, or mechanics (e.g. Blackjack).
+
+Evidence: `VANILLAFORGE_SYSTEM_PROMPT.md` §6 and `ENGINE_REFERENCE.md` §2 establish the custom-content evidence priority.
+
+Consequences: Agents do not assume custom content shares Retail/Wrath tuning based on matching spell names or icons; deployed data and DBC inspection take precedence.

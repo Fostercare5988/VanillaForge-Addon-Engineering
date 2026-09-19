@@ -107,6 +107,12 @@ There is no "legacy fallback tier."
 If the enhanced stack has no superior primitive, use the correct native
 1.12.1 primitive directly.
 
+If an addon intentionally declares a hard enhanced-client capability floor,
+do not preserve fallback branches whose only purpose is supporting runtimes
+below that floor, unless they serve another verified supported configuration.
+Addons that enforce a specific enhanced floor should consume its verified
+primitives directly.
+
 ------------------------------------------------------------------------
 
 ## 4. Capability-First Dependency Model
@@ -195,7 +201,10 @@ user's client.
 The current framework baseline is not every addon's minimum version.
 Set an addon's `MIN_CLASSIC_API` from the verified capabilities and fixes
 it actually requires; a framework baseline refresh alone does not require
-raising existing addon guards.
+raising existing addon guards. Conversely, if an addon intentionally declares
+a hard enhanced-client capability floor, do not preserve fallback branches
+whose only purpose is supporting runtimes below that floor, unless they serve
+another verified supported configuration.
 
 ------------------------------------------------------------------------
 
@@ -229,6 +238,24 @@ logic, inspect the current ClassicAPI source/documentation when
 available before designing a workaround.
 
 Do not use retail API knowledge as evidence that the backport exists.
+
+### Custom / Server Content Evidence Priority
+
+For server-specific or custom-content spell behavior, talents, mechanics,
+durations, or scaling, do not infer semantics from Retail references,
+matching spell names, shared icons, or unrelated game versions.
+
+Evidence priority for custom content:
+
+1.  Active deployed client/server source code or data files
+2.  Active local DBC/MPQ data (e.g., `Spell.dbc`, local client tables)
+3.  Verified runtime behavior (`/dump`, tooltips, in-client testing)
+4.  Project-specific documentation
+5.  External version-specific references (only when verified applicable)
+6.  Inference
+
+Never assume custom content shares Retail/Wrath tuning merely because the
+spell name or icon is identical.
 
 ------------------------------------------------------------------------
 
@@ -376,6 +403,9 @@ than exhaustive narration.
     implementation instead of completing it.
 10. Leave the repository in a coherent, testable state after every
     bounded phase.
+11. Remove temporary debug commands (such as diagnostic slash handlers or
+    ad-hoc tracing code) and test instrumentation before completion, unless
+    explicitly retained as supported developer features.
 
 ### State Ownership and Asynchronous Transactions
 
@@ -512,6 +542,11 @@ runtime verified.
 For meaningful addon changes, runtime validation may include: -
 `/reload` - `/luaerrors 1` - `/etrace` - `/dump` - `/framestack` -
 scenario-specific gameplay testing
+
+`/reload` (`ConsoleExec('reloadui')`) reloads only the Lua VM, FrameXML, and
+addon files. It does NOT reload native engine extensions (`ClassicAPI.dll`,
+`SuperWoW.dll`, `NamPower.dll`, `UnitXP_SP3.dll`, etc.). Any update or replacement
+of installed native DLLs requires a complete game client process restart.
 
 Never claim runtime verification unless it was actually performed.
 

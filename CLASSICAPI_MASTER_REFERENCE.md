@@ -1990,13 +1990,35 @@ AuraUtil.FindAuraByName
 AuraUtil.UnpackAuraData
 ```
 
-### Performance note
+### Positional Return Signature Discipline
+
+[SOURCE-VERIFIED] `C_UnitAuras.UnitAura`, `C_UnitAuras.UnitBuff`, `C_UnitAuras.UnitDebuff`, and `C_UnitAuras.UnitAuraBySlot` return values positionally in modern ClassicAPI order:
+
+```lua
+name, icon, count, dispelType, duration, expirationTime, source, isStealable, nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, isCastByPlayer, nameplateShowAll, timeMod = C_UnitAuras.UnitAura(unit, index [, filter])
+```
+
+(The same positional return sequence applies to `C_UnitAuras.UnitBuff`, `C_UnitAuras.UnitDebuff`, and `C_UnitAuras.UnitAuraBySlot(unit, slot)`).
+
+**Critical Contract Rules:**
+- **No `rank` return:** ClassicAPI modern aura APIs do **not** return a `rank` string.
+- **Unpack offset hazard:** Legacy 2.0/3.3.5 APIs returned `name, rank, icon, count...`. Assuming a legacy signature shifts position 4 (`dispelType`) into `count`, resulting in runtime Lua errors such as `attempt to compare number with string`.
+- **No type shims:** Do NOT apply `tonumber` or type shims to mask shifted unpack arguments. Correct the unpack mapping to the canonical signature.
+
+### Performance Note
 
 The current ClassicAPI source explicitly documents the positional `C_UnitAuras.UnitAura` path as a no-table-allocation route.
 
 For high-frequency aura scanning, this can be preferable to constructing a Lua table per aura.
 
 This namespace should replace legacy hidden tooltip aura scanners.
+
+### Aura Slot Compaction and Index Instability
+
+Aura indices (`1, 2, ... N`) are compacting array positions, **not stable aura identities**.
+- When an aura expires or is dispelled at index `k`, all higher-indexed auras immediately shift downward to fill the vacant index.
+- Never assume an aura index or button frame remains bound to the same spell or aura instance across updates.
+- Cooldown frames, OnUpdate scripts, and duration caches must never be keyed to transient array indices. Key cached active state by `(spellId, source)` or fully reset the button frame upon identity mismatch.
 
 ### Aura Filter Tokens
 
@@ -2560,6 +2582,8 @@ manual nil wipes
 manual item metadata parsers
 WorldFrame nameplate scraping
 ```
+
+Furthermore, if an addon intentionally declares a hard enhanced-client capability floor, do not preserve fallback branches whose only purpose is supporting runtimes below that floor, unless they serve another verified supported configuration. Addons that enforce a specific enhanced floor should consume its verified primitives directly without defensive fallback layers.
 
 ---
 
