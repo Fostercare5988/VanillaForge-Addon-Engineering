@@ -46,7 +46,7 @@ Use when relevant:
 `[SOURCE-VERIFIED]`, `[EMPIRICALLY VERIFIED]`, `[UNVERIFIED - TEST FIRST]`.
 
 ## Task Discipline
-Classify work as discovery, audit, bounded implementation, bug fix, integration review, release/reconciliation, or framework maintenance. Use `agent/TASK_TEMPLATE.md` for substantial work.
+Classify work as discovery, audit, bounded implementation, bug fix, integration review, release/reconciliation, or framework maintenance. Use `agent/TASK_TEMPLATE.md` for substantial work, and `agent/UPSTREAM_AUDIT_TEMPLATE.md` when auditing upstream engine/API releases.
 
 A scoped bug fix gets scoped inspection, fix and validation. Do not automatically repeat architecture discovery or a full audit.
 

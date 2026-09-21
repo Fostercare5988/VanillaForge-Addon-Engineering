@@ -20,13 +20,30 @@
   },
   "superwow": {
     "minimum_version": "2.2",
-    "repository": "balakethelock/SuperWoW"
+    "repository": "balakethelock/SuperWoW",
+    "reference_commit": "60c05fa1bed338f50092ee73894ee4e3b81b5a65",
+    "file_shas": {
+      "README.md": "13375af535aeaa8bd825e542bc82d61f1ca71c65"
+    }
   },
   "nampower": {
     "minimum_version": "4.6.2",
-    "repository": "Emyrk/nampower"
+    "repository": "Emyrk/nampower",
+    "reference_commit": "ff41d48e4b53b313e46489330ad92c0a820cabac",
+    "file_shas": {
+      "README.md": "9d5d18268ebe7bd552069206d343ffc993bc7bdf",
+      "SCRIPTS.md": "ca4b56093a9cbeafc64eeff67d9ef142e8922966",
+      "EVENTS.md": "86377537ae978af67d8a90ead3cc6d0496b945cd",
+      "DBC_FIELDS.md": "56056436d01626b17c0f193256d5990152d06ab9",
+      "UNIT_FIELDS.md": "bf4f91b3bc0e93e1761a731357549729b44e5a76"
+    }
   },
   "unitxp_sp3": {
-    "minimum_version": "90"
+    "minimum_version": "90",
+    "repository": "brues-code/UnitXP_SP3",
+    "reference_commit": "cedbf4b59776567db954ce38f681af1cbb9f0e1c",
+    "file_shas": {
+      "Vanilla1121_functions.h": "5795131caf9b2dfd626b188ebff7571df19e6850"
+    }
   }
 }

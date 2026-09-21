@@ -77,6 +77,42 @@ local function broken()
         )
         self.assertEqual(self.scan(source), [])
 
+    def test_mask_lua_preserves_lines_and_offsets(self):
+        source = (
+            "local x = 1 -- comment with math.mod(1, 2)\n"
+            'local s = "for k in pairs(t) do t[k] = nil" -- wipe string\n'
+            "--[[\n"
+            "multi-line\n"
+            "]]\n"
+            "return x\n"
+        )
+        c_lines, nc_lines = LINTER.HeuristicStructuralScanner.mask_lua(source)
+        raw_lines = source.splitlines(keepends=True)
+        self.assertEqual(len(c_lines), len(raw_lines))
+        self.assertEqual(len(nc_lines), len(raw_lines))
+        for r, c, nc in zip(raw_lines, c_lines, nc_lines):
+            self.assertEqual(len(r), len(c))
+            self.assertEqual(len(r), len(nc))
+        self.assertNotIn("math.mod", c_lines[0])
+        self.assertNotIn("pairs", c_lines[1])
+        self.assertIn("for k in pairs(t) do t[k] = nil", nc_lines[1])
+
+    def test_mask_xml_preserves_lines_and_offsets(self):
+        source = (
+            "<Ui>\n"
+            '  <!-- <Button name="CommentedButton"> -->\n'
+            '  <Frame name="RealFrame"/>\n'
+            "</Ui>\n"
+        )
+        c_lines, nc_lines = LINTER.HeuristicStructuralScanner.mask_xml(source)
+        raw_lines = source.splitlines(keepends=True)
+        self.assertEqual(len(c_lines), len(raw_lines))
+        self.assertEqual(len(nc_lines), len(raw_lines))
+        for r, c, nc in zip(raw_lines, c_lines, nc_lines):
+            self.assertEqual(len(r), len(c))
+        self.assertNotIn("CommentedButton", nc_lines[1])
+        self.assertIn("RealFrame", nc_lines[2])
+
 
 class AuditorRuleTests(unittest.TestCase):
     def setUp(self):
@@ -152,6 +188,66 @@ end
         self.assertNotIn("Foreign Locale", joined)
         self.assertNotIn("Foreign Localization", joined)
 
+    def test_manual_wipe_in_comment_or_string_does_not_trigger_b10(self):
+        errors, warnings, _ = self.audit(
+            '-- for k in pairs(cache) do cache[k] = nil end\n'
+            'local doc = "for k in pairs(cache) do cache[k] = nil end"\n'
+        )
+        self.assertEqual(errors, [])
+        self.assertFalse(any("Obsolete Wipe Loop" in w for w in warnings))
+
+    def test_legacy_library_in_comment_or_string_does_not_trigger_b0(self):
+        errors, warnings, _ = self.audit(
+            '-- migrated from AceLibrary\n'
+            'local note = "Using AceLibrary for fallback"\n'
+        )
+        self.assertEqual(errors, [])
+        self.assertFalse(any("Obsolete Library Bloat" in w for w in warnings))
+
+    def test_legacy_library_in_code_triggers_b0(self):
+        errors, warnings, _ = self.audit(
+            'local AceEvent = AceLibrary("AceEvent-2.0")\n'
+        )
+        self.assertEqual(errors, [])
+        self.assertTrue(any("Obsolete Library Bloat" in w for w in warnings))
+
+    def test_math_mod_in_comment_or_string_does_not_trigger_a4(self):
+        errors, warnings, _ = self.audit(
+            '-- use % instead of math.mod(a, b)\n'
+            'local s = "math.mod(5, 2)"\n'
+        )
+        self.assertEqual(errors, [])
+        self.assertFalse(any("Legacy math.mod" in w for w in warnings))
+
+    def test_bare_colon_in_comment_or_string_does_not_trigger_a1(self):
+        errors, warnings, _ = self.audit(
+            '-- example: f:GetScript and f:GetScript()\n'
+            'local s = "f:GetScript and f:GetScript()"\n'
+        )
+        self.assertEqual(errors, [])
+        self.assertFalse(any("Fatal Colon Method" in e for e in errors))
+
+    def test_marketing_superlative_in_ui_string_triggers_c14_and_14b(self):
+        errors, warnings, _ = self.audit(
+            'DEFAULT_CHAT_FRAME:AddMessage("Loaded enterprise-grade addon")\n'
+        )
+        self.assertTrue(any("Marketing Superlative in UI" in w for w in warnings))
+        self.assertTrue(any("§14b" in w for w in warnings))
+
+    def test_marketing_superlative_in_comment_does_not_trigger_c14(self):
+        errors, warnings, _ = self.audit(
+            '-- This is an enterprise-grade optimization\n'
+            'local x = 1\n'
+        )
+        self.assertFalse(any("Marketing Superlative" in w for w in warnings))
+
+    def test_developer_meta_jargon_in_comment_does_not_trigger_c14(self):
+        errors, warnings, _ = self.audit(
+            '-- Implemented via C++ engine coroutine\n'
+            'local x = 1\n'
+        )
+        self.assertFalse(any("Developer Meta-Jargon in UI" in w for w in warnings))
+
 
 class AddonDirectoryPolicyTests(unittest.TestCase):
     def test_missing_dependency_guard_is_not_an_error(self):
@@ -196,6 +292,23 @@ class AddonDirectoryPolicyTests(unittest.TestCase):
                     self.assertTrue(result[1])
                     self.assertEqual(result[2], [])
                     self.assertEqual(result[4], 0)
+
+    def test_readme_marketing_superlatives_trigger_rule_h9(self):
+        auditor = LINTER.VanillaForgeAuditor()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            addon = Path(tmp) / "HypeAddon"
+            addon.mkdir()
+            (addon / "HypeAddon.lua").write_text('local addonName = "HypeAddon"\n', encoding="utf-8")
+            (addon / "README.md").write_text(
+                "# HypeAddon\n"
+                "An ultra-optimized military-grade addon featuring zero-latency processing.\n",
+                encoding="utf-8",
+            )
+
+            result = auditor.audit_addon_dir(str(addon))
+            readme_warnings = result[2]
+            self.assertTrue(any("Rule H9 / §14b - Marketing Superlative" in w for w in readme_warnings))
 
 
 class TocManifestTests(unittest.TestCase):
