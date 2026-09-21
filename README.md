@@ -81,7 +81,8 @@ semantic changes, and runtime checks.
 │   ├── vanillaforge_linter.py
 │   └── check_upstream.py
 └── tests/                          # Framework and linter regression tests
-    └── test_linter.py
+    ├── test_linter.py
+    └── test_upstream_check.py
 ```
 
 ### `VANILLAFORGE_SYSTEM_PROMPT.md`
@@ -193,7 +194,7 @@ The automated checker [`tools/check_upstream.py`](tools/check_upstream.py) (run 
 A lightweight heuristic scanner for machine-detectable hazards and anti-patterns.
 
 The linter is a **floor, not a ceiling**. A clean scan is useful evidence, not proof
-that an addon is correct at runtime. Its regression suite lives in [`tests/test_linter.py`](tests/test_linter.py).
+that an addon is correct at runtime. Its regression suite lives in [`tests/test_linter.py`](tests/test_linter.py), supplemented by upstream configuration tests in [`tests/test_upstream_check.py`](tests/test_upstream_check.py).
 
 ---
 

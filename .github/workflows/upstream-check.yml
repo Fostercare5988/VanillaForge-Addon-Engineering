@@ -54,12 +54,12 @@ jobs:
               "The scheduled upstream checker detected a version, commit, or tracked-file change.",
               "",
               "### Review procedure",
+              "Follow `agent/UPSTREAM_AUDIT_TEMPLATE.md` for the full audit structure.",
+              "",
+              "Quick summary:",
               "- Inspect the actual upstream diff and release notes.",
-              "- Update `CLASSICAPI_MASTER_REFERENCE.md` only for verified ClassicAPI API/semantic changes.",
-              "- Update `ENGINE_REFERENCE.md` only for verified non-ClassicAPI engine/DLL changes.",
-              "- Update `VANILLAFORGE_SYSTEM_PROMPT.md` only if an engineering rule actually changes.",
-              "- Update `vanillaforge_linter.py` only for high-confidence, machine-detectable rules.",
-              "- After review, update `UPSTREAM_VERSIONS.json` to the reviewed version/SHA snapshot.",
+              "- Update reference docs only for verified changes; update the linter only for machine-detectable rules.",
+              "- Record the reviewed snapshot in `UPSTREAM_VERSIONS.json`.",
               "",
               `Workflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
             ].join("\n");
