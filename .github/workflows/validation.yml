@@ -32,6 +32,7 @@ jobs:
           python -m py_compile tools/vanillaforge_linter.py
           python -m py_compile tools/check_upstream.py
           python -m py_compile tests/test_linter.py
+          python -m py_compile tests/test_upstream_check.py
 
       - name: Validate upstream configuration JSON
         run: |
@@ -40,14 +41,25 @@ jobs:
       - name: Verify canonical framework files
         run: |
           test -f VANILLAFORGE_SYSTEM_PROMPT.md
+          test -f AGENTS.md
           test -f CLASSICAPI_MASTER_REFERENCE.md
           test -f ENGINE_REFERENCE.md
           test -f KNOWN_PATTERNS.md
           test -f README.md
           test -f UPSTREAM_VERSIONS.json
+          test -f agent/TASK_TEMPLATE.md
+          test -f agent/REVIEW_TEMPLATE.md
+          test -f agent/RETROSPECTIVE_TEMPLATE.md
+          test -f agent/UPSTREAM_AUDIT_TEMPLATE.md
+          test -f docs/AGENT_BOOTSTRAP.md
+          test -f docs/WORKFLOW.md
+          test -f docs/RELEASE_WORKFLOW.md
+          test -f docs/CLASSICAPI_1.15.12_AUDIT.md
+          test -f docs/DECISION_LOG.md
           test -f tools/vanillaforge_linter.py
           test -f tools/check_upstream.py
           test -f tests/test_linter.py
+          test -f tests/test_upstream_check.py
 
       - name: Reject stale framework filenames
         run: |

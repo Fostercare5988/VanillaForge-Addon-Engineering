@@ -56,3 +56,25 @@ Reason: Custom servers frequently rebalance, redesign, or introduce spells and t
 Evidence: `VANILLAFORGE_SYSTEM_PROMPT.md` §6 and `ENGINE_REFERENCE.md` §2 establish the custom-content evidence priority.
 
 Consequences: Agents do not assume custom content shares Retail/Wrath tuning based on matching spell names or icons; deployed data and DBC inspection take precedence.
+
+## 2026-09-21 — Tone and Technical Neutrality (§14b)
+Status: ACTIVE
+
+Decision: Prohibit unsubstantiated marketing superlatives (`enterprise-grade`, `zero-latency`, `zero-bloat`, `ultra-optimized`, `military-grade`, `best-in-class`), developer implementation meta-jargon in player UI, and progressive waiting ellipses (`...`) for discrete actions across public addon code and documentation.
+
+Reason: Addon documentation and user-facing notifications must communicate verified, neutral engineering facts rather than speculative marketing hype or internal C++ engine plumbing details.
+
+Evidence: `VANILLAFORGE_SYSTEM_PROMPT.md` §14b formalizes the standard; `tools/vanillaforge_linter.py` enforces Rule C14/§14b (UI strings) and Rule H9/§14b (`README.md`).
+
+Consequences: Code reviews, agent prompts, and automated static scans reject marketing hyperbole and developer meta-jargon in favor of concise, technical descriptions.
+
+## 2026-09-21 — Complete Upstream Snapshot Tracking and Audit Process
+Status: ACTIVE
+
+Decision: Track reference commits and file SHAs across all four enhanced-stack dependencies (`classicapi`, `superwow`, `nampower`, `unitxp_sp3`) in `UPSTREAM_VERSIONS.json`, and standardize upstream release audits using `agent/UPSTREAM_AUDIT_TEMPLATE.md`.
+
+Reason: Eliminate unmonitored blind spots across upstream dependencies and ensure that upstream updates, header drift, or release provenance changes follow a disciplined, repeatable audit and reconciliation workflow.
+
+Evidence: `UPSTREAM_VERSIONS.json` contains 40-character commit hashes and file SHAs for all tracked headers/docs; `tests/test_upstream_check.py` regression-tests the schema; `agent/UPSTREAM_AUDIT_TEMPLATE.md` provides the standardized audit procedure referenced by `AGENTS.md`, `README.md`, and `upstream-check.yml`.
+
+Consequences: Upstream dependency drift alerts route directly to the audit template, keeping framework documentation and linter rules synchronized with verified upstream evidence.
