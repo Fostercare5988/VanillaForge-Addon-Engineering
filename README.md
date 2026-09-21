@@ -59,6 +59,10 @@ semantic changes, and runtime checks.
 
 ```text
 .
+├── .github/                        # Continuous integration and automation
+│   └── workflows/
+│       ├── upstream-check.yml
+│       └── validation.yml
 ├── VANILLAFORGE_SYSTEM_PROMPT.md   # Authoritative engineering contract
 ├── AGENTS.md                       # Agent routing and session entry point
 ├── CLASSICAPI_MASTER_REFERENCE.md  # ClassicAPI capabilities and namespaces
