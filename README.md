@@ -59,13 +59,29 @@ semantic changes, and runtime checks.
 
 ```text
 .
-├── VANILLAFORGE_SYSTEM_PROMPT.md
-├── CLASSICAPI_MASTER_REFERENCE.md
-├── ENGINE_REFERENCE.md
-├── KNOWN_PATTERNS.md
-├── README.md
-└── tools/
-    └── vanillaforge_linter.py
+├── VANILLAFORGE_SYSTEM_PROMPT.md   # Authoritative engineering contract
+├── AGENTS.md                       # Agent routing and session entry point
+├── CLASSICAPI_MASTER_REFERENCE.md  # ClassicAPI capabilities and namespaces
+├── ENGINE_REFERENCE.md             # SuperWoW, NamPower, UnitXP SP3, DXVK
+├── KNOWN_PATTERNS.md               # Reusable patterns and anti-patterns
+├── UPSTREAM_VERSIONS.json          # Canonical versions and drift metadata
+├── README.md                       # Framework overview and public contract
+├── agent/                          # Operational engineering templates
+│   ├── TASK_TEMPLATE.md
+│   ├── REVIEW_TEMPLATE.md
+│   ├── RETROSPECTIVE_TEMPLATE.md
+│   └── UPSTREAM_AUDIT_TEMPLATE.md
+├── docs/                           # Workflows, audits, and bootstrap guides
+│   ├── AGENT_BOOTSTRAP.md
+│   ├── WORKFLOW.md
+│   ├── RELEASE_WORKFLOW.md
+│   ├── CLASSICAPI_1.15.12_AUDIT.md
+│   └── DECISION_LOG.md
+├── tools/                          # Automation and validation
+│   ├── vanillaforge_linter.py
+│   └── check_upstream.py
+└── tests/                          # Framework and linter regression tests
+    └── test_linter.py
 ```
 
 ### `VANILLAFORGE_SYSTEM_PROMPT.md`
@@ -84,6 +100,23 @@ It defines:
 - when to consult the reference knowledge
 
 This is the file to give an AI as the primary system/instruction prompt.
+
+### `AGENTS.md` & `agent/`
+
+The operational routing layer for AI-assisted engineering sessions.
+
+[`AGENTS.md`](AGENTS.md) operationalizes the engineering contract without overriding it. It specifies:
+
+- load order and selective context retrieval
+- rules of engagement for fresh AI sessions
+- classification of work (discovery, audit, bounded implementation, bug fix, release)
+- task templates in `agent/`:
+  - [`agent/TASK_TEMPLATE.md`](agent/TASK_TEMPLATE.md) — Scoped execution, context budgets, and verification gates
+  - [`agent/REVIEW_TEMPLATE.md`](agent/REVIEW_TEMPLATE.md) — Final integration review before declaration of completion
+  - [`agent/RETROSPECTIVE_TEMPLATE.md`](agent/RETROSPECTIVE_TEMPLATE.md) — Learning extraction and candidate lesson promotion
+  - [`agent/UPSTREAM_AUDIT_TEMPLATE.md`](agent/UPSTREAM_AUDIT_TEMPLATE.md) — Upstream component audit and framework drift reconciliation
+
+See [`docs/AGENT_BOOTSTRAP.md`](docs/AGENT_BOOTSTRAP.md) for pre-packaged bootstrap prompts tailored for Claude, Antigravity/Gemini, and OpenAI Codex.
 
 ### `CLASSICAPI_MASTER_REFERENCE.md`
 
@@ -148,12 +181,19 @@ Examples include:
 
 Patterns are reference material, not mandatory ceremony.
 
-### `tools/vanillaforge_linter.py`
+### `UPSTREAM_VERSIONS.json` & `tools/check_upstream.py`
 
-A lightweight heuristic scanner for machine-detectable hazards.
+Automated upstream dependency tracking and drift detection.
+
+[`UPSTREAM_VERSIONS.json`](UPSTREAM_VERSIONS.json) records the framework's environment baseline, reference commits, and verified file blob SHAs.
+The automated checker [`tools/check_upstream.py`](tools/check_upstream.py) (run locally or on a weekly GitHub Actions cron via `.github/workflows/upstream-check.yml`) compares the stored snapshot against upstream GitHub repositories and flags drift before it can silently break addon assumptions.
+
+### `tools/vanillaforge_linter.py` & `tests/`
+
+A lightweight heuristic scanner for machine-detectable hazards and anti-patterns.
 
 The linter is a **floor, not a ceiling**. A clean scan is useful evidence, not proof
-that an addon is correct at runtime.
+that an addon is correct at runtime. Its regression suite lives in [`tests/test_linter.py`](tests/test_linter.py).
 
 ---
 
@@ -297,9 +337,13 @@ Do not replace legitimate per-frame animation with a timer simply to eliminate
 
 ## Using the Framework with an AI
 
+For autonomous coding agents (Antigravity, Claude Code, Cursor, Codex), use [`AGENTS.md`](AGENTS.md) as the primary operational entry point. It defines selective loading, rules of engagement, context budget discipline, and structured task templates.
+
+For session startup across different environments, see [`docs/AGENT_BOOTSTRAP.md`](docs/AGENT_BOOTSTRAP.md) (ready-to-paste bootstrap prompts for Claude, Gemini/Antigravity, and OpenAI Codex) and [`docs/WORKFLOW.md`](docs/WORKFLOW.md) (full engineering lifecycle).
+
 Recommended context order:
 
-1. provide `VANILLAFORGE_SYSTEM_PROMPT.md`
+1. provide `VANILLAFORGE_SYSTEM_PROMPT.md` (or load via `AGENTS.md`)
 2. provide the addon/repository being worked on
 3. let the AI consult only the relevant reference files
 4. use `CLASSICAPI_MASTER_REFERENCE.md` for ClassicAPI questions

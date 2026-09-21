@@ -519,6 +519,26 @@ compatibility
 Do not confuse removal of unused localization bloat with a universal
 technical requirement that addons can never support another language.
 
+### 14b. Tone and Technical Neutrality
+
+User-facing text, documentation, commit messages, and README files must maintain
+a neutral, factual engineering tone.
+
+1. Unsubstantiated marketing superlatives and hype phrases are prohibited:
+   - Do not use terms such as `enterprise-grade`, `zero-latency`, `zero-bloat`,
+     `ultra-optimized`, `military-grade`, or `best-in-class`.
+   - Describe architectural properties directly and factually (e.g., "deterministic
+     memory allocation", "amortized garbage collection", "O(1) table lookup",
+     "hardware-accelerated via DXVK") rather than using speculative marketing adjectives.
+2. Developer implementation meta-jargon belongs in code comments or technical docs,
+   never in player-facing UI text or notification messages:
+   - Do not display internal engine plumbing details such as "via C++", "with C++ engine",
+     or "coroutine worker" to players. State user-relevant outcomes directly.
+3. Progressive waiting ellipses are prohibited for discrete operations:
+   - Do not use open-ended progressive messages (e.g., "Sorting bags...", "Scanning...")
+     in user notifications for operations that complete immediately or within a single frame.
+   - Use concise, past-tense confirmation states (e.g., "Bags sorted.") or silence.
+
 ------------------------------------------------------------------------
 
 ## 15. Validation

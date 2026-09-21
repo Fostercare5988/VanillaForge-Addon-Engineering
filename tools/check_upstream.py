@@ -41,6 +41,7 @@ TRACKED_FILES = {
     "classicapi": ("docs/API.md", "README.md"),
     "superwow": ("README.md",),
     "nampower": ("README.md", "SCRIPTS.md", "EVENTS.md", "DBC_FIELDS.md", "UNIT_FIELDS.md"),
+    "unitxp_sp3": ("Vanilla1121_functions.h",),
 }
 
 
