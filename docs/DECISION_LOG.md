@@ -78,3 +78,14 @@ Reason: Eliminate unmonitored blind spots across upstream dependencies and ensur
 Evidence: `UPSTREAM_VERSIONS.json` contains 40-character commit hashes and file SHAs for all tracked headers/docs; `tests/test_upstream_check.py` regression-tests the schema; `agent/UPSTREAM_AUDIT_TEMPLATE.md` provides the standardized audit procedure referenced by `AGENTS.md`, `README.md`, and `upstream-check.yml`.
 
 Consequences: Upstream dependency drift alerts route directly to the audit template, keeping framework documentation and linter rules synchronized with verified upstream evidence.
+
+## 2026-09-24 — Independent ownership across addon portfolios
+Status: ACTIVE
+
+Decision: Keep each addon responsible for a coherent feature area and its mutable state. Use narrow optional public contracts for cross-addon integration when independent installation is intended; extract shared code only when substantial repeated behavior justifies the dependency.
+
+Reason: Shared engine APIs and small helper overlap do not establish shared state ownership. Hidden load-order and mutable-internal dependencies make otherwise independent addons fragile.
+
+Evidence: Recent multi-addon architecture and integration reviews found working read-only queries for optional frame and equipment coordination, while addon-owned tooltip decorators compose through post-hooks. `VANILLAFORGE_SYSTEM_PROMPT.md` §11 records the resulting boundary rule.
+
+Consequences: Architecture reviews identify the owner of each mutable state and verify optional integration without assuming another addon is installed or loaded first.

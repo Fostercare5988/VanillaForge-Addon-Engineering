@@ -684,6 +684,16 @@ When recycling or hiding an aura or cooldown frame, execute an explicit reset:
 - cooldown animation model (`cooldown:SetCooldown(0, 0)`)
 - texture asset, vertex color, alpha (`button:SetAlpha(1.0)`), and border overlay (`border:Hide()`)
 
+### 12.8 Reversible Blizzard frame suppression
+
+When only visual suppression is needed, inspect that frame's FrameXML event and
+update paths before choosing `Hide()`, alpha, or another presentation control.
+Preserve Blizzard's event registration and internal state where possible;
+`UnregisterAllEvents()` can make restoration depend on a reload. When disabling
+the feature, use the frame's verified normal update path to restore its state.
+Some frames require stronger intervention, so do not apply one hide technique
+universally.
+
 ---
 
 ## 13. Runtime Diagnostics
@@ -741,6 +751,12 @@ Alterac Valley  40v40
 ```
 
 Treat battleground availability as deployment-specific content. Do not infer later-expansion battlegrounds from generic WoW knowledge.
+
+For the 1.12.1 client, `BATTLEGROUND` is the chat type for battleground chat
+(`/bg`); `RAID` is a separate chat type. FrameXML defines
+`ChatTypeInfo["BATTLEGROUND"]` and routes `CHAT_MSG_BATTLEGROUND` messages.
+Select the battleground type for announcements rather than falling back to
+`SAY` while inside one.
 
 ### WSG flag-message semantics
 
