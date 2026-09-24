@@ -330,15 +330,18 @@ when both click types are required.
 
 ------------------------------------------------------------------------
 
-### KP-23 --- Child Mouse Dead Zones
+### KP-23 --- Compound Row Input Ownership
 
-**Problem:** child bars/textures/frames intercept input intended for a
-compound parent button.
+**Problem:** child frames, including status bars, intercept input intended for a
+compound parent button, or a row's drag gesture competes with its click action.
 
 **Preferred direction:** disable mouse interaction on non-interactive
-children and let the parent own the click surface.
+children and let the parent own the full visible click surface. If dragging
+with the same mouse button disrupts that action, use a dedicated header or
+drag handle.
 
-Apply only to children that can actually intercept input.
+Apply mouse disabling only to children that can actually intercept input.
+Test click and drag behavior separately.
 
 ------------------------------------------------------------------------
 
@@ -833,6 +836,20 @@ garbage generation in combat hot paths.
   the required state.
 - Keep the pattern capability-based: register and consume only the specific
   events or APIs the addon's feature set actually requires.
+
+------------------------------------------------------------------------
+
+### KP-56 --- Tooltip Decoration Coexistence
+
+**Problem:** Multiple addons add lines to the same tooltip; replacing a
+`Set*` method or sharing duplicate state can lose original behavior or another
+addon's lines depending on load order.
+
+**Preferred direction:** For additive decoration, post-hook the relevant
+tooltip methods where supported, leaving the original call and returns intact.
+Keep each addon's duplicate guards on the tooltip under its own keys and clear
+them when tooltip state resets. Read another addon's state only through a
+narrow public query. Test repeated tooltip reuse and both addon load orders.
 
 ------------------------------------------------------------------------
 

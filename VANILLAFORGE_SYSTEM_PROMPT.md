@@ -407,6 +407,19 @@ than exhaustive narration.
     ad-hoc tracing code) and test instrumentation before completion, unless
     explicitly retained as supported developer features.
 
+### Addon Portfolio Boundaries
+
+Give each addon or module a coherent responsibility and clear ownership of its
+mutable state. Sharing an engine API does not imply shared state ownership or
+justify merging components.
+
+When addons are intended to install independently, integrate through explicit
+optional contracts, preferably narrow read-only queries. Check provider
+availability at use time; do not reach into another addon's mutable internals
+or assume load order. Add a shared library only when substantial repeated
+behavior justifies the dependency; a small stable helper may be simpler to
+keep local.
+
 ### State Ownership and Asynchronous Transactions
 
 Where an addon has multi-stage work driven by events, timers, combat
