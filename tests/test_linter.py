@@ -279,7 +279,7 @@ class AddonDirectoryPolicyTests(unittest.TestCase):
             addon = Path(tmp) / "GuardedAddon"
             addon.mkdir()
             (addon / "README.md").write_text("# GuardedAddon\n", encoding="utf-8")
-            for minimum in (11400, 11510, 11511, 11512):
+            for minimum in (11400, 11510, 11511, 11512, 11513):
                 with self.subTest(minimum=minimum):
                     (addon / "GuardedAddon.lua").write_text(
                         f"local MIN_CLASSIC_API = {minimum}\n"

@@ -6,7 +6,7 @@
 >
 > Source basis: `brues-code/ClassicAPI`, default branch `master`, official `README.md`, official `docs/API.md`, and selected implementation/source references.
 >
-> Snapshot baseline used by VanillaForge: **ClassicAPI v1.15.12+**.
+> Snapshot baseline used by VanillaForge: **ClassicAPI v1.15.13+**.
 >
 > IMPORTANT: ClassicAPI is actively developed. This document is a local snapshot, not a claim that future versions cannot add or change functionality. If installed ClassicAPI is newer and a task depends on newly added behavior not present here, inspect the installed/current source and update this reference deliberately.
 
@@ -57,17 +57,18 @@ v1.15.9 -> 11509
 v1.15.10 -> 11510
 v1.15.11 -> 11511
 v1.15.12 -> 11512
+v1.15.13 -> 11513
 ```
 
 The VanillaForge framework baseline is:
 
 ```text
-ClassicAPI v1.15.12+
+ClassicAPI v1.15.13+
 ```
 
 Do not assume a future version's new API exists solely because a similarly named Retail API exists.
 
-This environment/reference baseline does not mandate `MIN_CLASSIC_API=11512` in
+This environment/reference baseline does not mandate `MIN_CLASSIC_API=11513` in
 every addon. Declare the minimum required by the capabilities and semantic fixes
 the addon actually consumes.
 
@@ -445,6 +446,21 @@ NAME_PLATE_UNIT_REMOVED
 Nameplate unit tokens participate in UnitX calls and unit events.
 
 This is the preferred architecture over WorldFrame child scraping when the addon needs authoritative nameplate identity.
+
+**Delivery Resilience (v1.15.13+):** [SOURCE-VERIFIED]
+The dispatcher records a frame as announced only after it issues
+`NAME_PLATE_CREATED`. A new GUID's `NAME_PLATE_UNIT_ADDED` waits for that frame's
+announcement and a claimed ADDED event slot. If these conditions are not met,
+the GUID receives no token slot or observers and is omitted from the announced
+snapshot, allowing another attempt on a later tick while the plate remains visible.
+This also avoids emitting REMOVED for a deferred ADDED that was never issued.
+An unclaimed event slot does not by itself prove event-table exhaustion, and a
+retry does not guarantee delivery on the next tick or successful addon handling.
+
+Evidence: [nameplate fix](https://github.com/brues-code/ClassicAPI/commit/fa7d71435feabde2c5a08e9175321ca614b6449a).
+The upstream maintainer explicitly reports that the dropped-slot case was not
+verified in game. [UNVERIFIED - TEST FIRST] for that failure-path reproduction;
+source verification is not local runtime verification. Event names/payloads are unchanged.
 
 ---
 
@@ -881,8 +897,50 @@ C_CVar.DoesCVarExist
 C_CVar.GetCVarBitfield
 C_CVar.GetCVarBool
 C_CVar.GetCVarInfo
+C_CVar.RemoveTempCVar
 C_CVar.SetCVarBitfield
+C_CVar.SetTempCVar
 ```
+
+### Temporary Session CVars (v1.15.13+)
+
+ClassicAPI v1.15.13 introduces non-persistent session CVar manipulation:
+
+```lua
+C_CVar.SetTempCVar(name, value)
+C_CVar.RemoveTempCVar(name)
+```
+
+**Semantics & Implementation:** [SOURCE-VERIFIED]
+
+- **Temporary value:** The setter requests a non-persistent change and records the
+  live value before the first temporary set. That snapshot is not necessarily the
+  value currently saved on disk. The config-writer hook substitutes the snapshot
+  for an active override's live value during serialization, then restores the
+  temporary value in memory.
+- **Repeated sets and removal:** Repeated temporary sets preserve the first
+  snapshot while the override still matches. Removal restores that snapshot only
+  if the live value still equals the recorded temporary value; otherwise it drops
+  the record without restoring. Removing an untracked valid CVar is a no-op.
+- **Replacement detection:** Ordinary `SetCVar` is not hooked to clear ownership.
+  A different live value is detected on a later temporary set, removal, or config
+  write. The next temporary set then snapshots that replacement; removal/writing
+  discards the old override record. A `SetCVar` writing the **same string** as the
+  temporary value is indistinguishable from the override and does not release it.
+  Do not rely on that call to make the temporary value permanent. For an explicit
+  persistent change, remove the override first and then call `SetCVar`.
+- **Arguments/returns:** Both functions return nothing. A nil temporary value
+  becomes an empty string. Unknown or read-only CVars raise errors as with
+  `SetCVar`; callbacks can normalize the value, and the implementation records
+  the value that actually landed.
+- **Scope/ownership:** Storage is process-global and both functions are available
+  in game and on Glue/login screens. This is one override record per CVar, not a
+  stack of independent addon owners. Coordinate overlapping users and remove an
+  override when its owning mode ends; do not infer that `/reload` resets it.
+
+Evidence: [temporary-CVar source](https://github.com/brues-code/ClassicAPI/blob/v1.15.13/src/cvar/Temp.cpp).
+These are source-verified semantics; persistence and callback behavior still need
+target-client testing before claiming [EMPIRICALLY VERIFIED].
 
 ---
 
@@ -932,6 +990,57 @@ Modernization use cases:
 - avoid cursor-driven Lua swap loops
 - use delayed/batch container events
 - obtain direct IDs/info without tooltip scraping
+
+### Equipment Slot Grouping in SortBags (v1.15.13+)
+
+[SOURCE-VERIFIED] The existing `C_Container.SortBags()` and
+`C_Container.SortBankBags()` gain a new ordering; their signatures are unchanged.
+Non-poor weapons/armor now share one gear category instead of four quality tiers.
+Poor-quality gear remains junk. Category order is hearthstone, gear, consumables,
+reagents, trade goods, quest items, other items by quality, then junk; junk fills
+from the opposite end of the general-bag space.
+
+Within gear, comparison is **item class -> inventory-type slot rank -> subclass ->
+quality descending -> name -> stack count descending -> item ID**. Weapons sort
+before armor because class precedes slot rank. Within armor, shields/held-offhands
+precede head, shoulder, back, chest/robe, wrist, hands, waist, legs and feet;
+neck, rings and trinkets follow feet, then shirt/tabard. Quality only orders items
+after slot rank and subclass agree: a helm group is not globally highest-quality-first.
+
+The exact source rank table (inventory-type IDs, in ascending priority) is:
+
+```text
+17, 13, 21, 14, 23, 26, 22, 15, 25, 24, 27, 28,
+1, 3, 16, 5, 20, 9, 10, 6, 7, 8,
+2, 11, 12, 4, 19, 18, 0
+```
+
+Unknown inventory types rank after these. This table applies within item class;
+it is not a single global equipment-slot sequence. Upstream attributes the rank
+order to Baganator, but the full sorting policy remains ClassicAPI's own.
+
+**Integration constraints:** Both calls take no arguments and return nothing.
+Sorting combines stacks and places items across server updates; it is not an
+immediate completion contract. A call while the merge phase is pending is ignored,
+including a competing bank/bag sort. Bank moves require the bank to be open.
+Items with missing data stay pinned; bank stack merging also needs cached stack
+limits. A later explicit sort can place items after their data arrives. Specialty
+bags, excluded bags, and the configured fill direction still affect placement.
+
+`BAG_UPDATE_DELAYED` is a batched view-refresh signal, **not a sort-completion
+event**. The Lua event fires before the C++ bag-update subscribers, including the
+one that may start placement after merging. Do not announce success or complete
+an addon transaction on the first such event; verify the relevant inventory state
+if a completion claim is needed. Do not start another sort on every bag update.
+
+Prefer this implementation when its policy meets the addon's requirements. If a
+different ordering is required, the verified native movement primitives
+`C_Container.SwapItems`, `C_Container.MoveItem`, and `C_Container.AutoStoreItem`
+can support it. This release alone does not establish that every bag addon can
+discard its custom ordering or classification.
+
+Evidence: [sorting source](https://github.com/brues-code/ClassicAPI/blob/v1.15.13/src/container/SortBags.cpp),
+[bag-update dispatcher](https://github.com/brues-code/ClassicAPI/blob/v1.15.13/src/bag/UpdateDelayed.cpp).
 
 ---
 
@@ -2474,6 +2583,12 @@ BAG_UPDATE_DELAYED
 
 when appropriate.
 
+ClassicAPI v1.15.13 adds equipment-slot grouping to its existing native sorter.
+Use it when that ordering meets the addon's requirements; consult
+[the container contract](#equipment-slot-grouping-in-sortbags-v11513) for the exact
+ordering, asynchronous behavior and bank/data constraints. `BAG_UPDATE_DELAYED`
+can refresh the view but does not certify completion of a sort.
+
 ---
 
 ## 95. Replace Manual Item Metadata Scraping
@@ -2595,32 +2710,41 @@ This document was built from the official repository:
 
 ```text
 brues-code/ClassicAPI
-release: v1.15.12
-commit:  fde3beca9dba18e7327802eb094b5bff81f39d47
+release: v1.15.13
+commit:  fa7d71435feabde2c5a08e9175321ca614b6449a
 branch:  master
 ```
 
 Official source files used as primary reference:
 
 ```text
-README.md (blob: 7611ff488b103ed6cda3258343e85cc5ccdef8ba)
-docs/API.md (blob: 0ab67379ec55e5e9ebe92595b40611cc5d482164)
+README.md (blob: db401f0578060c3aa52364d533bbced570235fea)
+docs/API.md (blob: 23794ac2e8335aae7957d80f5ccecd4228ea34f0)
 src/macro/ShowTooltip.cpp (blob: 24a8aa1158c5c93754b10e4d263c3dd6a90047e0)
 src/table/Length.cpp (blob: 5c3f9dfdbedd34ae016caefd038e3003facf6b28)
+src/cvar/Temp.cpp (blob: 3810691c26dc7e91ca2af75ad615c7e32945d58f)
+src/container/SortBags.cpp (blob: b6d77b3b7bc6e8a9b2361fa4bfbcf1d2117acf7a)
+src/nameplate/Events.cpp (blob: cebb4ac06c43f85dd907f74cd19b908bbd540897)
 Earlier verified source knowledge retained (Swing.cpp, SwingRange.cpp, Equipment.cpp, Data.cpp, Custom.cpp, Offsets.h)
 ```
 
-The v1.15.10/v1.15.11 API reference blob was:
+The v1.15.12 API reference blob was:
 
 ```text
-ee441d9ce1c67fc86ea0c3bb02da80d4f3ba49de
+0ab67379ec55e5e9ebe92595b40611cc5d482164
 ```
 
-The full `v1.15.10...v1.15.12` review found no new addon-facing functions or events.
-The API documentation delta only adds the weak-value stored-length exception;
-the macro fix is source-documented. README is unchanged. See
-[the audit](docs/CLASSICAPI_1.15.12_AUDIT.md) for tag objects, release timestamps,
-all seven commits, source blobs, and the independently downloaded DLL hash.
+The v1.15.13 release adds:
+
+- `C_CVar.SetTempCVar` and `C_CVar.RemoveTempCVar` (session-only CVar overrides without `Config.wtf` persistence)
+- Baganator-style equipment slot grouping in `C_Container.SortBags()` and `C_Container.SortBankBags()`
+- Nameplate announcement retries while prerequisites remain unmet (no new event payloads)
+
+The complete three-commit `v1.15.12...v1.15.13` range, release/DLL provenance,
+review corrections and runtime requirements are recorded in
+[the v1.15.13 audit](docs/CLASSICAPI_1.15.13_AUDIT.md).
+The [earlier audit](docs/CLASSICAPI_1.15.12_AUDIT.md) retains v1.15.10 through
+v1.15.12 provenance; its macro and weak-table knowledge remains valid.
 
 ---
 
