@@ -6,7 +6,7 @@ VanillaForge is the engineering framework for enhanced World of Warcraft 1.12.1 
 
 ## Target
 - WoW 1.12.1, Build 5875, Interface 11200
-- ClassicAPI v1.15.12+
+- ClassicAPI v1.15.13+
 - SuperWoW v2.2+
 - NamPower v4.6.2+
 - UnitXP SP3 v90+

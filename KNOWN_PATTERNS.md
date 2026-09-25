@@ -534,14 +534,19 @@ C_Container.SortBags()
 C_Container.SortBankBags()
 ```
 
-prefer the native implementation over maintaining a large Lua swap
-engine.
+prefer it when its ordering meets the addon's requirements. In ClassicAPI
+v1.15.13+, equipment-slot grouping is part of that ordering; see the
+[canonical container contract](CLASSICAPI_MASTER_REFERENCE.md#equipment-slot-grouping-in-sortbags-v11513)
+for its semantics and constraints. Different ordering requirements can still
+justify addon logic using verified native movement APIs.
 
 For bank operations, still verify the actual UI/state preconditions
 required by the addon and client.
 
-Use `BAG_UPDATE_DELAYED` where verified as the authoritative post-batch
-update event.
+Use `BAG_UPDATE_DELAYED` to refresh container views after batched bag changes.
+It can fire before the sort's placement phase and does not certify that a sort
+has completed. Verify the relevant inventory state before publishing completion;
+do not reenter sorting on each bag update.
 
 ------------------------------------------------------------------------
 

@@ -3,7 +3,7 @@
 ## Enhanced WoW 1.12.1 Addon Engineering Framework
 
 [![WoW](https://img.shields.io/badge/WoW-1.12.1%20Build%205875-blue.svg)](https://github.com/Fostercare5988/VanillaForge-Addon-Engineering)
-[![ClassicAPI](https://img.shields.io/badge/ClassicAPI-v1.15.12%2B-brightgreen.svg)](https://github.com/brues-code/ClassicAPI)
+[![ClassicAPI](https://img.shields.io/badge/ClassicAPI-v1.15.13%2B-brightgreen.svg)](https://github.com/brues-code/ClassicAPI)
 [![SuperWoW](https://img.shields.io/badge/SuperWoW-v2.2%2B-green.svg)](https://github.com/balakethelock/SuperWoW)
 [![Framework](https://img.shields.io/badge/VanillaForge-v3.1-informational.svg)](VANILLAFORGE_SYSTEM_PROMPT.md)
 
@@ -36,7 +36,7 @@ not to the framework identity.
 
 | Component | Baseline | Role |
 | --- | --- | --- |
-| [ClassicAPI](https://github.com/brues-code/ClassicAPI) | **v1.15.12+** | Modern/backported WoW API, Lua compatibility, events, unit tokens, secure-style helpers, timers and modern client behavior |
+| [ClassicAPI](https://github.com/brues-code/ClassicAPI) | **v1.15.13+** | Modern/backported WoW API, Lua compatibility, events, unit tokens, secure-style helpers, timers and modern client behavior |
 | [SuperWoW](https://github.com/balakethelock/SuperWoW) | **v2.2+** | GUID-aware identity/targeting, structured events and additional client/UI extensions |
 | [NamPower](https://github.com/Emyrk/nampower) | **v4.6.2+** | Spell queue/quickcast behavior plus native spell, unit, DBC and event APIs |
 | [UnitXP SP3](https://github.com/brues-code/UnitXP_SP3) | **v90+** | Raw telemetry, distance/LOS and selected client/window utilities |
@@ -49,9 +49,10 @@ capabilities.
 
 This is the framework's current environment baseline. An addon's minimum ClassicAPI
 version follows the capabilities and fixes it consumes; this refresh does not require
-every existing addon to set `MIN_CLASSIC_API=11512`. See the
-[v1.15.10 through v1.15.12 audit](docs/CLASSICAPI_1.15.12_AUDIT.md) for provenance,
-semantic changes, and runtime checks.
+every existing addon to set `MIN_CLASSIC_API=11513`. See the
+[v1.15.13 audit](docs/CLASSICAPI_1.15.13_AUDIT.md) for current provenance, semantic
+changes, and runtime checks, and the
+[v1.15.10 through v1.15.12 audit](docs/CLASSICAPI_1.15.12_AUDIT.md) for earlier history.
 
 ---
 
@@ -80,6 +81,7 @@ semantic changes, and runtime checks.
 │   ├── WORKFLOW.md
 │   ├── RELEASE_WORKFLOW.md
 │   ├── CLASSICAPI_1.15.12_AUDIT.md
+│   ├── CLASSICAPI_1.15.13_AUDIT.md
 │   └── DECISION_LOG.md
 ├── tools/                          # Automation and validation
 │   ├── vanillaforge_linter.py
