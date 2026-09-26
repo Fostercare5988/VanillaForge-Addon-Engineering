@@ -3,7 +3,7 @@
 VanillaForge Addon Linter & Heuristic Static Analysis Scanner (v3.1)
 Part of the VanillaForge Enhanced WoW 1.12.1 Addon Engineering Framework.
 Targets World of Warcraft 1.12.1 Build 5875 / Interface 11200 with an enhanced-client baseline:
-ClassicAPI v1.15.13+, SuperWoW v2.2+, NamPower v4.6.2+, UnitXP SP3 v90+, and DXVK runtime.
+ClassicAPI v1.15.14+, SuperWoW v2.2+, NamPower v4.6.2+, UnitXP SP3 v90+, and DXVK runtime.
 The full environment may be installed, but individual addons only depend on components they actually consume.
 """
 

@@ -6,7 +6,7 @@
 >
 > Source basis: `brues-code/ClassicAPI`, default branch `master`, official `README.md`, official `docs/API.md`, and selected implementation/source references.
 >
-> Snapshot baseline used by VanillaForge: **ClassicAPI v1.15.13+**.
+> Snapshot baseline used by VanillaForge: **ClassicAPI v1.15.14+**.
 >
 > IMPORTANT: ClassicAPI is actively developed. This document is a local snapshot, not a claim that future versions cannot add or change functionality. If installed ClassicAPI is newer and a task depends on newly added behavior not present here, inspect the installed/current source and update this reference deliberately.
 
@@ -58,17 +58,18 @@ v1.15.10 -> 11510
 v1.15.11 -> 11511
 v1.15.12 -> 11512
 v1.15.13 -> 11513
+v1.15.14 -> 11514
 ```
 
 The VanillaForge framework baseline is:
 
 ```text
-ClassicAPI v1.15.13+
+ClassicAPI v1.15.14+
 ```
 
 Do not assume a future version's new API exists solely because a similarly named Retail API exists.
 
-This environment/reference baseline does not mandate `MIN_CLASSIC_API=11513` in
+This environment/reference baseline does not mandate `MIN_CLASSIC_API=11514` in
 every addon. Declare the minimum required by the capabilities and semantic fixes
 the addon actually consumes.
 
@@ -1632,11 +1633,40 @@ ClassicAPI categorizes macro icons across two dimensions:
   - **Pass 1** (MPQ archive walk): Prefix-filtered for `Ability_*` / `Spell_*`.
   - **Pass 2** (Disk walk): Prefix-filtered for `Ability_*` / `Spell_*` in `<basePath>\Interface\Icons\`.
   - **Pass 3** (Disk walk): Extension-only filter (`.blp`/`.tga`) for `Interface\Icons\`.
-- In a stock client install, disk folder `Interface\Icons\` is empty, so pass 3 discovers nothing. Consequently, the engine's built-in array (`GetNumMacroIcons() == 746`) contains only `Ability_*`/`Spell_*` icons.
+- Before v1.15.14, an unmodified icon loader with no loose disk icons listed only `Ability_*`/`Spell_*` icons. The previously recorded count of 746 is a historical example, not a portable count or a current baseline invariant. v1.15.14 explicitly adds the question mark as described below.
 - Putting custom `INV_*.blp` files directly into `Interface\Icons\` allows them to enter the engine's list via pass 3 after restarting the client.
 - The ~5,226 `INV_*` icons shipped inside MPQs are rejected by pass 1 prefix filtering. ClassicAPI hooks all three enumeration callbacks at their entry point, capturing these archive item icons into a separate list for `GetMacroItemIcons`.
 - `GetMacroIconInfo(index)` returns `""` (empty string) rather than `nil` when queried with an out-of-bounds index.
-- Only `GetNumMacroIcons()` triggers the engine's lazy icon array build (gated on `count == 0`).
+- Call `GetNumMacroIcons()` before iterating `GetMacroIconInfo(index)`; do not assume the latter initializes the list. The four ClassicAPI append-to-table enumerators above also call `EnsureLoaded()` when the engine count is zero. This loading behavior predates v1.15.14.
+
+### Question-mark icon availability (v1.15.14+)
+
+[SOURCE-VERIFIED] On initial loading of an empty engine icon list, ClassicAPI
+seeds `INV_Misc_QuestionMark`, lets the original loader sort and deduplicate,
+then moves the question mark to internal index 0 (Lua `GetMacroIconInfo(1)`).
+This makes the `?` selectable in the native macro picker without an additional
+icon-injection workaround. It enables the existing `#showtooltip` / `#show`
+dynamic-icon rule; it does not make explicitly selected non-question-mark icons
+dynamic. `GetMacroInfo` still reports the stored choice, while
+`C_Macro.GetMacroIcon` reports the currently displayed icon.
+
+The synthetic seed bypasses the capture hook, so it is not falsely classified
+as a loose disk icon. The four append-to-table enumerators keep their existing
+source/category contracts; first-entry behavior applies to the engine list,
+not to each of those four tables. Other MPQ `INV_*` icons still require the
+item enumerator. Existing copies of the question mark are intended to collapse
+through the engine's adjacent deduplication.
+
+Engineering implication: counts and numeric icon positions can change with this
+release or client assets. Resolve against the current enumeration rather than
+persisting an index as cross-version icon identity. The existing out-of-bounds
+empty-string rule remains valid (KP-54). There are no new Lua functions or events.
+
+Evidence: [pinned icon-loader source](https://github.com/brues-code/ClassicAPI/blob/7707127d5f1293ed9f1c15bd1e13e4b37254bf3d/src/macro/Icons.cpp)
+and [display-icon rule](https://github.com/brues-code/ClassicAPI/blob/7707127d5f1293ed9f1c15bd1e13e4b37254bf3d/src/macro/IconPath.cpp).
+[UNVERIFIED - TEST FIRST] Picker display, duplicate suppression with custom assets
+and hook coexistence require client testing; this is not a local empirical claim
+or an unconditional guarantee across every patched client.
 
 Also inspect `/classicapi` for the complete current Macro namespace.
 
@@ -2710,8 +2740,8 @@ This document was built from the official repository:
 
 ```text
 brues-code/ClassicAPI
-release: v1.15.13
-commit:  fa7d71435feabde2c5a08e9175321ca614b6449a
+release: v1.15.14
+commit:  7707127d5f1293ed9f1c15bd1e13e4b37254bf3d
 branch:  master
 ```
 
@@ -2719,7 +2749,10 @@ Official source files used as primary reference:
 
 ```text
 README.md (blob: db401f0578060c3aa52364d533bbced570235fea)
-docs/API.md (blob: 23794ac2e8335aae7957d80f5ccecd4228ea34f0)
+docs/API.md (blob: aeeb8c23d3848caa8f29f8cada0963619f27dcad)
+src/macro/Icons.cpp (blob: 5ad755eaf93c13bc4fea5e353f6ea40fea23e964)
+src/macro/IconPath.cpp (blob: 40cd511660c76ec48ec8e22c96fad58c5cf1e7c2)
+src/Offsets.h (blob: e625357c0c7fc08b386d7522e41ea8bfc83684a5)
 src/macro/ShowTooltip.cpp (blob: 24a8aa1158c5c93754b10e4d263c3dd6a90047e0)
 src/table/Length.cpp (blob: 5c3f9dfdbedd34ae016caefd038e3003facf6b28)
 src/cvar/Temp.cpp (blob: 3810691c26dc7e91ca2af75ad615c7e32945d58f)
@@ -2734,7 +2767,13 @@ The v1.15.12 API reference blob was:
 0ab67379ec55e5e9ebe92595b40611cc5d482164
 ```
 
-The v1.15.13 release adds:
+The v1.15.14 release makes the question-mark icon the first engine macro icon
+and selectable without a separate icon-injection workaround. No API signatures,
+event payloads, bag sorting or Lua table semantics change in this release. See
+[the v1.15.14 audit](docs/CLASSICAPI_1.15.14_AUDIT.md) for the full one-commit range,
+independently verified provenance and runtime requirements.
+
+The v1.15.13 release added:
 
 - `C_CVar.SetTempCVar` and `C_CVar.RemoveTempCVar` (session-only CVar overrides without `Config.wtf` persistence)
 - Baganator-style equipment slot grouping in `C_Container.SortBags()` and `C_Container.SortBankBags()`
