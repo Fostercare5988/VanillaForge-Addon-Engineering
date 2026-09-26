@@ -1,21 +1,21 @@
 {
   "classicapi": {
-    "minimum_version": "1.15.13",
+    "minimum_version": "1.15.14",
     "minimum_version_scope": "framework environment, not every addon's dependency guard",
-    "reference_version": "1.15.13",
+    "reference_version": "1.15.14",
     "repository": "brues-code/ClassicAPI",
-    "reference_commit": "fa7d71435feabde2c5a08e9175321ca614b6449a",
+    "reference_commit": "7707127d5f1293ed9f1c15bd1e13e4b37254bf3d",
     "file_shas": {
-      "docs/API.md": "23794ac2e8335aae7957d80f5ccecd4228ea34f0",
+      "docs/API.md": "aeeb8c23d3848caa8f29f8cada0963619f27dcad",
       "README.md": "db401f0578060c3aa52364d533bbced570235fea"
     },
     "release_provenance": {
-      "tag": "v1.15.13",
-      "tag_object": "74b49619eda03ea5adefcb4ef176c16d014a06f4",
-      "published_at": "2026-09-25T16:11:17Z",
-      "dll_asset_id": 588725535,
-      "dll_size_bytes": 1442304,
-      "dll_sha256": "5fc99279f590a3c670cab14afabe19b3d78272c95485ab1c1e5ff2961f6de68b"
+      "tag": "v1.15.14",
+      "tag_object": "407a4c616a2828a70c9b5b736aa753ec9a240029",
+      "published_at": "2026-09-26T05:36:24Z",
+      "dll_asset_id": 590018427,
+      "dll_size_bytes": 1442816,
+      "dll_sha256": "18e25f0d120ff0fb7c1af8eb268eed30177d2d5eccd3169160b219ea1d24dc8f"
     }
   },
   "superwow": {

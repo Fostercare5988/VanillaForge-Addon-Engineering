@@ -53,7 +53,7 @@ Never infer client/API capabilities from a server/content version number.
 
 Canonical minimum environment:
 
--   ClassicAPI `v1.15.13+`
+-   ClassicAPI `v1.15.14+`
 -   SuperWoW `v2.2+`
 -   NamPower `v4.6.2+`
 -   UnitXP SP3 `v90+`
