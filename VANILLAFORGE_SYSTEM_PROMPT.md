@@ -201,7 +201,12 @@ user's client.
 The current framework baseline is not every addon's minimum version.
 Set an addon's `MIN_CLASSIC_API` from the verified capabilities and fixes
 it actually requires; a framework baseline refresh alone does not require
-raising existing addon guards. Conversely, if an addon intentionally declares
+raising existing addon guards. A maintainer may explicitly choose a higher
+supported release floor to reduce the supported runtime matrix. Record that as
+support policy, keep guards and installation docs consistent, and do not claim
+that older APIs were introduced in the chosen release. Do not advance such a
+floor again without a capability requirement or another explicit policy decision.
+Conversely, if an addon intentionally declares
 a hard enhanced-client capability floor, do not preserve fallback branches
 whose only purpose is supporting runtimes below that floor, unless they serve
 another verified supported configuration.
