@@ -6,7 +6,7 @@
 >
 > Source basis: `brues-code/ClassicAPI`, default branch `master`, official `README.md`, official `docs/API.md`, and selected implementation/source references.
 >
-> Snapshot baseline used by VanillaForge: **ClassicAPI v1.15.14+**.
+> Snapshot baseline used by VanillaForge: **ClassicAPI v1.15.15+**.
 >
 > IMPORTANT: ClassicAPI is actively developed. This document is a local snapshot, not a claim that future versions cannot add or change functionality. If installed ClassicAPI is newer and a task depends on newly added behavior not present here, inspect the installed/current source and update this reference deliberately.
 
@@ -59,17 +59,18 @@ v1.15.11 -> 11511
 v1.15.12 -> 11512
 v1.15.13 -> 11513
 v1.15.14 -> 11514
+v1.15.15 -> 11515
 ```
 
 The VanillaForge framework baseline is:
 
 ```text
-ClassicAPI v1.15.14+
+ClassicAPI v1.15.15+
 ```
 
 Do not assume a future version's new API exists solely because a similarly named Retail API exists.
 
-This environment/reference baseline does not mandate `MIN_CLASSIC_API=11514` in
+This environment/reference baseline does not mandate `MIN_CLASSIC_API=11515` in
 every addon. Declare the minimum required by the capabilities and semantic fixes
 the addon actually consumes.
 
@@ -1106,6 +1107,7 @@ C_EquipmentSet.GetNumEquipmentSets
 C_EquipmentSet.IgnoreSlotForSave
 C_EquipmentSet.IsSlotIgnoredForSave
 C_EquipmentSet.ModifyEquipmentSet
+C_EquipmentSet.PickupEquipmentSet
 C_EquipmentSet.SaveEquipmentSet
 C_EquipmentSet.UnignoreSlotForSave
 C_EquipmentSet.UseEquipmentSet
@@ -1354,6 +1356,7 @@ GameTooltip:GetGameObject
 GameTooltip:GetItem
 GameTooltip:GetOwner
 GameTooltip:GetSpell
+GameTooltip:GetUnit
 GameTooltip:GetUnitGUID
 GameTooltip:HasGameObject
 GameTooltip:HasItem
@@ -2740,19 +2743,19 @@ This document was built from the official repository:
 
 ```text
 brues-code/ClassicAPI
-release: v1.15.14
-commit:  7707127d5f1293ed9f1c15bd1e13e4b37254bf3d
+release: v1.15.15
+commit:  71805db62f1e8a154477033dc1f50960c535af8b
 branch:  master
 ```
 
 Official source files used as primary reference:
 
 ```text
-README.md (blob: db401f0578060c3aa52364d533bbced570235fea)
-docs/API.md (blob: aeeb8c23d3848caa8f29f8cada0963619f27dcad)
+README.md (blob: cf885d857ce6fedbe1559a01cba1c3ea25e2a35c)
+docs/API.md (blob: a162057257ebe44c13e512d940eedf994c351a35)
 src/macro/Icons.cpp (blob: 5ad755eaf93c13bc4fea5e353f6ea40fea23e964)
 src/macro/IconPath.cpp (blob: 40cd511660c76ec48ec8e22c96fad58c5cf1e7c2)
-src/Offsets.h (blob: e625357c0c7fc08b386d7522e41ea8bfc83684a5)
+src/Offsets.h (blob: 9e10fb5f691d18aa23c1e1e90756da84042a08e9)
 src/macro/ShowTooltip.cpp (blob: 24a8aa1158c5c93754b10e4d263c3dd6a90047e0)
 src/table/Length.cpp (blob: 5c3f9dfdbedd34ae016caefd038e3003facf6b28)
 src/cvar/Temp.cpp (blob: 3810691c26dc7e91ca2af75ad615c7e32945d58f)
@@ -2898,3 +2901,12 @@ Important developer tools:
 Before writing a workaround for a limitation commonly associated with stock WoW 1.12.1, search this reference.
 
 ClassicAPI exists specifically to make many of those limitations obsolete.
+
+
+## v1.15.15 source-verified addon contracts
+[SOURCE-VERIFIED] GameTooltip:GetUnit() returns (name, unitToken) or nothing when no unit is shown. SetUnit retains its input token; world hover uses mouseover; unit-attribute frames retain their token, including offline/far group members. Binding exists before OnTooltipSetUnit. GetUnitGUID remains (name, guid) and now resolves roster/name-cache names without a live object. Same-GUID world hover while an existing SetUnit tooltip stays visible can retain the earlier token. Tokens are mutable; use GUID identity for retained references.
+
+[SOURCE-VERIFIED] C_EquipmentSet.PickupEquipmentSet(setID) puts a native set on the cursor; unknown IDs do nothing. GetCursorInfo and GetActionInfo return "equipmentset", setName; the second value is a name, not a numeric ID. CURSOR_CHANGED reports Enum.UICursorType.EquipmentSet. Action clicks fire WEAR_EQUIPMENT_SET(setID); the event alone does not equip. The bundled EquipmentManager checks item locks and casting, then calls UseEquipmentSet. Do not add duplicate equip handlers.
+
+Set action placements persist in the per-character native equipment-set file, not addon SavedVariables or server action type. Rename/save repaint buttons; deleting a set clears its buttons. Native sets do not automatically import addon outfit schemas. Item/spell trackers must classify type before inferring identity from icons.
+[UNVERIFIED - TEST FIRST] Verify tooltip tokens/events for live/offline roster units and action pickup/place/swap/use/delete/relogin. No local runtime verification is claimed. See [v1.15.15 audit](docs/CLASSICAPI_1.15.15_AUDIT.md).
