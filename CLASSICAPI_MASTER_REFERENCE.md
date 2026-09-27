@@ -2302,6 +2302,26 @@ PLAYER_STARTED_TURNING
 PLAYER_STOPPED_TURNING
 ```
 
+### Modifier event state ordering
+
+[SOURCE-VERIFIED] At the v1.15.15 reference commit, `MODIFIER_STATE_CHANGED`
+provides `key, down` (`LSHIFT`, `RSHIFT`, `LCTRL`, `RCTRL`, `LALT`, `RALT`;
+numeric 1/0). ClassicAPI updates its modifier bitmap before firing the event
+from a thread message hook, before the engine dispatches that key message.
+The left/right modifier queries read this updated bitmap.
+
+For a combined shortcut inside this event, use
+`IsLeftShiftKeyDown() or IsRightShiftKeyDown()` and
+`IsLeftControlKeyDown() or IsRightControlKeyDown()` as needed. Native merged
+`IsShiftKeyDown()` / `IsControlKeyDown()` read a different state path and must
+not be assumed current at this event boundary. Re-query both sides on each
+transition; releasing one side must not relock while the other remains held.
+Focus regain also reconciles the bitmap and emits changed transitions.
+
+Source: [Modifier.cpp](https://github.com/brues-code/ClassicAPI/blob/71805db62f1e8a154477033dc1f50960c535af8b/src/input/Modifier.cpp)
+(blob `7071459ca029f220881208df1d3cec10c0b3849f`). This is source verification;
+specific keyboard/focus behavior still requires in-client testing.
+
 ---
 
 ## 76. Faction / Quest

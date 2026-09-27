@@ -30,6 +30,13 @@ Useful runtime tools: `/reload`, `/luaerrors 1`, `/etrace`, `/dump`, `/framestac
 
 Static success is not runtime proof.
 
+For UI changes, verify methods against the actual client/widget type before
+adding them to a test double. Mocks must reject unsupported methods on the
+changed widget rather than silently return no-op functions. Exercise normal
+settings entry, saved-state refresh, toggle and reset paths. For drag changes,
+also test live refresh during a first unsaved drag, modifier release, and saved
+positions at different scales. See `ENGINE_REFERENCE.md` §12.9.
+
 ## 7. Integration Review
 Use after complex multi-phase, state-machine, persistence, ownership or cross-module work. Review integrated behavior for stale events, supersession, premature state publication, lost deferred work, cleanup ownership, migration precedence, dependency mismatch and load-order regressions.
 

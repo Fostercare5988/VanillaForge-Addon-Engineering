@@ -9,7 +9,7 @@
 > **Canonical enhanced-client baseline**
 >
 > - World of Warcraft 1.12.1, Build 5875, `Interface: 11200`
-> - ClassicAPI v1.15.14+
+> - ClassicAPI v1.15.15+
 > - SuperWoW v2.2+
 > - NamPower v4.6.2+
 > - UnitXP SP3 v90+
@@ -693,6 +693,22 @@ Preserve Blizzard's event registration and internal state where possible;
 the feature, use the frame's verified normal update path to restore its state.
 Some frames require stronger intervention, so do not apply one hide technique
 universally.
+
+### 12.9 Widget methods and faithful UI mocks
+
+[SOURCE-VERIFIED] Native 1.12.1 `Slider` widgets do not provide the
+`Button:Enable()` / `Button:Disable()` methods. For a slider, control mouse input
+with `EnableMouse()` and its appearance separately, without discarding its
+configured value. Blizzard's [1.12.1 slider helpers](https://github.com/tekkub/wow-ui-source/blob/5a98d3fd8172c95966426c62cb4e8a72165a4fd5/FrameXML/OptionsFrame.lua#L450)
+manage thumb and text appearance separately from button enable/disable calls.
+An enhanced API baseline does not imply that every widget gains later-client
+methods; verify the actual widget type and any extension before using them.
+
+UI mocks must preserve these type boundaries. Unsupported methods on the widget
+under test must remain absent or fail explicitly; a generic no-op method factory
+can conceal precisely the API error the test should catch. Exercise the actual
+settings open/refresh, toggle and reset paths, including saved configurations.
+Passing mock tests still does not verify live rendering or pointer behavior.
 
 ---
 
