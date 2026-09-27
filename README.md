@@ -49,7 +49,10 @@ capabilities.
 
 This is the framework's current environment baseline. An addon's minimum ClassicAPI
 version follows the capabilities and fixes it consumes; this refresh does not require
-every existing addon to set `MIN_CLASSIC_API=11515`. See the
+every existing addon to set `MIN_CLASSIC_API=11515`. A maintainer can explicitly
+choose a higher support floor; that decision must be documented separately from
+the minimum required by an API, and reflected consistently in guards and docs.
+See the
 [v1.15.15 audit](docs/CLASSICAPI_1.15.15_AUDIT.md) for current provenance, semantic
 changes, and runtime checks, the [v1.15.13 audit](docs/CLASSICAPI_1.15.13_AUDIT.md), and the
 [v1.15.10 through v1.15.12 audit](docs/CLASSICAPI_1.15.12_AUDIT.md) for earlier history.

@@ -72,7 +72,10 @@ Do not assume a future version's new API exists solely because a similarly named
 
 This environment/reference baseline does not mandate `MIN_CLASSIC_API=11515` in
 every addon. Declare the minimum required by the capabilities and semantic fixes
-the addon actually consumes.
+the addon actually consumes. An explicitly chosen maintainer support floor may
+be higher; document that policy separately from an API's introduction version.
+Keep startup guards and installation requirements consistent. Do not automatically
+raise the support floor on every upstream release.
 
 ---
 

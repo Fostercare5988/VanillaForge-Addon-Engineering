@@ -70,3 +70,27 @@ ItemRack: 30/31 regression tests pass; test_swap_abort_drains_queue_and_stops_re
 Upstream checker confirms ClassicAPI commit and both blobs CURRENT; overall exit 1 is from NamPower 4.6.3 versus intentionally retained 4.6.2 baseline. SuperWoW and UnitXP are CURRENT. Diff checks pass. AutoBG's five pending smoothing/appearance files were preserved, not bundled into this audit.
 
 Release reconciliation: README files for all eight addons recommend ClassicAPI v1.15.15+ and distinguish it from unchanged enforced minimums. The user authorized publishing the framework integration, three action-type fixes and pending validated AutoBG timer appearance work.
+
+## Independent recheck and subsequent support policy — 2026-09-27
+
+The annotated tag, peeled commit, all three commits in the complete .14-to-.15
+range, publication timestamp, DLL asset ID/size, GitHub digest and all recorded
+source/document blob SHAs were independently checked again against official
+upstream. The downloaded DLL hashes to the recorded SHA-256. No source contract
+correction or additional Known Pattern was required.
+
+The maintainer subsequently chose v1.15.15+ as the published support floor for
+the eight personal addon projects. This is an explicit support policy, not
+evidence that their older APIs first appeared in .15, and does not impose the
+same guard on other VanillaForge projects. The framework retains capability
+history and does not automatically raise addon guards on future releases.
+Project commits, deployment hash and runtime gaps belong in the local addon
+maintenance register; source verification remains separate from gameplay proof.
+
+Recheck validation: 40 framework tests and 99 addon regressions pass; 114
+boundary scenarios cover the 19 addon startup guards (missing/invalid version,
+.14 rejection, .15 and later acceptance). All eight Lua/load graphs and diff
+checks pass. Static scans have zero errors; the 11 Bagnon and one TWThreat
+XML-loading advisories are understood. The ClassicAPI-only upstream check is
+CURRENT with exit 0. The full checker still reports the known NamPower .3 versus
+intentionally supported .2 release difference; that separate policy is retained.
