@@ -16,10 +16,12 @@ VERIFY:
 1. Correctness: intended behavior, safe error/cancellation paths.
 2. Ownership: stale/duplicate events, supersession, deferred work, published state.
 3. APIs: verified primitives, authoritative state, dependencies match consumption.
+   UI hooks: globals exist in the target client/verified extension; event and render callers inspected.
 4. Performance: hot-path churn/polling justified; claims match evidence.
 5. Persistence: scratch state, migrations, SavedVariables coherence.
 6. UI/load graph: TOC, root Bindings.xml, layout churn.
 7. Validation: targeted/full tests, linter, runtime clearly separated from static.
+   UI regressions: faithful methods/hooks and native redraw side effects; new test fails the faulty revision where practical.
 8. Repository: final diff, artifacts, affected docs/version/dependencies, exact status.
 
 RETURN:

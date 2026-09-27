@@ -2165,6 +2165,20 @@ Aura indices (`1, 2, ... N`) are compacting array positions, **not stable aura i
 - Never assume an aura index or button frame remains bound to the same spell or aura instance across updates.
 - Cooldown frames, OnUpdate scripts, and duration caches must never be keyed to transient array indices. Key cached active state by `(spellId, source)` or fully reset the button frame upon identity mismatch.
 
+### Aura Presence, Timing and Refresh
+
+[SOURCE-VERIFIED] In [v1.15.15 aura data enrichment](https://github.com/brues-code/ClassicAPI/blob/71805db62f1e8a154477033dc1f50960c535af8b/src/aura/Data.cpp),
+remote-unit timing depends on observed application/cast state. A missing or
+elapsed cached expiration can yield `expirationTime == 0` while the aura is
+still reported. Zero means no known expiration, not proof of removal or a
+permanent aura. Retain the reported icon without inventing a duration.
+
+[SOURCE-VERIFIED] [Observed reapplications](https://github.com/brues-code/ClassicAPI/blob/71805db62f1e8a154477033dc1f50960c535af8b/src/aura/Source.cpp)
+can refresh cached timing and signal `UNIT_AURA` even when the spell/slot is
+unchanged. Refresh from the API on the relevant unit event; resolve unit aliases
+with `UnitIsUnit()` where appropriate. Change the cooldown when timing changes,
+but leave an unchanged sweep running. See `ENGINE_REFERENCE.md` §12.10.
+
 ### Aura Filter Tokens
 
 `C_UnitAuras` functions accepting a filter string (`"HELPFUL"`, `"HARMFUL"`, etc.) support:
