@@ -89,3 +89,26 @@ Reason: Shared engine APIs and small helper overlap do not establish shared stat
 Evidence: Recent multi-addon architecture and integration reviews found working read-only queries for optional frame and equipment coordination, while addon-owned tooltip decorators compose through post-hooks. `VANILLAFORGE_SYSTEM_PROMPT.md` §11 records the resulting boundary rule.
 
 Consequences: Architecture reviews identify the owner of each mutable state and verify optional integration without assuming another addon is installed or loaded first.
+
+## 2026-09-27 — Widget-aware UI validation and modifier event ordering
+Status: ACTIVE
+
+Decision: Preserve native widget method boundaries in UI mocks and validate
+settings entry/refresh/toggle/reset. Record ClassicAPI's modifier-event bitmap
+ordering in its canonical API reference.
+
+Evidence: A reported native Slider:Enable crash was reproduced when the addon
+mock stopped supplying Button methods to Slider widgets. Archived 1.12.1
+OptionsFrame.lua uses separate slider appearance helpers. ClassicAPI's pinned
+Modifier.cpp updates its own bitmap and fires before engine key dispatch;
+regressions reproduce missed Ctrl+Shift when a handler reads stale native state.
+
+Promotion gate: Both observations are general, verified, likely to recur and
+material to UI correctness. Existing API-verification guidance was insufficiently
+specific about permissive mocks and this event's ordering. ENGINE_REFERENCE.md
+§12.9, docs/WORKFLOW.md §6 and CLASSICAPI_MASTER_REFERENCE.md §75 are sufficient;
+no new Known Pattern or speculative linter rule is needed. Lexical variable
+names alone cannot safely establish a widget's type or event execution order.
+
+Consequences: Agents verify widget types and input event timing rather than
+using mock success as capability proof. In-game verification remains separate.
