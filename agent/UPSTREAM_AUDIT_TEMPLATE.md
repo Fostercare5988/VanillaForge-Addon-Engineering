@@ -48,12 +48,17 @@ VANILLAFORGE IMPACT ASSESSMENT:
 RECONCILIATION & EXECUTION:
 1. Synchronize reference documentation with source evidence.
 2. Update UPSTREAM_VERSIONS.json (version, commit SHA, file SHAs, asset hashes).
-3. Update tools/vanillaforge_linter.py if machine-checkable rules changed.
-4. Run validation:
+3. For ClassicAPI, save the release audit as docs/CLASSICAPI_<reference_version>_AUDIT.md.
+   Regenerate README's audit index: python tools/check_audit_index.py --write.
+   Current/historical status is derived from JSON and audit filenames; preserve
+   earlier source evidence rather than marking all older knowledge SUPERSEDED.
+4. Update tools/vanillaforge_linter.py if machine-checkable rules changed.
+5. Run validation:
    - python -m unittest discover tests
+   - python tools/check_audit_index.py
    - python tools/check_upstream.py --verbose
    - python tools/vanillaforge_linter.py <AddonPath>
-5. If binary/DLL was upgraded in the game client, remind that /reload is insufficient;
+6. If binary/DLL was upgraded in the game client, remind that /reload is insufficient;
    a full WoW.exe process restart is required (§15).
 
 REPORT:
