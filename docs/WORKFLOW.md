@@ -37,6 +37,15 @@ settings entry, saved-state refresh, toggle and reset paths. For drag changes,
 also test live refresh during a first unsaved drag, modifier release, and saved
 positions at different scales. See `ENGINE_REFERENCE.md` §12.9.
 
+For client hooks, verify the global in the exact 1.12 source or a verified
+extension, then inspect its event and render callers. Test the native redraw
+that can overwrite addon presentation, not only the addon's event handler.
+Preserve meaningful side effects in mocks, such as cooldown sequence restarts.
+For a regression fix, where practical, run the new test against the faulty
+revision and confirm it fails for the intended reason. Execute the relevant
+pinned FrameXML function in a source integration test when simplified mocks
+cannot represent the interaction. Report this separately from in-game testing.
+
 ## 7. Integration Review
 Use after complex multi-phase, state-machine, persistence, ownership or cross-module work. Review integrated behavior for stale events, supersession, premature state publication, lost deferred work, cleanup ownership, migration precedence, dependency mismatch and load-order regressions.
 

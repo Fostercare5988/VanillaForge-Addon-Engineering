@@ -676,13 +676,18 @@ hiding the button frequently leave ghost visual artifacts upon reuse, such as
 persisting cooldown sweeps, leftover duration text, or stale borders across
 target switches and slot shifts.
 
-When recycling or hiding an aura or cooldown frame, execute an explicit reset:
-- frame visibility (`button:Hide()`) and script handlers (`button:SetScript("OnUpdate", nil)`)
-- identity bindings (`unit`, `auraIndex`, `spellId`)
-- duration/expiration timestamps (and reject expired timed auras where `expirationTime > 0 and expirationTime <= GetTime()`)
+On removal or identity reuse, explicitly reset addon-owned state:
+
+- frame visibility (`button:Hide()`) and addon-owned script handlers; preserve native/template animation handlers
+- identity bindings (unit GUID, `auraIndex`, `spellId`, source GUID)
+- duration/expiration timestamps and cached timer bindings
 - text labels (`countText:SetText("")`, `durationText:SetText("")`)
-- cooldown animation model (`cooldown:SetCooldown(0, 0)`)
+- cooldown animation (`CooldownFrame_SetTimer(cooldown, 0, 0, 0)` for the native 1.12 cooldown Model; do not assume a later-client `SetCooldown` method)
 - texture asset, vertex color, alpha (`button:SetAlpha(1.0)`), and border overlay (`border:Hide()`)
+
+An unavailable or elapsed timer is not proof that an API-reported aura has gone.
+Clear its sweep/countdown while retaining the reported icon; see the ClassicAPI
+master reference §70. Do not reset an unchanged aura on every refresh.
 
 ### 12.8 Reversible Blizzard frame suppression
 
@@ -693,6 +698,14 @@ Preserve Blizzard's event registration and internal state where possible;
 the feature, use the frame's verified normal update path to restore its state.
 Some frames require stronger intervention, so do not apply one hide technique
 universally.
+
+[SOURCE-VERIFIED] In [1.12.1 TargetFrame.lua](https://github.com/tekkub/wow-ui-source/blob/5a98d3fd8172c95966426c62cb4e8a72165a4fd5/FrameXML/TargetFrame.lua),
+the native aura updater is `TargetDebuffButton_Update()`, not
+`TargetFrame_UpdateAuras()`. Both target aura events and the target-of-target
+render update can call it, showing stock icons again. When replacing those
+icons, enforce suppression after the native updater and restore through that
+updater when disabled. Keep aura scanning event-driven; a presentation hook
+called from a render path must not rescan all auras on every redraw.
 
 ### 12.9 Widget methods and faithful UI mocks
 
@@ -708,7 +721,24 @@ UI mocks must preserve these type boundaries. Unsupported methods on the widget
 under test must remain absent or fail explicitly; a generic no-op method factory
 can conceal precisely the API error the test should catch. Exercise the actual
 settings open/refresh, toggle and reset paths, including saved configurations.
+Post-hook mocks must likewise preserve which client globals exist and actually run
+the original function followed by the hook. A helper that silently skips a
+missing global must not make a required hook appear successfully installed.
 Passing mock tests still does not verify live rendering or pointer behavior.
+
+### 12.10 Native cooldown animation synchronization
+
+[SOURCE-VERIFIED] The [1.12.1 cooldown timer helper](https://github.com/tekkub/wow-ui-source/blob/5a98d3fd8172c95966426c62cb4e8a72165a4fd5/FrameXML/Cooldown.lua)
+calls `SetSequence(0)` for every enabled `CooldownFrame_SetTimer()` call, even
+with unchanged timing. Synchronize on identity/timing changes or re-enabling
+the sweep, rather than calling it on every aura refresh. Track the owning unit
+GUID, spell/source identity, start and duration, and clear those bindings on
+removal or reuse. A genuine reapplication must update the timing once.
+
+The helper's disabled path only hides the Model; it does not erase stored
+timestamps. Clear addon-owned caches explicitly and preserve the Model's native
+animation handler. Regression tests should exercise repeated unchanged events,
+native redraws, changed expiration, target switches, and off/on restoration.
 
 ---
 
