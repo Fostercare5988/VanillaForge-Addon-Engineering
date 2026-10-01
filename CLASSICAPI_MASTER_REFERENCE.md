@@ -6,7 +6,7 @@
 >
 > Source basis: `brues-code/ClassicAPI`, default branch `master`, official `README.md`, official `docs/API.md`, and selected implementation/source references.
 >
-> Snapshot baseline used by VanillaForge: **ClassicAPI v1.15.15+**.
+> Snapshot baseline used by VanillaForge: **ClassicAPI v1.15.16+**.
 >
 > IMPORTANT: ClassicAPI is actively developed. This document is a local snapshot, not a claim that future versions cannot add or change functionality. If installed ClassicAPI is newer and a task depends on newly added behavior not present here, inspect the installed/current source and update this reference deliberately.
 
@@ -60,17 +60,18 @@ v1.15.12 -> 11512
 v1.15.13 -> 11513
 v1.15.14 -> 11514
 v1.15.15 -> 11515
+v1.15.16 -> 11516
 ```
 
 The VanillaForge framework baseline is:
 
 ```text
-ClassicAPI v1.15.15+
+ClassicAPI v1.15.16+
 ```
 
 Do not assume a future version's new API exists solely because a similarly named Retail API exists.
 
-This environment/reference baseline does not mandate `MIN_CLASSIC_API=11515` in
+This environment/reference baseline does not mandate `MIN_CLASSIC_API=11516` in
 every addon. Declare the minimum required by the capabilities and semantic fixes
 the addon actually consumes. An explicitly chosen maintainer support floor may
 be higher; document that policy separately from an API's introduction version.
@@ -2780,8 +2781,8 @@ This document was built from the official repository:
 
 ```text
 brues-code/ClassicAPI
-release: v1.15.15
-commit:  71805db62f1e8a154477033dc1f50960c535af8b
+release: v1.15.16
+commit:  7ccbbaaf68bcde6b29b71806981d0338e0577189
 branch:  master
 ```
 
@@ -2947,3 +2948,6 @@ ClassicAPI exists specifically to make many of those limitations obsolete.
 
 Set action placements persist in the per-character native equipment-set file, not addon SavedVariables or server action type. Rename/save repaint buttons; deleting a set clears its buttons. Native sets do not automatically import addon outfit schemas. Item/spell trackers must classify type before inferring identity from icons.
 [UNVERIFIED - TEST FIRST] Verify tooltip tokens/events for live/offline roster units and action pickup/place/swap/use/delete/relogin. No local runtime verification is claimed. See [v1.15.15 audit](docs/CLASSICAPI_1.15.15_AUDIT.md).
+
+## v1.15.16 source-verified addon contracts
+[SOURCE-VERIFIED] Compatibility-only release; no new public Lua API symbols, events, or return signature changes. Bundled `!!!ClassicAPI` compatibility module `AddOns/!!!ClassicAPI/Util/AddOnCompat.lua` intercepts `Turtle_GroupUI` via `EventUtil.ContinueOnAddOnLoaded` and wraps the global `GroupFrame_ToggleMovement(state)` function. Under modern script dispatch, frame buttons pass the widget (`self`) as the first argument to `OnClick`; this wrapper sanitizes any non-numeric `state` argument to `nil` before calling the original function, preventing an arithmetic error (`1 - state` at `Turtle_GroupUI.lua:409`). See [v1.15.16 audit](docs/CLASSICAPI_1.15.16_AUDIT.md).
