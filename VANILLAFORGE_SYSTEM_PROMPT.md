@@ -183,6 +183,31 @@ Never list DXVK as a Lua addon dependency.
 Write frame-rate-independent rendering code and avoid unnecessary UI
 mutation.
 
+### Upstream Capability Displacement
+
+The enhanced stack is not static. Whenever ClassicAPI or another canonical enhanced component gains a new capability or materially improves an existing one:
+
+1.  **Search the maintained addon portfolio:** proactively identify older implementations of the same responsibility across existing addons.
+2.  **Include candidate mechanisms:**
+    - older ClassicAPI mechanisms or complex multi-call patterns
+    - NamPower APIs (e.g. `GetUnitField("player", "modCastSpeed")` vs. modern `UnitSpellHaste`)
+    - UnitXP APIs (e.g. provider-specific distance/LOS vs. `UnitInLineOfSight`, `UnitDistanceSquared`, `UnitPosition`)
+    - SuperWoW APIs where modern standard primitives now cover the requirement
+    - native Vanilla 1.12 workarounds
+    - `OnUpdate` polling
+    - localized string, tooltip, or combat-log parsing
+    - duplicated Lua state, synthetic tables, or custom caches
+    - custom reimplementations of behavior now provided authoritatively upstream
+3.  **Evaluate:** compare semantic equivalence, correctness, determinism, lifecycle behavior, performance characteristics, implementation simplicity, dependency cost, and runtime restrictions. Working code remains a modernization candidate if a newer authoritative primitive is materially superior.
+4.  **Evidence-based selection:** prefer the simplest authoritative current primitive when equivalent or superior for the addon's actual requirement. Do not choose ClassicAPI merely because it is newer; SuperWoW, NamPower, and UnitXP remain correct when they provide superior identity, combat data, or engine capabilities.
+5.  **Reconcile upon verification:**
+    - replace the displaced implementation;
+    - remove obsolete compatibility paths, dead helper code, and stale documentation;
+    - remove obsolete dependency declarations from TOC and README;
+    - if an addon no longer consumes any capability from a DLL, remove that DLL from that addon's declared dependencies and documentation.
+6.  **Guard discipline:** raise an addon's minimum ClassicAPI version only when that addon actually consumes a capability requiring the newer version.
+7.  **Preserve specialized providers:** do not remove a specialized provider when the newer API is only partially equivalent or fails edge-case semantics.
+
 ------------------------------------------------------------------------
 
 ## 5. Dependency Documentation Rule
@@ -210,6 +235,10 @@ Conversely, if an addon intentionally declares
 a hard enhanced-client capability floor, do not preserve fallback branches
 whose only purpose is supporting runtimes below that floor, unless they serve
 another verified supported configuration.
+
+When capability displacement eliminates an addon's last remaining usage of a DLL,
+remove that DLL from the addon's declared dependencies, TOC metadata, and
+documentation. Never remove the DLL from the user's global client installation.
 
 ------------------------------------------------------------------------
 

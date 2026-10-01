@@ -3,7 +3,7 @@
 This is the normal lifecycle for substantial addon engineering. Do not mechanically repeat every phase for every task.
 
 ## 1. Classify
-Choose the smallest correct class: architecture discovery, modernization audit, bounded implementation, scoped bug fix, integration review, release/reconciliation, or framework maintenance.
+Choose the smallest correct class: architecture discovery, modernization audit, capability displacement review, bounded implementation, scoped bug fix, integration review, release/reconciliation, or framework maintenance.
 
 ## 2. Architecture Discovery
 Use when the addon/subsystem is not yet understood. Establish TOC/load graph, module responsibilities, SavedVariables, event/timer ownership, state machines, UI ownership, actual dependencies, enhanced APIs, hot paths and cross-module contracts.
@@ -58,3 +58,19 @@ For a release/commit, follow `docs/RELEASE_WORKFLOW.md`.
 
 ## 9. Retrospective
 Use `agent/RETROSPECTIVE_TEMPLATE.md`. Keep addon-specific lessons with the addon. Promote reusable lessons only through the framework lesson gate.
+
+## 10. Upstream Refresh & Capability Displacement
+
+A framework baseline update and an addon modernization review are separate, bounded phases:
+- **Framework baseline update:** answers *"What capabilities are now available?"* Records provenance, audits drift, updates documentation, and advances framework tracking without editing addon repositories.
+- **Capability displacement review:** answers *"Which existing addon mechanisms can now be retired, simplified, or moved to a superior provider?"* Identifies and schedules concrete portfolio modernization candidates.
+
+### Modernization Lifecycle:
+1. **Upstream release:** new tag or release identified.
+2. **Upstream audit:** verify release boundary, tag hashes, commit provenance, and drift using `agent/UPSTREAM_AUDIT_TEMPLATE.md`.
+3. **Framework baseline update:** advance `UPSTREAM_VERSIONS.json`, reference documentation, and linter baseline.
+4. **Capability displacement review:** populate candidate matrix evaluating existing addon mechanisms against new primitives.
+5. **Portfolio candidate selection:** select verified replacement candidates for bounded implementation tasks. Updating the framework baseline does not automatically mean editing all addons.
+6. **Bounded addon modernization:** modernize identified subsystems in dedicated tasks using verified primitives.
+7. **Static & runtime validation:** run linter scans, unit tests, and live game testing (`/dump`, `/etrace`).
+8. **Obsolete code & dependency removal:** remove displaced Lua helpers, delete dead fallback paths, and drop unused DLL declarations from addon TOC and README when all call sites are eliminated.

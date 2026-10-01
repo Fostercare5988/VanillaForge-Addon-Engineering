@@ -81,5 +81,22 @@ class CheckUpstreamHelperTests(unittest.TestCase):
         self.assertIsNone(CHECKER.version_key(None))
 
 
+class UpstreamAuditTemplateTests(unittest.TestCase):
+    def test_audit_template_defines_capability_displacement_review(self):
+        template_path = ROOT / "agent" / "UPSTREAM_AUDIT_TEMPLATE.md"
+        self.assertTrue(template_path.is_file(), f"Missing audit template at {template_path}")
+        text = template_path.read_text(encoding="utf-8")
+        self.assertIn("PORTFOLIO CAPABILITY DISPLACEMENT REVIEW:", text)
+        for classification in (
+            "REPLACE",
+            "RETAIN",
+            "PARTIAL REPLACEMENT",
+            "NO OVERLAP",
+            "RUNTIME VERIFICATION REQUIRED",
+        ):
+            self.assertIn(classification, text)
+        self.assertIn("Candidate Displacement Matrix:", text)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

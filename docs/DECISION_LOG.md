@@ -112,3 +112,14 @@ names alone cannot safely establish a widget's type or event execution order.
 
 Consequences: Agents verify widget types and input event timing rather than
 using mock success as capability proof. In-game verification remains separate.
+
+## 2026-10-01 — Upstream Capability Displacement Review
+Status: ACTIVE
+
+Decision: New or materially improved upstream capabilities must be systematically evaluated against existing mechanisms across the maintained addon portfolio before the upstream enhancement is considered fully exploited.
+
+Reason: Without deliberate displacement review, addons accumulate historical dependencies, redundant workarounds, polling loops, and custom caches even after authoritative, superior primitives become available upstream.
+
+Evidence: ClassicAPI, SuperWoW, NamPower, and UnitXP SP3 evolve continuously, frequently adding primitives (e.g. `UnitSpellHaste`, `C_Item`, `UnitInLineOfSight`) that render older provider queries or client-side workarounds obsolete.
+
+Consequences: Upstream baseline adoption and addon modernization remain separate, bounded engineering phases. Every upstream release audit must populate a capability displacement review matrix. Verified replacements trigger bounded subsystem modernization, eliminating dead fallback branches and dropping unneeded DLL dependency declarations from individual addons without affecting the global client stack.
