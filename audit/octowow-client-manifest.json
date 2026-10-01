@@ -1,0 +1,457 @@
+{
+  "generatedAt": "2026-10-01T13:34:35.043090+00:00",
+  "authoritativeClientRoot": "C:\\Users\\Fostercare\\Desktop\\client",
+  "historicalClientRoot": "C:\\Users\\Fostercare\\Desktop\\Niko2",
+  "clientExecutable": "WoW.exe",
+  "clientBuild": 5875,
+  "interfaceVersion": 11200,
+  "realm": "play.octowow.st",
+  "loaderConfiguration": {
+    "dlls_txt": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client\\dlls.txt",
+      "sha256": "45bae372194d247428460fc353fa59c572a41711d4ee39a0f6d5767a8d8851c1",
+      "entries": [
+        "SuperWoWhook.dll",
+        "ClassicAPI.dll",
+        "nampower.dll",
+        "UnitXP_SP3.dll",
+        "AuctionQueryThrottle.dll",
+        "transmogfix.dll",
+        "d3d9.dll"
+      ]
+    },
+    "dlls_txt_cache": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client\\dlls.txt.cache",
+      "sha256": "b165e9a406f409ad1357a5494f9357bbb00cf4cc23b27e899384d69526be8179",
+      "cached_dlls": [
+        "C:\\Users\\Fostercare\\Desktop\\client\\transmogfix.dll",
+        "C:\\Users\\Fostercare\\Desktop\\client\\SuperWoWhook.dll",
+        "C:\\Users\\Fostercare\\Desktop\\client\\ClassicAPI.dll",
+        "C:\\Users\\Fostercare\\Desktop\\client\\nampower.dll",
+        "C:\\Users\\Fostercare\\Desktop\\client\\UnitXP_SP3.dll",
+        "C:\\Users\\Fostercare\\Desktop\\client\\AuctionQueryThrottle.dll"
+      ]
+    }
+  },
+  "nativeExtensions": {
+    "ClassicAPI.dll": {
+      "filename": "ClassicAPI.dll",
+      "bytes": 1449984,
+      "sha256": "e34886fb9725b9059375a5c37bff81ce220633c4e2c39719ef3223a6b8fc703d",
+      "loadedInDllsTxt": true,
+      "versionStrings": {
+        "FileVersion": "1.15.16.0",
+        "ProductVersion": "1.15.16.0",
+        "ProductName": "ClassicAPI",
+        "LegalCopyright": "Licensed under GPLv3"
+      },
+      "declaredVersion": "1.15.16.0",
+      "knownUpstreamTag": "v1.15.16",
+      "sha256MatchesUpstreamRelease": true
+    },
+    "SuperWoWhook.dll": {
+      "filename": "SuperWoWhook.dll",
+      "bytes": 1000448,
+      "sha256": "bd214b32c878649e94ce654835946bd05e0ce7710e8f01bae10d8ab50a89351d",
+      "loadedInDllsTxt": true,
+      "versionStrings": {},
+      "declaredVersion": "2.2",
+      "engineGlobal": "SUPERWOW_VERSION=\"2.2\""
+    },
+    "nampower.dll": {
+      "filename": "nampower.dll",
+      "bytes": 829952,
+      "sha256": "96af1722ee6b1a76cbb11e59e452fe54a83f54a3da80ae24f9c7571a0a6392fe",
+      "loadedInDllsTxt": true,
+      "versionStrings": {},
+      "declaredVersion": "4.6.2",
+      "logSignature": "Loading nampower v4.6.2",
+      "luaGlobal": "GetNampowerVersion"
+    },
+    "UnitXP_SP3.dll": {
+      "filename": "UnitXP_SP3.dll",
+      "bytes": 202240,
+      "sha256": "74a0a80aef02be28187fd67e9ec3945d54828ef3302a827754b4c40b69cdaed8",
+      "loadedInDllsTxt": true,
+      "versionStrings": {},
+      "declaredBuild": 90,
+      "peTimeDateStamp": 1774797347,
+      "luaGlobal": "UnitXP"
+    },
+    "AuctionQueryThrottle.dll": {
+      "filename": "AuctionQueryThrottle.dll",
+      "bytes": 92672,
+      "sha256": "720b7ad72941206249df23cb9d36addafa2634f190081f7b33834b84af184f5e",
+      "loadedInDllsTxt": true,
+      "versionStrings": {}
+    },
+    "transmogfix.dll": {
+      "filename": "transmogfix.dll",
+      "bytes": 12800,
+      "sha256": "cd9e4c6ce033b0923cf045269f590f5e0b886bd03f43bd81406670d781452210",
+      "loadedInDllsTxt": true,
+      "versionStrings": {}
+    },
+    "dxgi.dll": {
+      "filename": "dxgi.dll",
+      "bytes": 5877774,
+      "sha256": "abd1449dc28d536a4289c256ae7f4b6bbd15fa552792b7170c2ddece473c8bda",
+      "loadedInDllsTxt": false,
+      "versionStrings": {
+        "FileVersion": "10.0.17763.1 (WinBuild.160101.0800)",
+        "ProductVersion": "10.0.17763.1",
+        "ProductName": "DXVK",
+        "LegalCopyright": "zlib/libpng license"
+      }
+    },
+    "VanillaFixes.exe": {
+      "filename": "VanillaFixes.exe",
+      "bytes": 88576,
+      "sha256": "228d7bb5e3b5b0c2062d6c5f40c38c2a173e4c80d8a5d9e4077be800431b48a3",
+      "loadedInDllsTxt": false,
+      "versionStrings": {}
+    },
+    "VanillaHelpers.dll": {
+      "filename": "VanillaHelpers.dll",
+      "bytes": 254976,
+      "sha256": "1e74ddf6484c23482550d5f9e5f9d291085c4ac538d3b3ed9d87155521841196",
+      "loadedInDllsTxt": false,
+      "versionStrings": {}
+    },
+    "VanillaMultiMonitorFix.dll": {
+      "filename": "VanillaMultiMonitorFix.dll",
+      "bytes": 28160,
+      "sha256": "7fa033e744c4b8794a4c97a45d563a8870264244bfa1e478a1c0f85e0c6e3371",
+      "loadedInDllsTxt": false,
+      "versionStrings": {}
+    },
+    "VfPatcher.dll": {
+      "filename": "VfPatcher.dll",
+      "bytes": 72704,
+      "sha256": "f283b6b5ad8042e7995eff9768c150042dd47de6e5f00ffe530d2e67743df81d",
+      "loadedInDllsTxt": false,
+      "versionStrings": {}
+    }
+  },
+  "dataArchives": {
+    "backup.MPQ": {
+      "bytes": 6354963,
+      "sha256": "d95820d4aded54a6679a824a2c3b56401fe730a8f41cbdb1bca7148acd41326c"
+    },
+    "base.MPQ": {
+      "bytes": 12567654,
+      "sha256": "b5cb812735d5985d408f4fb5df942180b524efaf679a3a2bdebc320a665df01f"
+    },
+    "dbc.MPQ": {
+      "bytes": 4211367,
+      "sha256": "898f658ab5ac0dcc0eac4f29f980cfe10792b1ee48223f5dad61dd53201c9066"
+    },
+    "fonts.MPQ": {
+      "bytes": 1284223,
+      "sha256": "620a2021bfcf5464c79d56ab081951cced0e868ceaf9aa4c5e5d037827481452"
+    },
+    "interface.MPQ": {
+      "bytes": 69710782,
+      "sha256": "50a474f910e4c1c231c8554be5d4343f0456c00b8c2a6ad9cc843ac41f9795e1"
+    },
+    "misc.MPQ": {
+      "bytes": 6611117,
+      "sha256": "e588ad6c820bab5ddac0049f1c1377cb52da55381bb33babe066cc84c9a168a6"
+    },
+    "model.MPQ": {
+      "bytes": 191194646,
+      "sha256": "21cb93a3f6e591df8855fcbb0c559c70a0518a20408f7ee4cf59304731e5f8b9"
+    },
+    "patch-1.mpq": {
+      "bytes": 293493217,
+      "sha256": "416510b748b18b369369021554397c5ac53060d311e365674962d630990e9386"
+    },
+    "patch-2.mpq": {
+      "bytes": 293360042,
+      "sha256": "d55a5f531c241f72d8adf5effb305c5f56a708bfa6f0d0753e6de255b6b05573"
+    },
+    "patch-3.mpq": {
+      "bytes": 2060279959,
+      "sha256": "a3c822b7e6bbcb2b3509be94e1c747d65386fdecba64cec18dc58938ad97a791"
+    },
+    "patch-4.mpq": {
+      "bytes": 1368080007,
+      "sha256": "41c2ec9378dd60cd93ad4689bd9eb1e9d1eaadf6810e7ba362bb1cd440baff67"
+    },
+    "patch-5.mpq": {
+      "bytes": 54291383,
+      "sha256": "c3411200e76f0815d37911d93bcd42f60e8b968bf80451eed27d49d81d419d78"
+    },
+    "patch-O.mpq": {
+      "bytes": 9315256,
+      "sha256": "6f1f88d688247c1221af478a38651ffd6df8d66c4493ec82824e632f3ac64278"
+    },
+    "patch-Y.MPQ": {
+      "bytes": 12822,
+      "sha256": "fe7be1b6790b789b1bd47985590ca3062434c33da7d2e7f56a8fba996c7b3e0c"
+    },
+    "patch.MPQ": {
+      "bytes": 1909274748,
+      "sha256": "05d1dab7a9ff95485dd0bd8cbd6e63cd5aef1957b9036cc2688c1e5ac89f9386"
+    },
+    "sound.MPQ": {
+      "bytes": 709586366,
+      "sha256": "53f23007f1d1f59ee1137406cd6ae5eabe40acc9cdf4f080afb3bfbcabaa4f37"
+    },
+    "speech.MPQ": {
+      "bytes": 229169392,
+      "sha256": "d45669bed1e24a1ce7564078dee29fd6572a7cd61775d2b247105407afc78d51"
+    },
+    "terrain.MPQ": {
+      "bytes": 1099751861,
+      "sha256": "aa72bd704014b4c7d60012771ee30a9c1cbbd771f519f27be1c66e56d19e63b3"
+    },
+    "texture.MPQ": {
+      "bytes": 664760752,
+      "sha256": "78ae55d609fea3ac07eb1ce45024542c295032c37164234f820762d4dfa44128"
+    },
+    "wmo.MPQ": {
+      "bytes": 363610878,
+      "sha256": "07b85f5d5939e9cbc7c80b766725de8056de64b2927863387eebee15c3392089"
+    }
+  },
+  "frameXML": {
+    "Interface\\FrameXML\\ChatFrame.lua": {
+      "sourceArchive": "patch-4.mpq",
+      "bytes": 72017,
+      "sha256": "2371fd8216a8b06eeb0f8f3aa0ced74e07d3bb4e3fba27d5c7bcfb89cc9b124f"
+    },
+    "Interface\\FrameXML\\ChatFrame.xml": {
+      "sourceArchive": "patch-4.mpq",
+      "bytes": 3672,
+      "sha256": "98db0d338fd97a63bcea7f0e0c0c04904d262990da12d5952cf30f4f2ac96e2b"
+    },
+    "Interface\\FrameXML\\GlobalStrings.lua": {
+      "sourceArchive": "patch-5.mpq",
+      "bytes": 312863,
+      "sha256": "6bb6dd6006be7af38fa439985a47550173f55279e2f279298f13c9985a26ec2a"
+    },
+    "Interface\\FrameXML\\QuestFrame.lua": {
+      "sourceArchive": "patch-4.mpq",
+      "bytes": 21328,
+      "sha256": "546efb3238d46d6cd3cc4d03e9d817507e41ba4d1203a3418a9f15f9f486748f"
+    },
+    "Interface\\FrameXML\\QuestFrame.xml": {
+      "sourceArchive": "patch.MPQ",
+      "bytes": 35494,
+      "sha256": "23635b2ca881b75f81e2c0c0fb55c6c50173b2e76f61c0ea8e91be5f0a7d1832"
+    },
+    "Interface\\FrameXML\\GossipFrame.lua": {
+      "sourceArchive": "patch-4.mpq",
+      "bytes": 4090,
+      "sha256": "ec61b2531e750e3d3c676b09a625e88883f591abefd278fb180478a97e23de34"
+    },
+    "Interface\\FrameXML\\GossipFrame.xml": {
+      "sourceArchive": "patch.MPQ",
+      "bytes": 16154,
+      "sha256": "dae744fd7f7eb35660cd2f2c617c9f62e4211c49fa3c2aac4d9743532b791765"
+    },
+    "Interface\\FrameXML\\LootFrame.lua": {
+      "sourceArchive": "patch-4.mpq",
+      "bytes": 11825,
+      "sha256": "9464df009e6ef4e2701a52bfb5293c97b9f72c851de0f74fc93e87ae4becb03d"
+    },
+    "Interface\\FrameXML\\LootFrame.xml": {
+      "sourceArchive": "patch-4.mpq",
+      "bytes": 14735,
+      "sha256": "df44c8d4675c702cd3255dcf1c09c375c99de4d852a7dd950d65f0117475d217"
+    },
+    "Interface\\FrameXML\\UIParent.lua": {
+      "sourceArchive": "patch-4.mpq",
+      "bytes": 63478,
+      "sha256": "9ad1082fa46d02bc4fb7ee2d9f0509d171cb6b3a5c1a5440a1fef786ad4a28cc"
+    },
+    "Interface\\FrameXML\\UIParent.xml": {
+      "sourceArchive": "patch.MPQ",
+      "bytes": 1813,
+      "sha256": "f6264c5f016eb96095e789278fd083f8d2ddc407099fe3ce7223f873b3303139"
+    },
+    "Interface\\FrameXML\\FrameXML.toc": {
+      "sourceArchive": "patch-5.mpq",
+      "bytes": 3693,
+      "sha256": "551119c1893633d8c42fb6f16f6946e06e261f9e8fbdaab05ebceec1ff3c9c98"
+    },
+    "Interface\\FrameXML\\QuestLogFrame.lua": {
+      "sourceArchive": "patch-5.mpq",
+      "bytes": 27658,
+      "sha256": "39bdfaf250eca7320ac5d0eca48ee422a1f55f8ab3bbdcae227ec854671f9d0c"
+    }
+  },
+  "deployedAddons": {
+    "FostercareTweaks": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client\\Interface\\AddOns\\FostercareTweaks",
+      "git": {
+        "head": "ebc9bfc59c317ab1d8a29cca0adaf08728077d8f",
+        "branch": "main",
+        "clean": true,
+        "status": "clean"
+      },
+      "toc": {
+        "Interface": "11200",
+        "X-ClassicAPI-Min-Version": "1.15.15",
+        "Title": "FostercareTweaks",
+        "Notes": "Interface and gameplay tweaks for WoW 1.12.1. Requires ClassicAPI 1.15.15+ and SuperWoW 2.2+; UnitXP SP3 is optional.",
+        "Author": "Fostercare",
+        "Version": "3.1.0",
+        "DefaultState": "enabled",
+        "SavedVariablesPerCharacter": "FostercareTweaks_Config, FostercareTweaks_Cache"
+      }
+    },
+    "ItemRack": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client\\Interface\\AddOns\\ItemRack",
+      "git": {
+        "head": "1d31658a87d91f700e37a7e034bd4646be11e7a7",
+        "branch": "main",
+        "clean": true,
+        "status": "clean"
+      },
+      "toc": {
+        "Interface": "11200",
+        "X-ClassicAPI-Min-Version": "1.15.15",
+        "Author": "Gello, Fostercare5988",
+        "Title": "ItemRack",
+        "Notes": "Item sets and context menus for inventory items",
+        "Version": "2.0.0",
+        "SavedVariables": "ItemRack_Users, ItemRack_Settings, ItemRack_Events, Rack_User",
+        "OptionalDeps": "Bagnon, ButtonHole"
+      }
+    },
+    "AutoBG": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client\\Interface\\AddOns\\AutoBG",
+      "git": {
+        "head": "c0dcdb6400aed5ea08cb80e3b08ac3edaf8a1630",
+        "branch": "main",
+        "clean": true,
+        "status": "clean"
+      },
+      "toc": {
+        "Interface": "11200",
+        "X-ClassicAPI-Min-Version": "1.15.15",
+        "Title": "AutoBG",
+        "Notes": "BG timers, enemy frames and open-world Spy for WoW 1.12.1. Requires ClassicAPI v1.15.15+ and SuperWoW v2.2+; UnitXP SP3 optional.",
+        "Author": "Fostercare5988",
+        "Version": "2.0.0",
+        "SavedVariables": "AutoBG_Settings",
+        "X-Category": "Battlegrounds & PvP",
+        "X-Website": "https://github.com/Fostercare5988/AutoBG"
+      }
+    },
+    "Bagnon": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client\\Interface\\AddOns\\Bagnon",
+      "git": {
+        "head": "ed4d9e9f1a632fa07c9ef71e450c74aa3e654242",
+        "branch": "main",
+        "clean": true,
+        "status": "clean"
+      },
+      "toc": {
+        "Interface": "11200",
+        "X-ClassicAPI-Min-Version": "1.15.15",
+        "Title": "Bagnon",
+        "Notes": "Single-window inventory and bank engine engineered for World of Warcraft 1.12.1 (ClassicAPI v1.15.15+).",
+        "Author": "Tuller, McPewPew, Fostercare5988",
+        "Version": "2.2.1",
+        "OptionalDeps": "KC_Items",
+        "SavedVariablesPerCharacter": "BagnonSets",
+        "SavedVariables": "BagnonForeverData",
+        "X-Category": "Inventory & Bank",
+        "X-Website": "https://github.com/Fostercare5988/Bagnon"
+      }
+    },
+    "AutoLazy": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client\\Interface\\AddOns\\AutoLazy",
+      "git": {
+        "head": "3c545b84c235b60c54eeac703d24affe0311ccfd",
+        "branch": "main",
+        "clean": true,
+        "status": "clean"
+      },
+      "toc": {
+        "Interface": "11200",
+        "X-ClassicAPI-Min-Version": "1.15.15",
+        "Title": "AutoLazy",
+        "Notes": "High-performance dungeon loot automation, continuous repeatable quest turn-ins, Floating Addon Tray, and Reversible System Bloat Suppression (ClassicAPI v1.15.15+).",
+        "Author": "Fostercare5988",
+        "Version": "3.7.0",
+        "SavedVariables": "AutoLazyDB",
+        "X-Category": "Automation & Quality of Life",
+        "X-Website": "https://github.com/Fostercare5988/AutoLazy"
+      }
+    },
+    "TrinketMenu": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client\\Interface\\AddOns\\TrinketMenu",
+      "git": {
+        "head": "27e12d09852225db2878b3e8b43009316abdf3d6",
+        "branch": "main",
+        "clean": true,
+        "status": "clean"
+      },
+      "toc": {
+        "Interface": "11200",
+        "X-ClassicAPI-Min-Version": "1.15.15",
+        "Title": "TrinketMenu",
+        "Author": "Gello, Fostercare5988",
+        "Version": "3.9.0",
+        "Notes": "AddOn to manage trinkets engineered natively for World of Warcraft 1.12.1 (ClassicAPI v1.15.15+, SuperWoW v2.2+).",
+        "SavedVariables": "TrinketMenuOptions",
+        "SavedVariablesPerCharacter": "TrinketMenuPerOptions, TrinketMenuQueue"
+      }
+    },
+    "MikScrollingBattleText": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client\\Interface\\AddOns\\MikScrollingBattleText",
+      "git": {
+        "head": "df1fd0f206759ee49806ebe6410abef2fd66bc60",
+        "branch": "main",
+        "clean": true,
+        "status": "clean"
+      },
+      "toc": {
+        "Interface": "11200",
+        "X-ClassicAPI-Min-Version": "1.15.15",
+        "Title": "Mik's Scrolling Battle Text",
+        "Notes": "Scrolling combat text engineered for ClassicAPI, SuperWoW, NamPower, and UnitXP SP3.",
+        "Author": "Mik, Fostercare5988",
+        "Version": "6.5.2",
+        "SavedVariables": "MikSBT_Save",
+        "X-Category": "Combat",
+        "X-Website": "https://github.com/Fostercare5988/MikScrollingBattleText"
+      }
+    },
+    "TWThreat": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client\\Interface\\AddOns\\TWThreat",
+      "git": {
+        "head": "dac823c26e4468c84cca3b77f9a38fc19b5024c4",
+        "branch": "main",
+        "clean": true,
+        "status": "clean"
+      },
+      "toc": {
+        "Interface": "11200",
+        "X-ClassicAPI-Min-Version": "1.15.15",
+        "Title": "TWThreat",
+        "Notes": "Real-time threat meter engineered natively for World of Warcraft 1.12.1 (ClassicAPI v1.15.15+, SuperWoW 2.2+).",
+        "Author": "Xerron/Er, Fostercare5988",
+        "Version": "1.4.0",
+        "SavedVariablesPerCharacter": "TWT_CONFIG",
+        "X-Category": "Combat & Threat",
+        "X-Website": "https://github.com/Fostercare5988/TWThreat"
+      }
+    }
+  },
+  "clientExecutableInfo": {
+    "filename": "WoW.exe",
+    "bytes": 4927488,
+    "sha256": "079921d4994102e51f1424f4f8221387bf3a98f907cabbb6475d63506263cebf",
+    "versionInfo": {
+      "FileVersion": "1, 12, 1, 5875",
+      "ProductVersion": "Version 1.12",
+      "ProductName": "World of Warcraft",
+      "LegalCopyright": "Copyright \u00a9 2004"
+    }
+  }
+}
