@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-01T15:12:48.914615+00:00",
+  "generatedAt": "2026-10-01T15:22:53.219758+00:00",
   "authoritativeClientRoot": "C:\\Users\\Fostercare\\Desktop\\client",
   "historicalClientRoot": "C:\\Users\\Fostercare\\Desktop\\Niko2",
   "clientExecutable": "WoW.exe",
@@ -366,7 +366,7 @@
     "AutoLazy": {
       "path": "C:\\Users\\Fostercare\\Desktop\\client\\Interface\\AddOns\\AutoLazy",
       "git": {
-        "head": "757566380fce0e670ef3cf0647625861f4a4a5e6",
+        "head": "37299f66e008e66966028c0833668f06fb65c117",
         "branch": "main",
         "clean": true,
         "status": "clean"
