@@ -843,7 +843,9 @@ Enhanced WoW 1.12.1 client stack
 ### Hard addon dependency
 
 A component whose API the addon actually invokes and without which the addon cannot
-operate correctly.
+operate correctly. When capability displacement eliminates all call sites for a
+provider from an addon, remove that provider from the addon's declared dependencies
+and documentation; never remove the DLL from the user's client environment.
 
 ### Optional enhancement
 
