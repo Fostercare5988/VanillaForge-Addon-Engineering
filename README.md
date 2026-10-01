@@ -3,7 +3,7 @@
 ## Enhanced WoW 1.12.1 Addon Engineering Framework
 
 [![WoW](https://img.shields.io/badge/WoW-1.12.1%20Build%205875-blue.svg)](https://github.com/Fostercare5988/VanillaForge-Addon-Engineering)
-[![ClassicAPI](https://img.shields.io/badge/ClassicAPI-v1.15.15%2B-brightgreen.svg)](https://github.com/brues-code/ClassicAPI)
+[![ClassicAPI](https://img.shields.io/badge/ClassicAPI-v1.15.16%2B-brightgreen.svg)](https://github.com/brues-code/ClassicAPI)
 [![SuperWoW](https://img.shields.io/badge/SuperWoW-v2.2%2B-green.svg)](https://github.com/balakethelock/SuperWoW)
 [![Framework](https://img.shields.io/badge/VanillaForge-v3.1-informational.svg)](VANILLAFORGE_SYSTEM_PROMPT.md)
 
@@ -36,7 +36,7 @@ not to the framework identity.
 
 | Component | Baseline | Role |
 | --- | --- | --- |
-| [ClassicAPI](https://github.com/brues-code/ClassicAPI) | **v1.15.15+** | Modern/backported WoW API, Lua compatibility, events, unit tokens, secure-style helpers, timers and modern client behavior |
+| [ClassicAPI](https://github.com/brues-code/ClassicAPI) | **v1.15.16+** | Modern/backported WoW API, Lua compatibility, events, unit tokens, secure-style helpers, timers and modern client behavior |
 | [SuperWoW](https://github.com/balakethelock/SuperWoW) | **v2.2+** | GUID-aware identity/targeting, structured events and additional client/UI extensions |
 | [NamPower](https://github.com/Emyrk/nampower) | **v4.6.2+** | Spell queue/quickcast behavior plus native spell, unit, DBC and event APIs |
 | [UnitXP SP3](https://github.com/brues-code/UnitXP_SP3) | **v90+** | Raw telemetry, distance/LOS and selected client/window utilities |
@@ -49,7 +49,7 @@ capabilities.
 
 This is the framework's current environment baseline. An addon's minimum ClassicAPI
 version follows the capabilities and fixes it consumes; this refresh does not require
-every existing addon to set `MIN_CLASSIC_API=11515`. A maintainer can explicitly
+every existing addon to set `MIN_CLASSIC_API=11516`. A maintainer can explicitly
 choose a higher support floor; that decision must be documented separately from
 the minimum required by an API, and reflected consistently in guards and docs.
 
@@ -66,7 +66,8 @@ being investigated rather than loading every historical audit.
 
 | Audit | Status |
 | --- | --- |
-| [v1.15.15 audit](docs/CLASSICAPI_1.15.15_AUDIT.md) | Current reference |
+| [v1.15.16 audit](docs/CLASSICAPI_1.15.16_AUDIT.md) | Current reference |
+| [v1.15.15 audit](docs/CLASSICAPI_1.15.15_AUDIT.md) | Historical release audit |
 | [v1.15.14 audit](docs/CLASSICAPI_1.15.14_AUDIT.md) | Historical release audit |
 | [v1.15.13 audit](docs/CLASSICAPI_1.15.13_AUDIT.md) | Historical release audit |
 | [v1.15.12 audit](docs/CLASSICAPI_1.15.12_AUDIT.md) | Historical release audit |
