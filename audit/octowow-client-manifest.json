@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-01T13:34:35.043090+00:00",
+  "generatedAt": "2026-10-01T15:12:48.914615+00:00",
   "authoritativeClientRoot": "C:\\Users\\Fostercare\\Desktop\\client",
   "historicalClientRoot": "C:\\Users\\Fostercare\\Desktop\\Niko2",
   "clientExecutable": "WoW.exe",
@@ -22,14 +22,14 @@
     },
     "dlls_txt_cache": {
       "path": "C:\\Users\\Fostercare\\Desktop\\client\\dlls.txt.cache",
-      "sha256": "b165e9a406f409ad1357a5494f9357bbb00cf4cc23b27e899384d69526be8179",
+      "sha256": "27cc3fb8d4134301780bf7b827b482c25e3b9706edd9b46950c848dc7e070531",
       "cached_dlls": [
-        "C:\\Users\\Fostercare\\Desktop\\client\\transmogfix.dll",
         "C:\\Users\\Fostercare\\Desktop\\client\\SuperWoWhook.dll",
         "C:\\Users\\Fostercare\\Desktop\\client\\ClassicAPI.dll",
         "C:\\Users\\Fostercare\\Desktop\\client\\nampower.dll",
         "C:\\Users\\Fostercare\\Desktop\\client\\UnitXP_SP3.dll",
-        "C:\\Users\\Fostercare\\Desktop\\client\\AuctionQueryThrottle.dll"
+        "C:\\Users\\Fostercare\\Desktop\\client\\AuctionQueryThrottle.dll",
+        "C:\\Users\\Fostercare\\Desktop\\client\\transmogfix.dll"
       ]
     }
   },
@@ -366,7 +366,7 @@
     "AutoLazy": {
       "path": "C:\\Users\\Fostercare\\Desktop\\client\\Interface\\AddOns\\AutoLazy",
       "git": {
-        "head": "3c545b84c235b60c54eeac703d24affe0311ccfd",
+        "head": "757566380fce0e670ef3cf0647625861f4a4a5e6",
         "branch": "main",
         "clean": true,
         "status": "clean"
