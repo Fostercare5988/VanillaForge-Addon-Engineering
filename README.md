@@ -1,65 +1,91 @@
 # VanillaForge
 
-## Enhanced WoW 1.12.1 Addon Engineering Framework
+Engineering guidance, API references, and validation tools for enhanced World of
+Warcraft 1.12.1 addons. Framework version **3.1**.
 
-[![WoW](https://img.shields.io/badge/WoW-1.12.1%20Build%205875-blue.svg)](https://github.com/Fostercare5988/VanillaForge-Addon-Engineering)
-[![ClassicAPI](https://img.shields.io/badge/ClassicAPI-v1.15.16%2B-brightgreen.svg)](https://github.com/brues-code/ClassicAPI)
-[![SuperWoW](https://img.shields.io/badge/SuperWoW-v2.2%2B-green.svg)](https://github.com/balakethelock/SuperWoW)
-[![Framework](https://img.shields.io/badge/VanillaForge-v3.1-informational.svg)](VANILLAFORGE_SYSTEM_PROMPT.md)
+Start with [AGENTS.md](AGENTS.md). The authoritative engineering contract is
+[VANILLAFORGE_SYSTEM_PROMPT.md](VANILLAFORGE_SYSTEM_PROMPT.md); retrieve detailed
+references only when the task needs them.
 
-A local knowledge base, system prompt, and static-analysis toolkit for building and
-modernizing addons specifically for an **enhanced World of Warcraft 1.12.1 client**.
+## Target
 
-The framework is designed for AI coding assistants and human developers working with a
-known modern client-extension stack. It deliberately avoids preserving compatibility
-with an unmodified 2006 client when a verified enhanced primitive provides a better
-solution.
+**WoW 1.12.1 · Build 5875 · Interface 11200**
 
----
+| Component | Environment baseline |
+| --- | --- |
+| [ClassicAPI](https://github.com/brues-code/ClassicAPI) | v1.15.16+ |
+| [SuperWoW](https://github.com/balakethelock/SuperWoW) | v2.2+ |
+| [NamPower](https://github.com/Emyrk/nampower) | v4.6.2+ |
+| [UnitXP SP3](https://github.com/brues-code/UnitXP_SP3) | v90+ |
+| [DXVK](https://github.com/doitsujin/dxvk) / [VanillaFixes](https://github.com/hannesmann/vanillafixes) | Runtime / loader infrastructure |
 
-## Target Environment
+The installed stack is assumed available. Addons use and declare only components
+that they consume; their minimum versions follow the APIs and fixes they require.
+DXVK is never a Lua API or addon dependency. Server content revisions do not
+change the underlying client/API generation.
 
-The client/API target is always:
+## Find what you need
+
+| Question | Read |
+| --- | --- |
+| Start or resume an engineering task | [Agent bootstrap](docs/AGENT_BOOTSTRAP.md) |
+| Implement or modernize an addon | [Workflow](docs/WORKFLOW.md) |
+| Prepare or publish a release | [Release workflow](docs/RELEASE_WORKFLOW.md) |
+| Find a ClassicAPI capability | [ClassicAPI reference](CLASSICAPI_MASTER_REFERENCE.md) |
+| Check native extensions or FrameXML semantics | [Engine reference](ENGINE_REFERENCE.md) |
+| Investigate a recurring hazard | [Known patterns](KNOWN_PATTERNS.md) |
+| Inspect the deployed OctoWoW client | [Dated client baseline](audit/OCTOWOW_CLIENT_BASELINE.md) |
+| Review reusable lessons | [Retrospective](agent/RETROSPECTIVE_TEMPLATE.md#framework-lesson) and [decision log](docs/DECISION_LOG.md) |
+| Audit an upstream release | [Upstream audit template](agent/UPSTREAM_AUDIT_TEMPLATE.md) |
+
+[Task](agent/TASK_TEMPLATE.md) and [review](agent/REVIEW_TEMPLATE.md) templates
+support substantial work. Small fixes need only the relevant inspection and checks.
+
+## Validate
+
+Python tools use the standard library. From this repository:
 
 ```text
-World of Warcraft 1.12.1
-Build 5875
-Interface 11200
+python -B tools/vanillaforge_linter.py "<addon-path>"
+python -B tools/audit_addon.py "<addon-path>" --output "<private-report.json>"
+python -B tools/check_audit_index.py
+python -B tools/check_framework_docs.py
+python -B -m unittest discover -s tests -p "test_*.py" -v
 ```
 
-VanillaForge is server-agnostic. A deployment-specific server/content revision may
-change content, but it does not turn the underlying client into a later Blizzard API
-generation. Server names and content revisions belong to deployment/project context,
-not to the framework identity.
+The linter is heuristic. Tests and static checks do not establish in-game behavior;
+report remaining runtime checks explicitly. Native DLL changes require a full
+client restart; `/reload` reloads Lua, FrameXML, and addons.
 
-### Canonical enhanced stack
+The audit command collects loaded modules, hashes, candidate event/query/UI sites
+and scoped lint in one report. Add `--run-tests` for local Python unittest suites.
+It does not execute Lua, measure native cost or mark human review complete.
+Use the [complete performance/polish pass](docs/WORKFLOW.md#complete-performance-and-polish-pass)
+to turn that inventory into verified repairs. Keep reports and recovery outside
+the active game; public addon packages contain runtime files and player guides.
 
-| Component | Baseline | Role |
-| --- | --- | --- |
-| [ClassicAPI](https://github.com/brues-code/ClassicAPI) | **v1.15.16+** | Modern/backported WoW API, Lua compatibility, events, unit tokens, secure-style helpers, timers and modern client behavior |
-| [SuperWoW](https://github.com/balakethelock/SuperWoW) | **v2.2+** | GUID-aware identity/targeting, structured events and additional client/UI extensions |
-| [NamPower](https://github.com/Emyrk/nampower) | **v4.6.2+** | Spell queue/quickcast behavior plus native spell, unit, DBC and event APIs |
-| [UnitXP SP3](https://github.com/brues-code/UnitXP_SP3) | **v90+** | Raw telemetry, distance/LOS and selected client/window utilities |
-| [DXVK](https://github.com/doitsujin/dxvk) | Runtime | Direct3D 9 to Vulkan translation; **not a Lua addon API** |
-| [VanillaFixes](https://github.com/hannesmann/vanillafixes) | Runtime/loader | Client fixes and common DLL-loading infrastructure |
+## Maintain the knowledge
 
-The whole stack may be assumed present in the target environment, but an individual
-addon should only consume or declare a component when it actually uses that component's
-capabilities.
+Improve the existing canonical owner before adding guidance. Preserve verified
+evidence, retire superseded advice, and keep addon-specific facts with the addon.
+Lesson promotion is deliberate framework maintenance, guided by the
+[retrospective](agent/RETROSPECTIVE_TEMPLATE.md#framework-lesson).
 
-This is the framework's current environment baseline. An addon's minimum ClassicAPI
-version follows the capabilities and fixes it consumes; this refresh does not require
-every existing addon to set `MIN_CLASSIC_API=11516`. A maintainer can explicitly
-choose a higher support floor; that decision must be documented separately from
-the minimum required by an API, and reflected consistently in guards and docs.
+[UPSTREAM_VERSIONS.json](UPSTREAM_VERSIONS.json) records reference versions and
+source provenance. To check upstream drift (network access required):
 
-### ClassicAPI audit provenance
+```text
+python -B tools/check_upstream.py
+```
 
-The current reference is selected by `classicapi.reference_version` in
-`UPSTREAM_VERSIONS.json`. Historical audits preserve earlier provenance and
-unchanged knowledge; they do not set the current baseline. The v1.15.12 audit
-also covers v1.15.10 and v1.15.11. Read the audit relevant to the release or behavior
-being investigated rather than loading every historical audit.
+The current ClassicAPI audit is selected by `classicapi.reference_version`.
+Historical audits retain evidence for older releases; consult them selectively.
+After adding an audit or changing the reference version, regenerate its index:
+
+```text
+python -B tools/check_audit_index.py --write
+python -B tools/check_audit_index.py
+```
 
 <!-- BEGIN CLASSICAPI AUDIT INDEX -->
 <!-- Generated by tools/check_audit_index.py from UPSTREAM_VERSIONS.json and docs/CLASSICAPI_*_AUDIT.md. -->
@@ -74,455 +100,5 @@ being investigated rather than loading every historical audit.
 
 <!-- END CLASSICAPI AUDIT INDEX -->
 
----
-
-## Repository Layout
-
-```text
-.
-├── .github/                        # Continuous integration and automation
-│   └── workflows/
-│       ├── upstream-check.yml
-│       └── validation.yml
-├── VANILLAFORGE_SYSTEM_PROMPT.md   # Authoritative engineering contract
-├── AGENTS.md                       # Agent routing and session entry point
-├── CLASSICAPI_MASTER_REFERENCE.md  # ClassicAPI capabilities and namespaces
-├── ENGINE_REFERENCE.md             # SuperWoW, NamPower, UnitXP SP3, DXVK
-├── KNOWN_PATTERNS.md               # Reusable patterns and anti-patterns
-├── UPSTREAM_VERSIONS.json          # Canonical versions and drift metadata
-├── README.md                       # Framework overview and public contract
-├── agent/                          # Operational engineering templates
-│   ├── TASK_TEMPLATE.md
-│   ├── REVIEW_TEMPLATE.md
-│   ├── RETROSPECTIVE_TEMPLATE.md
-│   └── UPSTREAM_AUDIT_TEMPLATE.md
-├── docs/                           # Workflows, audits, and bootstrap guides
-│   ├── AGENT_BOOTSTRAP.md
-│   ├── WORKFLOW.md
-│   ├── RELEASE_WORKFLOW.md
-│   ├── CLASSICAPI_*_AUDIT.md        # Release audits; generated index above
-│   └── DECISION_LOG.md
-├── tools/                          # Automation and validation
-│   ├── vanillaforge_linter.py
-│   ├── check_upstream.py
-│   └── check_audit_index.py
-└── tests/                          # Framework and linter regression tests
-    ├── test_linter.py
-    ├── test_upstream_check.py
-    └── test_audit_index.py
-```
-
-### `VANILLAFORGE_SYSTEM_PROMPT.md`
-
-The compact active engineering contract.
-
-It defines:
-
-- target environment
-- capability-first development
-- no stock-client compatibility fallbacks
-- scope and completion discipline
-- performance principles
-- verification requirements
-- Git/public-addon discipline
-- when to consult the reference knowledge
-
-This is the file to give an AI as the primary system/instruction prompt.
-
-### `AGENTS.md` & `agent/`
-
-The operational routing layer for AI-assisted engineering sessions.
-
-[`AGENTS.md`](AGENTS.md) operationalizes the engineering contract without overriding it. It specifies:
-
-- load order and selective context retrieval
-- rules of engagement for fresh AI sessions
-- classification of work (discovery, audit, bounded implementation, bug fix, release)
-- task templates in `agent/`:
-  - [`agent/TASK_TEMPLATE.md`](agent/TASK_TEMPLATE.md) — Scoped execution, context budgets, and verification gates
-  - [`agent/REVIEW_TEMPLATE.md`](agent/REVIEW_TEMPLATE.md) — Final integration review before declaration of completion
-  - [`agent/RETROSPECTIVE_TEMPLATE.md`](agent/RETROSPECTIVE_TEMPLATE.md) — Learning extraction and candidate lesson promotion
-  - [`agent/UPSTREAM_AUDIT_TEMPLATE.md`](agent/UPSTREAM_AUDIT_TEMPLATE.md) — Upstream component audit and framework drift reconciliation
-
-See [`docs/AGENT_BOOTSTRAP.md`](docs/AGENT_BOOTSTRAP.md) for pre-packaged bootstrap prompts tailored for Claude, Antigravity/Gemini, and OpenAI Codex.
-
-### `CLASSICAPI_MASTER_REFERENCE.md`
-
-The local ClassicAPI knowledge base.
-
-It exists so an AI does **not** need to browse the ClassicAPI repository for ordinary
-API discovery.
-
-It covers, among other things:
-
-- Lua 5.1 compatibility and source rewriting
-- modern positional frame-script arguments
-- modern addon loading
-- the bundled `!!!ClassicAPI` addon
-- `/classicapi`
-- focus, nameplate and raid-marker unit tokens
-- macro conditions and secure-style helpers
-- `C_Timer`
-- `C_UnitAuras` / `AuraUtil`
-- `C_Spell` / `C_SpellBook`
-- `C_Item`
-- `C_Container`
-- `C_NamePlate`
-- `C_Map`
-- `C_Texture`
-- `C_LossOfControl`
-- events, globals and enums
-- GlueXML APIs
-- modernization guidance
-
-For ClassicAPI questions, this file is the framework's primary local reference.
-
-### `ENGINE_REFERENCE.md`
-
-Documents everything that should **not** be duplicated in the ClassicAPI master:
-
-- WoW 1.12.1 client/runtime boundaries
-- SuperWoW
-- NamPower
-- UnitXP SP3
-- DXVK
-- VanillaFixes / loader boundary
-- cross-stack API selection
-- FrameXML/UI engineering notes
-- runtime diagnostics
-- dependency documentation rules
-
-### `KNOWN_PATTERNS.md`
-
-Reusable engineering pitfalls and verified patterns extracted from real addon work.
-
-Examples include:
-
-- tooltip scraping
-- repeated aura scans
-- faux focus
-- fuzzy targeting
-- event/callback mistakes
-- cooldown edge cases
-- nameplate lifecycle problems
-- PvP-specific state handling
-
-Patterns are reference material, not mandatory ceremony.
-
-### `UPSTREAM_VERSIONS.json` & `tools/check_upstream.py`
-
-Automated upstream dependency tracking and drift detection.
-
-[`UPSTREAM_VERSIONS.json`](UPSTREAM_VERSIONS.json) records the framework's environment baseline, reference commits, and verified file blob SHAs.
-The automated checker [`tools/check_upstream.py`](tools/check_upstream.py) (run locally or on a weekly GitHub Actions cron via `.github/workflows/upstream-check.yml`) compares the stored snapshot against upstream GitHub repositories and flags drift before it can silently break addon assumptions.
-
-### `tools/vanillaforge_linter.py` & `tests/`
-
-A lightweight heuristic scanner for machine-detectable hazards and anti-patterns.
-
-The linter is a **floor, not a ceiling**. A clean scan is useful evidence, not proof
-that an addon is correct at runtime. Its regression suite lives in [`tests/test_linter.py`](tests/test_linter.py), supplemented by upstream configuration tests in [`tests/test_upstream_check.py`](tests/test_upstream_check.py).
-
-### `tools/check_audit_index.py`
-
-The offline [audit index checker](tools/check_audit_index.py) verifies that the
-current ClassicAPI reference has an audit and that the generated README index
-matches all release audit files. CI runs the same check. After adding an audit
-or changing the reference version, run:
-
-```bash
-python tools/check_audit_index.py --write
-python tools/check_audit_index.py
-```
-
-Only the marked index is regenerated; audit contents and the rest of this README
-are preserved. [Regression tests](tests/test_audit_index.py) cover missing audits,
-baseline changes, stale links, and safe regeneration.
-
----
-
-## Core Engineering Model
-
-### Enhanced-client only
-
-Do not write fallback branches merely so an addon still works on an unmodified stock
-1.12.1 client.
-
-If the target stack supplies a better authoritative primitive, use it.
-
-That does **not** mean every original 1.12.1 API is obsolete. Fundamental client APIs
-remain valid when they are still the correct primitive.
-
-The distinction is:
-
-```text
-valid native primitive       -> keep/use it
-obsolete compatibility hack  -> remove it when enhanced stack replaces it
-```
-
-### Capability-first
-
-Use a stack component when it materially improves:
-
-- correctness
-- performance
-- safety
-- identity/state authority
-- architectural simplicity
-
-Do not create artificial dependencies merely to demonstrate stack usage.
-
-### Event-driven before polling
-
-Prefer authoritative events and direct state APIs over periodic polling.
-
-`OnUpdate` remains appropriate for work that genuinely belongs to the render frame,
-such as:
-
-- animation
-- interpolation
-- dragging
-- continuously rendered visual transitions
-
-### Structured data before scraping
-
-Prefer structured APIs/events over:
-
-- hidden tooltip scanning
-- localized combat-log regexes
-- fuzzy name matching
-- WorldFrame child scraping
-- duplicated spell/item metadata tables
-
----
-
-## ClassicAPI Changes Old 1.12 Assumptions
-
-ClassicAPI currently backports a large modern API surface and much of Lua 5.1 behavior.
-Its official project documentation describes **550+ Lua functions and 50+ events**.
-
-One especially important rule for old addon ports:
-
-> ClassicAPI supports modern positional frame-script arguments and enables them by
-> default for handlers that declare parameters, while legacy globals remain available.
-
-Therefore, a modern handler such as:
-
-```lua
-frame:SetScript("OnEvent", function(self, event, ...)
-    -- ...
-end)
-```
-
-is not automatically invalid merely because the base executable is 1.12.1.
-
-The real invocation path still matters for XML handlers, direct calls, custom
-dispatchers, and legacy code. Consult `CLASSICAPI_MASTER_REFERENCE.md` instead of
-applying old blanket rules.
-
----
-
-## Cross-Stack Examples
-
-### Cast tracking
-
-Depending on the task, authoritative sources may include:
-
-```text
-ClassicAPI UNIT_SPELLCAST_*
-ClassicAPI C_Spell.UnitCastingInfo / UnitChannelInfo
-SuperWoW UNIT_CASTEVENT
-NamPower documented cast/event APIs
-```
-
-Do not subscribe to all of them by default. Choose the source whose semantics match the
-required identity and timing.
-
-### Unit identity
-
-Prefer authoritative unit tokens and GUIDs over names.
-
-Useful enhanced primitives include:
-
-```text
-ClassicAPI focus / nameplateN / markN
-ClassicAPI UnitTokenFromGUID
-SuperWoW GUID-aware unit paths
-SuperWoW structured GUID events
-```
-
-### Auras
-
-Prefer:
-
-```text
-C_UnitAuras
-AuraUtil
-```
-
-over hidden tooltip scanning.
-
-### Timers
-
-Prefer:
-
-```text
-C_Timer.After
-C_Timer.NewTimer
-C_Timer.NewTicker
-```
-
-for asynchronous/periodic work when no authoritative event exists.
-
-Do not replace legitimate per-frame animation with a timer simply to eliminate
-`OnUpdate`.
-
----
-
-## Using the Framework with an AI
-
-For autonomous coding agents (Antigravity, Claude Code, Cursor, Codex), use [`AGENTS.md`](AGENTS.md) as the primary operational entry point. It defines selective loading, rules of engagement, context budget discipline, and structured task templates.
-
-For session startup across different environments, see [`docs/AGENT_BOOTSTRAP.md`](docs/AGENT_BOOTSTRAP.md) (ready-to-paste bootstrap prompts for Claude, Gemini/Antigravity, and OpenAI Codex) and [`docs/WORKFLOW.md`](docs/WORKFLOW.md) (full engineering lifecycle).
-
-Recommended context order:
-
-1. provide `VANILLAFORGE_SYSTEM_PROMPT.md` (or load via `AGENTS.md`)
-2. provide the addon/repository being worked on
-3. let the AI consult only the relevant reference files
-4. use `CLASSICAPI_MASTER_REFERENCE.md` for ClassicAPI questions
-5. use `ENGINE_REFERENCE.md` for SuperWoW/NamPower/UnitXP/runtime questions
-6. use `KNOWN_PATTERNS.md` when the subsystem matches a known edge case
-
-Do **not** dump every reference file into every tiny prompt unless the model/tool cannot
-read files on demand. The whole point of splitting the old monolith was to stop paying
-the context cost of nameplate, cooldown, bag, PvP and engine trivia simultaneously.
-
-### Agentic environments
-
-When the AI has filesystem/terminal access, it should inspect the actual addon,
-implement the scoped task, and run relevant static checks.
-
-### Chat-only environments
-
-Provide the relevant addon files and reference material. The AI must not pretend it ran
-commands, edited the local repository, tested in-game, or pushed commits when it could
-not actually do so.
-
----
-
-## Static Validation
-
-Run:
-
-```bash
-python tools/vanillaforge_linter.py <addon-path>
-```
-
-Optional strict mode:
-
-```bash
-python tools/vanillaforge_linter.py --strict <addon-path>
-```
-
-The scanner should be treated as heuristic static analysis.
-
-After meaningful addon changes, perform an in-client smoke test where practical:
-
-```text
-/reload
-/luaerrors 1
-```
-
-Useful deeper diagnostics include:
-
-```text
-/classicapi
-/dump
-/etrace
-/framestack
-```
-
-Never describe an addon as runtime-verified unless it was actually tested.
-
----
-
-## Knowledge Maintenance
-
-The framework is intentionally split into layers.
-
-Do not automatically modify the system prompt or linter for every bug fixed in an
-addon.
-
-Promote knowledge only when it is:
-
-- verified
-- reusable across projects
-- likely to recur
-- important enough to justify permanent context
-- placed in the correct layer
-
-Use this placement rule:
-
-```text
-global engineering instruction  -> VANILLAFORGE_SYSTEM_PROMPT.md
-ClassicAPI fact/API             -> CLASSICAPI_MASTER_REFERENCE.md
-other engine/DLL fact           -> ENGINE_REFERENCE.md
-reusable implementation pitfall -> KNOWN_PATTERNS.md
-machine-detectable hazard       -> tools/vanillaforge_linter.py
-project-specific quirk          -> keep it in that project
-```
-
-This keeps the framework useful instead of allowing it to become an archaeological
-site of every bug ever encountered.
-
----
-
-## Public Addon Neutrality
-
-VanillaForge is the framework name, but public end-addons should normally
-be described neutrally as addons for:
-
-```text
-World of Warcraft 1.12.1 Enhanced Client
-```
-
-or, when dependency information is useful:
-
-```text
-Enhanced WoW 1.12.1 client using ClassicAPI / SuperWoW
-```
-
-Do not leak VanillaForge branding, current-server branding, or other internal workspace
-context into public addon titles, TOCs, READMEs, release notes, issue titles, or commit
-messages unless explicitly intended.
-
----
-
-## Design Goal
-
-The framework does not aim to make 2006 addon code merely *look* modern.
-
-It aims to produce addons engineered for the enhanced 1.12.1 client that actually
-exists in the target environment:
-
-- authoritative state
-- deterministic lifecycle
-- minimal hot-path work
-- no obsolete compatibility baggage
-- no invented APIs
-- no unnecessary DLL dependencies
-- focused verification
-- finished engineering work before framework ceremony
-
-> **Use the smallest set of verified enhanced primitives that produces the simplest,
-> most correct implementation.**
-
----
-
-## Maintainer
-
-Maintained by [Fostercare5988](https://github.com/Fostercare5988).
-
-Repository:
-`Fostercare5988/VanillaForge-Addon-Engineering`
+Maintained by [Fostercare5988](https://github.com/Fostercare5988) at
+[VanillaForge-Addon-Engineering](https://github.com/Fostercare5988/VanillaForge-Addon-Engineering).

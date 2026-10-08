@@ -75,6 +75,7 @@ Candidate Displacement Matrix:
 | <addon> | <responsibility> | <call/pattern> | <provider> | <new primitive> | REPLACE / RETAIN / PARTIAL / NO OVERLAP / VERIFY | <dll removed or none> | <test plan or N/A> |
 
 Candidate Detail:
+- Expand only actionable candidates; summarize RETAIN and NO OVERLAP findings.
 - candidate: <addon> - <responsibility>
 - semantic equivalence evidence: <source/docs citation>
 - expected benefit: <correctness / determinism / performance / simplicity / dependency reduction>
@@ -85,6 +86,8 @@ Candidate Detail:
 
 RECONCILIATION & EXECUTION:
 1. Synchronize reference documentation with source evidence.
+   Refine the canonical owner and retire superseded active guidance; preserve
+   pinned historical evidence. Do not duplicate the update across every layer.
 2. Update UPSTREAM_VERSIONS.json (version, commit SHA, file SHAs, asset hashes).
 3. For ClassicAPI, save the release audit as docs/CLASSICAPI_<reference_version>_AUDIT.md.
    Regenerate README's audit index: python tools/check_audit_index.py --write.
@@ -98,7 +101,7 @@ RECONCILIATION & EXECUTION:
    - python tools/check_upstream.py --verbose
    - python tools/vanillaforge_linter.py <AddonPath>
 7. If binary/DLL was upgraded in the game client, remind that /reload is insufficient;
-   a full WoW.exe process restart is required (§15).
+   a full WoW.exe process restart is required.
 
 REPORT:
 - upstream version drift summary

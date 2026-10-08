@@ -1,15 +1,34 @@
 # OctoWoW Deployed Client Baseline
 
-> **Authoritative Target Environment Baseline for VanillaForge Addon Engineering**
-> Generated from static reverse-engineering and byte-level audits of the deployed OctoWoW runtime.
+> **Historical deployed snapshot; verify the active installation before reuse.**
+> Generated from static reverse-engineering and byte-level audits of the earlier OctoWoW runtime.
+
+## Current installation correction — 8 October 2026
+
+The active game is now `C:\Users\Fostercare\Desktop\client-2026-10-06`, launched
+with its `VanillaFixes.exe`. Maintained addon source is
+`C:\Users\Fostercare\Desktop\client\FostercareClient`; the earlier `client` game
+is a comparison/recovery location. The active executable SHA-256 is
+`90f17dd45daf377891ba65303d447a7974e333d7d3ab7c955936d70e4ef2eff7`.
+
+The private project's `client-baseline.json` and `docs/STUTTER_REVIEW.md` own
+current installation evidence. DXVK 3.1.1 D3D9/Vulkan presentation was established
+in the latest recorded session after restoring root `d3d9.dll`. Its SHA-256 is
+`265888c31ca78dffa290c39cb7e50bfb02762590e41927906e46fb32f01497fa`.
+The earlier absence of `d3d9.dll` did not establish an alternate working renderer.
+WeirdPerformance's exact release/loading/effect remains unverified. Current
+settings and OctoWoW Data patches remain authoritative; do not substitute this
+older snapshot or assume matching DLL files prove runtime compatibility.
+
+Sections below preserve the earlier audit's original source scope.
 
 ---
 
-## 1. Authoritative Client Identity
+## 1. Earlier Snapshot Client Identity
 
 | Dimension | Authoritative Value | Evidence / Provenance |
 | :--- | :--- | :--- |
-| **Primary Deployed Client Root** | `C:\Users\Fostercare\Desktop\client` | `[DEPLOYED FACT]` Active development/runtime root |
+| **Earlier Client Root** | `C:\Users\Fostercare\Desktop\client` | `[DEPLOYED FACT]` Historical audit root |
 | **Client Executable** | `WoW.exe` (4,927,488 bytes) | `[DEPLOYED FACT]` SHA256: `079921d4994102e51f1424f4f8221387bf3a98f907cabbb6475d63506263cebf` |
 | **WoW Client Version** | `1.12.1.5875` | `[DEPLOYED FACT]` PE VersionResource: `FileVersion="1, 12, 1, 5875"`, `ProductVersion="Version 1.12"` |
 | **Interface Version Number** | `11200` | `[DEPLOYED FACT]` `FrameXML.toc` line 2: `## Interface: 11200` |
@@ -66,7 +85,7 @@ C:\Users\Fostercare\Desktop\client\
    - `client`: Upgraded to ClassicAPI **`v1.15.16.0`** (1,449,984 bytes, SHA256: `e34886fb...`), matching the official upstream release.
 2. **DirectX / Vulkan Infrastructure**:
    - `Niko2`: Contained `d3d9.dll` (7,856,142 bytes) in the root.
-   - `client`: Removed root `d3d9.dll`; loads through `dxgi.dll` and runtime driver hooks.
+   - `client`: Root `d3d9.dll` absent at the snapshot; alternate rendering/loading was not verified.
 3. **Data Patch Upgrades**:
    - `Niko2`: Missing `patch-O.mpq` (OctoWoW custom DBCs/spells) and `patch-Y.MPQ` (AutoLogin).
    - `client`: Deploys `patch-O.mpq` (9,315,256 bytes) and `patch-Y.MPQ` (12,822 bytes).
@@ -80,8 +99,10 @@ C:\Users\Fostercare\Desktop\client\
 
 When resolving conflicting specifications or APIs:
 
-1. **Deployed Client Files (`C:\Users\Fostercare\Desktop\client`)**:
-   Wins unconditionally for client engine behavior, event names, FrameXML functions, and native DLL availability.
+1. **Currently Active Deployed Client Files**:
+   Verify the active root and revision first. Its relevant source/files establish
+   deployed engine behavior, event names and FrameXML functions; file presence
+   alone does not establish runtime DLL loading.
 2. **OctoWoW Database (`https://octowow.st/db/`)**:
    Wins for server-content identities: item IDs, quest IDs, NPC IDs, spell IDs, and quest turn-in requirements.
 3. **Exact Upstream Native Releases**:

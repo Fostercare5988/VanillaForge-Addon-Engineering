@@ -1520,6 +1520,13 @@ OffhandHasWeapon
 
 This namespace should be checked before implementing tooltip-based item metadata extraction.
 
+[SOURCE-VERIFIED] The pinned [v1.15.16 API reference](https://github.com/brues-code/ClassicAPI/blob/7ccbbaaf68bcde6b29b71806981d0338e0577189/docs/API.md)
+documents `GetLootRollItemID(rollID)` as reading the engine's active roll list,
+using the same item ID as `GetLootRollItemLink` without parsing a string. It can
+return nil when no matching roll exists. Prefer a verified direct ID accessor
+for exact content rules; it identifies the active item but does not supply or
+validate a server-specific item catalog. Verify names and content rules separately.
+
 ---
 
 ## 49. Loot — `C_Loot`

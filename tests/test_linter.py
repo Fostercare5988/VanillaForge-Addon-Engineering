@@ -162,6 +162,32 @@ table.insert(args, nil)
         self.assertEqual(errors, [])
         self.assertTrue(any("Obsolete Wipe Loop" in warning for warning in warnings))
 
+    def test_hierarchy_advisory_preserves_safety_and_cold_path_choice(self):
+        for call in ("parent:GetChildren()", "frame:GetRegions()"):
+            with self.subTest(call=call):
+                errors, warnings, _ = self.audit(f"local entries = {{ {call} }}\n")
+                self.assertEqual(errors, [])
+                findings = [w for w in warnings if "Rule D1" in w]
+                self.assertEqual(len(findings), 1)
+                self.assertIn("repeated scans", findings[0])
+                self.assertIn("Cold-path allocation may be acceptable", findings[0])
+                self.assertIn("preserve traversal safety", findings[0])
+                self.assertNotIn("register recursion", findings[0])
+
+    def test_hierarchy_advisory_ignores_comments_and_strings(self):
+        errors, warnings, _ = self.audit(
+            '-- local entries = { parent:GetChildren() }\n'
+            'local note = "{ frame:GetRegions() }"\n'
+        )
+        self.assertEqual(errors, [])
+        self.assertFalse(any("Rule D1" in w for w in warnings))
+
+    def test_hierarchy_advisory_remains_suppressible(self):
+        _, warnings, _ = self.audit(
+            'local entries = { frame:GetRegions() } -- vanillaforge-ignore: D1\n'
+        )
+        self.assertFalse(any("Rule D1" in w for w in warnings))
+
     def test_vanillaforge_inline_suppression_works(self):
         _, warnings, _ = self.audit(
             "local remainder = math.mod(5, 2) -- vanillaforge-ignore: A4\n"
@@ -227,12 +253,12 @@ end
         self.assertEqual(errors, [])
         self.assertFalse(any("Fatal Colon Method" in e for e in errors))
 
-    def test_marketing_superlative_in_ui_string_triggers_c14_and_14b(self):
+    def test_marketing_superlative_in_ui_string_triggers_c14_with_current_policy(self):
         errors, warnings, _ = self.audit(
             'DEFAULT_CHAT_FRAME:AddMessage("Loaded enterprise-grade addon")\n'
         )
         self.assertTrue(any("Marketing Superlative in UI" in w for w in warnings))
-        self.assertTrue(any("§14b" in w for w in warnings))
+        self.assertTrue(any("Rule C14" in w and "Performance and UI" in w for w in warnings))
 
     def test_marketing_superlative_in_comment_does_not_trigger_c14(self):
         errors, warnings, _ = self.audit(
@@ -308,7 +334,7 @@ class AddonDirectoryPolicyTests(unittest.TestCase):
 
             result = auditor.audit_addon_dir(str(addon))
             readme_warnings = result[2]
-            self.assertTrue(any("Rule H9 / §14b - Marketing Superlative" in w for w in readme_warnings))
+            self.assertTrue(any("Rule H9 - Marketing Superlative" in w and "Performance and UI" in w for w in readme_warnings))
 
 
 class TocManifestTests(unittest.TestCase):

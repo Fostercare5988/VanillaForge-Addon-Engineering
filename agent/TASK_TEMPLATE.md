@@ -1,8 +1,12 @@
 # VanillaForge Task Template
 
+Use for substantial work. Omit inapplicable fields; the template need not become
+a new repository file. Resume from applicable verified state rather than repeating
+completed discovery.
+
 ```text
 TASK TYPE:
-architecture discovery | modernization audit | bounded implementation |
+architecture discovery | modernization audit | capability displacement review | bounded implementation |
 bug fix | integration review | release/reconciliation | framework maintenance
 
 OBJECTIVE:
@@ -16,7 +20,7 @@ KNOWN VERIFIED STATE:
 
 READ:
 - AGENTS.md
-- VANILLAFORGE_SYSTEM_PROMPT.md
+- VANILLAFORGE_SYSTEM_PROMPT.md (once per fresh session)
 - <only relevant references>
 
 DO NOT REPEAT:
@@ -33,6 +37,12 @@ INVARIANTS:
 
 EVIDENCE / API QUESTIONS:
 - <requires verification>
+
+FULL AUDIT COVERAGE / COST (when applicable):
+- <loaded modules/subsystems; responsibility, triggers, state owner, disposition>
+- <burst size x entities x work per callback; duplicate consumers and provider cost>
+- <same-fixture before/after operation counts; source hashes; native timing limits>
+- <controls/theme/input review; lifecycle, hidden views and optional integrations>
 
 VALIDATION:
 - <tests>

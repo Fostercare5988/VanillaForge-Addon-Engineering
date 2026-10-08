@@ -36,6 +36,12 @@ inefficiently.
 **Preferred direction:** use slot batching or a verified iterator such
 as `AuraUtil.ForEachAura` when available.
 
+Inspect the provider's lookup cost. Repeated by-index access can restart a
+descriptor walk even when the Lua loop is linear. Compare descriptor visits,
+table construction and required fields, not API-call count alone. Batch into
+reusable caller-owned storage only where the verified API supports it; preserve
+filtering, ordering, tooltip indices and identity.
+
 ------------------------------------------------------------------------
 
 ### KP-03 --- Faux Focus Through Target Swapping
@@ -163,6 +169,24 @@ registration and route to relevant state/frame through a direct lookup.
 Do not centralize merely for aesthetics if the event is cold or the
 existing design is already efficient.
 
+The same amplification occurs when each item completion or native slot update
+refreshes every slot. Coalesce presentation invalidations into one pending
+callback with the union of affected views. Read current identity, contents and
+visibility when it runs; do not retain a slot payload that may already be stale.
+Clear pending flags before refreshing so reentrant invalidation schedules a
+subsequent pass. Preserve immediate input/native work that cannot safely defer.
+Test a completion burst, view closure, target change and reentrant completion.
+
+Also trace independent owners of the same event. A narrow indicator event must
+not trigger a whole-view health/power/aura refresh through a second consumer.
+Assign one owner for the affected state, and test both handler orders. Separate
+presentation reflow from authoritative reads when only geometry changes; reuse
+the current identity-scoped snapshot, with roster/aura changes still invalidating
+it. Initialization helpers used by settings must not rebuild once before sizing
+and again after sizing. Verify final visible state and subsequent source events,
+not merely fewer calls.
+
+
 ------------------------------------------------------------------------
 
 ### KP-12 --- Stale Rows After Roster Shrink
@@ -225,6 +249,14 @@ periodic work.
 **Exception:** retain `OnUpdate` for genuinely frame-rate-dependent
 rendering, animation, dragging, interpolation, or similar behavior.
 
+Separate state sampling, countdown text, layout and animation; they need not
+share one cadence. Event-only code is incorrect when the chosen events do not
+cover live state changes. Verify event coverage before removing reconciliation.
+When periodic sampling remains necessary, reuse an appropriate owned ticker and
+share pass-wide snapshots instead of rereading the same target for each member.
+Preserve optional providers' semantics; a current-target fallback cannot observe
+every enemy's aggro. A correctness repair may add sampling without improving cost.
+
 ------------------------------------------------------------------------
 
 ### KP-17 --- Hidden UI Still Doing Work
@@ -237,6 +269,12 @@ hidden state makes the work unnecessary.
 
 Do not gate background state that must remain authoritative while
 hidden.
+
+When no consumers or background state obligations remain, cancel the owned ticker
+instead of repeatedly waking it to return. Reconcile state when the view reopens.
+Hiding a presentation container must not stop a foreign controller that owns
+expiry, input or native animation; inspect ownership before moving or hiding
+native frames.
 
 ------------------------------------------------------------------------
 
@@ -261,6 +299,21 @@ with values that have not changed.
 
 **Preferred direction:** diff-cache meaningful hot-path values.
 
+Distinguish addon decoration from the native updater. Apply invariant crops or
+layout when the owned object changes; refresh item quality on identity/inventory
+invalidation. Keep native countdown, flashing, expiry and tooltip behavior. For
+properties another owner can change, compare live state or invalidate after its
+write; a cached desired value alone does not prove the property is still applied.
+
+Validate numeric enum values against the provider's contract before caching or
+coloring them. Lua truthiness accepts unknown rarity `-1`; valid poor quality
+`0` must stay authoritative. Use exact-item metadata for an unknown result and
+neutral presentation while data remains unavailable. If a cached decoration
+depends on late metadata, retain only its pending item identity and invalidate
+on relevant completion. Re-read the current slot/owner before repainting: the
+original item may have moved. Test unknown native and metadata values, valid
+zero, unrelated completion and replacement before completion.
+
 Do not add elaborate caches to cold code.
 
 ------------------------------------------------------------------------
@@ -274,6 +327,13 @@ inside high-frequency combat/ticker/render paths.
 
 Move reusable state outside the hot path when measurement/structure
 justifies it.
+
+Consumers in one synchronous refresh can share an authoritative snapshot.
+Choose the cache lifetime explicitly. Do not extend a refresh-local remaining-time
+snapshot across ticks without a verified clock/invalidation contract. Inventory
+caches need relevant invalidation. Prune expired correlation state only when its
+lifecycle proves it cannot be needed by a delayed confirmation. Bounded cleanup
+must also define what remains retained.
 
 ------------------------------------------------------------------------
 
@@ -310,11 +370,56 @@ creates temporary tables.
 In frequently executed hierarchy scans, prefer an allocation-conscious
 traversal strategy.
 
-At load time, readability may matter more.
+First reduce discovery frequency; see KP-57. At load time, readability may
+matter more. Allocation advice is not permission to traverse an unsafe native
+tree or substitute child enumeration for region inspection. A Lua `pcall`
+cannot recover from a native access violation. Inspect the relevant lifetime
+and ownership constraints before changing traversal.
 
 ------------------------------------------------------------------------
 
 ## 4. UI Interaction and Layout Patterns
+
+### Preferred settings theme
+
+Use the dark plum and lavender style of the GearRack settings hub as the default
+for addon-owned configuration. The user approved its native rendering on
+2026-10-05. Apply it during requested UI work; preserve native game frames and
+useful controls rather than reskinning unrelated interfaces.
+
+| Element | RGBA color |
+| --- | --- |
+| Panel background | `0.055, 0.045, 0.075, 0.97` |
+| Panel border | `0.55, 0.43, 0.72, 1` |
+| Title and accent | `0.78, 0.65, 1, 1` |
+| Button background | `0.14, 0.10, 0.20, 1` |
+| Button border | `0.42, 0.33, 0.54, 1` |
+| Button hover | `0.25, 0.18, 0.35, 1` |
+| Checkbox label | `0.92, 0.90, 1, 1` |
+
+- Use a nearly opaque panel, a thin muted lavender border and flat dark plum
+  buttons. Native `Interface\\Buttons\\WHITE8X8` backdrops and
+  `Interface\\Tooltips\\UI-Tooltip-Border` edges need no extra artwork. Reference
+  edge sizes are 12 for the panel and 8 for buttons, with 4/2 pixel insets.
+- Start compact: a 360 UI-pixel panel, 20 pixel content margins, paired 156 by
+  32 buttons and an 8 pixel column gap. Scale the layout to the content; constrain
+  text and check it at supported UI scales instead of forcing these dimensions.
+- Use `GameFontNormalLarge` for the lavender title, `GameFontHighlight` for
+  button text and `GameFontHighlightSmall` for short white help text. Keep native
+  checkmarks and close controls. Give related rows consistent spacing and align
+  their labels; leave room for wrapped help without covering the next control.
+- Organize around player tasks, with short action buttons above visibility and
+  behavior choices. Label checkboxes by their visible result and put secondary
+  details beside the option. The theme does not prescribe reset or recovery
+  buttons; choose controls using the settings guidance in KP-44.
+- Hover feedback belongs in `OnEnter`/`OnLeave`; static settings need no polling
+  or `OnUpdate`. Hide the hub when opening a separate editor so its higher strata
+  cannot cover that editor. Retain drag, close, Escape and native input behavior.
+
+This is a visual preference, not evidence of correctness or performance. Verify
+entry, live changes, persistence, reset, text fit and input in the native client.
+
+------------------------------------------------------------------------
 
 ### KP-22 --- Missing Right-Click Registration
 
@@ -327,6 +432,12 @@ button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 ```
 
 when both click types are required.
+
+Inspect the deployed XML and delegated native handler as well. A native global
+handler may take no arguments and read `this`/`arg1`; do not replace it with a
+Retail-style `self, button` assumption. List row IDs may be category-local indices,
+not physical display rows or stable content IDs. Preserve the original click
+chain and model those distinctions in tests.
 
 ------------------------------------------------------------------------
 
@@ -505,6 +616,11 @@ entities that can have ambiguous/reused names.
 
 Names remain display data, not necessarily primary identity.
 
+For equipment, an item template ID or link is not an exact-copy identity. Use a
+verified item GUID when the feature promises a particular copy. An asynchronous
+saved set also needs an owned snapshot of its accepted definition: an unchanged
+set name does not prove unchanged contents or GUIDs.
+
 ------------------------------------------------------------------------
 
 ### KP-34 --- Nameplate Identity Recycling
@@ -660,6 +776,36 @@ ClassicAPI
 in ordinary player-facing messages unless the feature is explicitly a
 developer/debugging interface.
 
+Settings should name their checked result with concrete verbs: for example,
+"Hide loot roll messages" instead of "Clean chat". State whether an action is
+automatic and what is affected. Explain exclusions beside their selector so
+players know whether checked entries remain visible or become hidden.
+This is usability guidance, not a reason to delete useful controls blindly.
+
+Check that intended player-configurable features have reachable controls, and
+distinguish live edits from enable changes that require reload. Verify saved
+refresh and defaults without resetting unrelated choices. Compute window bounds
+in the same UI coordinate space as its parent; do not apply scale twice or force
+a minimum taller than the available viewport. Check scroll ends and footer reach
+at the user's scale. Headless geometry checks do not prove native pointer input,
+text wrapping or contrast.
+
+
+Before adding a control, inventory the current defaults, native/addon entry
+points and settings that already produce its result. A new control needs a
+distinct player task; do not duplicate layout or visibility choices with a bulk
+shortcut merely because its implementation is easy. Choose sensible initial
+defaults instead of making users repair them through an extra button.
+
+Keep primary menus focused on frequent tasks and direct navigation. Recovery
+actions are not mandatory menu furniture. Add them for a demonstrated need,
+prefer the smallest affected scope, and keep them near that feature. A broad
+data-wipe action needs an explicit product requirement, a clear scope and
+confirmation; confirmation alone does not make it useful. Keep one-time
+development or migration cleanup separate from runtime player controls. Preserve
+supported controls unless their retirement is requested or their redundancy is verified;
+when removing one, follow the workflow's complete feature-retirement guidance.
+
 ------------------------------------------------------------------------
 
 ### KP-45 --- Progressive Status Text for Near-Instant Operations
@@ -713,6 +859,23 @@ can be corrupted by duplicate, late, or out-of-order events.
 - Invalidate callbacks and timers belonging to superseded transactions.
 - Test supersession, duplicate events, late events, timeout recovery, and retry safety.
 
+Accept the latest explicit intent before suppressing duplicate work. Repeated
+selection is reusable only while the active owner still represents that intent
+and its accepted definition. Test A, then B, then A; edited definitions; exact
+copies; and retry after a missing item returns. Preserve an already issued native
+operation's ownership/deadline when it cannot be canceled safely; superseding
+the requested result does not make the old completion belong to the new request.
+
+Define priority between explicit selections and automatic queues for the affected
+slots. Preserve independent slots and later manual choices; retain an existing
+player choice about when automation resumes instead of silently changing it.
+
+A modifier held across delayed dialogs is not fresh authorization after a
+one-click request finishes or is canceled. Keep explicit selection identity and
+suppression through delayed responses, until a defined manual/session transition.
+Test cancellation, disable/re-enable and delayed menu return while the modifier
+stays held. Ambiguous identity remains manual.
+
 ------------------------------------------------------------------------
 
 ### KP-48 --- Root Bindings.xml and Advisory Manifest Orphan Warnings
@@ -741,8 +904,16 @@ because the full enhanced stack is installed in the client.
 - Distinguish between environment availability and actual addon dependency.
 - An addon should declare dependencies only for components whose APIs it directly consumes.
 - UnitXP SP3 may be documented as optional/recommended when core functionality works
-  without it but distance, LOS, raw health, or fallback telemetry improves with it.
+  without it but verified distance, sight or client utilities improve it (see ENGINE_REFERENCE.md).
 - DXVK is D3D9-to-Vulkan translation runtime infrastructure, never a Lua addon API or dependency.
+
+Choose a replacement for its verified semantics, restrictions, lifecycle and
+cost, not its newer name. Native aggregates suit count-only questions but do not
+establish stack capacity or exact-copy identity. Structured aura fields can
+replace scraping only when they preserve the required slot/filter semantics.
+Likewise, a macro executor outside the native stop context may not preserve
+`/stopmacro`. Do not substitute a partial equivalent or add another provider
+beside an existing authoritative owner merely to increase DLL use.
 
 ------------------------------------------------------------------------
 
@@ -770,6 +941,23 @@ or passing reusable tables) leads to unsubstantiated claims of "zero allocations
 **Action:**
 - Do not make absolute runtime performance claims without empirical profiling.
 - Use narrow, evidence-matched statements such as "eliminated transient table allocation in this path."
+
+Compare retained before/after source under the same controlled workload and
+report the counted operation and model limits. API calls, internal traversal,
+allocations and elapsed time are different measurements. Source counters prove
+bounded work reductions, not native timing, frame pacing or freeze attribution.
+Account for setup, deferred delivery and measurement instrumentation. When
+reporting synthetic CPU/GC, separate trace/counter allocation from addon work
+where practical, give sample spread and retain noisy results as noise. A lighter
+fixture still includes mocks; it is not a native profiler calibration.
+
+
+Profiler invocation counts include idle/throttle returns; fast growth can reflect
+frame-rate callbacks rather than repeated scans. Inspect the measured body and
+sampling overhead. Inclusive timings can overlap; positive net heap deltas do
+not establish retained memory or leak ownership. Verify how hooks are removed:
+closing a profiler window may leave instrumentation active. Compare an unhooked
+session before attributing gameplay cost.
 
 ------------------------------------------------------------------------
 
@@ -855,6 +1043,26 @@ tooltip methods where supported, leaving the original call and returns intact.
 Keep each addon's duplicate guards on the tooltip under its own keys and clear
 them when tooltip state resets. Read another addon's state only through a
 narrow public query. Test repeated tooltip reuse and both addon load orders.
+
+------------------------------------------------------------------------
+
+### KP-57 --- Discovery in Interactive Paths
+
+**Problem:** Repeating a client-wide global or frame scan whenever a menu opens
+can stall clicks even when the eventual layout is small. A timer merely defers
+that scan; it does not make the work cheaper.
+
+**Preferred direction:** Discover at relevant lifecycle boundaries, coalesce
+duplicate requests, and maintain a registry. Ordinary clicks and settings
+refreshes should consume that registry. Observe later creation only where a
+verified mechanism preserves the original API's arguments, returns and behavior;
+provide explicit registration for objects outside discovery coverage.
+
+Named globals, anchor heuristics and observed creation cannot guarantee discovery
+of every pre-existing private anonymous frame. Document coverage and exclude
+known system objects before native queries. Avoid unsafe engine enumeration to
+make a universal-discovery claim. Measure scan/API-call counts separately from
+actual client timing.
 
 ------------------------------------------------------------------------
 

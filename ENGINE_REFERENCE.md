@@ -377,21 +377,28 @@ documented API provides a measurable benefit.
 UnitXP SP3 is installed in the canonical environment but is an **opt-in addon
 dependency**.
 
-### 7.1 Historical telemetry API
+### 7.1 Verified distance and sight commands
 
-**HISTORICAL / VERIFY EXACT CURRENT SEMANTICS**
-
-The framework records:
+[SOURCE-VERIFIED] The pinned build-90 [command dispatcher](https://github.com/brues-code/UnitXP_SP3/blob/cedbf4b59776567db954ce38f681af1cbb9f0e1c/dllmain.cpp#L50-L130)
+implements these two-unit commands:
 
 ```lua
-UnitXP("health", unit)
-UnitXP("maxhealth", unit)
-UnitXP("distance", unit)
-UnitXP("distanceBetween", unit1, unit2)
-UnitXP("los", unit)
+UnitXP("distanceBetween", unit1, unit2) -- optional fourth distance-meter argument
+UnitXP("inSight", unit1, unit2)
 ```
 
-Use UnitXP when its telemetry semantics materially improve the addon.
+Distance defaults to the ranged meter; optional meters include `meleeAutoAttack`,
+`AoE`, `chains` and `Gaussian`. Failed distance/sight resolution returns nil.
+Choose the meter deliberately; these are not interchangeable geometric distances.
+
+This revision does not implement `health`, `maxhealth`, `distance` or `los`
+commands. They were previously listed here as historical examples without
+verified support. Unknown commands reach the original native `UnitXP` function;
+neither function presence nor a successful `pcall` proves a health capability.
+Use authoritative native/enhanced unit health APIs instead. Verify a different
+installed revision before assuming it adds any of these commands.
+
+Use UnitXP when its verified semantics materially improve the addon.
 
 Do not automatically replace a simpler authoritative ClassicAPI primitive such as a
 direct unit-position/range/LOS API unless UnitXP provides information or behavior the
@@ -399,14 +406,11 @@ task specifically needs.
 
 ### 7.2 Client/window utilities
 
-**HISTORICAL / VERIFY BEFORE USE**
-
-```lua
-FlashClientIcon()
-SetClientWindowForeground()
-```
-
-These are OS/client-window utilities, not ordinary gameplay state APIs.
+[SOURCE-VERIFIED] The same pinned dispatcher's `notify` branch provides
+`UnitXP("notify", "taskbarIcon")` and `UnitXP("notify", "systemSound", soundName)`.
+These are OS notifications, not ordinary gameplay state APIs. The previously
+listed standalone `FlashClientIcon` and `SetClientWindowForeground` globals
+are not established by this source; do not assume they exist.
 
 ### 7.3 Documented project role
 
@@ -543,10 +547,10 @@ Possible sources:
 ordinary UnitHealth/UnitHealthMax on authoritative tokens
 ClassicAPI enhanced unit APIs
 SuperWoW GUID-aware UnitX paths
-UnitXP raw telemetry
 ```
 
-Use UnitXP only when its raw/uncapped or other telemetry semantics are actually needed.
+Verify token/GUID validity, absolute versus percentage values and update timing.
+UnitXP build 90 does not expose health/maxhealth commands (see section 7.1).
 
 ### 10.5 Distance / LOS
 
@@ -557,7 +561,7 @@ ClassicAPI UnitInRange
 ClassicAPI UnitDistanceSquared
 ClassicAPI UnitPosition
 ClassicAPI UnitInLineOfSight
-UnitXP distance / distanceBetween / los
+UnitXP distanceBetween / inSight (two-unit commands; verify meter semantics)
 ```
 
 Select by required precision and unit availability. Do not stack several measurements
@@ -739,6 +743,33 @@ The helper's disabled path only hides the Model; it does not erase stored
 timestamps. Clear addon-owned caches explicitly and preserve the Model's native
 animation handler. Regression tests should exercise repeated unchanged events,
 native redraws, changed expiration, target switches, and off/on restoration.
+
+---
+
+### 12.11 Temporary control of foreign frames
+
+Keep foreign input scripts and native parents intact when relocating launchers;
+anchors can target another frame without reparenting. Separate a visual backdrop
+from input handling so it does not obscure native hover, clicks or menus.
+
+Capture all anchors, dimensions, alpha, strata, level, mouse state and the frame's
+own shown state before taking control. If the owner requests changes while the
+frame is controlled, retain the requested normal state for restoration rather
+than restoring a stale initial snapshot. Ancestor visibility is not the owner's
+own shown preference. Release ownership when a user excludes a frame; recapture
+its current state before taking control again.
+
+Review foreign method overrides for meaningful side effects before skipping an
+apparently redundant call. Use reentrancy guards for corrective layout/visibility
+calls. Restore a method slot only if it still contains your own wrapper; do not
+erase an override installed later. Review cached-method calls and native redraws
+that may bypass interception. No single suppression technique covers every frame.
+
+For outside-click dismissal, preserve the native click-up interaction. Where
+needed, defer dismissal and guard it against closing a newly opened session.
+Test child menus, tooltips and both mouse buttons in game; a Lua model cannot
+prove native pointer safety or input ordering. See the deployed
+[OctoWoW minimap notes](audit/OCTOWOW_FRAMEXML_CAPABILITIES.md#6-minimap-integration-evidence-2026-10-04).
 
 ---
 
