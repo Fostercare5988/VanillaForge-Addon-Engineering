@@ -55,12 +55,19 @@ jobs:
           test -f tools/vanillaforge_linter.py
           test -f tools/check_upstream.py
           test -f tools/check_audit_index.py
+          test -f tools/check_framework_docs.py
+          test -f tools/audit_addon.py
           test -f tests/test_linter.py
           test -f tests/test_upstream_check.py
           test -f tests/test_audit_index.py
+          test -f tests/test_framework_docs.py
+          test -f tests/test_addon_audit.py
 
       - name: Verify current ClassicAPI audit and README index
         run: python tools/check_audit_index.py
+
+      - name: Verify compact startup documents and local links
+        run: python tools/check_framework_docs.py
 
       - name: Reject stale framework filenames
         run: |

@@ -378,9 +378,9 @@ class VanillaForgeAuditor:
             # 5. Rule D1: Table Instantiations in Iterations / Hierarchy calls
             if not self._is_suppressed(raw_line, "D1"):
                 if re.search(r'\{\s*(?:[a-zA-Z0-9_]+:)?GetChildren\(\)\s*\}', code_line):
-                    warnings.append(f"[Rule D1 - Hierarchy Table Churn] Line {idx}: '{{ parent:GetChildren() }}' allocates memory. Use register recursion.")
+                    warnings.append(f"[Rule D1 - Hierarchy Table Churn] Line {idx}: '{{ parent:GetChildren() }}' allocates a temporary table; review repeated scans. Cold-path allocation may be acceptable; preserve traversal safety.")
                 if re.search(r'\{\s*(?:[a-zA-Z0-9_]+:)?GetRegions\(\)\s*\}', code_line):
-                    warnings.append(f"[Rule D1 - Hierarchy Table Churn] Line {idx}: '{{ f:GetRegions() }}' allocates memory. Use register recursion.")
+                    warnings.append(f"[Rule D1 - Hierarchy Table Churn] Line {idx}: '{{ f:GetRegions() }}' allocates a temporary table; review repeated scans. Cold-path allocation may be acceptable; preserve traversal safety.")
 
             # 6. Style - Redundant 144Hz notation
             if not self._is_suppressed(raw_line, "STYLE"):
@@ -453,7 +453,7 @@ class VanillaForgeAuditor:
                 if re.search(r'relativeTo\s*=\s*["\']\$parentCloseButton["\']', no_comment_line) and re.search(r'relativePoint\s*=\s*["\']TOPRIGHT["\']', no_comment_line):
                     infos.append(f"[Rule C13 / AP-28 - Title-Bar Offset Guessing] Line {idx}: Static TOPRIGHT offset guessing detected for close button sibling. Anchor using 'point=\"CENTER\" relativeTo=\"$parentCloseButton\" relativePoint=\"CENTER\"' with y=\"0\" per Rule C13.")
 
-            # 17. Rule C14 / AP-29 / §14b: In-Game Notification Tone & Developer Meta-Jargon
+            # 17. Rule C14 / AP-29: In-Game Notification Tone & Developer Meta-Jargon
             if not self._is_suppressed(raw_line, "C14") and not self._is_suppressed(raw_line, "AP-29"):
                 # Check for developer implementation jargon in player messages / localizations
                 if re.search(r'(?:AddMessage|UIErrorsFrame|Print|L\["[^"]+"\]\s*=|L\[\'[^\']+\'\]\s*=).*["\'][^"\']*\b(?:C\+\+|coroutine)\b', no_comment_line, re.IGNORECASE) or re.search(r'["\'][^"\']*\b(?:via C\+\+|with C\+\+|C\+\+ engine|via ClassicAPI C\+\+)\b', no_comment_line, re.IGNORECASE):
@@ -461,10 +461,10 @@ class VanillaForgeAuditor:
                 # Check for progressive waiting ellipsis in UI messages (e.g. "Sorting bags...", "Scanning...")
                 if re.search(r'["\'](?:Sorting|Cleaning|Filtering|Processing)(?:\s+bags|\s+items|\s+bank)?\.\.\.["\']', no_comment_line, re.IGNORECASE):
                     warnings.append(f"[Rule C14 / AP-29 - Progressive Ellipsis in UI] Line {idx}: Progressive waiting ellipsis detected in player-facing string. Modern client actions must use instant past-tense confirmations (e.g. 'Bags sorted.').")
-                # Check for unsubstantiated marketing buzzwords (§14b) in player-facing strings
+                # Check for unsubstantiated marketing buzzwords in player-facing strings
                 marketing_buzz = re.search(r'["\'][^"\']*\b(enterprise-grade|zero-latency|zero-bloat|ultra-optimized|military-grade|best-in-class)\b', no_comment_line, re.IGNORECASE)
                 if marketing_buzz:
-                    warnings.append(f"[Rule C14 / §14b - Marketing Superlative in UI] Line {idx}: Unsubstantiated marketing phrase '{marketing_buzz.group(1)}' detected in UI string. Use neutral technical language per §14b.")
+                    warnings.append(f"[Rule C14 - Marketing Superlative in UI] Line {idx}: Unsubstantiated marketing phrase '{marketing_buzz.group(1)}' detected in UI string. Use neutral technical language per the contract's Performance and UI section.")
 
             # 18. Rule C15 / AP-31: Zero-Thrash Event-Driven Modernization (Layout & Render Thrashing)
             if not self._is_suppressed(raw_line, "C15") and not self._is_suppressed(raw_line, "AP-31"):
@@ -579,7 +579,7 @@ class VanillaForgeAuditor:
                     readme_warnings.append("[Rule H8 - Gratuitous DLL Requirement] README.md lists 'DXVK' as an addon dependency. DXVK is a client rendering translation layer, not an addon API requirement. Remove it.")
                 buzz_match = re.search(r'\b(enterprise-grade|zero-latency|zero-bloat|ultra-optimized|military-grade|best-in-class)\b', rm, re.IGNORECASE)
                 if buzz_match:
-                    readme_warnings.append(f"[Rule H9 / §14b - Marketing Superlative] README.md contains marketing buzzword '{buzz_match.group(1)}'. Use neutral technical language per §14b.")
+                    readme_warnings.append(f"[Rule H9 - Marketing Superlative] README.md contains marketing buzzword '{buzz_match.group(1)}'. Use neutral technical language per the contract's Performance and UI section.")
 
         # Project structure diagnostics. Kept intentionally conservative.
         structure_warnings = []

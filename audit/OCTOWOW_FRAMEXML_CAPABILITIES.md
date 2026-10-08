@@ -163,13 +163,19 @@ Because both frames share slot `area = "left"` with `pushable = 0`, presenting `
    - Used when an NPC offers direct quest selections without a gossip dialog.
    - **`C_GossipInfo` data is NOT populated during `QUEST_GREETING`**; `C_GossipInfo.GetAvailableQuests()` returns an empty table.
    - FrameXML and addons must use legacy native APIs: `GetNumActiveQuests()`, `GetActiveTitle(i)`, `SelectActiveQuest(i)`, `GetNumAvailableQuests()`, `GetAvailableTitle(i)`, `SelectAvailableQuest(i)`.
-   - In `QUEST_GREETING`, **questID is completely unavailable** to the client; matching must rely on quest title strings.
+   - These native greeting calls do not supply a quest ID. That does not prove
+     that no enhanced accessor could exist. When no verified ID accessor covers
+     this dialog, use exact, officially verified titles and distinguish similar quests.
 
 ### 4.4 Transition Session Handover
 When `SelectGossipAvailableQuest` or `SelectGossipActiveQuest` is called:
 - The server causes `GossipFrame` to close, firing `GOSSIP_CLOSED`.
 - Asynchronously, `QUEST_DETAIL` or `QUEST_PROGRESS` fires and opens `QuestFrame`.
-- Any automation logic that terminates its quest session on `GOSSIP_CLOSED` must provide a grace window (e.g. `C_Timer.After(0.5, ...)`) to check if `QuestFrame` opened before resetting session state.
+- Do not treat the old panel's closure as proof that the selected quest
+  transaction ended. Preserve explicit handoff ownership across the transition
+  and invalidate stale callbacks. A bounded timeout may provide cleanup, but
+  AutoLazy's 0.5-second choice is not a universal engine timing guarantee;
+  packet ordering and pacing still require runtime verification.
 
 ---
 
@@ -193,3 +199,45 @@ When `SelectGossipAvailableQuest` or `SelectGossipActiveQuest` is called:
 6. **War Mode System**:
    - In `OctoWarModeOffer` and `OctoWowWarModeConfirm`.
    - World PvP bonus XP toggle and confirmation UI.
+
+---
+
+## 6. Minimap integration evidence (2026-10-04)
+
+Targeted read-only MPQ inspection confirms the following deployed source files;
+this is not a new full native-stack audit. `FrameXML.toc` still matches the
+baseline SHA256 above and loads `OctoRadioPlaceholder\OctoRadioPlaceholder.lua`.
+
+| Source | Archive | SHA256 |
+| --- | --- | --- |
+| `OctoRadioPlaceholder\OctoRadioPlaceholder.lua` | `patch-5.mpq` | `db1042b3cb989084b6704f22763af1f19862d3a9de30665ac18a17c694a666cf` |
+| `LFT\LFT.lua` | `patch-5.mpq` | `ba562c02687de7f8d87f45a989e80e42fa73ef212a65ceca202dd88f7dffd4ce` |
+| `LFT\LFT.xml` | `patch-4.mpq` | `5de2be9961ec0e6afdf5ed4eac607b1d337740b2607c7ad8040951bf11e26fa2` |
+| `Minimap.lua` | `patch-4.mpq` | `d2b752df8cfa8dcd64ce95020ca315efaa0d5cb30504fbf6dd724414f2357ecd` |
+| `UIDropDownMenu.lua` | `patch-4.mpq` | `847cdae056abd6897e3919f716eac7007a0c232981be4acf1e1d40b1912ccc0c` |
+
+[SOURCE-VERIFIED] OctoRadio uses `EBC_Minimap`, supplied by the base radio addon.
+It replaces that button's click/tooltip scripts (lines 428-436), anchors the
+`UIParent`-owned `OctoRadioMenu` to it (lines 322-334), and suppresses the legacy
+`EBCMinimapDropdown` (lines 409-413). Do not replace these deployed handlers with
+assumed upstream radio behavior or discover its menu as another launcher.
+
+[SOURCE-VERIFIED] `LFTMinimapButton` is parented to `Minimap` in the deployed XML.
+LFT installs/removes its own eye-animation `OnUpdate` handler and has native
+tooltip/menu paths. Hiding or relocating its launcher must preserve those paths;
+do not unregister LFT events or replace its scripts to suppress an icon.
+
+[UNVERIFIED - TEST FIRST] AutoLazy's development report described an Error #132
+after minimap child enumeration near context-menu use. The reported native
+address and dangling-pointer explanation were not independently reproduced or
+established by this inspection. Keep the precaution for this deployment: do not
+use `Minimap:GetChildren()` or engine-wide frame enumeration for launcher
+discovery. `pcall` and a userdata/type check do not validate a native pointer's
+lifetime or recover from a native access violation. This report is not a claim
+that every `GetChildren()` call on every frame is unsafe.
+
+AutoLazy now uses lifecycle discovery, incremental creation observation and
+explicit registration, preserving foreign parents. Its Lua tests cannot prove
+native safety, input ordering, full discovery coverage or actual CPU/GPU cost.
+The [addon reconciliation](OCTOWOW_ADDON_IMPACT_MATRIX.md#2-autolazy-v100-reconciliation-2026-10-04)
+records implementation, prior model tests and release evidence separately.

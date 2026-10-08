@@ -15,13 +15,78 @@ Prioritize correctness and architectural simplification. Look for scraping where
 
 Record finding, location, evidence, impact and direction. Do not implement during audit-only work.
 
+### Complete performance and polish pass
+
+For an authorized full audit/refactor, carry discovery through bounded repairs
+and validation in the same task. Audit-only mode still stops at findings.
+Start with the actual maintained source and active deployment; a previous audit
+is reusable only while its relevant file hashes, dependencies and settings apply.
+
+Run `python tools/audit_addon.py <AddonPath> --output <PrivateReportPath>` to
+collect the loaded module inventory, source hashes, registrations, candidate
+query/UI sites and scoped lint results. Add `--run-tests` to run local Python
+unittest discovery when that is the repository's test contract. Other test
+frameworks need their documented command. The report is a review map, not proof
+that every module was inspected or that a call is expensive. Keep it outside the
+addon and active game. Dynamic loaders, indirect wrappers and engine event
+semantics still need source review.
+
+Use one compact coverage table with a row per loaded module or coherent
+subsystem. Record its responsibility, state owner, triggers, repeated work,
+relevant API choices, evidence and disposition: repaired, verified unchanged,
+reused evidence, or unresolved. Include load-on-demand paths, client-managed
+bindings and optional integrations. Do not call an inventory a completed audit;
+resolve every row before reporting full coverage, and state remaining limits.
+
+Trace triggers through their consumers before counting suspicious syntax:
+
+1. **Fan-out and cardinality:** list events/hooks/timers, burst sizes, affected
+   entities and work per callback. A per-slot hook that refreshes every slot can
+   multiply a linear pass into quadratic work. Trace who already refreshed or
+   invalidated the same data. Death, loot, aura, bag, equipment and inspect bursts
+   deserve explicit scenarios where the addon handles them.
+2. **Authority and lifecycle:** compare existing native and DLL providers using
+   verified semantics, traversal cost, payload, identity, restrictions and cleanup.
+   A newer API or native timer is not automatically cheaper. Roster changes do
+   not cover live aggro changes; hidden views should not retain needless scans.
+   Preserve frame-rate animation and native input/redraw owners.
+3. **Bounded repair:** coalesce invalidations sharing one view/owner, query current
+   state at delivery, and preserve reentrant work and independent slots. Diff
+   stable addon-owned styling without suppressing required native updates. Do not
+   introduce broad caches, new polling or speculative abstractions to lower a
+   call counter. See [Known patterns](../KNOWN_PATTERNS.md) for lifecycle details.
+4. **Evidence:** use the actual before/after source with the same controlled
+   fixture. Count meaningful queries, traversed units, UI mutations, allocations
+   or scheduled callbacks as applicable; include setup and any work moved into
+   a timer/native provider. Exercise closed views, reused identities, bursts,
+   cancellation, repeated requests, missing data and optional owners. New
+   regressions should fail the old code for the intended reason where practical.
+   Operation counts establish work reduction; frame delivery needs comparable
+   native measurements. Profiler Count includes idle and throttle returns.
+5. **Polish:** review control usefulness, defaults and descriptions before styling.
+   Apply the shared settings theme consistently, preserve positions/bindings and
+   test visibility, scaling, dragging, Escape and native widget semantics. A
+   screenshot or permissive mock cannot prove native input behavior.
+
+Stop after the agreed coverage, backed repairs, relevant checks, exact deployment
+verification and concise unresolved runtime list. Do not expand into speculative
+rewrites. Keep one private record of changed source, installed/pending files,
+measurements, validation and recovery. Release cleanup follows the separate
+[release workflow](RELEASE_WORKFLOW.md).
+
 ## 4. Plan Bounded Phases
 Each phase needs one objective, explicit scope, invariants, validation and a stop condition.
 
 ## 5. Implement
-Follow the authoritative API-selection guidance in `VANILLAFORGE_SYSTEM_PROMPT.md` §7.
+Follow the authoritative API-selection guidance in `VANILLAFORGE_SYSTEM_PROMPT.md`.
 
 There is no legacy fallback tier. For async workflows, make request ownership explicit so stale/duplicate events cannot advance or erase newer work.
+
+When retiring a feature, remove its implementation, controls, defaults, event
+registrations, commands and affected documentation together. Check dynamic
+callers and supported integrations before calling code dead. Preserve necessary
+SavedVariables migration and unrelated user choices. Simplicity does not justify
+removing supported behavior outside the requested scope.
 
 ## 6. Validate
 Use targeted tests, structural/syntax checks, `tools/vanillaforge_linter.py`, repository tests, invariant review and runtime verification where static analysis cannot prove behavior.
@@ -57,7 +122,11 @@ At completion check files added/deleted/renamed, TOC, root client-managed `Bindi
 For a release/commit, follow `docs/RELEASE_WORKFLOW.md`.
 
 ## 9. Retrospective
-Use `agent/RETROSPECTIVE_TEMPLATE.md`. Keep addon-specific lessons with the addon. Promote reusable lessons only through the framework lesson gate.
+Use `agent/RETROSPECTIVE_TEMPLATE.md` after substantial work. Record only useful
+lessons or costly rework; a routine success needs no new report file. Inspect
+existing coverage before proposing a change. Refining or replacing its canonical
+owner takes precedence over adding guidance. Framework promotion is a separately
+authorized maintenance action; addon-specific facts stay with the addon.
 
 ## 10. Upstream Refresh & Capability Displacement
 
