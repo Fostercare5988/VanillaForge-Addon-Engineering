@@ -5,6 +5,13 @@ This is the normal lifecycle for substantial addon engineering. Do not mechanica
 ## 1. Classify
 Choose the smallest correct class: architecture discovery, modernization audit, capability displacement review, bounded implementation, scoped bug fix, integration review, release/reconciliation, or framework maintenance.
 
+For this maintained portfolio, start from the current installation correction
+and [current portfolio](../audit/OCTOWOW_ADDON_IMPACT_MATRIX.md#current-portfolio--12-october-2026). The manifest tool's
+`--addons-only` mode discovers installed Git projects; `--verify-remotes` checks
+origin heads without changing local refs. Confirm the source folder, branch and
+pending changes before using earlier findings. A policy baseline, file identity,
+loader listing and runtime observation are distinct evidence.
+
 ## 2. Architecture Discovery
 Use when the addon/subsystem is not yet understood. Establish TOC/load graph, module responsibilities, SavedVariables, event/timer ownership, state machines, UI ownership, actual dependencies, enhanced APIs, hot paths and cross-module contracts.
 
@@ -21,6 +28,11 @@ For an authorized full audit/refactor, carry discovery through bounded repairs
 and validation in the same task. Audit-only mode still stops at findings.
 Start with the actual maintained source and active deployment; a previous audit
 is reusable only while its relevant file hashes, dependencies and settings apply.
+
+Use the audit command's `--compare <previous-audit.json>` to identify source and
+load-graph changes before reusing evidence. Equal hashes do not transfer human
+review approval or verify unchanged DLLs, settings or native behavior. Keep the
+previous report as the evidence boundary; compare it with a separate output.
 
 Run `python tools/audit_addon.py <AddonPath> --output <PrivateReportPath>` to
 collect the loaded module inventory, source hashes, registrations, candidate
@@ -94,6 +106,12 @@ Use targeted tests, structural/syntax checks, `tools/vanillaforge_linter.py`, re
 Useful runtime tools: `/reload`, `/luaerrors 1`, `/etrace`, `/dump`, `/framestack`.
 
 Static success is not runtime proof.
+
+When tests live outside the game, record their exact directory and execution
+command. Point runtime reads at the installed checkout; archived source remains
+recovery evidence. State which fixtures remain historical. A green test run
+against an older checkout does not validate today's installed code. Restricted
+Windows sessions may need TEMP/TMP pointed at a writable private test directory.
 
 For UI changes, verify methods against the actual client/widget type before
 adding them to a test double. Mocks must reject unsupported methods on the

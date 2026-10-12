@@ -6,6 +6,39 @@
 
 ---
 
+## Current acceptance pass (2026-10-12)
+
+Use only `client-2026-10-10` and record the addon commit/settings for each result.
+The [current portfolio](OCTOWOW_ADDON_IMPACT_MATRIX.md#current-portfolio--12-october-2026) separates current publication and
+source validation from these uncompleted native checks.
+
+1. Fully restart after native DLL updates. Confirm the expected extension versions
+   and active D3D9/Vulkan path in the new session; a file hash or loader list is
+   insufficient.
+2. Compare a repeatable route with the same scene, settings, addons and duration:
+   town idle, crowded combat, loot/equipment bursts and a raid/battleground. Keep
+   frame-time evidence and Lua profiling separate; investigate one owner at a time.
+3. Enable FostercareNameplates deliberately and test repeated target changes,
+   deaths/despawns and crowded plates. Check casts, text, scaling and toggles.
+   Verify FostercareTweaks' target castbar independently.
+4. Test AutoLazy's Shift-right-click against one selected repeatable quest,
+   multiple rewards, repeated clicks, NPC changes, cancellation and delayed server
+   replies. Confirm accepting a new quest stays manual.
+5. Open/reopen FostercareAuras, import old/new formats, swap targets and equipment,
+   then log out/in. Check appearance and settings persistence. Exercise BigWigs'
+   manual version query and `/frbuff`, unresolved combat names and SuperAPI item
+   charges when the relevant condition occurs.
+
+6. For FostercareAuras 1.0.1-local, change bag contents/equipment in quick succession
+   and confirm item trackers reach the final state. Show/hide grouped icons during
+   an active slide, including removing an icon, then reopen the editor. Check
+   final spacing and animation completion. Exercise any custom function that
+   requests a condition refresh; verify its dependent tracker updates afterward.
+   These repairs passed actual-source Lua regressions, not native gameplay.
+
+These are pending acceptance scenarios, not assertions that a current defect
+exists. Earlier rows below keep their original addon names and source scope.
+
 ## 1. Minimal Runtime Verification Items
 
 | Verification Item | Subsystem / Addon | Why Static Analysis Cannot Prove It | Recommended In-Game Verification Procedure |

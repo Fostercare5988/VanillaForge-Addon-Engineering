@@ -46,6 +46,7 @@ FULL AUDIT COVERAGE / COST (when applicable):
 
 VALIDATION:
 - <tests>
+- <exact external test directory/command and installed source it reads, when applicable>
 - <linter>
 - <repo checks>
 - <runtime checks>

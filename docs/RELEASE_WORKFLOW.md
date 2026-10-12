@@ -18,6 +18,12 @@ Inspect the complete diff and working tree. Where relevant verify:
 - deleted/renamed files disappeared from manifests/docs;
 - tests/tools/scratch artifacts are not accidentally shipped.
 
+Standalone addon READMEs must have usable installation, controls and requirements
+without a retired collection workspace. Check local documentation links against
+the published repository tree, including renamed projects. Sparse checkout may
+hide tracked development files; it is not evidence that those files are absent
+from GitHub or a release package.
+
 Persist only intentional player settings or data; keep caches, transient queues
 and request owners in runtime state. New addons start with a small current schema. Do not add
 speculative legacy imports, version ladders or reset paths to make a release look

@@ -31,6 +31,72 @@ class AddonAuditTests(unittest.TestCase):
         path.write_text(content, encoding="utf-8")
         return path
 
+    def test_comparison_reports_changed_added_removed_and_unchanged_modules(self):
+        self.write("Addon.toc", "core.lua\nold.lua\n")
+        self.write("old.lua", "local old = true\n")
+        previous = AUDIT.audit(self.addon)
+        self.write("Addon.toc", "core.lua\nnew.lua\n")
+        self.write("new.lua", "local new = true\n")
+        current = AUDIT.audit(self.addon)
+        difference = AUDIT.compare_reports(current, previous)
+        self.assertEqual(difference["unchanged_modules"], ["core.lua"])
+        self.assertEqual(difference["changed_modules"], ["Addon.toc"])
+        self.assertEqual(difference["added_modules"], ["new.lua"])
+        self.assertEqual(difference["removed_modules"], ["old.lua"])
+        self.assertTrue(difference["load_graph_changed"])
+        self.assertEqual(difference["status"], "changed")
+        self.assertEqual(current["review"]["status"], "pending")
+
+    def test_byte_change_invalidates_reuse_even_when_load_graph_is_unchanged(self):
+        previous = AUDIT.audit(self.addon)
+        self.write("core.lua", "local value = 2\n")
+        difference = AUDIT.compare_reports(AUDIT.audit(self.addon), previous)
+        self.assertEqual(difference["changed_modules"], ["core.lua"])
+        self.assertFalse(difference["load_graph_changed"])
+
+    def test_matching_source_does_not_promote_previous_review_or_runtime_claims(self):
+        previous = AUDIT.audit(self.addon)
+        previous["review"]["status"] = "complete"
+        previous["addon"] = "retired-client/Addon"
+        current = AUDIT.audit(self.addon)
+        difference = AUDIT.compare_reports(current, previous)
+        self.assertEqual(difference["status"], "unchanged")
+        self.assertEqual(current["review"]["status"], "pending")
+        self.assertIn("native runtime", difference["limitations"])
+
+    def test_comparison_rejects_missing_hash_and_duplicate_module(self):
+        current = AUDIT.audit(self.addon)
+        for mutate in (lambda d: d["modules"][0].pop("sha256"),
+                       lambda d: d["modules"].append(d["modules"][0])):
+            previous = AUDIT.audit(self.addon)
+            mutate(previous)
+            with self.assertRaises(ValueError):
+                AUDIT.compare_reports(current, previous)
+
+    def test_comparison_cli_preserves_its_input(self):
+        previous = self.root / "before.json"
+        previous.write_text(json.dumps(AUDIT.audit(self.addon)), encoding="utf-8")
+        original = previous.read_bytes()
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(AUDIT.main([str(self.addon), "--compare", str(previous),
+                                         "--output", str(previous)]), 2)
+        self.assertEqual(previous.read_bytes(), original)
+
+    def test_external_regression_receives_the_selected_source_root(self):
+        start = self.root / "external-tests"
+        start.mkdir()
+        (start / "test_source.py").write_text(
+            "import os, unittest\nfrom pathlib import Path\n"
+            "class SourceTest(unittest.TestCase):\n"
+            " def test_source(self):\n"
+            "  root = Path(os.environ['VANILLAFORGE_ADDON_ROOT'])\n"
+            "  self.assertEqual((root / 'core.lua').read_text(), 'local value = 1\\n')\n",
+            encoding="utf-8")
+        result = AUDIT.run_tests(start, "test*.py", 10, self.addon)
+        self.assertEqual(result["status"], "passed", result)
+        self.assertEqual(result["tests_run"], 1)
+        self.assertEqual(result["source_root"], str(self.addon))
+
     def test_nested_xml_closure_and_client_managed_bindings(self):
         self.write("Addon.toc", "ui/main.xml\n")
         self.write("ui/main.xml", '<Ui><Include file="nested/child.xml"/></Ui>')

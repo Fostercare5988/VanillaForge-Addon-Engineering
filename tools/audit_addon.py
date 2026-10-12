@@ -9,6 +9,7 @@ from bisect import bisect_left
 import hashlib
 import html
 import json
+import os
 import re
 import subprocess
 import xml.etree.ElementTree as ET
@@ -168,14 +169,53 @@ def audit(addon, toc_name=None):
     return report
 
 
-def run_tests(start, pattern, timeout):
+def compare_reports(current, previous):
+    """Compare evidence inputs without carrying forward a human-review verdict."""
+    def module_hashes(report):
+        if not isinstance(report, dict) or report.get("format") != 1:
+            raise ValueError("Comparison requires a format 1 addon audit")
+        if not isinstance(report.get("modules"), list) or not isinstance(report.get("graph"), list):
+            raise ValueError("Comparison audit lacks modules or load graph")
+        hashes = {}
+        for module in report["modules"]:
+            if not isinstance(module, dict):
+                raise ValueError("Invalid comparison module")
+            path, digest = module.get("path"), module.get("sha256")
+            if not isinstance(path, str) or not path or path in hashes:
+                raise ValueError("Invalid or duplicate comparison module path")
+            if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+                raise ValueError("Comparison module lacks a valid SHA-256")
+            hashes[path] = digest
+        return hashes
+
+    before, after = module_hashes(previous), module_hashes(current)
+    common = before.keys() & after.keys()
+    result = {
+        "previous_addon": previous.get("addon"),
+        "unchanged_modules": sorted(path for path in common if before[path] == after[path]),
+        "changed_modules": sorted(path for path in common if before[path] != after[path]),
+        "added_modules": sorted(after.keys() - before.keys()),
+        "removed_modules": sorted(before.keys() - after.keys()),
+        "load_graph_changed": previous["graph"] != current["graph"],
+        "graph_errors_changed": previous.get("graph_errors") != current.get("graph_errors"),
+        "limitations": "Source equality does not verify APIs, settings, test coverage or native runtime; human review remains pending.",
+    }
+    result["status"] = "changed" if any(result[key] for key in (
+        "changed_modules", "added_modules", "removed_modules", "load_graph_changed", "graph_errors_changed")) else "unchanged"
+    return result
+
+
+def run_tests(start, pattern, timeout, source_root=None):
     command = [sys.executable, "-B", "-m", "unittest", "discover", "-s", str(start), "-p", pattern, "-v"]
-    result = {"command": command, "timeout_seconds": timeout}
+    result = {"command": command, "timeout_seconds": timeout, "source_root": str(source_root) if source_root else None}
     if not start.is_dir():
         return dict(result, status="failed", reason="Test directory does not exist", tests_run=0)
     try:
+        environment = os.environ.copy()
+        if source_root is not None:
+            environment["VANILLAFORGE_ADDON_ROOT"] = str(source_root)
         completed = subprocess.run(command, cwd=start.parent, capture_output=True, text=True,
-                                   errors="replace", timeout=timeout, check=False)
+                                   errors="replace", timeout=timeout, check=False, env=environment)
         output = completed.stdout + completed.stderr
         matches = re.findall(r"^Ran (\d+) tests? in ", output, re.M)
         count = int(matches[-1]) if matches else 0
@@ -191,6 +231,7 @@ def main(argv=None):
     parser.add_argument("addon", type=Path)
     parser.add_argument("--toc", help="Explicit root TOC filename; otherwise inspect all root *.toc files")
     parser.add_argument("--output", type=Path, help="JSON destination outside addon; default stdout")
+    parser.add_argument("--compare", type=Path, help="Previous audit JSON; report source/load-graph changes without transferring review approval")
     parser.add_argument("--run-tests", action="store_true", help="Execute local Python unittest discovery explicitly")
     parser.add_argument("--test-start", type=Path, help="Test directory; default <addon>/tests")
     parser.add_argument("--test-pattern", default="test*.py")
@@ -200,14 +241,18 @@ def main(argv=None):
         addon = args.addon.resolve()
         if args.output and inside(args.output.resolve(), addon):
             raise ValueError("Output must be outside the addon directory")
+        if args.compare and args.output and args.compare.resolve() == args.output.resolve():
+            raise ValueError("Comparison input and output must differ; preserve previous evidence")
         if not 0 < args.test_timeout <= 600:
             raise ValueError("Test timeout must be > 0 and <= 600 seconds")
         if not args.run_tests and (args.test_start or args.test_pattern != "test*.py"):
             raise ValueError("Test options require --run-tests")
         report = audit(addon, args.toc)
+        if args.compare:
+            report["comparison"] = compare_reports(report, json.loads(args.compare.read_text(encoding="utf-8-sig")))
         if args.run_tests:
             report["tests"] = run_tests((args.test_start or addon / "tests").resolve(),
-                                        args.test_pattern, args.test_timeout)
+                                        args.test_pattern, args.test_timeout, addon)
         output = json.dumps(report, indent=2, ensure_ascii=True) + "\n"
         if args.output:
             args.output.resolve().write_text(output, encoding="utf-8")

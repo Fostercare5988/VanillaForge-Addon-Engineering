@@ -1,35 +1,39 @@
 {
-  "generatedAt": "2026-10-01T15:26:23.585635+00:00",
-  "authoritativeClientRoot": "C:\\Users\\Fostercare\\Desktop\\client",
-  "historicalClientRoot": "C:\\Users\\Fostercare\\Desktop\\Niko2",
+  "generatedAt": "2026-10-12T16:50:28.546968+00:00",
+  "authoritativeClientRoot": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10",
+  "historicalClientRoot": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-06",
   "clientExecutable": "WoW.exe",
   "clientBuild": 5875,
   "interfaceVersion": 11200,
   "realm": "play.octowow.st",
   "loaderConfiguration": {
     "dlls_txt": {
-      "path": "C:\\Users\\Fostercare\\Desktop\\client\\dlls.txt",
-      "sha256": "45bae372194d247428460fc353fa59c572a41711d4ee39a0f6d5767a8d8851c1",
+      "path": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\dlls.txt",
+      "sha256": "95f2981cdc0663de465dc1c0567d0b96b1924054eb19da0db2cda0a2e825df1e",
       "entries": [
         "SuperWoWhook.dll",
         "ClassicAPI.dll",
         "nampower.dll",
         "UnitXP_SP3.dll",
-        "AuctionQueryThrottle.dll",
+        "OctoLogin.dll",
         "transmogfix.dll",
+        "AuctionQueryThrottle.dll",
         "d3d9.dll"
       ]
     },
+    "missingEntries": [],
     "dlls_txt_cache": {
-      "path": "C:\\Users\\Fostercare\\Desktop\\client\\dlls.txt.cache",
-      "sha256": "27cc3fb8d4134301780bf7b827b482c25e3b9706edd9b46950c848dc7e070531",
+      "path": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\dlls.txt.cache",
+      "sha256": "da87f06bb6693f88b79926499a063d2b2d6fa1b3011b7bb3417eb650c59c6664",
       "cached_dlls": [
-        "C:\\Users\\Fostercare\\Desktop\\client\\SuperWoWhook.dll",
-        "C:\\Users\\Fostercare\\Desktop\\client\\ClassicAPI.dll",
-        "C:\\Users\\Fostercare\\Desktop\\client\\nampower.dll",
-        "C:\\Users\\Fostercare\\Desktop\\client\\UnitXP_SP3.dll",
-        "C:\\Users\\Fostercare\\Desktop\\client\\AuctionQueryThrottle.dll",
-        "C:\\Users\\Fostercare\\Desktop\\client\\transmogfix.dll"
+        "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\SuperWoWhook.dll",
+        "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\ClassicAPI.dll",
+        "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\nampower.dll",
+        "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\UnitXP_SP3.dll",
+        "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\OctoLogin.dll",
+        "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\transmogfix.dll",
+        "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\AuctionQueryThrottle.dll",
+        "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\d3d9.dll"
       ]
     }
   },
@@ -38,7 +42,7 @@
       "filename": "ClassicAPI.dll",
       "bytes": 1449984,
       "sha256": "e34886fb9725b9059375a5c37bff81ce220633c4e2c39719ef3223a6b8fc703d",
-      "loadedInDllsTxt": true,
+      "listedInDllsTxt": true,
       "versionStrings": {
         "FileVersion": "1.15.16.0",
         "ProductVersion": "1.15.16.0",
@@ -46,91 +50,121 @@
         "LegalCopyright": "Licensed under GPLv3"
       },
       "declaredVersion": "1.15.16.0",
-      "knownUpstreamTag": "v1.15.16",
-      "sha256MatchesUpstreamRelease": true
+      "referenceHashMatches": true,
+      "referenceVersion": "1.15.16",
+      "referenceEvidence": "audit/OCTOWOW_NATIVE_STACK.md and OCTOWOW_CLIENT_BASELINE.md",
+      "sha256MatchesUpstreamRelease": true,
+      "knownUpstreamTag": "v1.15.16"
     },
     "SuperWoWhook.dll": {
       "filename": "SuperWoWhook.dll",
       "bytes": 1000448,
       "sha256": "bd214b32c878649e94ce654835946bd05e0ce7710e8f01bae10d8ab50a89351d",
-      "loadedInDllsTxt": true,
+      "listedInDllsTxt": true,
       "versionStrings": {},
-      "declaredVersion": "2.2",
-      "engineGlobal": "SUPERWOW_VERSION=\"2.2\""
+      "declaredVersion": null,
+      "referenceHashMatches": true,
+      "referenceVersion": "2.2",
+      "referenceEvidence": "audit/OCTOWOW_NATIVE_STACK.md and OCTOWOW_CLIENT_BASELINE.md"
     },
     "nampower.dll": {
       "filename": "nampower.dll",
       "bytes": 829952,
       "sha256": "96af1722ee6b1a76cbb11e59e452fe54a83f54a3da80ae24f9c7571a0a6392fe",
-      "loadedInDllsTxt": true,
+      "listedInDllsTxt": true,
       "versionStrings": {},
-      "declaredVersion": "4.6.2",
-      "logSignature": "Loading nampower v4.6.2",
-      "luaGlobal": "GetNampowerVersion"
+      "declaredVersion": null,
+      "referenceHashMatches": true,
+      "referenceVersion": "4.6.2",
+      "referenceEvidence": "audit/OCTOWOW_NATIVE_STACK.md and OCTOWOW_CLIENT_BASELINE.md"
     },
     "UnitXP_SP3.dll": {
       "filename": "UnitXP_SP3.dll",
       "bytes": 202240,
       "sha256": "74a0a80aef02be28187fd67e9ec3945d54828ef3302a827754b4c40b69cdaed8",
-      "loadedInDllsTxt": true,
+      "listedInDllsTxt": true,
       "versionStrings": {},
-      "declaredBuild": 90,
-      "peTimeDateStamp": 1774797347,
-      "luaGlobal": "UnitXP"
+      "declaredVersion": null,
+      "referenceHashMatches": true,
+      "referenceVersion": "90",
+      "referenceEvidence": "audit/OCTOWOW_NATIVE_STACK.md and OCTOWOW_CLIENT_BASELINE.md"
     },
     "AuctionQueryThrottle.dll": {
       "filename": "AuctionQueryThrottle.dll",
       "bytes": 92672,
       "sha256": "720b7ad72941206249df23cb9d36addafa2634f190081f7b33834b84af184f5e",
-      "loadedInDllsTxt": true,
-      "versionStrings": {}
+      "listedInDllsTxt": true,
+      "versionStrings": {},
+      "declaredVersion": null
     },
     "transmogfix.dll": {
       "filename": "transmogfix.dll",
       "bytes": 12800,
       "sha256": "cd9e4c6ce033b0923cf045269f590f5e0b886bd03f43bd81406670d781452210",
-      "loadedInDllsTxt": true,
-      "versionStrings": {}
+      "listedInDllsTxt": true,
+      "versionStrings": {},
+      "declaredVersion": null
     },
-    "dxgi.dll": {
-      "filename": "dxgi.dll",
-      "bytes": 5877774,
-      "sha256": "abd1449dc28d536a4289c256ae7f4b6bbd15fa552792b7170c2ddece473c8bda",
-      "loadedInDllsTxt": false,
+    "d3d9.dll": {
+      "filename": "d3d9.dll",
+      "bytes": 7856142,
+      "sha256": "265888c31ca78dffa290c39cb7e50bfb02762590e41927906e46fb32f01497fa",
+      "listedInDllsTxt": true,
       "versionStrings": {
         "FileVersion": "10.0.17763.1 (WinBuild.160101.0800)",
         "ProductVersion": "10.0.17763.1",
         "ProductName": "DXVK",
         "LegalCopyright": "zlib/libpng license"
-      }
+      },
+      "declaredVersion": "10.0.17763.1 (WinBuild.160101.0800)",
+      "referenceHashMatches": true,
+      "referenceVersion": "3.1.1",
+      "referenceEvidence": "audit/OCTOWOW_NATIVE_STACK.md and OCTOWOW_CLIENT_BASELINE.md"
+    },
+    "dxgi.dll": {
+      "filename": "dxgi.dll",
+      "bytes": 5877774,
+      "sha256": "abd1449dc28d536a4289c256ae7f4b6bbd15fa552792b7170c2ddece473c8bda",
+      "listedInDllsTxt": false,
+      "versionStrings": {
+        "FileVersion": "10.0.17763.1 (WinBuild.160101.0800)",
+        "ProductVersion": "10.0.17763.1",
+        "ProductName": "DXVK",
+        "LegalCopyright": "zlib/libpng license"
+      },
+      "declaredVersion": "10.0.17763.1 (WinBuild.160101.0800)"
     },
     "VanillaFixes.exe": {
       "filename": "VanillaFixes.exe",
       "bytes": 88576,
       "sha256": "228d7bb5e3b5b0c2062d6c5f40c38c2a173e4c80d8a5d9e4077be800431b48a3",
-      "loadedInDllsTxt": false,
-      "versionStrings": {}
+      "listedInDllsTxt": false,
+      "versionStrings": {},
+      "declaredVersion": null
     },
     "VanillaHelpers.dll": {
       "filename": "VanillaHelpers.dll",
       "bytes": 254976,
       "sha256": "1e74ddf6484c23482550d5f9e5f9d291085c4ac538d3b3ed9d87155521841196",
-      "loadedInDllsTxt": false,
-      "versionStrings": {}
+      "listedInDllsTxt": false,
+      "versionStrings": {},
+      "declaredVersion": null
     },
     "VanillaMultiMonitorFix.dll": {
       "filename": "VanillaMultiMonitorFix.dll",
       "bytes": 28160,
       "sha256": "7fa033e744c4b8794a4c97a45d563a8870264244bfa1e478a1c0f85e0c6e3371",
-      "loadedInDllsTxt": false,
-      "versionStrings": {}
+      "listedInDllsTxt": false,
+      "versionStrings": {},
+      "declaredVersion": null
     },
     "VfPatcher.dll": {
       "filename": "VfPatcher.dll",
       "bytes": 72704,
       "sha256": "f283b6b5ad8042e7995eff9768c150042dd47de6e5f00ffe530d2e67743df81d",
-      "loadedInDllsTxt": false,
-      "versionStrings": {}
+      "listedInDllsTxt": false,
+      "versionStrings": {},
+      "declaredVersion": null
     }
   },
   "dataArchives": {
@@ -179,12 +213,12 @@
       "sha256": "41c2ec9378dd60cd93ad4689bd9eb1e9d1eaadf6810e7ba362bb1cd440baff67"
     },
     "patch-5.mpq": {
-      "bytes": 54291383,
-      "sha256": "c3411200e76f0815d37911d93bcd42f60e8b968bf80451eed27d49d81d419d78"
+      "bytes": 54360249,
+      "sha256": "9b4c153dfde207cfbabd8c506dfcdcf9d8efdf334fcac6ff831e948da113c6fb"
     },
     "patch-O.mpq": {
-      "bytes": 9315256,
-      "sha256": "6f1f88d688247c1221af478a38651ffd6df8d66c4493ec82824e632f3ac64278"
+      "bytes": 9351883,
+      "sha256": "72275ee0e12bde2d3e7eb491856088afe0e0b3f58908a60f8db8f3a1a93b9a4b"
     },
     "patch-Y.MPQ": {
       "bytes": 12822,
@@ -273,8 +307,8 @@
     },
     "Interface\\FrameXML\\FrameXML.toc": {
       "sourceArchive": "patch-5.mpq",
-      "bytes": 3693,
-      "sha256": "551119c1893633d8c42fb6f16f6946e06e261f9e8fbdaab05ebceec1ff3c9c98"
+      "bytes": 3798,
+      "sha256": "b2dcb5218ba99608090c89da260d4eec0f7797898b1027495e87eb10fd239b6f"
     },
     "Interface\\FrameXML\\QuestLogFrame.lua": {
       "sourceArchive": "patch-5.mpq",
@@ -282,156 +316,448 @@
       "sha256": "39bdfaf250eca7320ac5d0eca48ee422a1f55f8ab3bbdcae227ec854671f9d0c"
     }
   },
+  "frameXMLReadErrors": [],
   "deployedAddons": {
-    "FostercareTweaks": {
-      "path": "C:\\Users\\Fostercare\\Desktop\\client\\Interface\\AddOns\\FostercareTweaks",
+    "ActionBarProfiles": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\Interface\\AddOns\\ActionBarProfiles",
       "git": {
-        "head": "ebc9bfc59c317ab1d8a29cca0adaf08728077d8f",
+        "head": "6c9297359c95326118a2df25935aa59d8b6acfeb",
         "branch": "main",
         "clean": true,
-        "status": "clean"
+        "status": "clean",
+        "remoteVerification": "verified",
+        "origin": "https://github.com/Fostercare5988/ActionBarProfiles.git",
+        "upstream": "origin/main",
+        "ahead": 0,
+        "behind": 0,
+        "trackingEvidence": "local refs; fetch may be stale",
+        "remoteHead": "6c9297359c95326118a2df25935aa59d8b6acfeb",
+        "remoteMatchesHead": true
       },
       "toc": {
         "Interface": "11200",
-        "X-ClassicAPI-Min-Version": "1.15.15",
-        "Title": "FostercareTweaks",
-        "Notes": "Interface and gameplay tweaks for WoW 1.12.1. Requires ClassicAPI 1.15.15+ and SuperWoW 2.2+; UnitXP SP3 is optional.",
-        "Author": "Fostercare",
-        "Version": "3.1.0",
-        "DefaultState": "enabled",
-        "SavedVariablesPerCharacter": "FostercareTweaks_Config, FostercareTweaks_Cache"
-      }
+        "Title": "ActionBarProfiles",
+        "Notes": "Save and load action bar profiles",
+        "Author": "firenahzku; maintained by Fostercare5988",
+        "Version": "1.0.0",
+        "Dependencies": "!!!ClassicAPI",
+        "OptionalDeps": "FostercareTweaks",
+        "SavedVariables": "ABP_Layout, ABP_ButtonPosition, ABP_LayoutVersion"
+      },
+      "runtimeTocExists": true
     },
-    "ItemRack": {
-      "path": "C:\\Users\\Fostercare\\Desktop\\client\\Interface\\AddOns\\ItemRack",
+    "AtlasLoot": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\Interface\\AddOns\\AtlasLoot",
       "git": {
-        "head": "1d31658a87d91f700e37a7e034bd4646be11e7a7",
+        "head": "a05952ecd8c718ed6f7ce511009c0dcccf9fa41f",
         "branch": "main",
         "clean": true,
-        "status": "clean"
+        "status": "clean",
+        "remoteVerification": "verified",
+        "origin": "https://github.com/Fostercare5988/AtlasLoot.git",
+        "upstream": "origin/main",
+        "ahead": 0,
+        "behind": 0,
+        "trackingEvidence": "local refs; fetch may be stale",
+        "remoteHead": "a05952ecd8c718ed6f7ce511009c0dcccf9fa41f",
+        "remoteMatchesHead": true
       },
       "toc": {
         "Interface": "11200",
-        "X-ClassicAPI-Min-Version": "1.15.15",
-        "Author": "Gello, Fostercare5988",
-        "Title": "ItemRack",
-        "Notes": "Item sets and context menus for inventory items",
-        "Version": "2.0.0",
-        "SavedVariables": "ItemRack_Users, ItemRack_Settings, ItemRack_Events, Rack_User",
-        "OptionalDeps": "Bagnon, ButtonHole"
-      }
+        "Title": "AtlasLoot |cff7fff7f TurtleWOW|r",
+        "Notes": "Shows possible loot from dungeon bosses and other sources.",
+        "Author": "Otari (overhaul/revamp, menu changes, bugfixes/updates), Lexie (Turtle WoW fixes/updates), Pepopo, MarcelineVQ (Kara40 loot), Shagu",
+        "LegacyAuthor": "Daviesh, Pompa (Turtle WoW World Bosses), Xerron (Turtle WoW World Bosses), Gurky (Turtle WoW 1.16/1.16.1 Dungeons)",
+        "Version": "3.4.6",
+        "SavedVariablesPerCharacter": "AtlasLootCharDB",
+        "OptionalDeps": "Alphamap, AtlasLoader, LootLink, ItemSync, HewdropLib, Ace2, EquipCompare, EQCompare"
+      },
+      "runtimeTocExists": true
     },
     "AutoBG": {
-      "path": "C:\\Users\\Fostercare\\Desktop\\client\\Interface\\AddOns\\AutoBG",
+      "path": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\Interface\\AddOns\\AutoBG",
       "git": {
-        "head": "c0dcdb6400aed5ea08cb80e3b08ac3edaf8a1630",
+        "head": "6531cc85da75993f6341559cdaa15d885f2926dd",
         "branch": "main",
         "clean": true,
-        "status": "clean"
+        "status": "clean",
+        "remoteVerification": "verified",
+        "origin": "https://github.com/Fostercare5988/AutoBG.git",
+        "upstream": "origin/main",
+        "ahead": 0,
+        "behind": 0,
+        "trackingEvidence": "local refs; fetch may be stale",
+        "remoteHead": "6531cc85da75993f6341559cdaa15d885f2926dd",
+        "remoteMatchesHead": true
       },
       "toc": {
+        "X-Maintainer": "Fostercare5988",
         "Interface": "11200",
         "X-ClassicAPI-Min-Version": "1.15.15",
         "Title": "AutoBG",
         "Notes": "BG timers, enemy frames and open-world Spy for WoW 1.12.1. Requires ClassicAPI v1.15.15+ and SuperWoW v2.2+; UnitXP SP3 optional.",
         "Author": "Fostercare5988",
-        "Version": "2.0.0",
+        "Version": "1.0.0",
         "SavedVariables": "AutoBG_Settings",
         "X-Category": "Battlegrounds & PvP",
-        "X-Website": "https://github.com/Fostercare5988/AutoBG"
-      }
-    },
-    "Bagnon": {
-      "path": "C:\\Users\\Fostercare\\Desktop\\client\\Interface\\AddOns\\Bagnon",
-      "git": {
-        "head": "ed4d9e9f1a632fa07c9ef71e450c74aa3e654242",
-        "branch": "main",
-        "clean": true,
-        "status": "clean"
+        "X-Website": "https://github.com/Fostercare5988"
       },
-      "toc": {
-        "Interface": "11200",
-        "X-ClassicAPI-Min-Version": "1.15.15",
-        "Title": "Bagnon",
-        "Notes": "Single-window inventory and bank engine engineered for World of Warcraft 1.12.1 (ClassicAPI v1.15.15+).",
-        "Author": "Tuller, McPewPew, Fostercare5988",
-        "Version": "2.2.1",
-        "OptionalDeps": "KC_Items",
-        "SavedVariablesPerCharacter": "BagnonSets",
-        "SavedVariables": "BagnonForeverData",
-        "X-Category": "Inventory & Bank",
-        "X-Website": "https://github.com/Fostercare5988/Bagnon"
-      }
+      "runtimeTocExists": true
     },
     "AutoLazy": {
-      "path": "C:\\Users\\Fostercare\\Desktop\\client\\Interface\\AddOns\\AutoLazy",
+      "path": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\Interface\\AddOns\\AutoLazy",
       "git": {
-        "head": "23b0d361a46d0b2f44eaaa91d506c7fa7c8d70da",
+        "head": "a17ae1e437f82a48c664a574e8b58c33dca5b0d0",
         "branch": "main",
         "clean": true,
-        "status": "clean"
+        "status": "clean",
+        "remoteVerification": "verified",
+        "origin": "https://github.com/Fostercare5988/AutoLazy.git",
+        "upstream": "origin/main",
+        "ahead": 0,
+        "behind": 0,
+        "trackingEvidence": "local refs; fetch may be stale",
+        "remoteHead": "a17ae1e437f82a48c664a574e8b58c33dca5b0d0",
+        "remoteMatchesHead": true
       },
       "toc": {
+        "X-Maintainer": "Fostercare5988",
         "Interface": "11200",
         "X-ClassicAPI-Min-Version": "1.15.15",
         "Title": "AutoLazy",
         "Notes": "Loot automation, Shift-click quest turn-ins, and a reversible minimap addon tray (ClassicAPI v1.15.15+).",
         "Author": "Fostercare5988",
-        "Version": "1.0.0",
+        "Version": "1.1.0",
         "SavedVariables": "AutoLazyDB",
         "X-Category": "Automation & Quality of Life",
-        "X-Website": "https://github.com/Fostercare5988/AutoLazy"
+        "X-Website": "https://github.com/Fostercare5988"
       },
-      "verifiedAt": "2026-10-04T15:00:49+00:00"
+      "runtimeTocExists": true
     },
-    "TrinketMenu": {
-      "path": "C:\\Users\\Fostercare\\Desktop\\client\\Interface\\AddOns\\TrinketMenu",
+    "aux-addon": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\Interface\\AddOns\\aux-addon",
       "git": {
-        "head": "27e12d09852225db2878b3e8b43009316abdf3d6",
+        "head": "7fed3e5f8d5156ae73417b40bd91ce1abdfb67d3",
         "branch": "main",
         "clean": true,
-        "status": "clean"
+        "status": "clean",
+        "remoteVerification": "verified",
+        "origin": "https://github.com/Fostercare5988/aux-addon.git",
+        "upstream": "origin/main",
+        "ahead": 0,
+        "behind": 0,
+        "trackingEvidence": "local refs; fetch may be stale",
+        "remoteHead": "7fed3e5f8d5156ae73417b40bd91ce1abdfb67d3",
+        "remoteMatchesHead": true
       },
       "toc": {
         "Interface": "11200",
-        "X-ClassicAPI-Min-Version": "1.15.15",
-        "Title": "TrinketMenu",
-        "Author": "Gello, Fostercare5988",
-        "Version": "3.9.0",
-        "Notes": "AddOn to manage trinkets engineered natively for World of Warcraft 1.12.1 (ClassicAPI v1.15.15+, SuperWoW v2.2+).",
-        "SavedVariables": "TrinketMenuOptions",
-        "SavedVariablesPerCharacter": "TrinketMenuPerOptions, TrinketMenuQueue"
-      }
+        "Author": "shirsig",
+        "OptionalDeps": "ShaguTweaks",
+        "Title": "aux",
+        "Notes": "Auction House replacement",
+        "SavedVariables": "aux"
+      },
+      "runtimeTocExists": true
     },
-    "MikScrollingBattleText": {
-      "path": "C:\\Users\\Fostercare\\Desktop\\client\\Interface\\AddOns\\MikScrollingBattleText",
+    "Bagnon": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\Interface\\AddOns\\Bagnon",
       "git": {
-        "head": "df1fd0f206759ee49806ebe6410abef2fd66bc60",
+        "head": "6757678f995cd5dff533bbca58a79506e97fa119",
         "branch": "main",
         "clean": true,
-        "status": "clean"
+        "status": "clean",
+        "remoteVerification": "verified",
+        "origin": "https://github.com/Fostercare5988/Bagnon.git",
+        "upstream": "origin/main",
+        "ahead": 0,
+        "behind": 0,
+        "trackingEvidence": "local refs; fetch may be stale",
+        "remoteHead": "6757678f995cd5dff533bbca58a79506e97fa119",
+        "remoteMatchesHead": true
       },
       "toc": {
+        "X-Maintainer": "Fostercare5988",
+        "Interface": "11200",
+        "X-ClassicAPI-Min-Version": "1.15.15",
+        "X-ClassicAPI-Required-Capabilities": "BAG_UPDATE_DELAYED, GET_ITEM_INFO_RECEIVED, C_Timer.NewTimer, C_Timer.NewTicker",
+        "Title": "Bagnon",
+        "Notes": "Unified inventory, bank and cached character bags for WoW 1.12.1.",
+        "Author": "Tuller, McPewPew, Fostercare5988",
+        "Version": "1.0.0",
+        "OptionalDeps": "KC_Items",
+        "SavedVariablesPerCharacter": "BagnonSets",
+        "SavedVariables": "BagnonForeverData",
+        "X-Category": "Inventory & Bank",
+        "X-Website": "https://github.com/Fostercare5988"
+      },
+      "runtimeTocExists": true
+    },
+    "BetterCharacterStats": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\Interface\\AddOns\\BetterCharacterStats",
+      "git": {
+        "head": "6ff1064f55a452e946facd4f0613036958854018",
+        "branch": "main",
+        "clean": true,
+        "status": "clean",
+        "remoteVerification": "verified",
+        "origin": "https://github.com/Fostercare5988/BetterCharacterStats.git",
+        "upstream": "origin/main",
+        "ahead": 0,
+        "behind": 0,
+        "trackingEvidence": "local refs; fetch may be stale",
+        "remoteHead": "6ff1064f55a452e946facd4f0613036958854018",
+        "remoteMatchesHead": true
+      },
+      "toc": {
+        "X-Website": "https://github.com/Fostercare5988",
+        "X-Maintainer": "Fostercare5988",
+        "Interface": "11200",
+        "X-ClassicAPI-Required-Capabilities": "C_Timer.NewTimer, C_UnitAuras.GetAuraDataBySpellName",
+        "Title": "BetterCharacterStats",
+        "Author": "moh, Bennylava, Lexie, Spit, Pepopo, MarcelineVQ",
+        "Version": "1.15.3",
+        "Notes": "Improved character statistics inside Character Info panel.",
+        "SavedVariablesPerCharacter": "BCSConfig"
+      },
+      "runtimeTocExists": true
+    },
+    "BigWigs": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\Interface\\AddOns\\BigWigs",
+      "git": {
+        "head": "bc62ae88eaa48c83a9d57e77a3c564585c94ef1d",
+        "branch": "main",
+        "clean": true,
+        "status": "clean",
+        "remoteVerification": "verified",
+        "origin": "https://github.com/Fostercare5988/BigWigs.git",
+        "upstream": "origin/main",
+        "ahead": 0,
+        "behind": 0,
+        "trackingEvidence": "local refs; fetch may be stale",
+        "remoteHead": "bc62ae88eaa48c83a9d57e77a3c564585c94ef1d",
+        "remoteMatchesHead": true
+      },
+      "toc": {
+        "Interface": "11200",
+        "X-Revision": "30139",
+        "X-Fork": "Pepo",
+        "Title": "|cFFFF8080Pepopo|r Big Wigs |cff7fff7f30139|r |cffabd473Turtle-WoW|r",
+        "Title-zhCN": "|cffabd473Turtle-WoW|r Big Wigs",
+        "Notes": "Boss Mods with Timer bars.",
+        "Notes-esES": "M\u00c3\u00b3dulos para Jefes con barras temporizadoras.",
+        "Notes-zhCN": "\u00e5\u009b\u00a2\u00e9\u0098\u009f\u00e9\u00a6\u0096\u00e9\u00a2\u0086\u00e6\u0088\u0098\u00e4\u00bf\u00a1\u00e6\u0081\u00af\u00e6\u008f\u0090\u00e7\u00a4\u00ba\u00e6\u008f\u0092\u00e4\u00bb\u00b6\u00ef\u00bc\u008c\u00e5\u00b8\u00a6\u00e6\u009c\u0089\u00e8\u00ae\u00a1\u00e6\u0097\u00b6\u00e6\u009d\u00a1\u00e3\u0080\u0082",
+        "Notes-zhTW": "\u00e5\u009c\u0098\u00e9\u009a\u008a\u00e9\u00a6\u0096\u00e9\u00a0\u0098\u00e6\u0088\u00b0\u00e8\u00a8\u008a\u00e6\u0081\u00af\u00e6\u008f\u0090\u00e7\u00a4\u00ba\u00e6\u008f\u0092\u00e4\u00bb\u00b6\u00ef\u00bc\u008c\u00e5\u00b8\u00b6\u00e6\u009c\u0089\u00e8\u00a8\u0088\u00e6\u0099\u0082\u00e6\u00a2\u009d\u00e3\u0080\u0082",
+        "Author": "Relar, Balake, Pepopo, Bethy, Tekkub Stoutwrithe, Ammo, Shyva, Rabbit, LYQ, Dorann, Hosq & Others",
+        "Version": "2.0.0",
+        "X-Website": "https://github.com/pepopo978/BigWigs/",
+        "X-Category": "Raid",
+        "X-RelSite-WoWI": "5086",
+        "X-RelSite-Curse": "4356",
+        "X-AceForum": "1222",
+        "X-FlySpray": "1",
+        "OptionalDeps": "Ace2, FuBar, FuBarPlugin-2.0, Babble-2.2, CandyBar, CompostLib, DewdropLib, PaintChipsLib, TabletLib, SurfaceLib, Surfaces, MikScrollingBattleText, sct, SpellStatusLib, SpellCacheLib, GratuityLib, Deformat, SpecialEventsEmbed, RosterLib",
+        "X-Embeds": "Ace2, FuBarPlugin-2.0, Babble-2.2, CandyBar, CompostLib, DewdropLib, PaintChipsLib, TabletLib, SurfaceLib",
+        "SavedVariables": "BigWigsDB, BigWigsFubarDB, BigWigsCommonAurasDB, BigWigsZombieFoodDB, BigWigsRespawnTimersDB, BigWigsContributeFlag",
+        "SavedVariablesPerCharacter": "BigWigsDBPerChar, BigWigsBarClick"
+      },
+      "runtimeTocExists": true
+    },
+    "FostercareAuras": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\Interface\\AddOns\\FostercareAuras",
+      "git": {
+        "head": "73b7d5a6cea1275d25ebe6ce4c510a3985ea6ccb",
+        "branch": "main",
+        "clean": true,
+        "status": "clean",
+        "remoteVerification": "verified",
+        "origin": "https://github.com/Fostercare5988/FostercareAuras.git",
+        "upstream": "origin/main",
+        "ahead": 0,
+        "behind": 0,
+        "trackingEvidence": "local refs; fetch may be stale",
+        "remoteHead": "73b7d5a6cea1275d25ebe6ce4c510a3985ea6ccb",
+        "remoteMatchesHead": true
+      },
+      "toc": {
+        "X-NamPower-MinVersion": "4.6.2",
+        "X-ClassicAPI-MinVersion": "1.15.16",
+        "X-Maintainer": "Fostercare5988",
+        "Interface": "11200",
+        "Title": "FostercareAuras",
+        "Notes": "Personal ability, aura, item and resource trackers.",
+        "Author": "Fostercare5988",
+        "Version": "1.0.1-local",
+        "SavedVariablesPerCharacter": "FostercareAurasDB"
+      },
+      "runtimeTocExists": true
+    },
+    "FostercareNameplates": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\Interface\\AddOns\\FostercareNameplates",
+      "git": {
+        "head": "82c44e91f5e5a2fab23932d2460cc408c768b079",
+        "branch": "main",
+        "clean": true,
+        "status": "clean",
+        "remoteVerification": "verified",
+        "origin": "https://github.com/Fostercare5988/FostercareNameplates.git",
+        "upstream": "origin/main",
+        "ahead": 0,
+        "behind": 0,
+        "trackingEvidence": "local refs; fetch may be stale",
+        "remoteHead": "82c44e91f5e5a2fab23932d2460cc408c768b079",
+        "remoteMatchesHead": true
+      },
+      "toc": {
+        "Interface": "11200",
+        "Title": "FostercareNameplates",
+        "Notes": "Adjustable Blizzard-style nameplates. Requires ClassicAPI 1.15.15+ and SuperWoW 2.2+. NamPower 4.6.2+ enables cooldown estimates.",
+        "Author": "Fostercare5988",
+        "Version": "1.0.0",
+        "X-Website": "https://github.com/Fostercare5988/FostercareNameplates",
+        "X-ClassicAPI-Min-Version": "1.15.15",
+        "OptionalDeps": "FostercareTweaks, BlizzNameplatesPlus, ShaguPlates",
+        "DefaultState": "disabled",
+        "SavedVariablesPerCharacter": "FostercareNameplates_Config"
+      },
+      "runtimeTocExists": true
+    },
+    "FostercareTweaks": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\Interface\\AddOns\\FostercareTweaks",
+      "git": {
+        "head": "342dbb0973f8e8ddbf38d1e16d4f93bf500239f8",
+        "branch": "main",
+        "clean": true,
+        "status": "clean",
+        "remoteVerification": "verified",
+        "origin": "https://github.com/Fostercare5988/FostercareTweaks.git",
+        "upstream": "origin/main",
+        "ahead": 0,
+        "behind": 0,
+        "trackingEvidence": "local refs; fetch may be stale",
+        "remoteHead": "342dbb0973f8e8ddbf38d1e16d4f93bf500239f8",
+        "remoteMatchesHead": true
+      },
+      "toc": {
+        "X-Website": "https://github.com/Fostercare5988",
+        "X-Maintainer": "Fostercare5988",
+        "Interface": "11200",
+        "X-ClassicAPI-Min-Version": "1.15.15",
+        "Title": "FostercareTweaks",
+        "Notes": "Interface and gameplay tweaks for WoW 1.12.1. Requires ClassicAPI 1.15.15+ and SuperWoW 2.2+; NamPower v4.6.2+ is optional.",
+        "OptionalDeps": "GearRack, AutoBG, AtlasLoot, Turtle_GroupUI",
+        "Author": "Fostercare5988",
+        "Version": "1.3.0",
+        "DefaultState": "enabled",
+        "SavedVariablesPerCharacter": "FostercareTweaks_Config, FostercareTweaks_Cache"
+      },
+      "runtimeTocExists": true
+    },
+    "GearRack": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\Interface\\AddOns\\GearRack",
+      "git": {
+        "head": "e1ac7d362947232fc449ad2860d93ecbc66df4d6",
+        "branch": "main",
+        "clean": true,
+        "status": "clean",
+        "remoteVerification": "verified",
+        "origin": "https://github.com/Fostercare5988/GearRack.git",
+        "upstream": "origin/main",
+        "ahead": 0,
+        "behind": 0,
+        "trackingEvidence": "local refs; fetch may be stale",
+        "remoteHead": "e1ac7d362947232fc449ad2860d93ecbc66df4d6",
+        "remoteMatchesHead": true
+      },
+      "toc": {
+        "Interface": "11200",
+        "X-ClassicAPI-Min-Version": "1.15.16",
+        "X-SuperWoW-Min-Version": "2.2",
+        "X-NamPower-Min-Version": "4.6.2",
+        "Title": "GearRack",
+        "Notes": "Gear sets, trinket priority queues and persistent weapon swaps.",
+        "Version": "1.0.0",
+        "SavedVariables": "GearRackDB",
+        "SavedVariablesPerCharacter": "GearRackCharDB",
+        "OptionalDeps": "Bagnon"
+      },
+      "runtimeTocExists": true
+    },
+    "MikScrollingBattleText": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\Interface\\AddOns\\MikScrollingBattleText",
+      "git": {
+        "head": "92bb79b2bbdf33eacf3610fe5eac5f35821e3421",
+        "branch": "main",
+        "clean": true,
+        "status": "clean",
+        "remoteVerification": "verified",
+        "origin": "https://github.com/Fostercare5988/MikScrollingBattleText.git",
+        "upstream": "origin/main",
+        "ahead": 0,
+        "behind": 0,
+        "trackingEvidence": "local refs; fetch may be stale",
+        "remoteHead": "92bb79b2bbdf33eacf3610fe5eac5f35821e3421",
+        "remoteMatchesHead": true
+      },
+      "toc": {
+        "X-Maintainer": "Fostercare5988",
         "Interface": "11200",
         "X-ClassicAPI-Min-Version": "1.15.15",
         "Title": "Mik's Scrolling Battle Text",
-        "Notes": "Scrolling combat text engineered for ClassicAPI, SuperWoW, NamPower, and UnitXP SP3.",
+        "Notes": "Scrolling combat text engineered for ClassicAPI, SuperWoW, and NamPower.",
         "Author": "Mik, Fostercare5988",
-        "Version": "6.5.2",
+        "Version": "1.0.0",
         "SavedVariables": "MikSBT_Save",
         "X-Category": "Combat",
-        "X-Website": "https://github.com/Fostercare5988/MikScrollingBattleText"
-      }
+        "X-Website": "https://github.com/Fostercare5988"
+      },
+      "runtimeTocExists": true
     },
-    "TWThreat": {
-      "path": "C:\\Users\\Fostercare\\Desktop\\client\\Interface\\AddOns\\TWThreat",
+    "SuperAPI": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\Interface\\AddOns\\SuperAPI",
       "git": {
-        "head": "dac823c26e4468c84cca3b77f9a38fc19b5024c4",
+        "head": "a516eed251cef855634cb6c717ffb09196e6635a",
         "branch": "main",
         "clean": true,
-        "status": "clean"
+        "status": "clean",
+        "remoteVerification": "verified",
+        "origin": "https://github.com/Fostercare5988/SuperAPI.git",
+        "upstream": "origin/main",
+        "ahead": 0,
+        "behind": 0,
+        "trackingEvidence": "local refs; fetch may be stale",
+        "remoteHead": "a516eed251cef855634cb6c717ffb09196e6635a",
+        "remoteMatchesHead": true
       },
       "toc": {
+        "Interface": "11200",
+        "X-ClassicAPI-Required-Capabilities": "MODIFIER_STATE_CHANGED, IsLeftShiftKeyDown, IsRightShiftKeyDown",
+        "Title": "SuperAPI |cFFFF8080-balake-|r",
+        "Notes": "the companion compatibility addon to the mod of the same name.",
+        "Author": "balake",
+        "SavedVariablesPerCharacter": "SuperAPIDB",
+        "X-Embeds": "Ace2, FuBarPlugin-2.0, CompostLib, DewDropLib, TabletLib"
+      },
+      "runtimeTocExists": true
+    },
+    "TWThreat": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\Interface\\AddOns\\TWThreat",
+      "git": {
+        "head": "6c891f2368a9100dfde4bfb9cde0126c2b6e1383",
+        "branch": "main",
+        "clean": true,
+        "status": "clean",
+        "remoteVerification": "verified",
+        "origin": "https://github.com/Fostercare5988/TWThreat.git",
+        "upstream": "origin/main",
+        "ahead": 0,
+        "behind": 0,
+        "trackingEvidence": "local refs; fetch may be stale",
+        "remoteHead": "6c891f2368a9100dfde4bfb9cde0126c2b6e1383",
+        "remoteMatchesHead": true
+      },
+      "toc": {
+        "X-Maintainer": "Fostercare5988",
         "Interface": "11200",
         "X-ClassicAPI-Min-Version": "1.15.15",
         "Title": "TWThreat",
@@ -440,19 +766,69 @@
         "Version": "1.4.0",
         "SavedVariablesPerCharacter": "TWT_CONFIG",
         "X-Category": "Combat & Threat",
-        "X-Website": "https://github.com/Fostercare5988/TWThreat"
-      }
+        "X-Website": "https://github.com/Fostercare5988"
+      },
+      "runtimeTocExists": true
+    },
+    "UnitXP_SP3_Addon": {
+      "path": "C:\\Users\\Fostercare\\Desktop\\client-2026-10-10\\Interface\\AddOns\\UnitXP_SP3_Addon",
+      "git": {
+        "head": "66f89ca441889fd807b82458f0b339587d977040",
+        "branch": "main",
+        "clean": true,
+        "status": "clean",
+        "remoteVerification": "verified",
+        "origin": "https://github.com/Fostercare5988/UnitXP_SP3_Addon.git",
+        "upstream": "origin/main",
+        "ahead": 0,
+        "behind": 0,
+        "trackingEvidence": "local refs; fetch may be stale",
+        "remoteHead": "66f89ca441889fd807b82458f0b339587d977040",
+        "remoteMatchesHead": true
+      },
+      "toc": {
+        "Interface": "11200",
+        "Title": "UnitXP SP3 Lua Addon",
+        "Notes": "Menu to control UnitXP SP3 mod",
+        "Author": "allfox and thankful community",
+        "DefaultState": "enabled",
+        "OptionalDeps": "none",
+        "SavedVariables": "UnitXP_SP3_Addon, UnitXP_SP3_Icon"
+      },
+      "runtimeTocExists": true
     }
   },
   "clientExecutableInfo": {
     "filename": "WoW.exe",
-    "bytes": 4927488,
-    "sha256": "079921d4994102e51f1424f4f8221387bf3a98f907cabbb6475d63506263cebf",
+    "bytes": 7024640,
+    "sha256": "cb599a39b7cbc6fc2d63cc1d2fb18fac62546b81b08c407512d1bdec4471614b",
     "versionInfo": {
       "FileVersion": "1, 12, 1, 5875",
       "ProductVersion": "Version 1.12",
       "ProductName": "World of Warcraft",
       "LegalCopyright": "Copyright \u00a9 2004"
     }
-  }
+  },
+  "unmanagedAddons": [
+    "Blizzard_AuctionUI",
+    "Blizzard_BattlefieldMinimap",
+    "Blizzard_BindingUI",
+    "Blizzard_CombatText",
+    "Blizzard_CraftUI",
+    "Blizzard_GMSurveyUI",
+    "Blizzard_InspectUI",
+    "Blizzard_MacroUI",
+    "Blizzard_RaidUI",
+    "Blizzard_TalentUI",
+    "Blizzard_TradeSkillUI",
+    "Blizzard_TrainerUI",
+    "BrainwasherPro",
+    "DebugTools",
+    "EasyPoisons",
+    "OctoMail",
+    "pfDebug",
+    "ShaguDPS",
+    "shootyepgp"
+  ],
+  "addonStateUpdatedAt": "2026-10-12T17:37:09.362180+00:00"
 }
