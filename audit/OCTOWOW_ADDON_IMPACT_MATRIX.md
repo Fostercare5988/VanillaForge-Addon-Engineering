@@ -107,6 +107,23 @@ those evidence boundaries, and all 94 framework tests pass. KP-11 was refined fo
 closely spaced invalidation; no additional mandatory policy document was added.
 The reviewed framework changes are included in this publication.
 
+### Fresh MSBT audit — 12 October 2026
+
+The later [complete MSBT audit](MSBT_2026-10-12_AUDIT.md) reviewed all ten loaded
+files at unchanged source `92bb79b2`. It reproduced six defects: false aura fades
+on stack reductions, color-picker writes crossing profile boundaries, options
+refresh hiding native damage while disabled, external-message color unit
+mismatch, Notification font inheritance using Outgoing, and stale mana-gain
+activation baselines. The original 49 regressions still pass; their coverage did
+not include these failures. No MSBT fix or addon release was made by the audit.
+
+Stationary sticky display performs 600 widget writes across 100 hold-phase
+frames; a stress batch of 200 distinct spell IDs performs 19,900 merge candidate
+comparisons. These are controlled operation counts, not native frame-time or
+normal-workload measurements. The [published reproductions](replays/msbt-2026-10-12/README.md)
+read installed source and extract native UI references temporarily, outside the
+game. Successful execution confirms the historical defects, not repaired behavior.
+
 ### Next acceptance and review boundaries
 
 1. Complete the [current runtime acceptance pass](OCTOWOW_RUNTIME_VERIFICATION.md#current-acceptance-pass-2026-10-12)
@@ -124,6 +141,9 @@ The reviewed framework changes are included in this publication.
 4. Reuse applicable GearRack/Bagnon/inspect operation-count evidence, redirect
    external tests to current source and measure any remaining fan-out before
    editing. Keep projects separate; a merge alone has no demonstrated FPS benefit.
+5. Repair the six MSBT findings with desired-behavior regressions and the audit's
+   native checks. Preserve player profiles, merge semantics and active animation;
+   measure representative bursts before changing the merge algorithm or styling.
 
 Each implementation should finish one selected subsystem with a before/after
 source fixture, explicit native checks and clean repository reconciliation.

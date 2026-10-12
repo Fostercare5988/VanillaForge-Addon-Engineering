@@ -1,0 +1,2822 @@
+{
+  "format": 1,
+  "addon": "<CLIENT>\\Interface\\AddOns\\MikScrollingBattleText",
+  "limits": {
+    "files": 1024,
+    "edges": 8192,
+    "file_bytes": 2000000,
+    "total_bytes": 32000000,
+    "depth": 64,
+    "sites_per_module": 500,
+    "lint_records_per_kind": 100
+  },
+  "graph": [
+    {
+      "from": "TOC",
+      "to": "MikScrollingBattleText.toc"
+    },
+    {
+      "from": "MikScrollingBattleText.toc",
+      "to": "localization.lua"
+    },
+    {
+      "from": "MikScrollingBattleText.toc",
+      "to": "localization_options.lua"
+    },
+    {
+      "from": "MikScrollingBattleText.toc",
+      "to": "MikTableRecyclerObject.lua"
+    },
+    {
+      "from": "MikScrollingBattleText.toc",
+      "to": "MikCombatEventHelper.lua"
+    },
+    {
+      "from": "MikScrollingBattleText.toc",
+      "to": "MikScrollingBattleText.lua"
+    },
+    {
+      "from": "MikScrollingBattleText.toc",
+      "to": "MSBTOptions.lua"
+    },
+    {
+      "from": "MikScrollingBattleText.toc",
+      "to": "MikCombatEventHelper.xml"
+    },
+    {
+      "from": "MikScrollingBattleText.toc",
+      "to": "MikScrollingBattleText.xml"
+    },
+    {
+      "from": "MikScrollingBattleText.toc",
+      "to": "MSBTOptions.xml"
+    }
+  ],
+  "modules": [
+    {
+      "path": "MikScrollingBattleText.toc",
+      "sha256": "dc7ed9a86751d92980ea65580da004d59c3a2cafb693cda7ce2f8c97d86424fc",
+      "bytes": 566,
+      "review_status": "pending",
+      "review_fields": [
+        "ownership/lifecycle",
+        "frequency/fanout",
+        "identity/invalidation",
+        "API capability alternatives",
+        "UI delta writes",
+        "cleanup/integration"
+      ],
+      "lint": {
+        "errors": {
+          "count": 0,
+          "records": []
+        },
+        "warnings": {
+          "count": 0,
+          "records": []
+        },
+        "infos": {
+          "count": 0,
+          "records": []
+        }
+      }
+    },
+    {
+      "path": "localization.lua",
+      "sha256": "bb3196652350ae14faaeb4f5902e7557172f74a29b66cb65c7cadcaddf08b02d",
+      "bytes": 44557,
+      "review_status": "pending",
+      "review_fields": [
+        "ownership/lifecycle",
+        "frequency/fanout",
+        "identity/invalidation",
+        "API capability alternatives",
+        "UI delta writes",
+        "cleanup/integration"
+      ],
+      "lint": {
+        "errors": {
+          "count": 0,
+          "records": []
+        },
+        "warnings": {
+          "count": 0,
+          "records": []
+        },
+        "infos": {
+          "count": 0,
+          "records": []
+        }
+      },
+      "sites": [],
+      "site_count": 0,
+      "sites_truncated": false
+    },
+    {
+      "path": "localization_options.lua",
+      "sha256": "bdf03856ffc5491a2e174d5f6a0e6e18f2d52df8fa0f26ab79b95633a52508a8",
+      "bytes": 33239,
+      "review_status": "pending",
+      "review_fields": [
+        "ownership/lifecycle",
+        "frequency/fanout",
+        "identity/invalidation",
+        "API capability alternatives",
+        "UI delta writes",
+        "cleanup/integration"
+      ],
+      "lint": {
+        "errors": {
+          "count": 0,
+          "records": []
+        },
+        "warnings": {
+          "count": 0,
+          "records": []
+        },
+        "infos": {
+          "count": 0,
+          "records": []
+        }
+      },
+      "sites": [],
+      "site_count": 0,
+      "sites_truncated": false
+    },
+    {
+      "path": "MikTableRecyclerObject.lua",
+      "sha256": "7f94e951ae1e45d34333e6af0401063a4a81c76abf222fec050c7a43c04b3af5",
+      "bytes": 5283,
+      "review_status": "pending",
+      "review_fields": [
+        "ownership/lifecycle",
+        "frequency/fanout",
+        "identity/invalidation",
+        "API capability alternatives",
+        "UI delta writes",
+        "cleanup/integration"
+      ],
+      "lint": {
+        "errors": {
+          "count": 0,
+          "records": []
+        },
+        "warnings": {
+          "count": 0,
+          "records": []
+        },
+        "infos": {
+          "count": 0,
+          "records": []
+        }
+      },
+      "sites": [],
+      "site_count": 0,
+      "sites_truncated": false
+    },
+    {
+      "path": "MikCombatEventHelper.lua",
+      "sha256": "c424f9f85af33636bc9af98251ef765fd1e9fa56439fc05f1aaddea951aa1f73",
+      "bytes": 47994,
+      "review_status": "pending",
+      "review_fields": [
+        "ownership/lifecycle",
+        "frequency/fanout",
+        "identity/invalidation",
+        "API capability alternatives",
+        "UI delta writes",
+        "cleanup/integration"
+      ],
+      "lint": {
+        "errors": {
+          "count": 0,
+          "records": []
+        },
+        "warnings": {
+          "count": 0,
+          "records": []
+        },
+        "infos": {
+          "count": 0,
+          "records": []
+        }
+      },
+      "sites": [
+        {
+          "kind": "reads_scans",
+          "api": "UnitExists",
+          "line": 252
+        },
+        {
+          "kind": "reads_scans",
+          "api": "UnitExists",
+          "line": 283
+        },
+        {
+          "kind": "reads_scans",
+          "api": "UnitExists",
+          "line": 676
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 696,
+          "argument": "PLAYER_REGEN_ENABLED",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 697,
+          "argument": "PLAYER_REGEN_DISABLED",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 698,
+          "argument": "PLAYER_COMBO_POINTS",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 699,
+          "argument": "UNIT_HEALTH",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 700,
+          "argument": "UNIT_MANA",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 701,
+          "argument": "PLAYER_TARGET_CHANGED",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 702,
+          "argument": "UNIT_PET",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 703,
+          "argument": "CHAT_MSG_COMBAT_HONOR_GAIN",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 704,
+          "argument": "CHAT_MSG_COMBAT_FACTION_CHANGE",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 705,
+          "argument": "CHAT_MSG_SKILL",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 706,
+          "argument": "CHAT_MSG_COMBAT_XP_GAIN",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 707,
+          "argument": "CHAT_MSG_COMBAT_HOSTILE_DEATH",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 711,
+          "argument": "SPELL_DAMAGE_EVENT_SELF",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 712,
+          "argument": "SPELL_DAMAGE_EVENT_OTHER",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 713,
+          "argument": "AUTO_ATTACK_SELF",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 714,
+          "argument": "AUTO_ATTACK_OTHER",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 715,
+          "argument": "SPELL_HEAL_BY_SELF",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 716,
+          "argument": "SPELL_HEAL_BY_OTHER",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 717,
+          "argument": "SPELL_HEAL_ON_SELF",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 718,
+          "argument": "SPELL_ENERGIZE_ON_SELF",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 719,
+          "argument": "SPELL_MISS_SELF",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 720,
+          "argument": "SPELL_MISS_OTHER",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 721,
+          "argument": "BUFF_ADDED_SELF",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 722,
+          "argument": "BUFF_REMOVED_SELF",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 723,
+          "argument": "DEBUFF_ADDED_SELF",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 724,
+          "argument": "DEBUFF_REMOVED_SELF",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 725,
+          "argument": "DAMAGE_SHIELD_SELF",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 726,
+          "argument": "DAMAGE_SHIELD_OTHER",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 727,
+          "argument": "ENVIRONMENTAL_DMG_SELF",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 730,
+          "argument": null,
+          "dynamic_argument": true
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterEvent",
+          "line": 737,
+          "argument": "PLAYER_REGEN_ENABLED",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterEvent",
+          "line": 738,
+          "argument": "PLAYER_REGEN_DISABLED",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterEvent",
+          "line": 739,
+          "argument": "PLAYER_COMBO_POINTS",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterEvent",
+          "line": 740,
+          "argument": "UNIT_HEALTH",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterEvent",
+          "line": 741,
+          "argument": "UNIT_MANA",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterEvent",
+          "line": 742,
+          "argument": "PLAYER_TARGET_CHANGED",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterEvent",
+          "line": 743,
+          "argument": "UNIT_PET",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterEvent",
+          "line": 744,
+          "argument": "CHAT_MSG_COMBAT_HONOR_GAIN",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterEvent",
+          "line": 745,
+          "argument": "CHAT_MSG_COMBAT_FACTION_CHANGE",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterEvent",
+          "line": 746,
+          "argument": "CHAT_MSG_SKILL",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterEvent",
+          "line": 747,
+          "argument": "CHAT_MSG_COMBAT_XP_GAIN",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterEvent",
+          "line": 748,
+          "argument": "CHAT_MSG_COMBAT_HOSTILE_DEATH",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterAllEvents",
+          "line": 752,
+          "argument": null,
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterAllEvents",
+          "line": 754,
+          "argument": null,
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 788,
+          "argument": null,
+          "dynamic_argument": true
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterAllEvents",
+          "line": 794,
+          "argument": null,
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 796,
+          "argument": null,
+          "dynamic_argument": true
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 802,
+          "argument": "ADDON_LOADED",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 803,
+          "argument": "PLAYER_ENTERING_WORLD",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "callbacks",
+          "api": "SetScript",
+          "line": 806,
+          "argument": "OnEvent",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "callbacks",
+          "api": "SetScript",
+          "line": 808,
+          "argument": "OnEvent",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterEvent",
+          "line": 816,
+          "argument": "ADDON_LOADED",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "enhanced_api_sites",
+          "api": "C_Timer.NewTimer",
+          "line": 856
+        },
+        {
+          "kind": "timers",
+          "api": "C_Timer.NewTimer",
+          "line": 856
+        },
+        {
+          "kind": "reads_scans",
+          "api": "UnitExists",
+          "line": 878
+        },
+        {
+          "kind": "reads_scans",
+          "api": "UnitExists",
+          "line": 934
+        },
+        {
+          "kind": "reads_scans",
+          "api": "UnitExists",
+          "line": 1016
+        },
+        {
+          "kind": "reads_scans",
+          "api": "UnitExists",
+          "line": 1022
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 1206,
+          "argument": null,
+          "dynamic_argument": true
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterAllEvents",
+          "line": 1213,
+          "argument": null,
+          "dynamic_argument": false
+        },
+        {
+          "kind": "reads_scans",
+          "api": "UnitExists",
+          "line": 1236
+        }
+      ],
+      "site_count": 64,
+      "sites_truncated": false
+    },
+    {
+      "path": "MikScrollingBattleText.lua",
+      "sha256": "1684e8919ee6400e3d78f2a160c5534c3b99def72ebbc4e66c8e9519a4c986f7",
+      "bytes": 103160,
+      "review_status": "pending",
+      "review_fields": [
+        "ownership/lifecycle",
+        "frequency/fanout",
+        "identity/invalidation",
+        "API capability alternatives",
+        "UI delta writes",
+        "cleanup/integration"
+      ],
+      "lint": {
+        "errors": {
+          "count": 0,
+          "records": []
+        },
+        "warnings": {
+          "count": 0,
+          "records": []
+        },
+        "infos": {
+          "count": 0,
+          "records": []
+        }
+      },
+      "sites": [
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 314,
+          "argument": null,
+          "dynamic_argument": true
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterEvent",
+          "line": 324,
+          "argument": null,
+          "dynamic_argument": true
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 334,
+          "argument": "ADDON_LOADED",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 335,
+          "argument": "PLAYER_ENTERING_WORLD",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterEvent",
+          "line": 351,
+          "argument": "ADDON_LOADED",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterEvent",
+          "line": 357,
+          "argument": "ADDON_LOADED",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 404
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 526
+        },
+        {
+          "kind": "reads_scans",
+          "api": "UnitExists",
+          "line": 1132
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetAlpha",
+          "line": 1533
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetAlpha",
+          "line": 1534
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 1536
+        },
+        {
+          "kind": "enhanced_api_sites",
+          "api": "C_Timer.NewTimer",
+          "line": 1565
+        },
+        {
+          "kind": "timers",
+          "api": "C_Timer.NewTimer",
+          "line": 1565
+        },
+        {
+          "kind": "ui_writes",
+          "api": "ClearAllPoints",
+          "line": 1725
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1737
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetAlpha",
+          "line": 1739
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 1740
+        },
+        {
+          "kind": "ui_writes",
+          "api": "ClearAllPoints",
+          "line": 1800
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetTexture",
+          "line": 1801
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetWidth",
+          "line": 1802
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetHeight",
+          "line": 1803
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 1805
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetTexture",
+          "line": 1808
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 1815
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 2111
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetAlpha",
+          "line": 2116
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetAlpha",
+          "line": 2118
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetWidth",
+          "line": 2119
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetHeight",
+          "line": 2120
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetAlpha",
+          "line": 2124
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetAlpha",
+          "line": 2125
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetWidth",
+          "line": 2128
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetHeight",
+          "line": 2129
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 2149
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetAlpha",
+          "line": 2156
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetAlpha",
+          "line": 2158
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetAlpha",
+          "line": 2164
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetAlpha",
+          "line": 2166
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetAlpha",
+          "line": 2184
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetAlpha",
+          "line": 2186
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 2193
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetAlpha",
+          "line": 2194
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetAlpha",
+          "line": 2196
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2432
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2435
+        }
+      ],
+      "site_count": 46,
+      "sites_truncated": false
+    },
+    {
+      "path": "MSBTOptions.lua",
+      "sha256": "38c042283349af35ac9ae32da880e78656ef5e485e87ba9891d70f54a693cd37",
+      "bytes": 179772,
+      "review_status": "pending",
+      "review_fields": [
+        "ownership/lifecycle",
+        "frequency/fanout",
+        "identity/invalidation",
+        "API capability alternatives",
+        "UI delta writes",
+        "cleanup/integration"
+      ],
+      "lint": {
+        "errors": {
+          "count": 0,
+          "records": []
+        },
+        "warnings": {
+          "count": 3,
+          "records": [
+            "[Rule D1 - Hierarchy Table Churn] Line 3874: '{ f:GetRegions() }' allocates a temporary table; review repeated scans. Cold-path allocation may be acceptable; preserve traversal safety.",
+            "[Rule D1 - Hierarchy Table Churn] Line 3883: '{ parent:GetChildren() }' allocates a temporary table; review repeated scans. Cold-path allocation may be acceptable; preserve traversal safety.",
+            "[Rule D1 - Hierarchy Table Churn] Line 3888: '{ f:GetRegions() }' allocates a temporary table; review repeated scans. Cold-path allocation may be acceptable; preserve traversal safety."
+          ]
+        },
+        "infos": {
+          "count": 0,
+          "records": []
+        }
+      },
+      "sites": [
+        {
+          "kind": "events",
+          "api": "RegisterEvent",
+          "line": 108,
+          "argument": "VARIABLES_LOADED",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "events",
+          "api": "UnregisterEvent",
+          "line": 117,
+          "argument": "VARIABLES_LOADED",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 136
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 139
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 140
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 143
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 176
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 250
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 253
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 308
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 331
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 338
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 342
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 345
+        },
+        {
+          "kind": "callbacks",
+          "api": "SetScript",
+          "line": 423,
+          "argument": "OnMouseWheel",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "callbacks",
+          "api": "SetScript",
+          "line": 431,
+          "argument": "OnMouseWheel",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "callbacks",
+          "api": "SetScript",
+          "line": 439,
+          "argument": "OnMouseWheel",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "callbacks",
+          "api": "SetScript",
+          "line": 447,
+          "argument": "OnMouseWheel",
+          "dynamic_argument": false
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 468
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 804
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 965
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 971
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1017
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetValue",
+          "line": 1051
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1055
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1067
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1170
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetWidth",
+          "line": 1171
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 1183
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1185
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 1191
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1193
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 1203
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1205
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 1216
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1218
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 1229
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1231
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1239
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1258
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1281
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 1294
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 1297
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 1343
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1348
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 1359
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1364
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 1375
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1380
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 1388
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 1400
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1405
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 1416
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 1431
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 1443
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 1448
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1537
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1566
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetVertexColor",
+          "line": 1687
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetVertexColor",
+          "line": 1728
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetVertexColor",
+          "line": 1753
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 1912
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1944
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 1950
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 1957
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 1990
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 2022
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2028
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2035
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2068
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 2100
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2108
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2116
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2149
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 2177
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2196
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2228
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 2247
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2256
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2338
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2345
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2349
+        },
+        {
+          "kind": "ui_writes",
+          "api": "ClearAllPoints",
+          "line": 2350
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 2351
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2378
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2385
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2389
+        },
+        {
+          "kind": "ui_writes",
+          "api": "ClearAllPoints",
+          "line": 2390
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 2391
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2418
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2425
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2429
+        },
+        {
+          "kind": "ui_writes",
+          "api": "ClearAllPoints",
+          "line": 2430
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 2431
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2453
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2467
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2505
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2506
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2509
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2510
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2514
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2538
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2541
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2544
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2548
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2560
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2600
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2601
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2626
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2630
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2641
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2645
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2653
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2664
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2731
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2747
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2751
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2776
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2791
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2795
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2809
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2820
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2863
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 2879
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2883
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2895
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2982
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2983
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2984
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2985
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2986
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2987
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 2988
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 2991
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3000
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3001
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3002
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3003
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3004
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3005
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3006
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 3009
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3080
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3081
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3082
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3083
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3086
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3095
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3098
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3099
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3100
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3101
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetHeight",
+          "line": 3117
+        },
+        {
+          "kind": "ui_writes",
+          "api": "ClearAllPoints",
+          "line": 3118
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 3119
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetHeight",
+          "line": 3122
+        },
+        {
+          "kind": "ui_writes",
+          "api": "ClearAllPoints",
+          "line": 3123
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 3124
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetHeight",
+          "line": 3127
+        },
+        {
+          "kind": "ui_writes",
+          "api": "ClearAllPoints",
+          "line": 3128
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetPoint",
+          "line": 3129
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 3187
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 3188
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 3189
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 3458
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3498
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetHeight",
+          "line": 3517
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3520
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3523
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3524
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3525
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3526
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3527
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3529
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3530
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3531
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3533
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetHeight",
+          "line": 3572
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3575
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3578
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3579
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3580
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3581
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3582
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3583
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3584
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3585
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3587
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3600
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3601
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3602
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3603
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3604
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3605
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3606
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3607
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3608
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3616
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3617
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3618
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3619
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3620
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3621
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3622
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3623
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 3624
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3805
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetVertexColor",
+          "line": 3881
+        },
+        {
+          "kind": "reads_scans",
+          "api": "GetChildren",
+          "line": 3883
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 3889
+        }
+      ],
+      "site_count": 210,
+      "sites_truncated": false
+    },
+    {
+      "path": "MikCombatEventHelper.xml",
+      "sha256": "91fd8bacf2b96d8f3d16130c709fc53bb452cf0340e0e35370e49295821bd82f",
+      "bytes": 369,
+      "review_status": "pending",
+      "review_fields": [
+        "ownership/lifecycle",
+        "frequency/fanout",
+        "identity/invalidation",
+        "API capability alternatives",
+        "UI delta writes",
+        "cleanup/integration"
+      ],
+      "lint": {
+        "errors": {
+          "count": 0,
+          "records": []
+        },
+        "warnings": {
+          "count": 0,
+          "records": []
+        },
+        "infos": {
+          "count": 0,
+          "records": []
+        }
+      },
+      "sites": [
+        {
+          "kind": "xml_handler",
+          "api": "OnEvent",
+          "line": 8
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLoad",
+          "line": 9
+        }
+      ],
+      "site_count": 2,
+      "sites_truncated": false
+    },
+    {
+      "path": "MikScrollingBattleText.xml",
+      "sha256": "a17a7b4575035116b24df7a1d6f644a75d4c0f59c8003260ff53b0c766d90582",
+      "bytes": 10558,
+      "review_status": "pending",
+      "review_fields": [
+        "ownership/lifecycle",
+        "frequency/fanout",
+        "identity/invalidation",
+        "API capability alternatives",
+        "UI delta writes",
+        "cleanup/integration"
+      ],
+      "lint": {
+        "errors": {
+          "count": 0,
+          "records": []
+        },
+        "warnings": {
+          "count": 0,
+          "records": []
+        },
+        "infos": {
+          "count": 0,
+          "records": []
+        }
+      },
+      "sites": [
+        {
+          "kind": "xml_handler",
+          "api": "OnEvent",
+          "line": 8
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLoad",
+          "line": 9
+        },
+        {
+          "kind": "on_update",
+          "api": "OnUpdate",
+          "line": 130
+        },
+        {
+          "kind": "on_update",
+          "api": "OnUpdate",
+          "line": 251
+        },
+        {
+          "kind": "on_update",
+          "api": "OnUpdate",
+          "line": 372
+        }
+      ],
+      "site_count": 5,
+      "sites_truncated": false
+    },
+    {
+      "path": "MSBTOptions.xml",
+      "sha256": "01aabe299ac21e46d9b7a43c5934784dfc2e2f938ff4f20318b30d0eb5ee436e",
+      "bytes": 78606,
+      "review_status": "pending",
+      "review_fields": [
+        "ownership/lifecycle",
+        "frequency/fanout",
+        "identity/invalidation",
+        "API capability alternatives",
+        "UI delta writes",
+        "cleanup/integration"
+      ],
+      "lint": {
+        "errors": {
+          "count": 0,
+          "records": []
+        },
+        "warnings": {
+          "count": 0,
+          "records": []
+        },
+        "infos": {
+          "count": 0,
+          "records": []
+        }
+      },
+      "sites": [
+        {
+          "kind": "xml_handler",
+          "api": "OnEnter",
+          "line": 25
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 28
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 31
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLeave",
+          "line": 31
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnClick",
+          "line": 41
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnValueChanged",
+          "line": 58
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnClick",
+          "line": 66
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnEnter",
+          "line": 70
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 73
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLeave",
+          "line": 76
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 77
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnEnter",
+          "line": 91
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 94
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLeave",
+          "line": 97
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 98
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnEnter",
+          "line": 125
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 128
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 131
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLeave",
+          "line": 131
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnTextChanged",
+          "line": 132
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnEscapePressed",
+          "line": 133
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnEnterPressed",
+          "line": 134
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnHide",
+          "line": 135
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnClick",
+          "line": 160
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnEnter",
+          "line": 161
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 164
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetVertexColor",
+          "line": 167
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLeave",
+          "line": 169
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 170
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetVertexColor",
+          "line": 171
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnClick",
+          "line": 179
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnEnter",
+          "line": 180
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 183
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 186
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLeave",
+          "line": 186
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnEnter",
+          "line": 291
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 294
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 297
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLeave",
+          "line": 297
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnClick",
+          "line": 298
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnClick",
+          "line": 337
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnEnter",
+          "line": 433
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 436
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 439
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLeave",
+          "line": 439
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnClick",
+          "line": 440
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnEnter",
+          "line": 508
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 511
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 514
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLeave",
+          "line": 514
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnClick",
+          "line": 515
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLoad",
+          "line": 655
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetValue",
+          "line": 658
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnVerticalScroll",
+          "line": 660
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 783
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLeave",
+          "line": 783
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnHide",
+          "line": 784
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 788
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 789
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnEscapePressed",
+          "line": 792
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 795
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 799
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 801
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnEnterPressed",
+          "line": 801
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLoad",
+          "line": 912
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetValue",
+          "line": 915
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnVerticalScroll",
+          "line": 917
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 1051
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLeave",
+          "line": 1051
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnHide",
+          "line": 1052
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1056
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 1057
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnEscapePressed",
+          "line": 1060
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1063
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 1067
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 1069
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnEnterPressed",
+          "line": 1069
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLoad",
+          "line": 1180
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetValue",
+          "line": 1183
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnVerticalScroll",
+          "line": 1185
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 1319
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLeave",
+          "line": 1319
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnHide",
+          "line": 1320
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1324
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Show",
+          "line": 1325
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnEscapePressed",
+          "line": 1328
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1331
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 1335
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 1337
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnEnterPressed",
+          "line": 1337
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnEnter",
+          "line": 1379
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetText",
+          "line": 1382
+        },
+        {
+          "kind": "ui_writes",
+          "api": "Hide",
+          "line": 1385
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLeave",
+          "line": 1385
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnMouseDown",
+          "line": 1386
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnMouseUp",
+          "line": 1392
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLoad",
+          "line": 1473
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnClick",
+          "line": 1476
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLoad",
+          "line": 1493
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnClick",
+          "line": 1496
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLoad",
+          "line": 1524
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnClick",
+          "line": 1527
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLoad",
+          "line": 1544
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnClick",
+          "line": 1547
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnValueChanged",
+          "line": 1608
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnValueChanged",
+          "line": 1622
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLoad",
+          "line": 1683
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnShow",
+          "line": 1684
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnValueChanged",
+          "line": 1798
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLoad",
+          "line": 1876
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnShow",
+          "line": 1877
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnHide",
+          "line": 1878
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLoad",
+          "line": 2194
+        },
+        {
+          "kind": "ui_writes",
+          "api": "SetValue",
+          "line": 2197
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnVerticalScroll",
+          "line": 2199
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLoad",
+          "line": 2329
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnShow",
+          "line": 2330
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnMouseDown",
+          "line": 2497
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnMouseUp",
+          "line": 2503
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnEvent",
+          "line": 2825
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnLoad",
+          "line": 2826
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnHide",
+          "line": 2827
+        },
+        {
+          "kind": "xml_handler",
+          "api": "OnShow",
+          "line": 2828
+        }
+      ],
+      "site_count": 123,
+      "sites_truncated": false
+    }
+  ],
+  "graph_errors": [],
+  "tests": {
+    "command": [
+      "<PYTHON>",
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "<LOCAL_EVIDENCE>\\own-addons-learning-2026-10-12\\tests\\MikScrollingBattleText",
+      "-p",
+      "test*.py",
+      "-v"
+    ],
+    "timeout_seconds": 60,
+    "source_root": "<CLIENT>\\Interface\\AddOns\\MikScrollingBattleText",
+    "status": "passed",
+    "tests_run": 49,
+    "returncode": 0,
+    "output_tail": "test_payload_direction_amount_school_and_no_invented_spell (test_damage_shield.DamageShieldTests.test_payload_direction_amount_school_and_no_invented_spell) ... ok\ntest_burst_totals_order_and_crit (test_lead_audit.CoreTests.test_burst_totals_order_and_crit) ... ok\ntest_disable_reenable_rejects_old_callback (test_lead_audit.CoreTests.test_disable_reenable_rejects_old_callback) ... ok\ntest_format_name_no_roster_scan (test_lead_audit.CoreTests.test_format_name_no_roster_scan) ... ok\ntest_hidden_event_returns_to_pool (test_lead_audit.CoreTests.test_hidden_event_returns_to_pool) ... ok\ntest_invalid_suppression_pattern_is_safe (test_lead_audit.CoreTests.test_invalid_suppression_pattern_is_safe) ... ok\ntest_pooled_jitter_restarts (test_lead_audit.CoreTests.test_pooled_jitter_restarts) ... ok\ntest_profile_switch_cancels_pending_and_clears_active (test_lead_audit.CoreTests.test_profile_switch_cancels_pending_and_clears_active) ... ok\ntest_recycler_duplicate_release (test_lead_audit.CoreTests.test_recycler_duplicate_release) ... ok\ntest_recycler_nested_reference_clear_and_overflow (test_lead_audit.CoreTests.test_recycler_nested_reference_clear_and_overflow) ... ok\ntest_same_name_melee_keeps_guid (test_lead_audit.CoreTests.test_same_name_melee_keeps_guid) ... ok\ntest_unversioned_profile_preserves_choices (test_lead_audit.CoreTests.test_unversioned_profile_preserves_choices) ... ok\ntest_world_change_cancels_pending (test_lead_audit.CoreTests.test_world_change_cancels_pending) ... ok\ntest_dialog_fits_small_ui (test_lead_audit.OptionTests.test_dialog_fits_small_ui) ... ok\ntest_passive_editbox_does_not_write_settings (test_lead_audit.OptionTests.test_passive_editbox_does_not_write_settings) ... ok\ntest_passive_slider_clamp_does_not_write_saved_value (test_lead_audit.OptionTests.test_passive_slider_clamp_does_not_write_saved_value) ... ok\ntest_switch_threshold_to_search_without_events (test_lead_audit.OptionTests.test_switch_threshold_to_search_without_events) ... ok\ntest_template_names_match_case (test_lead_audit.OptionTests.test_template_names_match_case) ... ok\ntest_heal_duplicate_and_pet_overlap (test_lead_audit.ProviderTests.test_heal_duplicate_and_pet_overlap) ... ok\ntest_melee_flags_and_partial_block (test_lead_audit.ProviderTests.test_melee_flags_and_partial_block) ... ok\ntest_no_foreign_event_default (test_lead_audit.ProviderTests.test_no_foreign_event_default) ... ok\ntest_no_idle_cleanup_ticker (test_lead_audit.ProviderTests.test_no_idle_cleanup_ticker) ... ok\ntest_pet_other_variants (test_lead_audit.ProviderTests.test_pet_other_variants) ... ok\ntest_search_triggers_registered_and_one_match_per_event (test_lead_audit.ProviderTests.test_search_triggers_registered_and_one_match_per_event) ... ok\ntest_spell_hit_bit_and_absorb_immunity (test_lead_audit.ProviderTests.test_spell_hit_bit_and_absorb_immunity) ... ok\ntest_total_healing_no_health_sampling (test_lead_audit.ProviderTests.test_total_healing_no_health_sampling) ... ok\ntest_unknown_guid_never_uses_current_target (test_lead_audit.ProviderTests.test_unknown_guid_never_uses_current_target) ... ok\ntest_combat_end_preserves_queued_damage (test_lifecycle_edges.LifecycleEdgeTests.test_combat_end_preserves_queued_damage) ... ok\ntest_empty_thresholds_do_no_health_reads (test_lifecycle_edges.LifecycleEdgeTests.test_empty_thresholds_do_no_health_reads) ... ok\ntest_final_low_health_crossing_is_delivered_and_disable_cancels_check (test_lifecycle_edges.LifecycleEdgeTests.test_final_low_health_crossing_is_delivered_and_disable_cancels_check) ... ok\ntest_localized_capture_order_and_literal_percent (test_lifecycle_edges.LifecycleEdgeTests.test_localized_capture_order_and_literal_percent) ... ok\ntest_mana_observation_preserves_small_gains_and_spell_energy (test_lifecycle_edges.LifecycleEdgeTests.test_mana_observation_preserves_small_gains_and_spell_energy) ... ok\ntest_native_combat_text_choice_survives_enable_disable (test_lifecycle_edges.LifecycleEdgeTests.test_native_combat_text_choice_survives_enable_disable) ... ok\ntest_overflow_is_collectible_and_primary_bounded (test_lifecycle_edges.LifecycleEdgeTests.test_overflow_is_collectible_and_primary_bounded) ... ok\ntest_periodic_crit_preserves_both_properties (test_lifecycle_edges.LifecycleEdgeTests.test_periodic_crit_preserves_both_properties) ... ok\ntest_pet_outgoing_heal_uses_existing_general_heal_control (test_lifecycle_edges.LifecycleEdgeTests.test_pet_outgoing_heal_uses_existing_general_heal_control) ... ok\ntest_reentrant_merge_keeps_new_queue_and_returns_all_events (test_lifecycle_edges.LifecycleEdgeTests.test_reentrant_merge_keeps_new_queue_and_returns_all_events) ... ok\ntest_shield_never_resolves_generic_name_to_a_spell_icon (test_lifecycle_edges.LifecycleEdgeTests.test_shield_never_resolves_generic_name_to_a_spell_icon) ... ok\ntest_process_merge_avoids_queue_holes (test_routing_and_profiles.MSBTRoutingAndProfileTests.test_process_merge_avoids_queue_holes) ... ok\ntest_spell_heal_on_self_routes_pet_heal (test_routing_and_profiles.MSBTRoutingAndProfileTests.test_spell_heal_on_self_routes_pet_heal) ... ok\ntest_update_profiles_preserves_unversioned_profile (test_routing_and_profiles.MSBTRoutingAndProfileTests.test_update_profiles_preserves_unversioned_profile) ... ok\ntest_all_pages_font_paths_and_passive_profile_preservation (test_settings_integration.SettingsIntegrationTests.test_all_pages_font_paths_and_passive_profile_preservation) ... ok\ntest_mover_escape_restores_preview_and_stops_drag (test_settings_integration.SettingsIntegrationTests.test_mover_escape_restores_preview_and_stops_drag) ... ok\ntest_native_scroll_end_hides_unused_rows (test_settings_integration.SettingsIntegrationTests.test_native_scroll_end_hides_unused_rows) ... ok\ntest_search_editor_transition_and_icon_clear (test_settings_integration.SettingsIntegrationTests.test_search_editor_transition_and_icon_clear) ... ok\ntest_each_health_owner_and_player_mana_are_independent (test_trigger_throttle.TriggerThrottleTests.test_each_health_owner_and_player_mana_are_independent) ... ok\ntest_friendly_target_keeps_native_one_nil_predicate (test_trigger_throttle.TriggerThrottleTests.test_friendly_target_keeps_native_one_nil_predicate) ... ok\ntest_same_owner_retains_interval_and_final_state_runs (test_trigger_throttle.TriggerThrottleTests.test_same_owner_retains_interval_and_final_state_runs) ... ok\ntest_unrelated_named_and_guid_units_cannot_suppress_player (test_trigger_throttle.TriggerThrottleTests.test_unrelated_named_and_guid_units_cannot_suppress_player) ... ok\n\n----------------------------------------------------------------------\nRan 49 tests in 1.509s\n\nOK\n",
+    "reason": null
+  },
+  "review": {
+    "status": "pending",
+    "scenarios": [
+      "login/reload and persistence",
+      "combat enter/leave and mob deaths",
+      "loot and inventory/equipment bursts",
+      "aura and roster changes",
+      "inspect/target/nameplate changes",
+      "hidden/reopened UI and optional integrations"
+    ],
+    "api_provider_semantics_and_cost": "pending",
+    "measured_baseline_and_after": "pending",
+    "pending_modules": 10
+  },
+  "limitations": [
+    "Lexical sites and lint are candidates, not defect or performance proof.",
+    "No Lua compilation, dynamic load discovery, API equivalence or native gameplay verification.",
+    "TOC/XML source closure only; referenced media and dependencies need separate review.",
+    "No code, configuration or runtime changes; optional tests execute local Python when requested."
+  ],
+  "module_count": 10,
+  "status": "human_review_pending",
+  "comparison": {
+    "previous_addon": "<CLIENT>\\Interface\\AddOns\\MikScrollingBattleText",
+    "unchanged_modules": [
+      "MSBTOptions.lua",
+      "MSBTOptions.xml",
+      "MikCombatEventHelper.lua",
+      "MikCombatEventHelper.xml",
+      "MikScrollingBattleText.lua",
+      "MikScrollingBattleText.toc",
+      "MikScrollingBattleText.xml",
+      "MikTableRecyclerObject.lua",
+      "localization.lua",
+      "localization_options.lua"
+    ],
+    "changed_modules": [],
+    "added_modules": [],
+    "removed_modules": [],
+    "load_graph_changed": false,
+    "graph_errors_changed": false,
+    "limitations": "Source equality does not verify APIs, settings, test coverage or native runtime; human review remains pending.",
+    "status": "unchanged"
+  }
+}

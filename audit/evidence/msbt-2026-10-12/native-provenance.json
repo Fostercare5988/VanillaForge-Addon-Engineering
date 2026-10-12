@@ -1,0 +1,52 @@
+{
+  "UIDropDownMenu.lua": {
+    "archive": "patch-4.mpq",
+    "bytes": 25701,
+    "sha256": "847cdae056abd6897e3919f716eac7007a0c232981be4acf1e1d40b1912ccc0c"
+  },
+  "ColorPickerFrame.xml": {
+    "archive": "patch.MPQ",
+    "bytes": 9849,
+    "sha256": "ec008b428ad0580c01d3e89a23d361a846d5d80c50e9b4c2d22c07fd05e00003"
+  },
+  "UIParent.lua": {
+    "archive": "patch-4.mpq",
+    "bytes": 63478,
+    "sha256": "9ad1082fa46d02bc4fb7ee2d9f0509d171cb6b3a5c1a5440a1fef786ad4a28cc"
+  },
+  "UIPanelTemplates.xml": {
+    "archive": "patch-4.mpq",
+    "bytes": 18081,
+    "sha256": "e501b1abacabb3c13106f0e8041e2b880aa6580ef65e8bb8639da540e708fef3"
+  },
+  "UIDropDownMenu.xml": {
+    "archive": "patch-4.mpq",
+    "bytes": 1322,
+    "sha256": "632497c4aea88639ae06e136d8b95ae3efbef4ea8ddb8cd130de51eebe817689"
+  },
+  "globals-00-interface.lua": {
+    "archive": "interface.MPQ",
+    "bytes": 270522,
+    "sha256": "2a250be71c59079ab3279147703147cb3e87b10f27b70e24e80b727a06523b09"
+  },
+  "OptionsFrameTemplates.xml": {
+    "archive": "patch-4.mpq",
+    "bytes": 12824,
+    "sha256": "1b379bb8f1f104718a01ee17fa1fe4de8da9790d2992bd085277ce9b6c96e94c"
+  },
+  "globals-01-patch.lua": {
+    "archive": "patch.MPQ",
+    "bytes": 314249,
+    "sha256": "0547dadecfce5d36e85c67c5681868c3fa8d5b0a4bb828236d0b38e4e249756c"
+  },
+  "globals-02-patch-3.lua": {
+    "archive": "patch-3.mpq",
+    "bytes": 315036,
+    "sha256": "165a363dfca42b0ea08e1e24119bda60d8031a5bd9f0a93f998ead1cc7c0db7d"
+  },
+  "globals-03-patch-5.lua": {
+    "archive": "patch-5.mpq",
+    "bytes": 312863,
+    "sha256": "6bb6dd6006be7af38fa439985a47550173f55279e2f279298f13c9985a26ec2a"
+  }
+}
