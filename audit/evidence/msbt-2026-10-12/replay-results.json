@@ -1,0 +1,309 @@
+{
+  "source": "<CLIENT>\\Interface\\AddOns\\MikScrollingBattleText",
+  "sourceFiles": 57,
+  "sourceUnchanged": true,
+  "meaning": "Six existing defect reproductions confirmed; no fixes applied.",
+  "findings": {
+    "F1_aura_stack_decrease": {
+      "cases": {
+        "BUFF_REMOVED_SELF": {
+          "state": 2,
+          "observedFadeEvents": 1,
+          "trueRemovalControl": 1,
+          "expectedFadeEvents": 0,
+          "remainingStacks": 2
+        },
+        "DEBUFF_REMOVED_SELF": {
+          "state": 2,
+          "observedFadeEvents": 1,
+          "trueRemovalControl": 1,
+          "expectedFadeEvents": 0,
+          "remainingStacks": 2
+        }
+      },
+      "completePipelineFalseFade": 1
+    },
+    "F2_notification_font_owner": {
+      "4": {
+        "expectedInheritedSize": 34,
+        "inheritedSize": 20,
+        "recordedArea": "Outgoing",
+        "eventType": "MSBT_EVENTTYPE_NOTIFICATION_DEBUFF",
+        "persistedOverride": 20
+      },
+      "3": {
+        "recordedArea": "Outgoing",
+        "eventType": "MSBT_EVENTTYPE_OUTGOING_DAMAGE",
+        "inheritedSize": 20
+      },
+      "2": {
+        "recordedArea": "Incoming",
+        "eventType": "MSBT_EVENTTYPE_INCOMING_DAMAGE",
+        "inheritedSize": 22
+      }
+    },
+    "F3_disabled_damage_owner": {
+      "enabledFalseControl": "0",
+      "userDisabled": true,
+      "showGameDamage": false,
+      "afterDisable": "1",
+      "afterOptionsShown": "0",
+      "enabledTrueControl": "1"
+    },
+    "F4_picker_profile_owner": {
+      "accept": {
+        "expectedSecondProfile": {
+          "r": 0.7,
+          "g": 0.8,
+          "b": 0.9
+        },
+        "observedSecondProfile": {
+          "r": 0.4,
+          "g": 0.5,
+          "b": 0.6
+        },
+        "firstProfileAfter": {
+          "r": 0.4,
+          "g": 0.5,
+          "b": 0.6
+        }
+      },
+      "cancel": {
+        "expectedSecondProfile": {
+          "r": 0.7,
+          "g": 0.8,
+          "b": 0.9
+        },
+        "observedSecondProfile": {
+          "r": 0.1,
+          "g": 0.2,
+          "b": 0.3
+        },
+        "firstProfileAfter": {
+          "r": 0.4,
+          "g": 0.5,
+          "b": 0.6
+        }
+      }
+    },
+    "F5_external_color_units": {
+      "caller": "<CLIENT>\\Interface\\AddOns\\BigWigs\\Plugins\\Messages.lua",
+      "callerSha256": "f390ef3c9e69aec3a0017ec732906c23d660ad4e1633942b41d986bd42afdc01",
+      "expectedSetTextColor": [
+        0.2,
+        0.5,
+        0.8
+      ],
+      "observedSetTextColor": [
+        51,
+        127.5,
+        204
+      ],
+      "nativeClampingOrAppearanceMeasured": false
+    },
+    "F6_mana_enable_baseline": [
+      {
+        "previousBaseline": 100,
+        "manaWhenEnabled": 20,
+        "firstObservedIncrease": 5,
+        "expectedFirstGain": "5 Mana",
+        "observedFirstGainMessages": [],
+        "subsequentTwoManaGainControl": true
+      },
+      {
+        "previousBaseline": 20,
+        "manaWhenEnabled": 70,
+        "firstObservedIncrease": 5,
+        "expectedFirstGain": "5 Mana",
+        "observedFirstGainMessages": [
+          "55 Mana"
+        ],
+        "subsequentTwoManaGainControl": true
+      }
+    ]
+  },
+  "operationCounts": {
+    "merge": [
+      {
+        "inputs": 1,
+        "distinctSpellIds": false,
+        "mergeCandidateVisits": 0,
+        "outputs": 1,
+        "amountConserved": 1
+      },
+      {
+        "inputs": 1,
+        "distinctSpellIds": true,
+        "mergeCandidateVisits": 0,
+        "outputs": 1,
+        "amountConserved": 1
+      },
+      {
+        "inputs": 10,
+        "distinctSpellIds": false,
+        "mergeCandidateVisits": 9,
+        "outputs": 1,
+        "amountConserved": 10
+      },
+      {
+        "inputs": 10,
+        "distinctSpellIds": true,
+        "mergeCandidateVisits": 45,
+        "outputs": 10,
+        "amountConserved": 10
+      },
+      {
+        "inputs": 50,
+        "distinctSpellIds": false,
+        "mergeCandidateVisits": 49,
+        "outputs": 1,
+        "amountConserved": 50
+      },
+      {
+        "inputs": 50,
+        "distinctSpellIds": true,
+        "mergeCandidateVisits": 1225,
+        "outputs": 50,
+        "amountConserved": 50
+      },
+      {
+        "inputs": 200,
+        "distinctSpellIds": false,
+        "mergeCandidateVisits": 199,
+        "outputs": 1,
+        "amountConserved": 200
+      },
+      {
+        "inputs": 200,
+        "distinctSpellIds": true,
+        "mergeCandidateVisits": 19900,
+        "outputs": 200,
+        "amountConserved": 200
+      }
+    ],
+    "sticky": {
+      "frames": 100,
+      "unchangedNonCriticalStickyWithIcon": {
+        "icon.SetWidth": 100,
+        "font.SetAlpha": 100,
+        "font.SetPoint": 100,
+        "icon.SetHeight": 100,
+        "icon.SetAlpha": 100,
+        "font.SetTextHeight": 100
+      },
+      "totalWidgetWrites": 600,
+      "nativeMillisecondsMeasured": false
+    }
+  },
+  "sourceHashes": {
+    ".gitattributes": "07fdef95ec77a006e6eaa5235916e9ed90208183a826a666a67fa94ce0c2a034",
+    ".gitignore": "5169c0a179e196fdb0fca64b247ecbd950253420394d538a3cbb10a5cf1d6f7f",
+    "localization.lua": "bb3196652350ae14faaeb4f5902e7557172f74a29b66cb65c7cadcaddf08b02d",
+    "localization_options.lua": "bdf03856ffc5491a2e174d5f6a0e6e18f2d52df8fa0f26ab79b95633a52508a8",
+    "MikCombatEventHelper.lua": "c424f9f85af33636bc9af98251ef765fd1e9fa56439fc05f1aaddea951aa1f73",
+    "MikCombatEventHelper.xml": "91fd8bacf2b96d8f3d16130c709fc53bb452cf0340e0e35370e49295821bd82f",
+    "MikScrollingBattleText.lua": "1684e8919ee6400e3d78f2a160c5534c3b99def72ebbc4e66c8e9519a4c986f7",
+    "MikScrollingBattleText.toc": "dc7ed9a86751d92980ea65580da004d59c3a2cafb693cda7ce2f8c97d86424fc",
+    "MikScrollingBattleText.xml": "a17a7b4575035116b24df7a1d6f644a75d4c0f59c8003260ff53b0c766d90582",
+    "MikTableRecyclerObject.lua": "7f94e951ae1e45d34333e6af0401063a4a81c76abf222fec050c7a43c04b3af5",
+    "MSBTOptions.lua": "38c042283349af35ac9ae32da880e78656ef5e485e87ba9891d70f54a693cd37",
+    "MSBTOptions.xml": "01aabe299ac21e46d9b7a43c5934784dfc2e2f938ff4f20318b30d0eb5ee436e",
+    "README.md": "25b60f7ac0170102213f0faed1eff157ab44a1209bbb0ab5e0d49ffc1cd49096",
+    "Artwork/PlainBackdrop.tga": "61f41c08e649545b14cdc226c9e26bc4f4f061f357150cf7e7ac1250dc2c5c7f",
+    "docs/USER_GUIDE.md": "697c1441affd1c4e552062b614a83d0060c93d29daf4242811e5243d7b6cfe53",
+    "Fonts/adventure.ttf": "e5de92f4cd5e99f7c1e70a573f220403366c7d0f901f2ba740ae190b99be2076",
+    "Fonts/archangelsk.ttf": "8ce867bf441b551b09cc5a8290e1c4d1aa64c03b94171c8af52b5a43358ac9eb",
+    "Fonts/backsplatter.ttf": "000283cd7d1d9ef9b263180151573c67d0d0fee0674784eeaa1871f358c3f4d2",
+    "Fonts/basketofhammers.ttf": "0e4fd5226ed527f9d532039bb73006c3aa4cad91a05f87aa3ffe08ab2c38bf4d",
+    "Fonts/bazooka.ttf": "40b937264d2325eafd8dd97b18d93d449c92aa065ba4001d87f411bb7e45c6fa",
+    "Fonts/BigNoodleTitling.ttf": "1bdaea7c5e8925016a9da5500fa68b544d9681d667c661be53a7dc6a94a815e7",
+    "Fonts/BlackCastleMF.ttf": "149d71d96348ee9b2e36b9557c527364911149bbd91a0edafa51f0399e04f8eb",
+    "Fonts/budhand.ttf": "02cf00d0024d3db6160d74f1f479a839f0cd0a6ba844dba845c0587f0cb3c055",
+    "Fonts/college.ttf": "ba089e3e585ccc59c2297aaf51cb5efe68c0cb8553558a3de7224428eae53963",
+    "Fonts/comic.ttf": "b82c53776058f291382ff7e008d4675839d2dc21eb295c66391f6fb0655d8fc0",
+    "Fonts/Continuum.ttf": "28e295353b910b9ca7bf3d2b437bb5873ce49d5db1df661f8c97efeb9399d8b9",
+    "Fonts/cooline.ttf": "3e676d16860f06085da51cf9a44155feac03e4afabdcefed72ac8f403a9b02a6",
+    "Fonts/creeper.ttf": "bcb6e888ae414be26ad14f98b5ceeaed5abe5035e61ac6a532e67d7ebaa03f9e",
+    "Fonts/defused.ttf": "d46bb098446762e1a8063e373954a75f21fc83edf090895c7a24f3e4823fec41",
+    "Fonts/DieDieDie.ttf": "a7cf332ae1604f905a419e0ff03bd6dafe3caf1fb02de0b4c022e5f1dc761af9",
+    "Fonts/exocet.ttf": "612b829e26d86b0f92811c1efe80ccc157995f54988c84b223545f612047c994",
+    "Fonts/Expressway.ttf": "06a2106170c2b5b736955cc749ed755f3757d103230645158f0bd5b5b91c386b",
+    "Fonts/FuturaBold.ttf": "aa64abd2aac5374ec35657476233ca8873ec1c2057a2031cd3979df3b2e24af8",
+    "Fonts/galaxy.ttf": "61551e5aac084a487ec5caefc3e27098e07d1910a54c94f29d6b81ebf5dc7666",
+    "Fonts/GoogleSans-Bold.ttf": "baf49bbad31bba9afb9f18b2feff9871aa248548bf3e15b58ececde099fb1dfa",
+    "Fonts/GoogleSans-Medium.ttf": "0cdf0063c8c613033b911b0eb7162aa0a3931b4129ba193163e71dc7d8e16e4b",
+    "Fonts/Homespun.ttf": "00987661c58306d4166af5c94d69b2becb21548097658e4627ef4dfdfb6b3f90",
+    "Fonts/Inter-Bold.ttf": "288316099b1e0a47a4716d159098005eef7c0066921f34e3200393dbdb01947f",
+    "Fonts/Inter-SemiBold.ttf": "78a843fade9d4612a5567302fb595b56976eb5fcebf4fea5a5912d638bafcde3",
+    "Fonts/mailrays.TTF": "0ac4cb0dbc9f6c73da1c7d3fba3924f280c8a02318a56e92b357be516932c595",
+    "Fonts/Myriad-Pro.ttf": "a4eefdaeccae42faeaf989b6b642f2e39386fd33a7e11c39e7c08d3bfc4eb18a",
+    "Fonts/pepsi.ttf": "986311d9f65f5687dcbddb8f7e8176efe277f31e0f276f00e5dde4dd5f119ba6",
+    "Fonts/porky.ttf": "7e5798e90dcc1545ebae2f41bf8325bf6061e62b97288dec053c05b985acc85a",
+    "Fonts/PT-Sans-Narrow-Bold.ttf": "e69d83bcf5bd647892b4e2b22f5098dabd55c989413513197722fc156fb9f00e",
+    "Fonts/PT-Sans-Narrow-Regular.ttf": "4102edda03059163771869d258df54ac8563c408fa6e9ef75b2ddc85eabea6f4",
+    "Fonts/Roboto.ttf": "79e851404657dac2106b3d22ad256d47824a9a5765458edb72c9102a45816d95",
+    "Fonts/RobotoMono.ttf": "c570ac128b984104aeeffda5d69eea9496d676b25bdf0425585c4c934618c450",
+    "Fonts/SFProDisplay-Bold.ttf": "ab84e52d994a9633d3bfc4cafedc8a3821e182bf5cb34107f5520934b20025a5",
+    "Fonts/SFProText-Bold.ttf": "e75223787620bb8ba1b9f97f68c5e1fbe659d92cc61439cb81b4cef1ec8c0544",
+    "Fonts/signature.ttf": "cd3580f120c185b1e36ce6d107e657dbf1c04a70ac69c5b560f8312ebf418906",
+    "Fonts/simhei.ttf": "336a838f4a78e150826be608dae69de59d50948c3d2b71760e096ae764154bdc",
+    "Fonts/skratchpunk.ttf": "4309144a2f1b084407031b7f1da2dacab96dcf284fb1c31c70a2c27e4587a025",
+    "Fonts/yellowjacket.ttf": "716f35a0d2a6c56e191bad19a772b049b6948dea0e4d5a667fef6cb02913c291",
+    "Fonts/zombie.ttf": "619e6ba6e3852d747064d276abd028b89204d9e1d383d991ee893b4a30edff95",
+    "sounds/LowHealth.mp3": "ef0401268b779f1e86755ee603370c022df14a20df1f0bef369d7890ccede2eb",
+    "sounds/LowMana.mp3": "2b312e0bf33c76c1fdf9d644b60117ad3eae0eea923fc5eedd31212f74bc4dfb",
+    "sounds/Resist.mp3": "d94b976a59bf1b6fba0c00a7d5345143ba6d0e5cc4710d1c4126d9ae987702cb"
+  },
+  "nativeReferenceProvenance": {
+    "UIDropDownMenu.lua": {
+      "archive": "patch-4.mpq",
+      "bytes": 25701,
+      "sha256": "847cdae056abd6897e3919f716eac7007a0c232981be4acf1e1d40b1912ccc0c"
+    },
+    "ColorPickerFrame.xml": {
+      "archive": "patch.MPQ",
+      "bytes": 9849,
+      "sha256": "ec008b428ad0580c01d3e89a23d361a846d5d80c50e9b4c2d22c07fd05e00003"
+    },
+    "UIParent.lua": {
+      "archive": "patch-4.mpq",
+      "bytes": 63478,
+      "sha256": "9ad1082fa46d02bc4fb7ee2d9f0509d171cb6b3a5c1a5440a1fef786ad4a28cc"
+    },
+    "UIPanelTemplates.xml": {
+      "archive": "patch-4.mpq",
+      "bytes": 18081,
+      "sha256": "e501b1abacabb3c13106f0e8041e2b880aa6580ef65e8bb8639da540e708fef3"
+    },
+    "UIDropDownMenu.xml": {
+      "archive": "patch-4.mpq",
+      "bytes": 1322,
+      "sha256": "632497c4aea88639ae06e136d8b95ae3efbef4ea8ddb8cd130de51eebe817689"
+    },
+    "globals-00-interface.lua": {
+      "archive": "interface.MPQ",
+      "bytes": 270522,
+      "sha256": "2a250be71c59079ab3279147703147cb3e87b10f27b70e24e80b727a06523b09"
+    },
+    "OptionsFrameTemplates.xml": {
+      "archive": "patch-4.mpq",
+      "bytes": 12824,
+      "sha256": "1b379bb8f1f104718a01ee17fa1fe4de8da9790d2992bd085277ce9b6c96e94c"
+    },
+    "globals-01-patch.lua": {
+      "archive": "patch.MPQ",
+      "bytes": 314249,
+      "sha256": "0547dadecfce5d36e85c67c5681868c3fa8d5b0a4bb828236d0b38e4e249756c"
+    },
+    "globals-02-patch-3.lua": {
+      "archive": "patch-3.mpq",
+      "bytes": 315036,
+      "sha256": "165a363dfca42b0ea08e1e24119bda60d8031a5bd9f0a93f998ead1cc7c0db7d"
+    },
+    "globals-03-patch-5.lua": {
+      "archive": "patch-5.mpq",
+      "bytes": 312863,
+      "sha256": "6bb6dd6006be7af38fa439985a47550173f55279e2f279298f13c9985a26ec2a"
+    }
+  }
+}

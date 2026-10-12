@@ -37,6 +37,7 @@ change the underlying client/API generation.
 | Investigate a recurring hazard | [Known patterns](KNOWN_PATTERNS.md) |
 | Inspect the deployed OctoWoW client | [Dated client baseline](audit/OCTOWOW_CLIENT_BASELINE.md) |
 | Find maintained projects, current status and next priorities | [Current portfolio](audit/OCTOWOW_ADDON_IMPACT_MATRIX.md#current-portfolio--12-october-2026) |
+| Review the fresh MSBT findings and reproduce them | [MSBT audit](audit/MSBT_2026-10-12_AUDIT.md) |
 | Review reusable lessons | [Retrospective](agent/RETROSPECTIVE_TEMPLATE.md#framework-lesson) and [decision log](docs/DECISION_LOG.md) |
 | Audit an upstream release | [Upstream audit template](agent/UPSTREAM_AUDIT_TEMPLATE.md) |
 
