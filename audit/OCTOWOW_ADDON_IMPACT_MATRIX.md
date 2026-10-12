@@ -5,7 +5,138 @@
 
 ---
 
-## 1. Current portfolio review (2026-10-06)
+## Current portfolio — 12 October 2026
+
+The active source and game root is `C:\Users\Fostercare\Desktop\client-2026-10-10`.
+All 16 maintained checkouts live directly in `Interface\AddOns`. On 12 October,
+eight pending repositories were committed and pushed; the other eight already
+matched origin. All 16 local HEADs, origin/main refs and remotely read main heads
+matched, and every working tree was clean. This is a dated reconciliation, not a
+permanent claim about future working trees. Tags and release assets were unchanged.
+The [GitHub overview](https://github.com/Fostercare5988/Fostercare-Addons) is a
+navigation hub; source ownership stays with each standalone addon.
+
+| Project | Responsibility | TOC version | Verified HEAD | Publication |
+| --- | --- | --- | --- | --- |
+| [ActionBarProfiles](https://github.com/Fostercare5988/ActionBarProfiles) | Save/restore action bars | 1.0.0 | `6c929735` | existing commit verified |
+| [AtlasLoot](https://github.com/Fostercare5988/AtlasLoot) | Loot browser | 3.4.6 | `a05952ec` | existing commit verified |
+| [AutoBG](https://github.com/Fostercare5988/AutoBG) | Battleground queues, carriers and enemy views | 1.0.0 | `6531cc85` | existing commit verified |
+| [AutoLazy](https://github.com/Fostercare5988/AutoLazy) | Loot messages, quest turn-ins and minimap tray | 1.1.0 | `a17ae1e4` | new commit pushed |
+| [aux-addon](https://github.com/Fostercare5988/aux-addon) | Auction search/posting and price history | not declared | `7fed3e5f` | new commit pushed |
+| [Bagnon](https://github.com/Fostercare5988/Bagnon) | Bags, bank, sorting and cached inventory | 1.0.0 | `6757678f` | existing commit verified |
+| [BetterCharacterStats](https://github.com/Fostercare5988/BetterCharacterStats) | Character statistics | 1.15.3 | `6ff1064f` | new commit pushed |
+| [BigWigs](https://github.com/Fostercare5988/BigWigs) | Encounter warnings and timers | 2.0.0 | `bc62ae88` | new commit pushed |
+| [FostercareAuras](https://github.com/Fostercare5988/FostercareAuras) | Configurable trackers, conditions and bars | 1.0.1-local | `73b7d5a` | subsequent repair pushed |
+| [FostercareNameplates](https://github.com/Fostercare5988/FostercareNameplates) | Separate nameplate appearance and casts | 1.0.0 | `82c44e91` | existing commit verified |
+| [FostercareTweaks](https://github.com/Fostercare5988/FostercareTweaks) | Interface, unit frames and target castbar | 1.3.0 | `342dbb09` | existing commit verified |
+| [GearRack](https://github.com/Fostercare5988/GearRack) | Equipment sets and weapon/trinket requests | 1.0.0 | `e1ac7d36` | existing commit verified |
+| [MikScrollingBattleText](https://github.com/Fostercare5988/MikScrollingBattleText) | Combat event routing and scrolling output | 1.0.0 | `92bb79b2` | existing commit verified |
+| [SuperAPI](https://github.com/Fostercare5988/SuperAPI) | SuperWoW settings/native interface integration | not declared | `a516eed2` | new commit pushed |
+| [TWThreat](https://github.com/Fostercare5988/TWThreat) | Threat protocol and displays | 1.4.0 | `6c891f23` | new commit pushed |
+| [UnitXP_SP3_Addon](https://github.com/Fostercare5988/UnitXP_SP3_Addon) | UnitXP settings/interface integration | not declared | `66f89ca4` | new commit pushed |
+
+### Source and runtime evidence
+
+The current [client manifest](octowow-client-manifest.json) records the source
+root, native file identity, loader entries and all Git/TOC states. Native capture
+time and later addon reconciliation time are separate. Current DLL observations
+belong to the [installation correction](OCTOWOW_CLIENT_BASELINE.md#current-installation-correction--12-october-2026).
+Do not reuse a historical warning as an unresolved current defect without checking.
+
+All 16 projects passed TOC/XML closure and scoped VanillaForge lint: 465 loaded
+files, including 422 Lua files compiled with Lua 5.1. Compilation is a syntax
+check in that runtime, not a complete proof of WoW Lua 5.0 or native widget/API
+compatibility. This inventory does not mean every loaded module received a new
+human modernization audit.
+
+206 retained behavioral regressions were adapted to read the installed source:
+AutoLazy 132, aux 5, BetterCharacterStats 9, BigWigs 7, FostercareAuras 33,
+SuperAPI 12, TWThreat 4 and UnitXP_SP3_Addon 4. Historical development fixtures
+remain external; tests did not execute archived addon source. Unchanged projects
+received source checks, not a repeat of all historical behavioral suites.
+These checks establish neither measured FPS gains nor native crash safety.
+
+One private record holds staged diffs, exact source hashes, external test paths,
+commands/results, initial/final Git states and the review runner:
+`.private/portfolio-review-2026-10-12`. Developer artifacts and recovery stay
+outside the active game. Existing sparse-checkout rules remain in place.
+
+### Framework review and corrections
+
+| Finding | Evidence and resolution |
+| --- | --- |
+| Current and historical state were easy to confuse | The old handoff described 13 repositories and retired paths; the hub listed 12. The current inventory has 16. This section is the current project map; historical sections below keep their dates. |
+| Native inventory could manufacture confidence | The manifest assigned baseline versions to unrecognized binaries, omitted d3d9.dll and hid archive-read failures. It now separates observed PE versions, reference hash identity and loader listings, includes D3D9 and reports incomplete inspection. Regression tests cover those cases. |
+| Project discovery could miss new work | A maintained-name list required manual edits. Git checkouts are now discovered directly; unmanaged addon folders are listed separately. Quick inventory avoids hashing the game's archives, and optional remote verification reads authoritative branch heads. |
+| Pending README edits broke standalone repositories | Seven READMEs pointed at the retired FostercareClient workspace or missing sibling documentation. Their usable standalone guides were retained and reconciled before pushing. The aura source-location record was corrected; original notices and license terms remain. |
+| Old test placement could validate the wrong checkout | Retained tests live outside the game after consolidation. This pass explicitly redirected runtime reads to the installed source and recorded fixture origins. The workflow/task template now captures exact external test commands and source roots. |
+
+The compact engineering contract now states the actual OctoWoW objective and
+requires verification of the supported baseline. Existing performance, native UI
+and settings-theme guidance is already substantial; more general rules would not
+replace current-state checks and measured acceptance.
+
+### Personal addon improvement and learning pass — 12 October 2026
+
+The subsequent pass covered ActionBarProfiles, AutoBG, AutoLazy, FostercareAuras,
+FostercareNameplates, FostercareTweaks, GearRack and MikScrollingBattleText.
+Their 112 loaded modules passed closure/lint checks, and 93 Lua chunks compiled
+with Lua 5.1. Applicable earlier source/architecture reviews were reused and
+current entry points rerun; this is not a new line-by-line audit of every module.
+
+Nine external suite invocations passed 1,154 test executions, including shared
+tests exercised by more than one integration suite. Counts are executions, not
+1,154 unique tests. The exact source roots, commands, fixtures, suite results,
+coverage limits and before/after evidence are retained in
+`.private/own-addons-learning-2026-10-12`. The portable new replay corpus lives
+under [regressions](../regressions/README.md), outside the game.
+
+FostercareAuras 1.0.1-local fixes three demonstrated defects: closely spaced bag
+changes discarded after a snapshot read, evaluation callbacks losing subsequent
+invalidation, and grouped-slide tracking reading a foreign global frame. Eleven
+new actual-source regressions preserve those paths; nine reject the preceding
+source. In the same 200-notification fixture, clock reads fall from 200 to zero;
+both revisions still perform one bag query and 19 equipped-item reads. A second
+change after an intervening read is now retained. This establishes control-flow
+correctness and removed Lua work, not native FPS or crash safety.
+
+Framework learning now has executable support: `audit_addon.py --compare`
+detects source/load-graph changes while leaving human review pending. Its external
+test runner passes the selected installed source root. Six tool regressions cover
+those evidence boundaries, and all 94 framework tests pass. KP-11 was refined for
+closely spaced invalidation; no additional mandatory policy document was added.
+The reviewed framework changes are included in this publication.
+
+### Next acceptance and review boundaries
+
+1. Complete the [current runtime acceptance pass](OCTOWOW_RUNTIME_VERIFICATION.md#current-acceptance-pass-2026-10-12)
+   on a repeatable route with fixed settings and commit identities. Investigate
+   actual frame-time spikes before attributing them to Lua, DLLs or graphics.
+2. Continue FostercareAuras from the condition/group repairs above. Check native
+   grouped animation and final item state, then review hidden-editor lifecycle and
+   complex/custom configuration paths against concrete reproductions. Existing
+   target confirmation/expiry regressions remain current; lexical OnUpdate counts
+   do not establish a defect or justify replacing animation callbacks.
+3. Review visible interface owners together: FostercareTweaks, the independent
+   FostercareNameplates and native compact group UI. Verify one owner per surface,
+   then check fonts, spacing, scaling, dragging and the preferred settings theme
+   in game. Preserve useful controls and saved positions.
+4. Reuse applicable GearRack/Bagnon/inspect operation-count evidence, redirect
+   external tests to current source and measure any remaining fan-out before
+   editing. Keep projects separate; a merge alone has no demonstrated FPS benefit.
+
+Each implementation should finish one selected subsystem with a before/after
+source fixture, explicit native checks and clean repository reconciliation.
+No broad addon rewrite was performed by these bounded reviews.
+
+Current MSBT and AutoBG source have no direct UnitXP call sites; the protected
+health probes mentioned in the historical October 8 note below are absent.
+FostercareNameplates owns the separate nameplate implementation; Tweaks retains
+its target-frame castbar.
+
+---
+
+## Historical portfolio review (2026-10-06)
 
 **Narrow reconciliation, 2026-10-08:** the table retains the October 6 review
 scope. Observed UnitXP calls in its rows are not verified capabilities. The

@@ -177,6 +177,11 @@ Clear pending flags before refreshing so reentrant invalidation schedules a
 subsequent pass. Preserve immediate input/native work that cannot safely defer.
 Test a completion burst, view closure, target change and reentrant completion.
 
+Mark cached state dirty on every relevant signal; the pending flag can coalesce
+work without discarding changes. A timestamp-based ignore window can lose a later
+notification after an earlier snapshot was already consumed. Test two close
+notifications with a snapshot read between them, as well as a burst before one read.
+
 Also trace independent owners of the same event. A narrow indicator event must
 not trigger a whole-view health/power/aura refresh through a second consumer.
 Assign one owner for the affected state, and test both handler orders. Separate

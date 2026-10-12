@@ -3,22 +3,57 @@
 > **Historical deployed snapshot; verify the active installation before reuse.**
 > Generated from static reverse-engineering and byte-level audits of the earlier OctoWoW runtime.
 
-## Current installation correction — 8 October 2026
+## Current installation correction — 12 October 2026
 
-The active game is now `C:\Users\Fostercare\Desktop\client-2026-10-06`, launched
-with its `VanillaFixes.exe`. Maintained addon source is
-`C:\Users\Fostercare\Desktop\client\FostercareClient`; the earlier `client` game
-is a comparison/recovery location. The active executable SHA-256 is
-`90f17dd45daf377891ba65303d447a7974e333d7d3ab7c955936d70e4ef2eff7`.
+The sole active game is now `C:\Users\Fostercare\Desktop\client-2026-10-10`, launched
+with its `VanillaFixes.exe`. Maintained addon repositories live directly in
+`C:\Users\Fostercare\Desktop\client-2026-10-10\Interface\AddOns\<addon>`.
+Edit, validate, commit and push from those installed folders; do not maintain a
+second source checkout or copy-deploy addons over them. Keep developer tools,
+tests, audit evidence and recovery outside the game. Earlier checkouts and the
+retired `FostercareClient` workspace are preserved under
+`C:\Users\Fostercare\Documents\VanillaForge\.private\addon-consolidation-2026-10-11\recovery`.
+The earlier `client` and `client-2026-10-06` games are historical/recovery only.
+All 15 maintained GitHub addon repositories were moved from the latter with
+their Git history, ignored/untracked files and uncommitted changes intact.
+Full file hashes, directories, HEADs, branches, remotes and working-tree status
+matched before/after. Migration evidence is under
+`.private/client-migration-2026-10-12`; its `incoming-SuperAPI` directory preserves
+the new client's original non-Git SuperAPI copy outside the game. Non-Git addons
+and WTF were outside this migration's scope.
+On 12 October, FostercareTweaks 1.3.0 moved its nameplate implementation into
+the independent FostercareNameplates 1.0.0 repository in the same active AddOns
+directory. There are now 16 maintained repositories. Nameplates starts disabled;
+`/fnp` opens its settings when enabled. The target-frame castbar stays in Tweaks.
+Source, migration, regression and deployment evidence is under
+`.private/fostercare-nameplates-split-2026-10-12`; this separation does not establish
+the cause of the reported stutters or native crash safety.
+The active executable remains WoW 1.12.1.5875, Interface `11200`; SHA-256:
+`cb599a39b7cbc6fc2d63cc1d2fb18fac62546b81b08c407512d1bdec4471614b`.
 
-The private project's `client-baseline.json` and `docs/STUTTER_REVIEW.md` own
-current installation evidence. DXVK 3.1.1 D3D9/Vulkan presentation was established
-in the latest recorded session after restoring root `d3d9.dll`. Its SHA-256 is
+The [current client manifest](octowow-client-manifest.json) records the new active
+installation. The archived private workspace's `client-baseline.json` and
+`docs/STUTTER_REVIEW.md` describe the previous installation. DXVK 3.1.1
+D3D9/Vulkan presentation was established in that older installation after
+restoring root `d3d9.dll`. Its SHA-256 is
 `265888c31ca78dffa290c39cb7e50bfb02762590e41927906e46fb32f01497fa`.
-The earlier absence of `d3d9.dll` did not establish an alternate working renderer.
-WeirdPerformance's exact release/loading/effect remains unverified. Current
-settings and OctoWoW Data patches remain authoritative; do not substitute this
-older snapshot or assume matching DLL files prove runtime compatibility.
+The new root contains the matching `d3d9.dll`; this is file evidence, not runtime
+verification. The earlier absence of `d3d9.dll` did not establish an alternate
+working renderer. WeirdPerformance's exact release/loading/effect remains
+unverified. Current settings and OctoWoW Data patches remain authoritative;
+do not substitute older snapshots or assume matching DLL files prove runtime compatibility.
+
+At migration, the new root's `ClassicAPI.dll` reports **1.15.12.0**, below the
+framework's deliberate 1.15.16+ baseline and FostercareTweaks 1.2.2's declared
+1.15.15+ minimum. That observation is historical: the 12 October portfolio
+preflight now finds **1.15.16.0**, SHA-256
+`e34886fb9725b9059375a5c37bff81ce220633c4e2c39719ef3223a6b8fc703d`, matching
+the pinned upstream release. SuperWoW 2.2, NamPower 4.6.2, UnitXP SP3 build 90
+and DXVK 3.1.1 d3d9.dll match the dated reference file hashes. All five are listed
+in the current `dlls.txt`; no listed file is missing. These are current file and
+loader-list observations, not proof of runtime loading or performance. The
+manifest now distinguishes declared PE versions from reference hash identity.
+Native updates require a full client restart.
 
 Sections below preserve the earlier audit's original source scope.
 

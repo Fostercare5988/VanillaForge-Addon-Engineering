@@ -21,14 +21,28 @@ import sys
 import zlib
 import bz2
 
+# These hashes identify the dated reference files; they do not prove runtime
+# loading or compatibility. Only ClassicAPI has upstream asset provenance here.
+NATIVE_REFERENCES = {
+    'ClassicAPI.dll': ('1.15.16', 'e34886fb9725b9059375a5c37bff81ce220633c4e2c39719ef3223a6b8fc703d'),
+    'SuperWoWhook.dll': ('2.2', 'bd214b32c878649e94ce654835946bd05e0ce7710e8f01bae10d8ab50a89351d'),
+    'nampower.dll': ('4.6.2', '96af1722ee6b1a76cbb11e59e452fe54a83f54a3da80ae24f9c7571a0a6392fe'),
+    'UnitXP_SP3.dll': ('90', '74a0a80aef02be28187fd67e9ec3945d54828ef3302a827754b4c40b69cdaed8'),
+    'd3d9.dll': ('3.1.1', '265888c31ca78dffa290c39cb7e50bfb02762590e41927906e46fb32f01497fa'),
+}
+
 class MPQArchive:
     """Self-contained standard-library MPQ reader for WoW 1.12.1 archives."""
 
     def __init__(self, path: Path | str) -> None:
         self.file = open(path, "rb")
-        self.header = self._read_header()
-        self.hash_table = self._read_table("hash")
-        self.block_table = self._read_table("block")
+        try:
+            self.header = self._read_header()
+            self.hash_table = self._read_table("hash")
+            self.block_table = self._read_table("block")
+        except Exception:
+            self.file.close()
+            raise
         self.index = {}
         for entry in self.hash_table:
             block_idx, locale = entry[4], entry[2]
@@ -229,28 +243,47 @@ def get_pe_version_strings(path: Path) -> dict[str, str]:
     return res
 
 
-def get_git_info(repo_path: Path) -> dict[str, str]:
+def get_git_info(repo_path: Path, verify_remote: bool = False) -> dict:
     if not (repo_path / '.git').exists():
         return {'status': 'not_a_repo'}
     try:
-        head = subprocess.check_output(
-            ['git', '-C', str(repo_path), 'rev-parse', 'HEAD'],
-            stderr=subprocess.DEVNULL
-        ).decode().strip()
-        status_out = subprocess.check_output(
-            ['git', '-C', str(repo_path), 'status', '--short'],
-            stderr=subprocess.DEVNULL
-        ).decode().strip()
-        branch = subprocess.check_output(
-            ['git', '-C', str(repo_path), 'rev-parse', '--abbrev-ref', 'HEAD'],
-            stderr=subprocess.DEVNULL
-        ).decode().strip()
-        return {
+        def git(*args):
+            return subprocess.check_output(
+                ['git', '-C', str(repo_path), *args], stderr=subprocess.DEVNULL,
+                timeout=20, encoding='utf-8', errors='replace').strip()
+
+        head = git('rev-parse', 'HEAD')
+        status_out = git('status', '--short')
+        branch = git('rev-parse', '--abbrev-ref', 'HEAD')
+        result = {
             'head': head,
             'branch': branch,
             'clean': len(status_out) == 0,
-            'status': status_out if status_out else 'clean'
+            'status': status_out if status_out else 'clean',
+            'remoteVerification': 'not_requested',
         }
+        try:
+            result['origin'] = git('remote', 'get-url', 'origin')
+        except subprocess.CalledProcessError:
+            result['origin'] = None
+        try:
+            result['upstream'] = git('rev-parse', '--abbrev-ref', '@{u}')
+            ahead, behind = git('rev-list', '--left-right', '--count', 'HEAD...@{u}').split()
+            result.update(ahead=int(ahead), behind=int(behind), trackingEvidence='local refs; fetch may be stale')
+        except subprocess.CalledProcessError:
+            result['upstream'] = None
+        if verify_remote:
+            if not result['origin'] or branch == 'HEAD':
+                result['remoteVerification'] = 'unavailable'
+            else:
+                try:
+                    remote = git('ls-remote', '--heads', 'origin', 'refs/heads/' + branch)
+                    remote_head = remote.split()[0] if remote else None
+                    result.update(remoteHead=remote_head, remoteMatchesHead=remote_head == head,
+                                  remoteVerification='verified' if remote_head else 'branch_missing')
+                except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
+                    result.update(remoteVerification='failed', remoteError=str(error))
+        return result
     except Exception as e:
         return {'error': str(e)}
 
@@ -272,6 +305,46 @@ def parse_toc_metadata(toc_path: Path) -> dict[str, str]:
     return res
 
 
+def inspect_addons(client_root: Path, verify_remotes: bool = False) -> dict:
+    """Discover installed Git checkouts without a second maintained-name list."""
+    addons_dir = client_root / 'Interface' / 'AddOns'
+    result = {'deployedAddons': {}, 'unmanagedAddons': []}
+    if addons_dir.is_dir():
+        for addon in sorted(addons_dir.iterdir(), key=lambda p: p.name.casefold()):
+            if not addon.is_dir():
+                continue
+            if not (addon / '.git').exists():
+                result['unmanagedAddons'].append(addon.name)
+                continue
+            toc = addon / (addon.name + '.toc')
+            result['deployedAddons'][addon.name] = {
+                'path': str(addon), 'git': get_git_info(addon, verify_remotes),
+                'toc': parse_toc_metadata(toc), 'runtimeTocExists': toc.is_file(),
+            }
+    return result
+
+
+def native_extension_info(path: Path, loader_entries: list[str]) -> dict:
+    data = path.read_bytes()
+    info = {
+        'filename': path.name, 'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest(),
+        'listedInDllsTxt': path.name.casefold() in {entry.casefold() for entry in loader_entries},
+        'versionStrings': get_pe_version_strings(path),
+    }
+    # A missing version resource is unknown, never the framework's target.
+    info['declaredVersion'] = info['versionStrings'].get('FileVersion')
+    reference = NATIVE_REFERENCES.get(path.name)
+    if reference:
+        version, digest = reference
+        info.update(referenceHashMatches=info['sha256'] == digest,
+                    referenceVersion=version,
+                    referenceEvidence='audit/OCTOWOW_NATIVE_STACK.md and OCTOWOW_CLIENT_BASELINE.md')
+        if path.name == 'ClassicAPI.dll':
+            info['sha256MatchesUpstreamRelease'] = info['sha256'] == digest
+            info['knownUpstreamTag'] = 'v' + version
+    return info
+
+
 def generate_manifest(client_root: Path, historical_root: Path | None = None) -> dict:
     client_root = client_root.resolve()
     manifest: dict = {
@@ -286,6 +359,7 @@ def generate_manifest(client_root: Path, historical_root: Path | None = None) ->
         'nativeExtensions': {},
         'dataArchives': {},
         'frameXML': {},
+        'frameXMLReadErrors': [],
         'deployedAddons': {}
     }
 
@@ -310,12 +384,15 @@ def generate_manifest(client_root: Path, historical_root: Path | None = None) ->
     dlls_txt = client_root / 'dlls.txt'
     loader_entries = []
     if dlls_txt.is_file():
-        loader_entries = [l.strip() for l in dlls_txt.read_text(errors='ignore').splitlines() if l.strip()]
+        loader_entries = [line.strip() for line in dlls_txt.read_text(errors='ignore').splitlines()
+                          if line.strip() and not line.lstrip().startswith(('#', ';'))]
         manifest['loaderConfiguration']['dlls_txt'] = {
             'path': str(dlls_txt),
             'sha256': sha256_file(dlls_txt),
             'entries': loader_entries
         }
+        manifest['loaderConfiguration']['missingEntries'] = [
+            entry for entry in loader_entries if not (client_root / entry).is_file()]
 
     dlls_cache = client_root / 'dlls.txt.cache'
     if dlls_cache.is_file():
@@ -328,42 +405,14 @@ def generate_manifest(client_root: Path, historical_root: Path | None = None) ->
     # Native extensions
     ext_files = [
         'ClassicAPI.dll', 'SuperWoWhook.dll', 'nampower.dll', 'UnitXP_SP3.dll',
-        'AuctionQueryThrottle.dll', 'transmogfix.dll', 'dxgi.dll',
+        'AuctionQueryThrottle.dll', 'transmogfix.dll', 'd3d9.dll', 'dxgi.dll',
         'VanillaFixes.exe', 'VanillaHelpers.dll', 'VanillaMultiMonitorFix.dll', 'VfPatcher.dll'
     ]
     for ext_name in ext_files:
         p = client_root / ext_name
         if not p.is_file():
             continue
-        data = p.read_bytes()
-        info: dict = {
-            'filename': ext_name,
-            'bytes': len(data),
-            'sha256': hashlib.sha256(data).hexdigest(),
-            'loadedInDllsTxt': ext_name in loader_entries,
-            'versionStrings': get_pe_version_strings(p)
-        }
-
-        # Specific known versions from logs/strings
-        if ext_name == 'ClassicAPI.dll':
-            info['declaredVersion'] = info['versionStrings'].get('FileVersion', '1.15.16.0')
-            info['knownUpstreamTag'] = 'v1.15.16'
-            info['sha256MatchesUpstreamRelease'] = (info['sha256'] == 'e34886fb9725b9059375a5c37bff81ce220633c4e2c39719ef3223a6b8fc703d')
-        elif ext_name == 'SuperWoWhook.dll':
-            info['declaredVersion'] = '2.2'
-            info['engineGlobal'] = 'SUPERWOW_VERSION="2.2"'
-        elif ext_name == 'nampower.dll':
-            info['declaredVersion'] = '4.6.2'
-            info['logSignature'] = 'Loading nampower v4.6.2'
-            info['luaGlobal'] = 'GetNampowerVersion'
-        elif ext_name == 'UnitXP_SP3.dll':
-            info['declaredBuild'] = 90
-            pe_off = struct.unpack_from('<I', data, 0x3C)[0]
-            ts = struct.unpack_from('<I', data, pe_off + 8)[0]
-            info['peTimeDateStamp'] = ts
-            info['luaGlobal'] = 'UnitXP'
-
-        manifest['nativeExtensions'][ext_name] = info
+        manifest['nativeExtensions'][ext_name] = native_extension_info(p, loader_entries)
 
     # Data MPQ inventory
     data_dir = client_root / 'Data'
@@ -403,6 +452,7 @@ def generate_manifest(client_root: Path, historical_root: Path | None = None) ->
         p = data_dir / mpq_name
         if not p.is_file():
             continue
+        arc = None
         try:
             arc = MPQArchive(p)
             for t in framexml_targets:
@@ -413,28 +463,15 @@ def generate_manifest(client_root: Path, historical_root: Path | None = None) ->
                         'bytes': len(blob),
                         'sha256': hashlib.sha256(blob).hexdigest()
                     }
-            arc.close()
-        except Exception:
-            pass
+        except Exception as error:
+            manifest['frameXMLReadErrors'].append({'archive': mpq_name, 'error': str(error)})
+        finally:
+            if arc is not None:
+                arc.close()
 
     manifest['frameXML'] = effective_files
 
-    # Maintained addons in Interface\AddOns
-    addons_dir = client_root / 'Interface' / 'AddOns'
-    maintained = [
-        'FostercareTweaks', 'ItemRack', 'AutoBG', 'Bagnon',
-        'AutoLazy', 'TrinketMenu', 'MikScrollingBattleText', 'TWThreat'
-    ]
-    if addons_dir.is_dir():
-        for a in maintained:
-            ap = addons_dir / a
-            if ap.is_dir():
-                toc_path = ap / f"{a}.toc"
-                manifest['deployedAddons'][a] = {
-                    'path': str(ap),
-                    'git': get_git_info(ap),
-                    'toc': parse_toc_metadata(toc_path)
-                }
+    manifest.update(inspect_addons(client_root))
 
     return manifest
 
@@ -503,23 +540,37 @@ def compare_manifests(curr: dict, prev: dict) -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--client', type=Path, default=Path(r'C:\Users\Fostercare\Desktop\client'),
+    parser.add_argument('--client', type=Path, default=Path(r'C:\Users\Fostercare\Desktop\client-2026-10-10'),
                         help='Authoritative deployed client directory')
-    parser.add_argument('--historical', type=Path, default=Path(r'C:\Users\Fostercare\Desktop\Niko2'),
+    parser.add_argument('--historical', type=Path, default=Path(r'C:\Users\Fostercare\Desktop\client-2026-10-06'),
                         help='Historical comparison client directory (optional)')
     parser.add_argument('--output', type=Path,
                         default=Path(r'C:\Users\Fostercare\Documents\VanillaForge\audit\octowow-client-manifest.json'),
                         help='Output path for JSON manifest')
     parser.add_argument('--compare', type=Path, default=None,
                         help='Previous manifest JSON file to compare against')
+    parser.add_argument('--addons-only', action='store_true',
+                        help='Quick portfolio status without hashing game archives')
+    parser.add_argument('--verify-remotes', action='store_true',
+                        help='Read origin branch heads over the network; no fetch or push')
     args = parser.parse_args(argv)
 
     if not args.client.is_dir():
         print(f"ERROR: Authoritative client directory not found: {args.client}", file=sys.stderr)
         return 1
+    if args.output.resolve().is_relative_to(args.client.resolve()):
+        print('ERROR: Keep manifests outside the active game directory.', file=sys.stderr)
+        return 1
 
     print(f"Auditing deployed client: {args.client}")
-    manifest = generate_manifest(args.client, args.historical if args.historical.is_dir() else None)
+    if args.addons_only:
+        manifest = dict(generatedAt=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                        authoritativeClientRoot=str(args.client.resolve()), scope='addon Git/TOC inventory',
+                        **inspect_addons(args.client.resolve(), args.verify_remotes))
+    else:
+        manifest = generate_manifest(args.client, args.historical if args.historical.is_dir() else None)
+        if args.verify_remotes:
+            manifest.update(inspect_addons(args.client.resolve(), True))
 
     prev_manifest = None
     if args.compare and args.compare.is_file():
@@ -531,9 +582,15 @@ def main(argv: list[str] | None = None) -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
     print(f"Manifest written to: {args.output}")
+    for name, addon in manifest['deployedAddons'].items():
+        git = addon['git']
+        print(f"  {name}: {git.get('head', '?')[:8]} "
+              f"{'clean' if git.get('clean') else 'CHANGED'}; origin {git.get('remoteVerification', 'unknown')}")
 
     if prev_manifest is not None:
         print(f"\nComparing with baseline manifest: {args.compare}")
+        if args.addons_only:
+            prev_manifest = {'deployedAddons': prev_manifest.get('deployedAddons', {})}
         deltas = compare_manifests(manifest, prev_manifest)
         if not deltas:
             print("No material engineering deltas detected.")
@@ -542,7 +599,13 @@ def main(argv: list[str] | None = None) -> int:
             for d in deltas:
                 print(f"  {d}")
 
-    return 0
+    incomplete = bool(manifest.get('frameXMLReadErrors'))
+    if incomplete:
+        print('ERROR: FrameXML inspection was incomplete; see frameXMLReadErrors.', file=sys.stderr)
+    remote_failed = args.verify_remotes and any(
+        addon['git'].get('remoteVerification') != 'verified' or not addon['git'].get('remoteMatchesHead')
+        for addon in manifest['deployedAddons'].values())
+    return int(incomplete or remote_failed)
 
 
 if __name__ == '__main__':

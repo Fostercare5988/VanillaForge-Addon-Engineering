@@ -7,13 +7,15 @@ support it. Build correct addons through bounded implementation and verification
 ## Target
 
 WoW 1.12.1, Build 5875, Interface `11200` defines client, Lua and FrameXML
-semantics. VanillaForge is server-agnostic: content revisions do not imply newer
-client APIs. Preserve native callback conventions (`this`, `event`, `arg1`, XML
+semantics. This workspace modernizes addons for the deployed OctoWoW client;
+Turtle WoW ancestry does not prove OctoWoW content or newer client APIs.
+Preserve native callback conventions (`this`, `event`, `arg1`, XML
 handlers) unless a verified extension changes them. Verify modern syntax and
 widget methods rather than assuming later Lua or Retail behavior.
 
-The installed environment is ClassicAPI v1.15.16+, SuperWoW v2.2+, NamPower
-v4.6.2+, UnitXP SP3 v90+, and DXVK. Change this baseline only deliberately.
+The supported environment baseline is ClassicAPI v1.15.16+, SuperWoW v2.2+,
+NamPower v4.6.2+, UnitXP SP3 v90+, and DXVK. Verify active file identity and
+runtime loading before relying on it. Change this baseline only deliberately.
 Individual addons declare only components whose capabilities they actually consume. DXVK is rendering
 infrastructure, never a Lua API or addon dependency.
 

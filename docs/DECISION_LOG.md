@@ -2,6 +2,59 @@
 
 Record durable framework-level decisions whose rationale would otherwise be lost. This is not a changelog, chat transcript or addon diary.
 
+## 2026-10-12 — Preserve learning through source-bound regressions
+Status: ACTIVE
+
+Decision: Extend the existing audit tool to compare loaded-file hashes/load graphs
+and pass an explicit installed source root to external regressions. Keep reusable
+addon replays under `regressions/`, outside the game. Equal source never promotes
+a prior review verdict or native-runtime claim.
+
+Evidence: Current aura delivery discarded a second bag change inside a 50 ms
+window after its snapshot was read, then erased requests raised by evaluation
+callbacks. Group slide tracking read an unrelated global frame. Eleven actual-source
+regressions cover the repaired paths; nine reject the preceding installed source.
+Historical portfolio suites also needed explicit fixture/source routing and current
+entry points after nameplate separation.
+
+Promotion review: The user explicitly requested continuing VanillaForge learning.
+Refine KP-11's existing invalidation guidance and implement comparison/source-routing
+checks. Keep the slide defect and detailed operation counts with addon evidence;
+they do not justify another universal policy or a speculative rewrite. Six tool
+regressions cover evidence invalidation, preserved review boundaries, input
+preservation and the selected test source.
+
+Consequences: A repaired behavior can be replayed after a future session or client
+migration. Native appearance, server behavior and frame delivery remain separate
+acceptance work. Source comparison is an inspection aid, not proof that every
+loaded module received a new audit.
+
+## 2026-10-12 — Verify current portfolio and distinguish native evidence
+Status: ACTIVE
+
+Decision: Refine the existing client manifest, portfolio audit and validation/release
+workflows. Discover installed Git projects, provide a quick status mode and read
+remote heads explicitly when requested. Separate a supported baseline, observed
+PE version, dated hash identity, loader listing and native runtime acceptance.
+
+Evidence: The portfolio preflight found 16 projects, eight pending trees, stale
+ClassicAPI warnings and standalone READMEs referencing a retired workspace. The
+manifest assigned target versions to unknown DLLs, omitted d3d9.dll and swallowed
+archive errors. Client-manifest regressions now reject those false conclusions,
+exercise remote/tracking disagreement and retain inspection failures.
+
+Promotion review: These are material, recurring evidence and reconciliation
+hazards. The user requested a VanillaForge improvement review. Existing guidance
+already required verification; its tool and current-state record needed repair.
+Refine those owners instead of adding another mandatory policy document. Exact
+addon results and source/test paths remain in the current portfolio audit and
+private review record; native performance remains unverified.
+
+Consequences: Framework defaults identify the active client, generated reports
+stay outside the game, and external tests must read the maintained installed
+source. Historical audits keep their dates and limitations. No baseline upgrade,
+client binary change or generalized performance claim follows from this review.
+
 ## Format
 ```text
 ## YYYY-MM-DD — Decision
