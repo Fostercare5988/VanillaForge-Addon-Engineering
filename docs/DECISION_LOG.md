@@ -2,6 +2,23 @@
 
 Record durable framework-level decisions whose rationale would otherwise be lost. This is not a changelog, chat transcript or addon diary.
 
+## 2026-10-14 — Invalidate test evidence when audited source changes
+Status: ACTIVE
+
+Decision: Recheck the loaded-source snapshot after explicit audit test execution.
+Use the existing traversal and comparison, skipping repeated lint/site scans.
+Preserve the original snapshot and runner diagnostics; invalidate evidence and
+fail the command when loaded source changes or cannot be rechecked.
+
+Evidence: A passing external test changed a same-size Lua file, yet the previous
+audit exited successfully with the old hash. Regression fixtures also exposed
+changed/new manifests and deleted source. Six new cases cover invalidation,
+unchanged/unloaded controls, retained failure output and skipped review scans.
+
+Review: Refine the existing tool and workflow evidence boundary in this authorized
+maintenance run. Endpoint equality cannot establish transient stability, actual
+test-source consumption or native behavior; no new mandatory policy file is needed.
+
 ## 2026-10-14 — Check supported minima separately from reference builds
 Status: ACTIVE
 

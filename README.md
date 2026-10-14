@@ -80,6 +80,8 @@ and scoped lint in one report. Add `--run-tests` for local Python unittest suite
 Use `--test-start` for external tests; the runner passes the selected addon path
 as `VANILLAFORGE_ADDON_ROOT`. The [installed-addon regressions](regressions/README.md)
 keep behavioral replays outside runtime packages; those tests require `lupa`.
+Explicit test runs recheck loaded source afterward. Changed source invalidates
+the test evidence and fails the command while retaining the runner output.
 Add `--compare <previous-report.json>` to identify changed source/load graphs
 without transferring previous review approval or overwriting its evidence.
 It does not execute Lua, measure native cost or mark human review complete.
