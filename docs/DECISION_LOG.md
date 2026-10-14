@@ -2,6 +2,29 @@
 
 Record durable framework-level decisions whose rationale would otherwise be lost. This is not a changelog, chat transcript or addon diary.
 
+## 2026-10-14 — Check supported minima separately from reference builds
+Status: ACTIVE
+
+Decision: Support UnitXP SP3 build 89+ by maintainer instruction while retaining
+brues-code build 90 as the deployed/source reference. Extend the existing offline
+documentation checker to compare all four supported component minima in the
+README, engineering contract and engine header against `UPSTREAM_VERSIONS.json`.
+Also check the detailed UnitXP support declaration. Existing validation CI runs
+this check; no addon runtime dependency or guard is raised.
+
+Reason: A support-floor change can leave contradictory canonical declarations.
+Reference commits and dated client observations must retain their actual versions;
+lowering a support floor does not verify every build-90 capability on build 89.
+
+Implementation and acceptance: Read the version registry, inspect current support
+sections, and report missing, duplicate or mismatched declarations. The checker
+must pass coherent build-89 support with a build-90 reference, fail stale minima
+with a nonzero exit, ignore dated evidence and leave every input unchanged.
+Eight new regressions cover these boundaries, including all four components and
+invalid/missing registry data. Run the framework suite, documentation checker,
+audit-index checker and diff check. These are offline framework checks; no game
+runtime or performance claim follows from them.
+
 ## 2026-10-12 — Preserve learning through source-bound regressions
 Status: ACTIVE
 

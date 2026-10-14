@@ -12,7 +12,7 @@
 > - ClassicAPI v1.15.16+
 > - SuperWoW v2.2+
 > - NamPower v4.6.2+
-> - UnitXP SP3 v90+
+> - UnitXP SP3 v89+
 > - DXVK runtime
 > - VanillaFixes / compatible DLL loader where required
 >
@@ -371,8 +371,13 @@ documented API provides a measurable benefit.
 
 ## 7. UnitXP SP3
 
-**Baseline:** v90+  
+**Baseline:** v89+\
 **Role:** telemetry and selected client/window utilities.
+
+The supported minimum is build 89. The maintainer uses brues-code build 90;
+the pinned source evidence below remains build 90 and does not establish that
+every documented command or fix is present in build 89. Verify any consumed
+capability against the installed build before relying on it.
 
 UnitXP SP3 is installed in the canonical environment but is an **opt-in addon
 dependency**.

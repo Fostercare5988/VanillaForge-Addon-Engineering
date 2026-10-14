@@ -39,11 +39,12 @@
     }
   },
   "unitxp_sp3": {
-    "minimum_version": "90",
+    "minimum_version": "89",
     "repository": "brues-code/UnitXP_SP3",
     "reference_commit": "cedbf4b59776567db954ce38f681af1cbb9f0e1c",
     "file_shas": {
       "Vanilla1121_functions.h": "5795131caf9b2dfd626b188ebff7571df19e6850"
-    }
+    },
+    "reference_version": "90"
   }
 }

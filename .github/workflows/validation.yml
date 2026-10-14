@@ -66,7 +66,7 @@ jobs:
       - name: Verify current ClassicAPI audit and README index
         run: python tools/check_audit_index.py
 
-      - name: Verify compact startup documents and local links
+      - name: Verify startup documents, local links and supported baselines
         run: python tools/check_framework_docs.py
 
       - name: Reject stale framework filenames

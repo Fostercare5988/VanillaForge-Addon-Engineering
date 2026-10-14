@@ -14,7 +14,7 @@ handlers) unless a verified extension changes them. Verify modern syntax and
 widget methods rather than assuming later Lua or Retail behavior.
 
 The supported environment baseline is ClassicAPI v1.15.16+, SuperWoW v2.2+,
-NamPower v4.6.2+, UnitXP SP3 v90+, and DXVK. Verify active file identity and
+NamPower v4.6.2+, UnitXP SP3 v89+, and DXVK. Verify active file identity and
 runtime loading before relying on it. Change this baseline only deliberately.
 Individual addons declare only components whose capabilities they actually consume. DXVK is rendering
 infrastructure, never a Lua API or addon dependency.

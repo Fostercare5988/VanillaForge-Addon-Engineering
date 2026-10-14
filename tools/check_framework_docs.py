@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check startup word budgets and local Markdown links, without network access.
+"""Check startup budgets, local links and supported baselines without network access.
 
 Only the two mandatory entry documents have size limits. Technical references
 remain uncapped. Links in fenced/inline code and external URLs are ignored.
@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import html
+import json
 import re
 import sys
 from pathlib import Path
@@ -26,6 +27,54 @@ INLINE_CODE = re.compile(r"(`+)(?!`)(.*?)\1(?!`)")
 DESTINATION = r"(?:<([^>\n]+)>|((?:\\.|[^\s()]|\([^()\n]*\))+))"
 INLINE_LINK = re.compile(r"(?<!\\)\]\(\s*" + DESTINATION + r"(?:\s+[\"'][^\n]*?[\"'])?\s*\)")
 REFERENCE = re.compile(r"^ {0,3}\[[^]\n]+\]:\s*" + DESTINATION)
+COMPONENTS = {
+    "classicapi": "ClassicAPI",
+    "superwow": "SuperWoW",
+    "nampower": "NamPower",
+    "unitxp_sp3": "UnitXP SP3",
+}
+
+
+def check_baselines(root: Path) -> list[str]:
+    """Compare current support declarations, not dated audits or reference builds."""
+    config = json.loads((root / "UPSTREAM_VERSIONS.json").read_text(encoding="utf-8"))
+    if not isinstance(config, dict):
+        return ["UPSTREAM_VERSIONS.json: expected a component object"]
+    errors: list[str] = []
+    documents = {}
+    for name in ("README.md", "VANILLAFORGE_SYSTEM_PROMPT.md", "ENGINE_REFERENCE.md"):
+        path = root / name
+        if not path.is_file():
+            errors.append(f"{name}: missing supported baseline document")
+        else:
+            documents[name] = path.read_text(encoding="utf-8")
+    for key, label in COMPONENTS.items():
+        entry = config.get(key)
+        minimum = entry.get("minimum_version") if isinstance(entry, dict) else None
+        if not isinstance(minimum, str) or not re.fullmatch(r"\d+(?:\.\d+)*", minimum):
+            errors.append(f"UPSTREAM_VERSIONS.json: {key}.minimum_version must be a numeric version string")
+            continue
+        for name, text in documents.items():
+            # Inspect only the canonical Target/header, excluding later evidence.
+            if name == "README.md":
+                section = text.split("## Target\n", 1)[-1].split("\n## ", 1)[0]
+                pattern = rf"\[{re.escape(label)}\]\([^\n)]*\)\s*\|\s*v(\d+(?:\.\d+)*)\+"
+            elif name == "VANILLAFORGE_SYSTEM_PROMPT.md":
+                section = text.split("## Target\n", 1)[-1].split("\n## ", 1)[0]
+                pattern = rf"{re.escape(label)}\s+v(\d+(?:\.\d+)*)\+"
+            else:
+                section = text.split("\n---", 1)[0]
+                pattern = rf"{re.escape(label)}\s+v(\d+(?:\.\d+)*)\+"
+            versions = re.findall(pattern, section)
+            if versions != [minimum]:
+                errors.append(f"{name}: {label} supported baseline {versions!r}; expected exactly one v{minimum}+")
+        # UnitXP's detailed section repeats support separately from its source pin.
+        if key == "unitxp_sp3" and "ENGINE_REFERENCE.md" in documents:
+            section = documents["ENGINE_REFERENCE.md"].split("## 7. UnitXP SP3\n", 1)[-1].split("\n### ", 1)[0]
+            versions = re.findall(r"\*\*Baseline:\*\*\s*v(\d+(?:\.\d+)*)\+", section)
+            if versions != [minimum]:
+                errors.append(f"ENGINE_REFERENCE.md: UnitXP section baseline {versions!r}; expected exactly one v{minimum}+")
+    return errors
 
 
 def visible_lines(text: str):
@@ -121,15 +170,17 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=ROOT, help="VanillaForge repository root")
     args = parser.parse_args(argv)
+    errors = []
     try:
-        errors = check(args.root)
+        errors.extend(check(args.root))
+        errors.extend(check_baselines(args.root))
     except (OSError, UnicodeError, ValueError) as exc:
-        errors = [str(exc)]
+        errors.append(str(exc))
     if errors:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)
         return 1
-    print("Framework startup budgets and local Markdown links verified.")
+    print("Framework startup budgets, local Markdown links and supported baselines verified.")
     return 0
 
 
