@@ -38,7 +38,14 @@ Run `python tools/audit_addon.py <AddonPath> --output <PrivateReportPath>` to
 collect the loaded module inventory, source hashes, registrations, candidate
 query/UI sites and scoped lint results. Add `--run-tests` to run local Python
 unittest discovery when that is the repository's test contract. Other test
-frameworks need their documented command. The report is a review map, not proof
+frameworks need their documented command. After explicit tests, the audit rechecks
+loaded hashes and the TOC/XML closure without repeating lint or review-site scans.
+Changed or unreadable source sets test status to `invalidated` and fails the command;
+`runner_status` and output retain the process result, and the original snapshot
+remains intact. Re-audit and rerun tests against the intended source. This endpoint
+check cannot detect edits restored before verification or prove that external
+tests consumed the selected source; keep their source-routing assertions.
+The report is a review map, not proof
 that every module was inspected or that a call is expensive. Keep it outside the
 addon and active game. Dynamic loaders, indirect wrappers and engine event
 semantics still need source review.

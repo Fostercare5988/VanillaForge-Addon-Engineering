@@ -76,7 +76,8 @@ def source_sites(text, suffix):
     return sorted(sites, key=lambda site: (site["line"], site["kind"], site["api"]))
 
 
-def audit(addon, toc_name=None):
+def audit(addon, toc_name=None, *, source_only=False):
+    """Collect loaded source; source_only skips repeated lint and review-site scans."""
     addon = Path(addon).resolve()
     if not addon.is_dir():
         raise ValueError("Addon directory does not exist")
@@ -90,7 +91,7 @@ def audit(addon, toc_name=None):
               "limitations": ["Lexical sites and lint are candidates, not defect or performance proof.",
                               "No Lua compilation, dynamic load discovery, API equivalence or native gameplay verification.",
                               "TOC/XML source closure only; referenced media and dependencies need separate review.",
-                              "No code, configuration or runtime changes; optional tests execute local Python when requested."]}
+                              "Audit collection is read-only; explicitly requested Python tests may have side effects."]}
     visited, active, total = set(), set(), 0
     auditor = VanillaForgeAuditor()
 
@@ -129,12 +130,12 @@ def audit(addon, toc_name=None):
         module = {"path": relative, "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data),
                   "review_status": "pending", "review_fields": ["ownership/lifecycle", "frequency/fanout",
                   "identity/invalidation", "API capability alternatives", "UI delta writes", "cleanup/integration"]}
-        if suffix in {".lua", ".xml", ".toc"}:
+        if not source_only and suffix in {".lua", ".xml", ".toc"}:
             lint = (auditor.audit_toc_file(str(path), str(addon))[:3] if suffix == ".toc"
                     else auditor.audit_file(str(path)))
             module["lint"] = {kind: {"count": len(items), "records": items[:LIMITS["lint_records_per_kind"]]}
                               for kind, items in zip(("errors", "warnings", "infos"), lint)}
-        if suffix in {".lua", ".xml"}:
+        if not source_only and suffix in {".lua", ".xml"}:
             sites = source_sites(text, suffix)
             module.update(sites=sites[:LIMITS["sites_per_module"]], site_count=len(sites),
                           sites_truncated=len(sites) > LIMITS["sites_per_module"])
@@ -253,12 +254,24 @@ def main(argv=None):
         if args.run_tests:
             report["tests"] = run_tests((args.test_start or addon / "tests").resolve(),
                                         args.test_pattern, args.test_timeout, addon)
+            report["tests"]["runner_status"] = report["tests"]["status"]
+            try:
+                after = audit(addon, args.toc, source_only=True)
+                verification = compare_reports(after, report)
+            except (OSError, ValueError) as error:
+                verification = {"status": "failed", "reason": str(error)}
+            verification["scope"] = (
+                "Loaded-source endpoint comparison only; it cannot detect edits restored before "
+                "the recheck or prove which source the external tests actually consumed.")
+            report["tests"]["source_verification"] = verification
+            if verification["status"] != "unchanged":
+                report["tests"]["status"] = "invalidated"
         output = json.dumps(report, indent=2, ensure_ascii=True) + "\n"
         if args.output:
             args.output.resolve().write_text(output, encoding="utf-8")
         else:
             print(output, end="")
-        return int(report["status"] == "source_checks_failed" or report["tests"]["status"] in {"failed", "timeout"})
+        return int(report["status"] == "source_checks_failed" or report["tests"]["status"] in {"failed", "timeout", "invalidated"})
     except (OSError, ValueError) as error:
         print(f"Audit failed: {error}", file=sys.stderr)
         return 2

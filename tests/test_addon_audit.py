@@ -6,6 +6,7 @@ import json
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parents[1] / "tools"
@@ -231,7 +232,87 @@ class AddonAuditTests(unittest.TestCase):
             self.assertEqual(report["status"], "human_review_pending")
             self.assertEqual(report["tests"]["status"], status)
             self.assertEqual(report["tests"]["tests_run"], 1)
+            self.assertEqual(report["tests"]["source_verification"]["status"], "unchanged")
             self.assertNotIn("__pycache__", {p.name for p in start.iterdir()})
+
+    def run_source_mutation(self, body):
+        start = self.root / "mutation-tests"
+        start.mkdir(exist_ok=True)
+        (start / "test_mutation.py").write_text(
+            "import os, unittest\nfrom pathlib import Path\n"
+            "class MutationTest(unittest.TestCase):\n"
+            " def test_source(self):\n"
+            "  root = Path(os.environ['VANILLAFORGE_ADDON_ROOT'])\n" +
+            "".join("  " + line + "\n" for line in body.splitlines()), encoding="utf-8")
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            code = AUDIT.main([str(self.addon), "--run-tests", "--test-start", str(start)])
+        return code, json.loads(output.getvalue())
+
+    def test_successful_runner_cannot_validate_changed_same_size_source(self):
+        before = AUDIT.audit(self.addon)
+        code, report = self.run_source_mutation("(root / 'core.lua').write_text('local value = 2\\n')")
+        self.assertEqual(code, 1)
+        self.assertEqual(report["tests"]["status"], "invalidated")
+        self.assertEqual(report["tests"]["runner_status"], "passed")
+        self.assertEqual(report["tests"]["tests_run"], 1)
+        self.assertEqual(report["modules"], before["modules"])
+        self.assertEqual(report["review"]["status"], "pending")
+        difference = report["tests"]["source_verification"]
+        self.assertEqual(difference["changed_modules"], ["core.lua"])
+        self.assertFalse(difference["load_graph_changed"])
+
+    def test_source_verification_detects_changed_load_graph_and_new_root_toc(self):
+        for manifest in ("Addon.toc", "New.toc"):
+            with self.subTest(manifest=manifest):
+                self.write("Addon.toc", "## Interface: 11200\ncore.lua\n")
+                (self.addon / "New.toc").unlink(missing_ok=True)
+                code, report = self.run_source_mutation(
+                    "(root / 'new.lua').write_text('local new = true\\n')\n" +
+                    f"(root / '{manifest}').write_text('core.lua\\nnew.lua\\n')")
+                self.assertEqual(code, 1)
+                self.assertEqual(report["tests"]["status"], "invalidated")
+                difference = report["tests"]["source_verification"]
+                self.assertTrue(difference["load_graph_changed"])
+                self.assertIn("new.lua", difference["added_modules"])
+
+    def test_deleted_source_or_manifest_cannot_leave_passing_test_evidence(self):
+        for name in ("core.lua", "Addon.toc"):
+            with self.subTest(deleted=name):
+                self.write("Addon.toc", "core.lua\n")
+                self.write("core.lua", "local value = 1\n")
+                code, report = self.run_source_mutation(f"(root / '{name}').unlink()")
+                self.assertEqual(code, 1)
+                self.assertEqual(report["tests"]["status"], "invalidated")
+                self.assertEqual(report["tests"]["runner_status"], "passed")
+                self.assertIn(report["tests"]["source_verification"]["status"], {"changed", "failed"})
+
+    def test_invalidated_source_retains_a_failed_runner_and_its_diagnostics(self):
+        code, report = self.run_source_mutation(
+            "(root / 'core.lua').write_text('local value = 2\\n')\nself.fail('original failure')")
+        self.assertEqual(code, 1)
+        self.assertEqual(report["tests"]["status"], "invalidated")
+        self.assertEqual(report["tests"]["runner_status"], "failed")
+        self.assertIn("original failure", report["tests"]["output_tail"])
+
+    def test_unloaded_scratch_file_does_not_invalidate_source_evidence(self):
+        code, report = self.run_source_mutation("(root / 'scratch.txt').write_text('temporary')")
+        self.assertEqual(code, 0)
+        self.assertEqual(report["tests"]["status"], "passed")
+        self.assertEqual(report["tests"]["source_verification"]["status"], "unchanged")
+
+    def test_post_test_snapshot_keeps_closure_and_errors_without_repeating_review_scans(self):
+        self.write("Addon.toc", "ui.xml\n")
+        self.write("ui.xml", '<Ui><Script file="core.lua"/><Include file="missing.xml"/></Ui>')
+        self.write("Bindings.xml", '<Bindings><Binding name="B">RunAction()</Binding></Bindings>')
+        before = AUDIT.audit(self.addon)
+        with mock.patch.object(AUDIT, "source_sites", side_effect=AssertionError("repeated site scan")), \
+             mock.patch.object(AUDIT.VanillaForgeAuditor, "audit_file", side_effect=AssertionError("repeated lint")), \
+             mock.patch.object(AUDIT.VanillaForgeAuditor, "audit_toc_file", side_effect=AssertionError("repeated TOC lint")):
+            after = AUDIT.audit(self.addon, source_only=True)
+        self.assertEqual(AUDIT.compare_reports(after, before)["status"], "unchanged")
+        self.assertEqual(after["graph_errors"], before["graph_errors"])
+        self.assertEqual({m["path"] for m in after["modules"]}, {"Addon.toc", "ui.xml", "core.lua", "Bindings.xml"})
+        self.assertTrue(all("lint" not in m and "sites" not in m for m in after["modules"]))
 
 
 if __name__ == "__main__":
