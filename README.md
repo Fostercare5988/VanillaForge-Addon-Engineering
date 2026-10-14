@@ -17,7 +17,7 @@ references only when the task needs them.
 | [ClassicAPI](https://github.com/brues-code/ClassicAPI) | v1.15.16+ |
 | [SuperWoW](https://github.com/balakethelock/SuperWoW) | v2.2+ |
 | [NamPower](https://github.com/Emyrk/nampower) | v4.6.2+ |
-| [UnitXP SP3](https://github.com/brues-code/UnitXP_SP3) | v90+ |
+| [UnitXP SP3](https://github.com/brues-code/UnitXP_SP3) | v89+ |
 | [DXVK](https://github.com/doitsujin/dxvk) / [VanillaFixes](https://github.com/hannesmann/vanillafixes) | Runtime / loader infrastructure |
 
 Verify the active installation against this supported baseline. Addons use and
@@ -66,6 +66,10 @@ Add `--verify-remotes` to read current origin branch heads over the network.
 This does not fetch, commit or push. Cached tracking refs are labeled separately.
 Use the full manifest command when DLLs, loader configuration or client patches
 change. Reports must stay outside the active game directory.
+
+The documentation checker also compares supported dependency minimums in the
+canonical docs with `UPSTREAM_VERSIONS.json`; dated audits and source reference
+builds remain separate.
 
 The linter is heuristic. Tests and static checks do not establish in-game behavior;
 report remaining runtime checks explicitly. Native DLL changes require a full
