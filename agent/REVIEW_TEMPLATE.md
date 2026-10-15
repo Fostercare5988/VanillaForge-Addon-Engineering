@@ -16,6 +16,8 @@ VERIFY:
 1. Correctness: intended behavior, safe error/cancellation paths.
 2. Ownership: stale/duplicate events, supersession, deferred work, published state.
 3. APIs: verified primitives, authoritative state, dependencies match consumption.
+   Target: selected client/server and required DLL environment recorded; static file
+   evidence, configured loading and native acceptance distinguished. No stock fallback tier.
    UI hooks: globals exist in the target client/verified extension; event and render callers inspected.
 4. Performance: coverage accounts for loaded modules; trace trigger fan-out,
    cardinality and shared consumers. Hot-path churn/polling justified; counters

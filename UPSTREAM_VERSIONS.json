@@ -24,6 +24,21 @@
     "reference_commit": "60c05fa1bed338f50092ee73894ee4e3b81b5a65",
     "file_shas": {
       "README.md": "13375af535aeaa8bd825e542bc82d61f1ca71c65"
+    },
+    "reference_version": "2.2",
+    "release_provenance": {
+      "tag": "Release",
+      "version": "2.2",
+      "release_id": 197923926,
+      "release_name": "SuperWoW 2.2",
+      "published_at": "2025-02-01T13:49:06Z",
+      "updated_at": "2026-07-16T14:04:02Z",
+      "archive_asset_id": 479239016,
+      "archive_filename": "SuperWoW.release.2.2.zip",
+      "archive_size_bytes": 697633,
+      "archive_updated_at": "2026-07-16T14:03:09Z",
+      "archive_sha256": "e1b37caf5496037fc369b8b68b5ef529be5fa951543869328bf38bef83dfa4a8",
+      "identity_scope": "GitHub API-reported archive digest; not the extracted DLL hash or a runtime loading result"
     }
   },
   "nampower": {
@@ -35,16 +50,76 @@
       "SCRIPTS.md": "ca4b56093a9cbeafc64eeff67d9ef142e8922966",
       "EVENTS.md": "86377537ae978af67d8a90ead3cc6d0496b945cd",
       "DBC_FIELDS.md": "56056436d01626b17c0f193256d5990152d06ab9",
-      "UNIT_FIELDS.md": "bf4f91b3bc0e93e1761a731357549729b44e5a76"
-    }
+      "UNIT_FIELDS.md": "bf4f91b3bc0e93e1761a731357549729b44e5a76",
+      "nampower/main.hpp": "812a2700347d3c043c592828e6e04f7c04017372",
+      "nampower/misc_scripts.cpp": "a70ccf42e5102f4c6e61e8455481dc322dbb2a06",
+      "nampower/spellevents.cpp": "a900881150988cd97717176ad18bfcb59e4eae66"
+    },
+    "minimum_version_scope": "framework environment, not every addon dependency guard; newer stable release provenance does not raise this floor",
+    "reference_version": "4.6.3",
+    "runtime_version": "4.6.2",
+    "reference_commit_scope": "current source includes an unreleased null-caster fix after the v4.6.3 release; release provenance describes the shipped binary separately",
+    "tracked_files": [
+      "README.md",
+      "SCRIPTS.md",
+      "EVENTS.md",
+      "DBC_FIELDS.md",
+      "UNIT_FIELDS.md",
+      "nampower/main.hpp",
+      "nampower/misc_scripts.cpp",
+      "nampower/spellevents.cpp"
+    ],
+    "release_provenance": {
+      "tag": "v4.6.3",
+      "commit": "fb70e44a2c9f2c8a6e97ef42ec5cac31c773ddba",
+      "published_at": "2026-09-03T20:04:07Z",
+      "dll_asset_id": 543277931,
+      "dll_size_bytes": 829952,
+      "dll_sha256": "96af1722ee6b1a76cbb11e59e452fe54a83f54a3da80ae24f9c7571a0a6392fe",
+      "runtime_version": "4.6.2"
+    },
+    "supported_release_provenance": [
+      {
+        "tag": "v4.6.2",
+        "commit": "11dddf3b9da8855081b9ea05965478bf8af386cf",
+        "published_at": "2026-06-15T00:20:39Z",
+        "dll_asset_id": 447669378,
+        "dll_size_bytes": 829952,
+        "dll_sha256": "b869f3a3b37114dbf12b299da05f913e25e9274fc903b7b3e62ab81ae0fb1bec",
+        "runtime_version": "4.6.2"
+      }
+    ]
   },
   "unitxp_sp3": {
     "minimum_version": "89",
     "repository": "brues-code/UnitXP_SP3",
     "reference_commit": "cedbf4b59776567db954ce38f681af1cbb9f0e1c",
     "file_shas": {
-      "Vanilla1121_functions.h": "5795131caf9b2dfd626b188ebff7571df19e6850"
+      "Vanilla1121_functions.h": "5795131caf9b2dfd626b188ebff7571df19e6850",
+      "dllmain.cpp": "c1c9cb586bd699bdb1534b5fa64260ebf96a68d0",
+      "coffTimeDateStamp.cpp": "e8e324aa973102b15b65478c32ff31160e8338b6"
     },
-    "reference_version": "90"
+    "reference_version": "90",
+    "minimum_version_scope": "framework environment, not every addon dependency guard; newer stable release provenance does not raise this floor",
+    "tracked_files": [
+      "Vanilla1121_functions.h",
+      "dllmain.cpp",
+      "coffTimeDateStamp.cpp"
+    ],
+    "release_provenance": {
+      "tag": "v90",
+      "tag_object": "1b43ea0179b0dc9fe20413c27367196539694a79",
+      "commit": "cedbf4b59776567db954ce38f681af1cbb9f0e1c",
+      "published_at": "2026-08-15T07:02:55Z",
+      "dll_asset_id": 515431799,
+      "dll_size_bytes": 185344,
+      "dll_sha256": "1d1a622fc4fd74864bdd5aa29d8c4ed2dd5cbb0340f978cbf4daca815235d10a"
+    },
+    "minimum_source_provenance": {
+      "tag": "v89",
+      "commit": "3370011e396ccdbf4c9921f6cf2b005bed818b24",
+      "dllmain_cpp_blob": "c1c9cb586bd699bdb1534b5fa64260ebf96a68d0",
+      "scope": "v89 and v90 dispatchers are byte-identical; this source tag does not establish any binary digest"
+    }
   }
 }

@@ -107,11 +107,15 @@ class SupportedBaselineTests(unittest.TestCase):
             "unitxp_sp3": {"minimum_version": "89", "reference_version": "90"},
         }
         self.save_config()
+        self.write("TARGET_ENVIRONMENT.json", (ROOT / "TARGET_ENVIRONMENT.json").read_text(encoding="utf-8"))
         declarations = [f"{label} v{self.config[key]['minimum_version']}+"
                         for key, label in CHECKER.COMPONENTS.items()]
         self.write("AGENTS.md", "# Router\n")
-        self.write("VANILLAFORGE_SYSTEM_PROMPT.md", "## Target\n" + ", ".join(declarations))
-        self.write("README.md", "## Target\n" + "\n".join(
+        revision = "OctoWoW client revision `2026.10.10`\n"
+        (self.root / "docs").mkdir()
+        self.write("docs/TARGET_ENVIRONMENT.md", revision)
+        self.write("VANILLAFORGE_SYSTEM_PROMPT.md", "## Target\n" + revision + ", ".join(declarations))
+        self.write("README.md", "## Target\n" + revision + "\n".join(
             f"| [{label}](https://example.test/{key}) | v{self.config[key]['minimum_version']}+ |"
             for key, label in CHECKER.COMPONENTS.items()))
         self.write("ENGINE_REFERENCE.md", "\n".join(declarations) +
@@ -120,15 +124,36 @@ class SupportedBaselineTests(unittest.TestCase):
     def write(self, name, text):
         (self.root / name).write_text(text, encoding="utf-8")
 
+    def test_target_revision_drift_and_required_dll_removal_fail(self):
+        self.assertEqual(CHECKER.check_target(self.root), [])
+        path = self.root / "TARGET_ENVIRONMENT.json"
+        profile = json.loads(path.read_text(encoding="utf-8"))
+        profile["client"]["distribution_revision"] = "2026.11.01"
+        self.write(path.name, json.dumps(profile))
+        errors = CHECKER.check_target(self.root)
+        self.assertEqual(len(errors), 3)
+        self.assertTrue(all("expected exactly one 2026.11.01" in error for error in errors))
+        del profile["required_extensions"]["unitxp_sp3"]
+        self.write(path.name, json.dumps(profile))
+        with contextlib.redirect_stderr(io.StringIO()) as output:
+            self.assertEqual(CHECKER.main(["--root", str(self.root)]), 1)
+        self.assertIn("must require the canonical", output.getvalue())
+
+    def test_missing_target_profile_is_a_cli_diagnostic(self):
+        (self.root / "TARGET_ENVIRONMENT.json").unlink()
+        with contextlib.redirect_stderr(io.StringIO()) as output:
+            self.assertEqual(CHECKER.main(["--root", str(self.root)]), 1)
+        self.assertIn("TARGET_ENVIRONMENT.json", output.getvalue())
+
     def save_config(self):
         self.write("UPSTREAM_VERSIONS.json", json.dumps(self.config))
 
     def test_support_89_and_reference_90_are_distinct_and_read_only(self):
-        before = {p.name: p.read_bytes() for p in self.root.iterdir()}
+        before = {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
         self.assertEqual(CHECKER.check_baselines(self.root), [])
         with contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(CHECKER.main(["--root", str(self.root)]), 0)
-        self.assertEqual(before, {p.name: p.read_bytes() for p in self.root.iterdir()})
+        self.assertEqual(before, {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob("*") if p.is_file()})
 
     def test_each_component_drift_is_reported_in_all_current_declarations(self):
         for key, label in CHECKER.COMPONENTS.items():

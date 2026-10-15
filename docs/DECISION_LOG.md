@@ -2,6 +2,27 @@
 
 Record durable framework-level decisions whose rationale would otherwise be lost. This is not a changelog, chat transcript or addon diary.
 
+## 2026-10-15 — Bind addon evidence to the selected client and required stack
+Status: ACTIVE
+
+Decision: Require all four API DLLs in the VanillaForge environment while
+preserving supported minima NamPower 4.6.2 and UnitXP SP3 v89. Keep current
+reference releases separate. Record target identity in TARGET_ENVIRONMENT.json;
+reuse one schema/preflight implementation in client, addon and framework checks.
+Provide a short [target guide](TARGET_ENVIRONMENT.md) instead of enlarging startup
+reading. Personal paths and historical hashes do not select today's client.
+
+Evidence: The [repository review](../audit/VANILLAFORGE_2026-10-15_REVIEW.md)
+records coverage and verified upstream provenance. NamPower's published v4.6.3
+still reports 4.6.2; UnitXP's version command returns a timestamp, not a release
+ordinal. Shared UnitPosition globals have incompatible provider return shapes.
+
+Consequences: Selected-client audits bind source to that installation, reject
+missing/old/unknown file requirements, and retain source-only/runtime-pending
+states. File checks do not establish the distribution revision or gameplay.
+Framework maintenance remains executable without a game. Preserve the existing
+minimum floors; raising an individual addon's guards requires its actual needs.
+
 ## 2026-10-14 — Invalidate test evidence when audited source changes
 Status: ACTIVE
 

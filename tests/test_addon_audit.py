@@ -1,5 +1,6 @@
 """Load closure, read-only defaults and evidence boundaries for source audits."""
 import contextlib
+import hashlib
 import importlib.util
 import io
 import json
@@ -191,7 +192,83 @@ class AddonAuditTests(unittest.TestCase):
             outputs.append(output.getvalue())
         self.assertEqual(outputs[0], outputs[1])
         self.assertEqual(json.loads(outputs[0])["tests"]["status"], "not_run")
+        self.assertEqual(json.loads(outputs[0])["environment"]["status"], "not_checked")
         self.assertEqual(before, {p.relative_to(self.addon): p.read_bytes() for p in self.addon.rglob("*") if p.is_file()})
+
+    def select_client(self):
+        client = self.root / "client"
+        deployed = client / "Interface" / "AddOns" / self.addon.name
+        deployed.parent.mkdir(parents=True)
+        self.addon.rename(deployed)
+        self.addon = deployed
+        return client
+
+    def test_selected_client_rejects_an_unrelated_source_checkout(self):
+        client = self.root / "other-client"
+        with mock.patch.object(AUDIT, "inspect_environment") as inspect:
+            with contextlib.redirect_stderr(io.StringIO()) as error:
+                self.assertEqual(AUDIT.main([str(self.addon), "--client", str(client)]), 2)
+        inspect.assert_not_called()
+        self.assertIn("inside the selected client's Interface/AddOns", error.getvalue())
+
+    def test_selected_client_blocked_environment_is_reported_separately_and_fails(self):
+        client = self.select_client()
+        environment = {"status": "blocked", "errors": ["Missing required extension: ClassicAPI.dll"],
+                       "runtime": {"status": "pending"}}
+        with mock.patch.object(AUDIT, "inspect_environment", return_value=environment) as inspect:
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(AUDIT.main([str(self.addon), "--client", str(client)]), 1)
+        inspect.assert_called_once_with(client.resolve())
+        report = json.loads(output.getvalue())
+        self.assertEqual(report["status"], "human_review_pending")
+        self.assertEqual(report["environment"], environment)
+
+    def test_selected_client_report_cannot_be_written_into_the_game_or_another_addon(self):
+        client = self.select_client()
+        for destination in (client / "report.json", client / "Interface" / "AddOns" / "Other" / "report.json"):
+            with self.subTest(destination=destination), \
+                 mock.patch.object(AUDIT, "inspect_environment") as inspect, \
+                 mock.patch.object(AUDIT, "run_tests") as run:
+                with contextlib.redirect_stderr(io.StringIO()) as error:
+                    self.assertEqual(AUDIT.main([str(self.addon), "--client", str(client),
+                                                 "--output", str(destination), "--run-tests"]), 2)
+                self.assertIn("outside the selected client directory", error.getvalue())
+                self.assertFalse(destination.exists())
+                inspect.assert_not_called()
+                run.assert_not_called()
+
+    def test_environment_changes_do_not_masquerade_as_source_changes(self):
+        previous = AUDIT.audit(self.addon)
+        current = AUDIT.audit(self.addon)
+        current["environment"] = {"status": "checks_passed", "runtime": {"status": "pending"}}
+        difference = AUDIT.compare_reports(current, previous)
+        self.assertTrue(difference["environment_changed"])
+        self.assertEqual(difference["changed_modules"], [])
+        self.assertFalse(difference["load_graph_changed"])
+        self.assertEqual(difference["status"], "changed")
+
+    def test_test_runner_cannot_reuse_environment_evidence_after_loader_mutation(self):
+        client = self.select_client()
+        loader = client / "dlls.txt"
+        loader.write_text("ClassicAPI.dll\n")
+
+        def inspect(root):
+            return {"status": "checks_passed", "runtime": {"status": "pending"},
+                    "loader_sha256": hashlib.sha256((root / "dlls.txt").read_bytes()).hexdigest()}
+
+        def run(*args):
+            loader.write_text("SuperWoWhook.dll\n")
+            return {"status": "passed", "tests_run": 1}
+
+        with mock.patch.object(AUDIT, "inspect_environment", side_effect=inspect), \
+             mock.patch.object(AUDIT, "run_tests", side_effect=run):
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(AUDIT.main([str(self.addon), "--client", str(client), "--run-tests"]), 1)
+        report = json.loads(output.getvalue())
+        self.assertEqual(report["tests"]["runner_status"], "passed")
+        self.assertEqual(report["tests"]["status"], "invalidated")
+        self.assertTrue(report["tests"]["source_verification"]["environment_changed"])
+        self.assertEqual(report["tests"]["source_verification"]["changed_modules"], [])
 
     def test_output_inside_addon_rejected_before_tests_run(self):
         marker = self.write("tests/test_side_effect.py", 'raise RuntimeError("must not import")')
@@ -207,6 +284,34 @@ class AddonAuditTests(unittest.TestCase):
             self.assertEqual(AUDIT.main([str(self.addon), "--output", str(destination)]), 1)
         report = json.loads(destination.read_text("utf-8"))
         self.assertGreater(next(m for m in report["modules"] if m["path"] == "core.lua")["lint"]["errors"]["count"], 0)
+
+    def test_output_retargeted_during_tests_cannot_enter_addon_or_overwrite_comparison(self):
+        output = self.root / "report.json"
+        previous = self.root / "previous.json"
+        previous.write_text(json.dumps(AUDIT.audit(self.addon)), encoding="utf-8")
+        original = previous.read_bytes()
+        resolve = Path.resolve
+        for diverted in (self.addon / "report.json", previous):
+            with self.subTest(destination=diverted):
+                moved = False
+
+                def resolve_output(path, *args, **kwargs):
+                    return diverted if path == output and moved else resolve(path, *args, **kwargs)
+
+                def run_tests(*args):
+                    nonlocal moved
+                    moved = True
+                    return {"status": "passed", "tests_run": 1}
+
+                with mock.patch.object(Path, "resolve", autospec=True, side_effect=resolve_output), \
+                     mock.patch.object(AUDIT, "run_tests", side_effect=run_tests), \
+                     contextlib.redirect_stderr(io.StringIO()):
+                    code = AUDIT.main([str(self.addon), "--run-tests", "--output", str(output),
+                                       "--compare", str(previous)])
+                self.assertEqual(code, 2)
+                self.assertEqual(previous.read_bytes(), original)
+                self.assertFalse(output.exists())
+                self.assertFalse((self.addon / "report.json").exists())
 
     def test_explicit_unittest_success_failure_and_zero_tests(self):
         start = self.addon / "tests"

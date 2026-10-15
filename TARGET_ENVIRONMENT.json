@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "server": {
+    "name": "OctoWoW",
+    "realmlist": "play.octowow.st",
+    "official_url": "https://octowow.st/"
+  },
+  "client": {
+    "distribution_revision": "2026.10.10",
+    "engine_version": "1.12.1.5875",
+    "interface": 11200,
+    "executable": "WoW.exe",
+    "launcher": "VanillaFixes.exe"
+  },
+  "required_extensions": {
+    "classicapi": "ClassicAPI.dll",
+    "superwow": "SuperWoWhook.dll",
+    "nampower": "nampower.dll",
+    "unitxp_sp3": "UnitXP_SP3.dll"
+  },
+  "revision_evidence": {
+    "url": "https://octowow.st/",
+    "checked_on": "2026-10-15",
+    "scope": "Official distribution listing; installed files and runtime are separate evidence."
+  }
+}

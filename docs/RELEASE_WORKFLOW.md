@@ -14,6 +14,7 @@ Inspect the complete diff and working tree. Where relevant verify:
 - dependency metadata reflects actual consumption;
 - DXVK is not an addon dependency;
 - optional/recommended dependencies are accurate;
+- required framework environment and selected client/server evidence are current;
 - versions and behavior docs are consistent;
 - deleted/renamed files disappeared from manifests/docs;
 - tests/tools/scratch artifacts are not accidentally shipped.
@@ -49,6 +50,8 @@ Before commit: inspect status and the working-tree diff before staging, stage on
 When pushing, verify local HEAD, `origin/<primary>` HEAD, intended tag if tags are used, and final working-tree status.
 
 Report static validation, repository reconciliation, commit/push and runtime verification separately.
+An audit's source-only or pending environment status does not become runtime
+acceptance through a successful commit or push. See [target preflight](TARGET_ENVIRONMENT.md).
 
 ## Downloadable Package
 

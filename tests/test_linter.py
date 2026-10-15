@@ -9,9 +9,12 @@ every heuristic warning.
 from __future__ import annotations
 
 import importlib.util
+import io
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -361,11 +364,89 @@ class TocManifestTests(unittest.TestCase):
             self.assertEqual(errors, [])
             self.assertEqual(warnings, [])
 
+    def test_target_interface_and_multiflavor_lists_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            addon = self.make_addon(tmp)
+            toc = addon / "ManifestAddon.toc"
+            for metadata in (
+                "## Interface: 11200\n",
+                "## Interface: 11200, 30400\n",
+                "## Interface: 30400, 11200\n",
+                "\ufeff## Interface: 11200\n",
+                "  ## interface : 11200 \n",
+            ):
+                with self.subTest(metadata=metadata):
+                    toc.write_text(metadata, encoding="utf-8")
+                    errors, _, _, _ = self.auditor.audit_toc_file(str(toc), str(addon))
+                    self.assertEqual(errors, [])
+
+    def test_missing_wrong_or_malformed_interface_is_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            addon = self.make_addon(tmp)
+            toc = addon / "ManifestAddon.toc"
+            for metadata, expected in (
+                ("## Title: ManifestAddon\n", "Missing"),
+                ("## Interface 11200\n", "Missing"),
+                ("## Interface: 30400\n", "does not include"),
+                ("## Interface: 112000\n", "does not include"),
+                ("## Interface:\n", "Malformed"),
+                ("## Interface: 11200,\n", "Malformed"),
+                ("## Interface: 11200 30400\n", "Malformed"),
+                ("## Interface: 11200,garbage\n", "Malformed"),
+                ("## Interface: 11200.0\n", "Malformed"),
+                ("## Interface: \u0661\u0661\u0662\u0660\u0660\n", "Malformed"),
+            ):
+                with self.subTest(metadata=metadata):
+                    toc.write_text(metadata, encoding="utf-8")
+                    errors, _, _, _ = self.auditor.audit_toc_file(str(toc), str(addon))
+                    self.assertTrue(any("TOC Interface Error" in e and expected in e for e in errors), errors)
+
+    def test_duplicate_interface_fields_are_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            addon = self.make_addon(tmp)
+            toc = addon / "ManifestAddon.toc"
+            for versions in ("11200\n## Interface: 11200", "11200\n## Interface: 30400"):
+                with self.subTest(versions=versions):
+                    toc.write_text(f"## Interface: {versions}\n", encoding="utf-8")
+                    errors, _, _, _ = self.auditor.audit_toc_file(str(toc), str(addon))
+                    self.assertTrue(any("Duplicate Interface" in e for e in errors), errors)
+
+    def test_folder_checks_target_candidates_without_foreign_flavor_false_positive(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            addon = self.make_addon(tmp)
+            for suffix in ("", "_ClassicAPI", "_Turtle"):
+                (addon / f"ManifestAddon{suffix}.toc").write_text("## Interface: 30400\n", encoding="utf-8")
+            (addon / "ManifestAddon_Mainline.toc").write_text("## Interface: 120000\n", encoding="utf-8")
+            results = self.auditor.audit_addon_dir(str(addon))[0]
+            for suffix in ("", "_ClassicAPI", "_Turtle"):
+                self.assertTrue(any("TOC Interface Error" in e for e in results[f"ManifestAddon{suffix}.toc"][0]))
+            self.assertEqual(results["ManifestAddon_Mainline.toc"][0], [])
+
+    def test_foreign_flavor_still_checks_declared_runtime_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            addon = self.make_addon(tmp)
+            (addon / "ManifestAddon_Mainline.toc").write_text("## Interface: 120000\nMissing.lua\n", encoding="utf-8")
+            errors = self.auditor.audit_addon_dir(str(addon))[0]["ManifestAddon_Mainline.toc"][0]
+            self.assertTrue(any("Declared runtime file does not exist" in e for e in errors), errors)
+            self.assertFalse(any("TOC Interface Error" in e for e in errors), errors)
+
+    def test_explicit_toc_cli_checks_selected_flavor_interface(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            addon = self.make_addon(tmp)
+            toc = addon / "ManifestAddon_Mainline.toc"
+            toc.write_text("## Interface: 120000\n", encoding="utf-8")
+            output = io.StringIO()
+            with mock.patch("sys.argv", [str(LINTER_PATH), str(toc)]), redirect_stdout(output):
+                with self.assertRaises(SystemExit) as raised:
+                    LINTER.main()
+            self.assertEqual(raised.exception.code, 1)
+            self.assertIn("TOC Interface Error", output.getvalue())
+
     def test_missing_declared_lua_is_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             addon = self.make_addon(tmp)
             toc = addon / "ManifestAddon.toc"
-            toc.write_text("Missing.lua\n", encoding="utf-8")
+            toc.write_text("## Interface: 11200\nMissing.lua\n", encoding="utf-8")
             errors, _, _, _ = self.auditor.audit_toc_file(str(toc), str(addon))
             self.assertTrue(any("Declared runtime file does not exist" in e for e in errors))
 
@@ -373,7 +454,7 @@ class TocManifestTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             addon = self.make_addon(tmp)
             toc = addon / "ManifestAddon.toc"
-            toc.write_text("Missing.xml\n", encoding="utf-8")
+            toc.write_text("## Interface: 11200\nMissing.xml\n", encoding="utf-8")
             errors, _, _, _ = self.auditor.audit_toc_file(str(toc), str(addon))
             self.assertTrue(any("Declared runtime file does not exist" in e for e in errors))
 
@@ -398,7 +479,7 @@ class TocManifestTests(unittest.TestCase):
             modules.mkdir()
             (modules / "Feature.lua").write_text("return\n", encoding="utf-8")
             toc = addon / "ManifestAddon.toc"
-            toc.write_text("Modules\\Feature.lua\n", encoding="utf-8")
+            toc.write_text("## Interface: 11200\nModules\\Feature.lua\n", encoding="utf-8")
             errors, _, _, _ = self.auditor.audit_toc_file(str(toc), str(addon))
             self.assertEqual(errors, [])
 
@@ -406,7 +487,7 @@ class TocManifestTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             addon = self.make_addon(tmp)
             toc = addon / "ManifestAddon.toc"
-            toc.write_text("## Dependencies: DXVK\n", encoding="utf-8")
+            toc.write_text("## Interface: 11200\n## Dependencies: DXVK\n", encoding="utf-8")
             errors, warnings, _, _ = self.auditor.audit_toc_file(str(toc), str(addon))
             self.assertEqual(errors, [])
             self.assertTrue(any("Invalid Addon Dependency" in w for w in warnings))
@@ -418,7 +499,7 @@ class TocManifestTests(unittest.TestCase):
             test_dir = addon / "tests"
             test_dir.mkdir()
             (test_dir / "fixture.lua").write_text("return\n", encoding="utf-8")
-            (addon / "ManifestAddon.toc").write_text("Core.lua\n", encoding="utf-8")
+            (addon / "ManifestAddon.toc").write_text("## Interface: 11200\nCore.lua\n", encoding="utf-8")
             result = self.auditor.audit_addon_dir(str(addon))
             self.assertFalse(any("fixture.lua" in w for w in result[3]))
 
@@ -427,7 +508,7 @@ class TocManifestTests(unittest.TestCase):
             addon = self.make_addon(tmp)
             (addon / "Core.lua").write_text("return\n", encoding="utf-8")
             (addon / "Bootstrap.lua").write_text("return\n", encoding="utf-8")
-            (addon / "ManifestAddon.toc").write_text("Core.lua\n", encoding="utf-8")
+            (addon / "ManifestAddon.toc").write_text("## Interface: 11200\nCore.lua\n", encoding="utf-8")
             result = self.auditor.audit_addon_dir(str(addon))
             self.assertEqual(result[4], 0)
             self.assertTrue(any("Bootstrap.lua" in w for w in result[3]))
@@ -440,7 +521,7 @@ class TocManifestTests(unittest.TestCase):
                 '<Bindings><Binding name="TEST_ACTION">TestAction()</Binding></Bindings>\n',
                 encoding="utf-8",
             )
-            (addon / "ManifestAddon.toc").write_text("Core.lua\n", encoding="utf-8")
+            (addon / "ManifestAddon.toc").write_text("## Interface: 11200\nCore.lua\n", encoding="utf-8")
             result = self.auditor.audit_addon_dir(str(addon))
             self.assertFalse(any("Bindings.xml" in w for w in result[3]), result[3])
 
@@ -449,7 +530,7 @@ class TocManifestTests(unittest.TestCase):
             addon = self.make_addon(tmp)
             (addon / "Core.lua").write_text("return\n", encoding="utf-8")
             (addon / "Dormant.lua").write_text("return\n", encoding="utf-8")
-            (addon / "ManifestAddon.toc").write_text("Core.lua\n", encoding="utf-8")
+            (addon / "ManifestAddon.toc").write_text("## Interface: 11200\nCore.lua\n", encoding="utf-8")
             result = self.auditor.audit_addon_dir(str(addon))
             self.assertTrue(any("Dormant.lua" in w for w in result[3]), result[3])
 
@@ -460,7 +541,7 @@ class TocManifestTests(unittest.TestCase):
             sub = addon / "Sub"
             sub.mkdir()
             (sub / "Bindings.xml").write_text("<Bindings></Bindings>\n", encoding="utf-8")
-            (addon / "ManifestAddon.toc").write_text("Core.lua\n", encoding="utf-8")
+            (addon / "ManifestAddon.toc").write_text("## Interface: 11200\nCore.lua\n", encoding="utf-8")
             result = self.auditor.audit_addon_dir(str(addon))
             self.assertTrue(any("Bindings.xml" in w for w in result[3]), result[3])
 

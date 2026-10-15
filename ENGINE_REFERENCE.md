@@ -16,8 +16,10 @@
 > - DXVK runtime
 > - VanillaFixes / compatible DLL loader where required
 >
-> The full stack may be assumed to be installed in the target environment.
-> An individual addon should only consume or declare the components it actually uses.
+> All four API DLLs are required by the supported environment. Verify their
+> active identities and loading before addon work; installation is not assumed
+> from an old audit or the presence of one shared global. An individual addon
+> consumes and declares only the providers its features actually require.
 
 ---
 
@@ -63,6 +65,11 @@ Interface 11200
 A deployment-specific server/content revision may change quests, zones, items,
 battlegrounds, spells, balance, or other server content. It does **not** imply a newer
 Lua VM, FrameXML generation, or Retail API.
+
+OctoWoW's `2026.10.10` distribution label is separate from this executable build
+and from the live realm/content revision. Select the actual client root,
+launcher, realmlist and relevant local patches before applying these references;
+see the [target preflight](docs/WORKFLOW.md).
 
 Therefore:
 
@@ -173,9 +180,11 @@ expands the Lua API.
 
 ### 5.1 GUID-aware unit access
 
-**HISTORICAL / VERIFY EDGE CASES BEFORE USE**
+**SOURCE-VERIFIED in the [official feature documentation](https://github.com/balakethelock/SuperWoW/wiki/Features)**
 
-The framework records SuperWoW support for GUID strings in enhanced unit-function paths.
+SuperWoW accepts GUID strings in enhanced unit-function paths; `UnitExists(unit)`
+also returns the GUID as its second result. Verify each consumed function's
+edge cases rather than extending this to unrelated APIs.
 
 Conceptual examples:
 
@@ -188,6 +197,11 @@ Use GUID identity where names are ambiguous or unit-token lifetime is unstable.
 
 Do not assume an arbitrary unrelated API accepts a GUID just because a `UnitX`
 function does.
+
+The official version globals are `SUPERWOW_VERSION` and `SUPERWOW_STRING`.
+For the supported `"2.2"` representation, use `tonumber(SUPERWOW_VERSION)`
+before comparing it to `2.2`. Shared `UnitGUID` or `UnitPosition` globals and
+the companion SuperAPI addon do not prove that `SuperWoWhook.dll` is loaded.
 
 ### 5.2 Direct targeting
 
@@ -280,11 +294,23 @@ here only if it is broadly reusable.
 
 ## 6. NamPower
 
-**Baseline:** v4.6.2+  
+**Baseline:** v4.6.2+\
 **Role:** casting/queueing and a large native API surface.
 
-NamPower is installed in the canonical environment but should be treated as an
-**opt-in addon dependency**.
+NamPower is required in the canonical environment; it becomes an addon API
+dependency only when the addon consumes its capabilities.
+
+[SOURCE-VERIFIED] The [v4.6.3 release](https://github.com/Emyrk/nampower/releases/tag/v4.6.3)
+filters invalid zero-ID dispel callbacks. Its
+[version constants](https://github.com/Emyrk/nampower/blob/fb70e44a2c9f2c8a6e97ef42ec5cac31c773ddba/nampower/main.hpp#L28-L30)
+remain `4, 6, 2`, which `GetNampowerVersion()` returns. Thus that runtime tuple
+cannot distinguish v4.6.2 from release v4.6.3. Match the official release asset
+identity in `UPSTREAM_VERSIONS.json`, then verify loading in the current session;
+do not reject the v4.6.3 binary solely for reporting `4.6.2`.
+
+The source reference `ff41d48e4b53b313e46489330ad92c0a820cabac` additionally
+contains an [unreleased null-caster crash fix](https://github.com/Emyrk/nampower/commit/ff41d48e4b53b313e46489330ad92c0a820cabac).
+Reading that source does not establish that the released DLL contains the fix.
 
 Current upstream documentation contains separate:
 
@@ -340,10 +366,11 @@ which returns:
 major, minor, patch
 ```
 
-Historical framework knowledge also records:
+The pinned [script reference](https://github.com/Emyrk/nampower/blob/ff41d48e4b53b313e46489330ad92c0a820cabac/SCRIPTS.md)
+also documents:
 
 ```lua
-GetSpellNameAndRankForId(...)
+GetSpellNameAndRankForId(spellId)
 ```
 
 Before using a NamPower function not explicitly documented in this file, consult the
@@ -360,6 +387,13 @@ For event-driven addon design:
    state unless reconciliation is actually needed
 3. document which component owns the state
 
+[SOURCE-VERIFIED] NamPower's [aura-event contract](https://github.com/Emyrk/nampower/blob/ff41d48e4b53b313e46489330ad92c0a820cabac/EVENTS.md#buffdebuff-events)
+uses `arg7` as state: `0` added, `1` removed, `2` modified. A `BUFF_REMOVED_*`
+or `DEBUFF_REMOVED_*` event with state `2` means a stack decrease, not aura
+expiration. `arg2` is the 1-based visible Lua slot (or `0` for a hidden aura);
+`arg6` is the raw 0-based slot. Preserve these distinctions when correlating
+NamPower events with ClassicAPI aura snapshots.
+
 ### 6.4 Dependency rule
 
 Do not add NamPower as an addon requirement merely because the client has it installed.
@@ -374,13 +408,27 @@ documented API provides a measurable benefit.
 **Baseline:** v89+\
 **Role:** telemetry and selected client/window utilities.
 
-The supported minimum is build 89. The maintainer uses brues-code build 90;
-the pinned source evidence below remains build 90 and does not establish that
-every documented command or fix is present in build 89. Verify any consumed
-capability against the installed build before relying on it.
+The supported minimum remains build 89; the current reference is the
+[brues-code v90 release](https://github.com/brues-code/UnitXP_SP3/releases/tag/v90).
+UnitXP SP3 is required in the canonical environment; an addon declares it only
+when its features consume UnitXP capabilities. Verify each consumed capability
+against the supported build. A historical local binary labeled build 90 is not
+automatically the official release: compare the exact asset identity recorded
+in `UPSTREAM_VERSIONS.json`.
 
-UnitXP SP3 is installed in the canonical environment but is an **opt-in addon
-dependency**.
+The [v89 source dispatcher](https://github.com/brues-code/UnitXP_SP3/blob/3370011e396ccdbf4c9921f6cf2b005bed818b24/dllmain.cpp)
+is byte-identical to v90 (`c1c9cb586bd699bdb1534b5fa64260ebf96a68d0`). The
+[v89-to-v90 diff](https://github.com/brues-code/UnitXP_SP3/compare/v89...v90)
+changes build/packaging and MinHook dependency layout, not these Lua commands.
+This supports their source-level availability at the existing v89 floor; it
+does not certify every binary or native behavior.
+
+[SOURCE-VERIFIED] The pinned [version dispatcher](https://github.com/brues-code/UnitXP_SP3/blob/cedbf4b59776567db954ce38f681af1cbb9f0e1c/dllmain.cpp#L484-L493)
+supports `UnitXP("version", "coffTimeDateStamp")` (numeric PE timestamp) and
+`UnitXP("version", "additionalInformation")` (`"Konaka-main"`). These identify
+a loaded extension, not the ordinal release number `90`; establish that with
+release provenance. The stock client already has a `UnitXP` function, so
+function presence or a successful `pcall` alone is insufficient.
 
 ### 7.1 Verified distance and sight commands
 
@@ -571,6 +619,12 @@ UnitXP distanceBetween / inSight (two-unit commands; verify meter semantics)
 
 Select by required precision and unit availability. Do not stack several measurements
 without a reason.
+
+Shared globals require special care in the mandatory combined stack. ClassicAPI
+and SuperWoW both register `UnitPosition`, with different return signatures;
+the last registration determines the live global. ClassicAPI also supplies
+GUID resolution when SuperWoW is absent. Verify the active return contract and
+each provider separately; see [shared unit APIs](CLASSICAPI_MASTER_REFERENCE.md#shared-unit-apis-in-the-full-dll-stack).
 
 ### 10.6 Combat log
 
@@ -810,7 +864,7 @@ Use them to verify:
 
 `/reload` (`ConsoleExec('reloadui')`) reinitializes the Lua VM, XML templates, and
 addon files. It does **not** reload or reinitialize native DLL binaries
-(`ClassicAPI.dll`, `SuperWoW.dll`, `NamPower.dll`, `UnitXP_SP3.dll`, etc.). After
+(`ClassicAPI.dll`, `SuperWoWhook.dll`, `nampower.dll`, `UnitXP_SP3.dll`, etc.). After
 updating or replacing any native engine DLL, the game client process must be
 completely restarted.
 

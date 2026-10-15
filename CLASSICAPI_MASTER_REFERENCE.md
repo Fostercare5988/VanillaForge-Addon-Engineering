@@ -71,12 +71,26 @@ ClassicAPI v1.15.16+
 
 Do not assume a future version's new API exists solely because a similarly named Retail API exists.
 
+[SOURCE-VERIFIED] `CLASSIC_API_VERSION` identifies a build's version stamp, not
+the complete loaded DLL stack. The pinned [version publisher](https://github.com/brues-code/ClassicAPI/blob/7ccbbaaf68bcde6b29b71806981d0338e0577189/src/api/Version.cpp)
+sets this global at startup and on `/reload`. Unstamped developer builds use
+`99999999` so minimum-version comparisons pass; see the pinned
+[build configuration](https://github.com/brues-code/ClassicAPI/blob/7ccbbaaf68bcde6b29b71806981d0338e0577189/CMakeLists.txt).
+That sentinel does not prove a published release or all capabilities of any
+later stable version. Record artifact/source identity separately, and verify
+the consumed API and its behavior on the loaded target.
+
 This environment/reference baseline does not mandate `MIN_CLASSIC_API=11516` in
 every addon. Declare the minimum required by the capabilities and semantic fixes
 the addon actually consumes. An explicitly chosen maintainer support floor may
 be higher; document that policy separately from an API's introduction version.
 Keep startup guards and installation requirements consistent. Do not automatically
 raise the support floor on every upstream release.
+
+ClassicAPI is one required component of VanillaForge's full enhanced environment;
+its version global does not establish that SuperWoW, NamPower and UnitXP SP3 are
+loaded. See [the engine stack](ENGINE_REFERENCE.md#3-stack-architecture) for
+environment requirements and provider selection.
 
 ---
 
@@ -176,6 +190,14 @@ GetModernScriptArgs()
 ```
 
 This changes one of the most important assumptions from stock 1.12: with ClassicAPI's default modern handler mode, modern positional event signatures are supported.
+
+[SOURCE-VERIFIED] The toggle is global and can be disabled after startup.
+Record `GetModernScriptArgs()` when verifying the target client; a sufficient
+`CLASSIC_API_VERSION` alone does not establish its current value. When the
+toggle is off, native zero-argument dispatch is restored. Inspect the active
+setting and the actual registration/call path before adopting positional
+handlers, and account for the effect on other addons before changing it.
+See the pinned [script-argument contract](https://github.com/brues-code/ClassicAPI/blob/7ccbbaaf68bcde6b29b71806981d0338e0577189/docs/API.md#setmodernscriptargsenable--getmodernscriptargs).
 
 Do not carry forward old framework rules that categorically prohibit `(self, event, ...)` without first considering ClassicAPI's active script-argument behavior.
 
@@ -278,6 +300,16 @@ Supported flavor filenames include:
 ```
 
 ClassicAPI can process modern-style multi-flavor addon layouts.
+
+[SOURCE-VERIFIED] The pinned [TOC selector](https://github.com/brues-code/ClassicAPI/blob/7ccbbaaf68bcde6b29b71806981d0338e0577189/src/addons/FlavorToc.cpp)
+tries `<Name>_Turtle.toc` only when its own Turtle detector is active, then
+`<Name>_ClassicAPI.toc`, then `<Name>.toc`. It deliberately does not select
+`_Vanilla`, `_Classic`, `_Mainline` or other later-client flavors. Do not infer
+the active flavor from server ancestry; inspect the actual target and selected
+manifest. The linter's directory audit checks target Interface metadata for
+the base, `_ClassicAPI` and `_Turtle` candidates without simulating runtime
+selection. An explicit TOC-file audit validates that selected file against
+Interface 11200.
 
 ### 5.3 Multiple Interface versions
 
@@ -2092,6 +2124,31 @@ UnitSpellTargetName
 
 ClassicAPI should be consulted before adding custom GUID-to-token registries, distance approximations, or legacy UnitX wrappers.
 
+### Shared unit APIs in the full DLL stack
+
+[SOURCE-VERIFIED] ClassicAPI's `UnitGUID(unit)` returns a 64-bit hexadecimal
+string such as `"0xF13000059A002553"`, rather than a later client's prefixed
+GUID format. GUID input and GUID output are different contracts. Its
+[token resolver](https://github.com/brues-code/ClassicAPI/blob/7ccbbaaf68bcde6b29b71806981d0338e0577189/src/unit/TokenExtensions.cpp)
+adds raw `0x...` GUID input only when `SuperWoWhook.dll` is absent; when that
+module is loaded, it defers GUID parsing to SuperWoW. Thus GUID-aware `UnitX`
+calls do not prove which DLL is loaded. Retain the required environment stack
+and verify component-specific runtime evidence separately.
+
+[SOURCE-VERIFIED] ClassicAPI's `UnitPosition(unit)` returns
+`posY, posX, posZ, instanceID`: west, north, height and the current `Map.dbc`
+ID. It reads visible units without a party/raid restriction and returns nil
+when a recognized unit has no known position. Invalid unit tokens can error.
+The pinned [API contract](https://github.com/brues-code/ClassicAPI/blob/7ccbbaaf68bcde6b29b71806981d0338e0577189/docs/API.md#unitpositionunit)
+explicitly warns that SuperWoW registers a global `UnitPosition` with a
+different return shape: the last registrant wins. Do not unpack the global
+using ClassicAPI's documented shape solely because ClassicAPI is present.
+Verify the live shape on the actual combined stack before using its coordinates.
+The pinned [implementation](https://github.com/brues-code/ClassicAPI/blob/7ccbbaaf68bcde6b29b71806981d0338e0577189/src/unit/Position.cpp)
+also registers `C_PlayerInfo.UnitPosition`; that alias does not establish the
+shape or ownership of the global function. [UNVERIFIED - TEST FIRST] for the
+active OctoWoW client's registration order and runtime results.
+
 ---
 
 ## 70. Unit Auras — `C_UnitAuras`
@@ -2806,6 +2863,10 @@ src/table/Length.cpp (blob: 5c3f9dfdbedd34ae016caefd038e3003facf6b28)
 src/cvar/Temp.cpp (blob: 3810691c26dc7e91ca2af75ad615c7e32945d58f)
 src/container/SortBags.cpp (blob: b6d77b3b7bc6e8a9b2361fa4bfbcf1d2117acf7a)
 src/nameplate/Events.cpp (blob: cebb4ac06c43f85dd907f74cd19b908bbd540897)
+src/api/Version.cpp (blob: 33c3ea05a268203cc96c0056557a497a141843a1)
+CMakeLists.txt (blob: 830adb8a01e930faa3016184faface04b67b8ff6)
+src/unit/TokenExtensions.cpp (blob: 1bb9fa98dc16defa0e8a8c75d8ef96225b87b61f)
+src/unit/Position.cpp (blob: 156568032d2a419a7d3fedc006b3d7651bc9d975)
 Earlier verified source knowledge retained (Swing.cpp, SwingRange.cpp, Equipment.cpp, Data.cpp, Custom.cpp, Offsets.h)
 ```
 

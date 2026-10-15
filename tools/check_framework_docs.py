@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import html
+import importlib.util
 import json
 import re
 import sys
@@ -33,6 +34,32 @@ COMPONENTS = {
     "nampower": "NamPower",
     "unitxp_sp3": "UnitXP SP3",
 }
+
+
+def check_target(root: Path) -> list[str]:
+    """Reuse preflight schema validation and keep current distribution declarations aligned."""
+    spec = importlib.util.spec_from_file_location(
+        "vanillaforge_target_requirements", Path(__file__).with_name("octowow_client_manifest.py"))
+    if spec is None or spec.loader is None:
+        raise ValueError("Cannot load target environment validation")
+    manifest = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(manifest)
+    target, _, _ = manifest.load_environment_requirements(
+        root / "TARGET_ENVIRONMENT.json", root / "UPSTREAM_VERSIONS.json")
+    revision = target["client"]["distribution_revision"]
+    errors = []
+    for name in ("README.md", "VANILLAFORGE_SYSTEM_PROMPT.md", "docs/TARGET_ENVIRONMENT.md"):
+        path = root / name
+        if not path.is_file():
+            errors.append(f"{name}: missing target environment document")
+            continue
+        text = path.read_text(encoding="utf-8")
+        if name != "docs/TARGET_ENVIRONMENT.md":
+            text = text.split("## Target\n", 1)[-1].split("\n## ", 1)[0]
+        versions = re.findall(r"(?:client|distribution)\s+revision[:\s`*]+(\d{4}\.\d{2}\.\d{2})", text, re.I)
+        if versions != [revision]:
+            errors.append(f"{name}: client revision {versions!r}; expected exactly one {revision}")
+    return errors
 
 
 def check_baselines(root: Path) -> list[str]:
@@ -174,6 +201,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         errors.extend(check(args.root))
         errors.extend(check_baselines(args.root))
+        errors.extend(check_target(args.root))
     except (OSError, UnicodeError, ValueError) as exc:
         errors.append(str(exc))
     if errors:

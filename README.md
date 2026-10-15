@@ -2,7 +2,7 @@
 
 Engineering guidance, API references, and validation tools for modernizing
 OctoWoW addons on the enhanced World of Warcraft 1.12.1 client. Framework
-version **3.1**.
+version **3.2**.
 
 Start with [AGENTS.md](AGENTS.md). The authoritative engineering contract is
 [VANILLAFORGE_SYSTEM_PROMPT.md](VANILLAFORGE_SYSTEM_PROMPT.md); retrieve detailed
@@ -12,6 +12,10 @@ references only when the task needs them.
 
 **WoW 1.12.1 · Build 5875 · Interface 11200**
 
+**OctoWoW distribution revision: 2026.10.10**, listed by the
+[official site](https://octowow.st/) on 15 October 2026. The distribution date,
+engine version, Interface number and server content are separate identities.
+
 | Component | Environment baseline |
 | --- | --- |
 | [ClassicAPI](https://github.com/brues-code/ClassicAPI) | v1.15.16+ |
@@ -20,8 +24,12 @@ references only when the task needs them.
 | [UnitXP SP3](https://github.com/brues-code/UnitXP_SP3) | v89+ |
 | [DXVK](https://github.com/doitsujin/dxvk) / [VanillaFixes](https://github.com/hannesmann/vanillafixes) | Runtime / loader infrastructure |
 
-Verify the active installation against this supported baseline. Addons use and
-declare only components they consume; minimum versions follow required APIs and fixes.
+**All four API DLLs are required for VanillaForge users.** The table gives the
+supported minimums; newer reviewed stable releases are preferred. Before addon
+implementation, identify the selected client/server and run the
+[target preflight](docs/TARGET_ENVIRONMENT.md). Its short procedure explains what
+to verify, which provider to use and what static tools can establish.
+Addons guard only components they consume; minimum versions follow required APIs and fixes.
 DXVK is never a Lua API or addon dependency. Server content revisions do not
 change the underlying client/API generation.
 
@@ -29,6 +37,7 @@ change the underlying client/API generation.
 
 | Question | Read |
 | --- | --- |
+| Understand the required client/DLL stack and start an addon task | [Target environment](docs/TARGET_ENVIRONMENT.md) |
 | Start or resume an engineering task | [Agent bootstrap](docs/AGENT_BOOTSTRAP.md) |
 | Implement or modernize an addon | [Workflow](docs/WORKFLOW.md) |
 | Prepare or publish a release | [Release workflow](docs/RELEASE_WORKFLOW.md) |
@@ -49,17 +58,25 @@ support substantial work. Small fixes need only the relevant inspection and chec
 Core Python tools use the standard library. From this repository:
 
 ```text
+python -B tools/octowow_client_manifest.py --client "<client-root>" --check-environment --output "<private-client-report.json>"
 python -B tools/vanillaforge_linter.py "<addon-path>"
-python -B tools/audit_addon.py "<addon-path>" --output "<private-report.json>"
+python -B tools/audit_addon.py "<addon-path>" --client "<client-root>" --output "<private-report.json>"
 python -B tools/check_audit_index.py
 python -B tools/check_framework_docs.py
 python -B -m unittest discover -s tests -p "test_*.py" -v
 ```
 
+The preflight checks required files, configured loader entries, version evidence
+and the selected realm against [TARGET_ENVIRONMENT.json](TARGET_ENVIRONMENT.json)
+and [UPSTREAM_VERSIONS.json](UPSTREAM_VERSIONS.json). Missing, old or unidentified
+requirements fail the check. Passing file checks still leaves runtime acceptance
+pending. An addon audit without `--client` is explicitly source-only.
+Framework maintenance can run its own tests without an installed game.
+
 For a quick view of every installed Git project, without hashing game archives:
 
 ```text
-python -B tools/octowow_client_manifest.py --addons-only --output .private/portfolio-status.json
+python -B tools/octowow_client_manifest.py --client "<client-root>" --addons-only --output .private/portfolio-status.json
 ```
 
 Add `--verify-remotes` to read current origin branch heads over the network.

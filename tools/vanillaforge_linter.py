@@ -4,7 +4,7 @@ VanillaForge Addon Linter & Heuristic Static Analysis Scanner (v3.1)
 Part of the VanillaForge Enhanced WoW 1.12.1 Addon Engineering Framework.
 Targets World of Warcraft 1.12.1 Build 5875 / Interface 11200 with an enhanced-client baseline:
 ClassicAPI v1.15.16+, SuperWoW v2.2+, NamPower v4.6.2+, UnitXP SP3 v89+, and DXVK runtime.
-The full environment may be installed, but individual addons only depend on components they actually consume.
+The full environment is required, while individual addons only declare components they actually consume.
 """
 
 import os
@@ -460,7 +460,7 @@ class VanillaForgeAuditor:
                     warnings.append(f"[Rule C14 / AP-29 - Developer Meta-Jargon in UI] Line {idx}: Developer meta-jargon ('C++', 'coroutine') detected in user-facing text. Communicate state changes cleanly without implementation details.")
                 # Check for progressive waiting ellipsis in UI messages (e.g. "Sorting bags...", "Scanning...")
                 if re.search(r'["\'](?:Sorting|Cleaning|Filtering|Processing)(?:\s+bags|\s+items|\s+bank)?\.\.\.["\']', no_comment_line, re.IGNORECASE):
-                    warnings.append(f"[Rule C14 / AP-29 - Progressive Ellipsis in UI] Line {idx}: Progressive waiting ellipsis detected in player-facing string. Modern client actions must use instant past-tense confirmations (e.g. 'Bags sorted.').")
+                    warnings.append(f"[Rule C14 / AP-29 - Progressive Ellipsis in UI] Line {idx}: Progressive waiting ellipsis detected in player-facing string. Use concise status text and report completion only after authoritative state confirms success.")
                 # Check for unsubstantiated marketing buzzwords in player-facing strings
                 marketing_buzz = re.search(r'["\'][^"\']*\b(enterprise-grade|zero-latency|zero-bloat|ultra-optimized|military-grade|best-in-class)\b', no_comment_line, re.IGNORECASE)
                 if marketing_buzz:
@@ -478,13 +478,14 @@ class VanillaForgeAuditor:
         """Normalize a TOC runtime entry to the host platform."""
         return entry.replace('\\', os.sep).replace('/', os.sep)
 
-    def audit_toc_file(self, toc_path, addon_dir):
+    def audit_toc_file(self, toc_path, addon_dir, require_target_interface=True):
         """Audit a WoW TOC as a first-class addon manifest."""
         errors, warnings, infos = [], [], []
         declared = set()
+        interface_entries = []
 
         try:
-            with open(toc_path, 'r', encoding='utf-8', errors='replace') as tf:
+            with open(toc_path, 'r', encoding='utf-8-sig', errors='replace') as tf:
                 raw_lines = tf.readlines()
         except Exception as e:
             return [f"[TOC Read Error] Cannot read manifest: {e}"], [], [], declared
@@ -505,6 +506,8 @@ class VanillaForgeAuditor:
                 if meta:
                     key = meta.group(1).strip().lower()
                     value = meta.group(2).strip()
+                    if key == 'interface':
+                        interface_entries.append((idx, value))
                     if key in dependency_fields and re.search(r'\bdxvk\b', value, re.IGNORECASE):
                         warnings.append(
                             f"[Rule H8 - Invalid Addon Dependency] Line {idx}: "
@@ -538,6 +541,34 @@ class VanillaForgeAuditor:
                 errors.append(
                     f"[TOC Manifest Error] Line {idx}: Declared runtime file does not exist: '{stripped}'"
                 )
+
+        if require_target_interface:
+            if not interface_entries:
+                errors.append(
+                    "[TOC Interface Error] Missing '## Interface:' metadata; "
+                    "the target client requires Interface 11200."
+                )
+            elif len(interface_entries) != 1:
+                lines = ', '.join(str(idx) for idx, _ in interface_entries)
+                errors.append(
+                    f"[TOC Interface Error] Duplicate Interface metadata on lines {lines}; "
+                    "declare one Interface field including 11200."
+                )
+            else:
+                idx, value = interface_entries[0]
+                # ClassicAPI supports multi-client TOCs, including lists whose
+                # first value is another client version. It rewrites the active
+                # 11200 entry before the native loadability check.
+                if not re.fullmatch(r'[0-9]+(?:[ \t]*,[ \t]*[0-9]+)*', value):
+                    errors.append(
+                        f"[TOC Interface Error] Line {idx}: Malformed Interface value "
+                        f"'{value}'; use 11200 or a comma-separated numeric list including 11200."
+                    )
+                elif not any(part.strip().lstrip('0') == '11200' for part in value.split(',')):
+                    errors.append(
+                        f"[TOC Interface Error] Line {idx}: Interface '{value}' "
+                        "does not include the target client version 11200."
+                    )
 
         return errors, warnings, infos, declared
 
@@ -590,9 +621,19 @@ class VanillaForgeAuditor:
             f for f in os.listdir(dir_path)
             if f.lower().endswith('.toc') and os.path.isfile(os.path.join(dir_path, f))
         )
+        addon_name = os.path.basename(os.path.abspath(dir_path)).lower()
+        target_toc_names = {
+            f'{addon_name}.toc', f'{addon_name}_classicapi.toc',
+            f'{addon_name}_turtle.toc',
+        }
         for f in toc_files:
             toc_path = os.path.join(dir_path, f)
-            toc_errors, toc_warnings, toc_infos, declared = self.audit_toc_file(toc_path, dir_path)
+            # Other shipped flavors may intentionally target a different client.
+            # Still audit their declared files, without asserting that they are
+            # active on this runtime. Selecting a TOC explicitly validates it.
+            toc_errors, toc_warnings, toc_infos, declared = self.audit_toc_file(
+                toc_path, dir_path, require_target_interface=f.lower() in target_toc_names
+            )
             declared_runtime_files.update(declared)
 
             with open(toc_path, 'r', encoding='utf-8', errors='replace') as tf:
@@ -656,7 +697,7 @@ class VanillaForgeAuditor:
 
 def main():
     parser = argparse.ArgumentParser(description="VanillaForge Addon Linter & Heuristic Static Analysis Scanner (v3.1)")
-    parser.add_argument("target", help="Path to Lua file or AddOn directory")
+    parser.add_argument("target", help="Path to Lua, XML or selected TOC file, or AddOn directory")
     parser.add_argument("--strict", action="store_true", help="Treat warnings as errors (exit code 1 on warnings)")
     parser.add_argument("--ignore", nargs="*", default=[], help="Global rules to suppress (e.g. --ignore A3 D1)")
     args = parser.parse_args()
@@ -670,7 +711,10 @@ def main():
 
     if os.path.isfile(target):
         print(f"\n{BOLD}{CYAN}=== Scanning File: {os.path.basename(target)} ==={RESET}\n")
-        errors, warnings, infos = auditor.audit_file(target)
+        if target.lower().endswith('.toc'):
+            errors, warnings, infos, _ = auditor.audit_toc_file(target, os.path.dirname(target))
+        else:
+            errors, warnings, infos = auditor.audit_file(target)
         if errors:
             for err in errors:
                 print(f"  {RED}✖ {err}{RESET}")
