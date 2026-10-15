@@ -212,7 +212,8 @@ def check_component(
 
     current_files: dict[str, str | None] = {}
     for path in tracked_paths or ():
-        current_files[str(path)] = file_sha(owner, repo, str(path), branch, token)
+        # Keep file evidence on the resolved snapshot if the branch advances mid-check.
+        current_files[str(path)] = file_sha(owner, repo, str(path), current_commit, token)
 
     stored_files = cfg.get("file_shas") or {}
     if not isinstance(stored_files, dict):
