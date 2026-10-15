@@ -34,6 +34,7 @@ jobs:
       - name: Validate upstream configuration JSON
         run: |
           python -m json.tool UPSTREAM_VERSIONS.json > /dev/null
+          python -m json.tool TARGET_ENVIRONMENT.json > /dev/null
 
       - name: Verify canonical framework files
         run: |
@@ -44,6 +45,7 @@ jobs:
           test -f KNOWN_PATTERNS.md
           test -f README.md
           test -f UPSTREAM_VERSIONS.json
+          test -f TARGET_ENVIRONMENT.json
           test -f agent/TASK_TEMPLATE.md
           test -f agent/REVIEW_TEMPLATE.md
           test -f agent/RETROSPECTIVE_TEMPLATE.md
@@ -57,11 +59,13 @@ jobs:
           test -f tools/check_audit_index.py
           test -f tools/check_framework_docs.py
           test -f tools/audit_addon.py
+          test -f tools/octowow_client_manifest.py
           test -f tests/test_linter.py
           test -f tests/test_upstream_check.py
           test -f tests/test_audit_index.py
           test -f tests/test_framework_docs.py
           test -f tests/test_addon_audit.py
+          test -f tests/test_client_manifest.py
 
       - name: Verify current ClassicAPI audit and README index
         run: python tools/check_audit_index.py

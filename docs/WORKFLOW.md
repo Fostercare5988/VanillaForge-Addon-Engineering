@@ -5,6 +5,22 @@ This is the normal lifecycle for substantial addon engineering. Do not mechanica
 ## 1. Classify
 Choose the smallest correct class: architecture discovery, modernization audit, capability displacement review, bounded implementation, scoped bug fix, integration review, release/reconciliation, or framework maintenance.
 
+### Establish the target
+
+For addon work, follow [target preflight](TARGET_ENVIRONMENT.md) before choosing
+APIs or reusing deployed evidence. Identify the selected OctoWoW distribution,
+engine, server pointer, installed source and affected client patches. All four
+modern API DLLs are required by the framework, even when an addon consumes only
+one provider. Resolve missing/old/unknown requirements before target-dependent
+implementation; source-only inspection must leave deployment acceptance pending.
+Framework maintenance can be completed using source and fixtures without a game.
+
+Run the client manifest with explicit `--client` and `--check-environment` for
+lightweight file/configuration validation. Pass the same `--client` to the addon
+audit to bind its evidence to the selected installation. No machine-specific
+default path or historical audit establishes today's active client. File checks
+and a configured realmlist do not prove runtime loading or server behavior.
+
 For this maintained portfolio, start from the current installation correction
 and [current portfolio](../audit/OCTOWOW_ADDON_IMPACT_MATRIX.md#current-portfolio--12-october-2026). The manifest tool's
 `--addons-only` mode discovers installed Git projects; `--verify-remotes` checks
@@ -34,7 +50,7 @@ load-graph changes before reusing evidence. Equal hashes do not transfer human
 review approval or verify unchanged DLLs, settings or native behavior. Keep the
 previous report as the evidence boundary; compare it with a separate output.
 
-Run `python tools/audit_addon.py <AddonPath> --output <PrivateReportPath>` to
+Run `python tools/audit_addon.py <AddonPath> --client <ClientRoot> --output <PrivateReportPath>` to
 collect the loaded module inventory, source hashes, registrations, candidate
 query/UI sites and scoped lint results. Add `--run-tests` to run local Python
 unittest discovery when that is the repository's test contract. Other test

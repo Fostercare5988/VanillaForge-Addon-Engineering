@@ -13,6 +13,8 @@ mode; the repository holds durable state, while chat history supplies context.
 ```text
 FRAMEWORK: <VanillaForge folder>
 PROJECT: <addon/repository and active folder>
+TARGET: <server, OctoWoW distribution revision, engine/interface, selected client root>
+ENVIRONMENT EVIDENCE: <required DLL preflight; native acceptance or explicitly source-only>
 MODE: <audit / implementation / release / framework maintenance>
 OBJECTIVE: <requested result and current frustrations>
 SCOPE: <subsystems; behavior and settings that must remain>
@@ -21,7 +23,8 @@ GIT AUTHORIZATION: <none, or the specific requested Git/release actions>
 
 Read AGENTS.md, then VANILLAFORGE_SYSTEM_PROMPT.md as the contract.
 Use the relevant workflow and references only for concrete questions. For the
-deployed OctoWoW client, start with audit/OCTOWOW_CLIENT_BASELINE.md.
+selected OctoWoW client, follow docs/TARGET_ENVIRONMENT.md. Historical paths and
+DLL observations in audit/OCTOWOW_CLIENT_BASELINE.md need current applicability.
 Reuse completed discovery unless repository evidence invalidates it.
 
 Follow the selected mode. Scale inspection and validation to the scope;

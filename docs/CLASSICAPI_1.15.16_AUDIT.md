@@ -51,3 +51,38 @@ Retrospective: Single compatibility fix in bundled Lua helper; no framework patt
 
 ## Validation outcome
 Framework regression suite passes. Upstream configuration and audit index validated. Stale reference classification completed.
+
+## Stable-baseline recheck and stack contracts — 2026-10-15
+
+The official latest-release metadata still identifies v1.15.16, with the same
+annotated tag, peeled commit, DLL asset ID, size and SHA-256 digest recorded
+above. The current `master` branch remains at
+`917b15640e2bdc2c8f24e0e0d4d520514d76ff52`; its unreleased quest additions remain
+excluded from the stable baseline. GitHub asset metadata was rechecked; no DLL
+was downloaded, installed or executed during this recheck.
+
+Reviewed existing stable-version contracts omitted from the master reference:
+
+- `src/api/Version.cpp` (blob `33c3ea05a268203cc96c0056557a497a141843a1`)
+  publishes the version global. `CMakeLists.txt` (blob
+  `830adb8a01e930faa3016184faface04b67b8ff6`) gives unstamped developer builds the
+  value `99999999`; passing a minimum gate does not prove stable artifact identity.
+- `docs/API.md` retains the recorded stable blob and documents the global
+  script-argument toggle. The active setting must be checked before depending
+  on positional handlers; a DLL version alone does not prove it is enabled.
+- `src/unit/TokenExtensions.cpp` (blob
+  `1bb9fa98dc16defa0e8a8c75d8ef96225b87b61f`) deliberately defers raw GUID input
+  to SuperWoW when `SuperWoWhook.dll` is loaded. Shared GUID-aware APIs cannot
+  identify the loaded provider or establish that all required DLLs are active.
+- `src/unit/Position.cpp` (blob
+  `156568032d2a419a7d3fedc006b3d7651bc9d975`) and the stable API documentation
+  establish ClassicAPI's position returns. The documentation explicitly warns
+  that SuperWoW defines the same global with a different return shape and the
+  last registrant wins. The master reference now records this collision and
+  requires verification on the combined target stack before using coordinates.
+
+These clarify pre-existing stable behavior; they are not new v1.15.16 APIs or
+a reason to raise addon guards. Canonical details are in master-reference
+sections 2, 4.4 and 69. [SOURCE-VERIFIED] means the pinned upstream contracts;
+[UNVERIFIED - TEST FIRST] remains applicable to the active OctoWoW client,
+registration order, script setting and addon runtime results.

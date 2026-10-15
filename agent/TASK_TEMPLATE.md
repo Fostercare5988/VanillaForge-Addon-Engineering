@@ -15,6 +15,11 @@ OBJECTIVE:
 REPOSITORY:
 <path/repository>
 
+TARGET ENVIRONMENT (addon work):
+<selected server/client revision, engine/interface, client root and installed addon source>
+<required modern DLL preflight, affected patch/source hashes, pending native acceptance>
+<explicitly source-only when deployment evidence is unavailable>
+
 KNOWN VERIFIED STATE:
 <reusable facts; durable repository artifact or audit/review document; applicable commit/revision>
 
