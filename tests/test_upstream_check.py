@@ -9,6 +9,7 @@ import importlib.util
 import json
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -79,6 +80,47 @@ class CheckUpstreamHelperTests(unittest.TestCase):
         self.assertGreater(CHECKER.version_key("1.15.12"), CHECKER.version_key("1.15.11"))
         self.assertGreater(CHECKER.version_key("4.6.3"), CHECKER.version_key("4.6.2"))
         self.assertIsNone(CHECKER.version_key(None))
+
+
+class CheckUpstreamSnapshotTests(unittest.TestCase):
+    def test_tracked_files_use_resolved_commit_when_branch_advances(self):
+        commit = "a" * 40
+        branch = "review/api"
+        snapshot = {"docs/API.md": "b" * 40, "README.md": "c" * 40}
+        config = {
+            "repository": "owner/repo",
+            "branch": branch,
+            "reference_version": "1.0",
+            "reference_commit": commit,
+            "tracked_files": list(snapshot),
+            "file_shas": snapshot,
+        }
+
+        def api(path, token):
+            if path == "/repos/owner/repo/releases/latest":
+                return {"tag_name": "v1.0"}
+            if path == "/repos/owner/repo/commits/review%2Fapi":
+                return {"sha": commit}
+            for filename, sha in snapshot.items():
+                if path == f"/repos/owner/repo/contents/{filename}?ref={commit}":
+                    return {"sha": sha}
+                if path == f"/repos/owner/repo/contents/{filename}?ref=review%2Fapi":
+                    # The branch advanced after its commit was resolved.
+                    return {"sha": "d" * 40}
+            raise AssertionError(f"Unexpected GitHub API request: {path}")
+
+        with mock.patch.object(CHECKER, "github_api", side_effect=api) as github:
+            result = CHECKER.check_component("example", config, None, False)
+
+        github.assert_any_call("/repos/owner/repo/commits/review%2Fapi", None)
+        self.assertEqual(result["branch"], branch)
+        self.assertEqual(result["upstream_commit"], commit)
+        self.assertEqual(result["file_shas"], snapshot)
+        self.assertFalse(result["changed"])
+        for filename in snapshot:
+            github.assert_any_call(
+                f"/repos/owner/repo/contents/{filename}?ref={commit}", None
+            )
 
 
 class UpstreamAuditTemplateTests(unittest.TestCase):
