@@ -15,8 +15,8 @@ Evidence: CORE forbids inspecting or hashing DLLs, while the workflow required
 only because SuperWoW and UnitXP builds had no recorded hashes.
 
 Consequences: Addon audits report source evidence only, plus a one-line summary.
-`octowow_client_manifest.py --check-environment` still exists for an explicitly
-requested client inventory; it is no longer part of the addon workflow.
+The manifest tool's `--check-environment` mode, DLL hashing and reference hash
+table were removed the same day; `--addons-only` remains for portfolio status.
 
 ## 2026-10-15 — Bind addon evidence to the selected client and required stack
 Status: SUPERSEDED (2026-10-19) for the addon audit preflight
