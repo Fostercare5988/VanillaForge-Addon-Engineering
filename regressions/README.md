@@ -107,6 +107,14 @@ The DLL batch (AutoBG `5438b7e`, `0b528fa`) extends `test_spy_nearby.py`,
 
 Nine of these fail on `20e7936`. Native event delivery and timing remain in-game checks.
 
+The second audit (`.private/audit-AutoBG-2026-10-19b.md`) adds batch B (`a322ee9`) and
+batch C (`0c33a7c`) cases: `test_player_state.py` (ClassicAPI `UnitIsAFK`, one Deserter
+lookup), `test_match_flow.py` (one auto-accept, `LeaveBattlefield()`),
+`test_options_preview.py` (no automatic preview inside a battleground), GUID learning,
+spell-classification caching, resurrection, carrier restore after test mode and
+battleground-only zone detection. Ten fail on `0b528fa`. `test_queue_types.py` keeps
+the Blood Ring finding as an expected failure until audit batch A is decided.
+
 ```text
 python -B tools/audit_addon.py "<AddOns>/AutoBG" --run-tests --test-start regressions/AutoBG --output .private/autobg-current.json
 ```
