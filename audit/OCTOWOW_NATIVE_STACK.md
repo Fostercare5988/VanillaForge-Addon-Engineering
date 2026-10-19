@@ -8,8 +8,9 @@
 Current requirements and verification belong to [target preflight](../docs/TARGET_ENVIRONMENT.md).
 The [installation correction](OCTOWOW_CLIENT_BASELINE.md#current-installation-correction--19-october-2026)
 records later files, including the 19 October ClassicAPI v1.16.0 release asset.
-NamPower's recorded hash now has official v4.6.3 asset provenance despite reporting 4.6.2. The dated UnitXP file differs from the official
-brues-code v90 release; its original build label is unconfirmed release identity.
+NamPower's recorded hash now has official v4.6.3 asset provenance despite
+reporting 4.6.2. The dated UnitXP file differs from the official brues-code v90
+release; its original build label is unconfirmed release identity.
 
 ---
 

@@ -58,8 +58,8 @@ never remove globally installed DLLs to simplify one addon.
 
 The shared ClassicAPI 1.16.0+ floor is explicit maintainer policy for every
 maintained addon; keep TOC metadata, dependency declarations, runtime guards and
-installation docs consistent. Other component guards remain capability-specific. Baseline refreshes do not raise this floor without a
-deliberate policy update.
+installation docs consistent. Other component guards remain capability-specific.
+Baseline refreshes do not raise this floor without a deliberate policy update.
 
 ## Scope and implementation
 
