@@ -34,18 +34,27 @@ see `CLASSICAPI_MASTER_REFERENCE.md` §4.
 ## Rules
 
 1. **Never invent an API.** Before using a function, event, argument or return value
-   you have not seen in this addon, search the references. Use grep for the name and
-   read only the matching section. Never read a reference file whole.
-   - ClassicAPI: `CLASSICAPI_MASTER_REFERENCE.md`
-   - SuperWoW, NamPower, UnitXP, FrameXML behavior: `ENGINE_REFERENCE.md`
-   - Recurring hazards: `KNOWN_PATTERNS.md`
+   you have not seen in this addon, grep for the name and read only the matching
+   section. Never read a large doc whole. Search in this order:
+   - The maintainers' docs in `.private/upstream/<dll>/`, at the commits pinned in
+     `UPSTREAM_VERSIONS.json`. They are authoritative for what each DLL provides.
+     If the folder is missing, run `python -B tools/fetch_upstream_docs.py`.
+   - Our references, for OctoWoW-specific facts and known hazards:
+     `CLASSICAPI_MASTER_REFERENCE.md`, `ENGINE_REFERENCE.md` (SuperWoW, NamPower,
+     UnitXP, FrameXML behavior) and `KNOWN_PATTERNS.md`.
 
-   If the answer is not there, say so and mark the code `-- UNVERIFIED: test in game`.
+   If neither has it, say so and mark the code `-- UNVERIFIED: test in game`.
 2. Change only what the task needs. Keep existing behavior, settings and
    SavedVariables unless asked to change them.
 3. Prefer events and timers over OnUpdate polling, except for animation and dragging.
 4. English for code, comments and player text. Settings use the dark plum and
    lavender theme unless told otherwise.
+5. **Use the DLLs.** ClassicAPI, NamPower, SuperWoW and UnitXP SP3 are installed to be
+   used: prefer them wherever they give better data, events or identity than stock
+   1.12. Never call something impossible before checking the maintainers' docs and
+   the installed addons, which show what works on this client. If it is still
+   unknown, say it is unverified and give a one-line in-game check, such as
+   `/run print(UnitHealth("target"), UnitHealthMax("target"))`.
 
 ## Session habits
 

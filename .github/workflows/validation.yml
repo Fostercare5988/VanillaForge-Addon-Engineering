@@ -56,6 +56,7 @@ jobs:
           test -f docs/DECISION_LOG.md
           test -f tools/vanillaforge_linter.py
           test -f tools/check_upstream.py
+          test -f tools/fetch_upstream_docs.py
           test -f tools/check_audit_index.py
           test -f tools/check_framework_docs.py
           test -f tools/audit_addon.py
