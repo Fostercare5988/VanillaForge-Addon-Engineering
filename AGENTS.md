@@ -4,6 +4,8 @@ Read [VANILLAFORGE_SYSTEM_PROMPT.md](VANILLAFORGE_SYSTEM_PROMPT.md) once at the
 start of a fresh engineering session. It is the authoritative contract; this file
 routes it. Reread only if relevant context was lost or changed.
 
+CORE.md is the default for everyday work; read the full contract only for Gate or Framework passes.
+
 Retrieve only what the task needs:
 
 | Need | Reference |
