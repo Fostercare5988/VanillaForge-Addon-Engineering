@@ -26,9 +26,9 @@ engine version, Interface number and server content are separate identities.
 
 **All four API DLLs are required for VanillaForge users.** The table gives the
 supported minimums; newer reviewed stable releases are preferred. Before addon
-implementation, identify the selected client/server and run the
-[target preflight](docs/TARGET_ENVIRONMENT.md). Its short procedure explains what
-to verify, which provider to use and what static tools can establish.
+implementation, read the [target environment](docs/TARGET_ENVIRONMENT.md). Its
+short procedure explains what to verify, which provider to use and what static
+tools can establish.
 Every maintained addon requires ClassicAPI v1.16.0+ by policy; other addon guards
 cover only components they consume, with minimums following required APIs and fixes.
 DXVK is never a Lua API or addon dependency. Server content revisions do not
@@ -59,19 +59,18 @@ support substantial work. Small fixes need only the relevant inspection and chec
 Core Python tools use the standard library. From this repository:
 
 ```text
-python -B tools/octowow_client_manifest.py --client "<client-root>" --check-environment --output "<private-client-report.json>"
 python -B tools/vanillaforge_linter.py "<addon-path>"
-python -B tools/audit_addon.py "<addon-path>" --client "<client-root>" --output "<private-report.json>"
+python -B tools/audit_addon.py "<addon-path>" --output "<private-report.json>"
+python -B tools/extract_framexml.py --client "<client-root>"
 python -B tools/check_audit_index.py
 python -B tools/check_framework_docs.py
 python -B -m unittest discover -s tests -p "test_*.py" -v
 ```
 
-The preflight checks required files, configured loader entries, version evidence
-and the selected realm against [TARGET_ENVIRONMENT.json](TARGET_ENVIRONMENT.json)
-and [UPSTREAM_VERSIONS.json](UPSTREAM_VERSIONS.json). Missing, old or unidentified
-requirements fail the check. Passing file checks still leaves runtime acceptance
-pending. An addon audit without `--client` is explicitly source-only.
+DLLs are assumed installed and are never inspected or hashed (see [CORE](CORE.md));
+the user reports DLL changes. The audit is source-only and prints a one-line
+summary. `extract_framexml.py` copies the native FrameXML files that regressions
+need into `.private/framexml`, outside the repository.
 Framework maintenance can run its own tests without an installed game.
 
 For a quick view of every installed Git project, without hashing game archives:
@@ -82,8 +81,7 @@ python -B tools/octowow_client_manifest.py --client "<client-root>" --addons-onl
 
 Add `--verify-remotes` to read current origin branch heads over the network.
 This does not fetch, commit or push. Cached tracking refs are labeled separately.
-Use the full manifest command when DLLs, loader configuration or client patches
-change. Reports must stay outside the active game directory.
+Reports must stay outside the active game directory.
 
 The documentation checker also compares supported dependency minimums in the
 canonical docs with `UPSTREAM_VERSIONS.json`; dated audits and source reference

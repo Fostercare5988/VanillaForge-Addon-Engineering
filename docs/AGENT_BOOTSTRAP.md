@@ -14,7 +14,7 @@ mode; the repository holds durable state, while chat history supplies context.
 FRAMEWORK: <VanillaForge folder>
 PROJECT: <addon/repository and active folder>
 TARGET: <server, OctoWoW distribution revision, engine/interface, selected client root>
-ENVIRONMENT EVIDENCE: <required DLL preflight; native acceptance or explicitly source-only>
+ENVIRONMENT EVIDENCE: <DLLs assumed installed per CORE; native acceptance or explicitly source-only>
 MODE: <audit / implementation / release / framework maintenance>
 OBJECTIVE: <requested result and current frustrations>
 SCOPE: <subsystems; behavior and settings that must remain>

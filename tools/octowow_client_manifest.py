@@ -35,6 +35,14 @@ NATIVE_REFERENCES = {
     'd3d9.dll': ('3.1.1', '265888c31ca78dffa290c39cb7e50bfb02762590e41927906e46fb32f01497fa'),
 }
 
+# Data archive load order; a later archive overrides an earlier one.
+MPQ_ORDER = [
+    'base.MPQ', 'dbc.MPQ', 'fonts.MPQ', 'interface.MPQ', 'misc.MPQ',
+    'model.MPQ', 'sound.MPQ', 'speech.MPQ', 'terrain.MPQ', 'texture.MPQ', 'wmo.MPQ',
+    'patch.MPQ', 'patch-1.mpq', 'patch-2.mpq', 'patch-3.mpq', 'patch-4.mpq',
+    'patch-5.mpq', 'patch-O.mpq', 'patch-Y.MPQ'
+]
+
 class MPQArchive:
     """Self-contained standard-library MPQ reader for WoW 1.12.1 archives."""
 
@@ -690,12 +698,7 @@ def generate_manifest(client_root: Path, historical_root: Path | None = None) ->
 
     # Data MPQ inventory
     data_dir = client_root / 'Data'
-    mpq_order = [
-        'base.MPQ', 'dbc.MPQ', 'fonts.MPQ', 'interface.MPQ', 'misc.MPQ',
-        'model.MPQ', 'sound.MPQ', 'speech.MPQ', 'terrain.MPQ', 'texture.MPQ', 'wmo.MPQ',
-        'patch.MPQ', 'patch-1.mpq', 'patch-2.mpq', 'patch-3.mpq', 'patch-4.mpq',
-        'patch-5.mpq', 'patch-O.mpq', 'patch-Y.MPQ'
-    ]
+    mpq_order = MPQ_ORDER
     if data_dir.is_dir():
         for mpq_name in sorted(os.listdir(data_dir)):
             if mpq_name.lower().endswith('.mpq'):

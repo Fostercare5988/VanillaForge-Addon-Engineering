@@ -43,44 +43,34 @@ permission to invent its APIs or silently change supported minimums.
 
 ## Start an addon session
 
-1. Identify the actual client root, launch path, selected server and addon source
-   checkout. Record distribution revision evidence separately from engine version.
-   A folder named `client-2026-10-10` is not proof of its contents. The personal
-   paths in [dated installation evidence](../audit/OCTOWOW_CLIENT_BASELINE.md)
+1. Identify the addon source checkout, its branch and the APIs it consumes.
+   The personal paths in [dated installation evidence](../audit/OCTOWOW_CLIENT_BASELINE.md)
    are historical observations, not defaults for another computer.
-2. Run the read-only file/configuration preflight. Keep output outside the game:
+2. Treat the four required DLLs as installed and loaded. Never inspect, hash or
+   verify the DLLs or the client installation; the user reports when a DLL
+   changes. Run the source audit with its output outside the game:
 
    ```text
-   python -B tools/octowow_client_manifest.py --client "<client-root>" --check-environment --output "<private-client-report.json>"
-   python -B tools/audit_addon.py "<client-root>/Interface/AddOns/<addon>" --client "<client-root>" --output "<private-addon-report.json>"
+   python -B tools/audit_addon.py "<addon-path>" --output "<private-addon-report.json>"
    ```
 
-   Missing, old or unidentified requirements block the environment check.
-   `checks_passed` concerns inspected files and configuration; runtime stays pending.
-   For a complete client inventory, omit `--check-environment`. Archive hashing
-   and scoped FrameXML inspection cost more than the lightweight preflight.
-   For multiple TOC flavors, use the addon's audit `--toc <selected-file.toc>`;
-   default discovery inventories all root TOCs and does not prove live selection.
-3. Before relying on a native capability in game, verify the restarted session's
-   provider versions/provenance, required functions, return shapes, relevant CVars
-   and event payloads. DLL changes require a full client restart. Record results
-   against that client and addon revision. A loader list, version global, old log
-   or Lua mock alone cannot establish the whole stack's current runtime behavior.
-4. Inspect the affected deployed FrameXML/DBC/MPQ files and relevant server data.
-   Record source archive/path/hash and unresolved precedence or extraction gaps.
-   Account for loose overrides and custom patches; a partial archive scan is not
-   proof of the effective client UI. Test affected server interactions on that realm.
+   For multiple TOC flavors, use `--toc <selected-file.toc>`; default discovery
+   inventories all root TOCs and does not prove live selection.
+3. Before relying on a native capability, verify it in game: the required
+   functions, return shapes, relevant CVars and event payloads. DLL changes require
+   a full client restart. A version global, old log or Lua mock alone cannot
+   establish runtime behavior.
+4. When a test needs native FrameXML, extract the files into `.private` with
+   `tools/extract_framexml.py`. They are Blizzard's code and never enter the
+   repository. Account for loose overrides and custom patches; test affected
+   server interactions on that realm.
 
-Source-only addon review remains useful when a game is unavailable. An audit
-without `--client` explicitly leaves the environment unchecked; it must not be
-reported as deployment or gameplay acceptance. Repository-only framework
+Source-only addon review remains useful when a game is unavailable. It must not
+be reported as deployment or gameplay acceptance. Repository-only framework
 maintenance needs no installed game or client download. Its tests use fixtures.
 
-An unidentified DLL is an evidence gap, not a new minimum-version policy.
-In particular, UnitXP v89 stays supported even when its binary lacks an ordinal
-PE version or an available upstream digest. Establish its source/release identity
-before accepting that environment; do not prescribe a v90 upgrade solely to make
-the static checker green.
+An unknown DLL build is not a new minimum-version policy. UnitXP v89 stays
+supported; do not prescribe an upgrade without a deliberate support decision.
 
 ## Choose providers by the task
 

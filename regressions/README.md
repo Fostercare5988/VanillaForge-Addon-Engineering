@@ -63,7 +63,10 @@ repairs in FostercareTweaks 1.3.1.
 - P3-5 and P3-6: castbar and reagent fan-out.
 
 Fourteen fail on the 1.3.0 source for the intended reason. The other four are
-controls that pass on both. They run complete selected functions or module files
+controls that pass on both. A nineteenth test checks the hard-coded native event
+lists against the client's FrameXML. Run `tools/extract_framexml.py --client
+<client-root>` first, which writes Blizzard's files to `.private/framexml`. The
+test is skipped without them. They run complete selected functions or module files
 with counting widget mocks, under Lua 5.1. They do not prove native widget
 behavior, real event payloads or frame times.
 

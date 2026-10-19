@@ -17,7 +17,7 @@ REPOSITORY:
 
 TARGET ENVIRONMENT (addon work):
 <selected server/client revision, engine/interface, client root and installed addon source>
-<required modern DLL preflight, affected patch/source hashes, pending native acceptance>
+<DLLs assumed installed per CORE, affected source hashes, pending native acceptance>
 <explicitly source-only when deployment evidence is unavailable>
 
 KNOWN VERIFIED STATE:

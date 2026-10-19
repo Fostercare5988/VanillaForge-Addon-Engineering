@@ -2,8 +2,24 @@
 
 Record durable framework-level decisions whose rationale would otherwise be lost. This is not a changelog, chat transcript or addon diary.
 
-## 2026-10-15 — Bind addon evidence to the selected client and required stack
+## 2026-10-19 — Assume the DLL stack; keep audits source-only
 Status: ACTIVE
+
+Decision: Remove the `--client` environment preflight from `audit_addon.py` and
+from the workflow, system prompt and target guide. The four DLLs are treated as
+installed and loaded; the user reports changes. Native FrameXML needed by tests
+is extracted into `.private` by `tools/extract_framexml.py`, never committed.
+
+Evidence: CORE forbids inspecting or hashing DLLs, while the workflow required
+`--client`, which hashed them. The FostercareTweaks audit of 2026-10-19 exited 1
+only because SuperWoW and UnitXP builds had no recorded hashes.
+
+Consequences: Addon audits report source evidence only, plus a one-line summary.
+`octowow_client_manifest.py --check-environment` still exists for an explicitly
+requested client inventory; it is no longer part of the addon workflow.
+
+## 2026-10-15 — Bind addon evidence to the selected client and required stack
+Status: SUPERSEDED (2026-10-19) for the addon audit preflight
 
 Decision: Require all four API DLLs in the VanillaForge environment while
 preserving supported minima NamPower 4.6.2 and UnitXP SP3 v89. Keep current

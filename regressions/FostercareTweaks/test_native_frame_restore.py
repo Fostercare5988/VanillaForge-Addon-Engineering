@@ -6,11 +6,16 @@ UnitFrameManaBar_Initialize (archived pane-stutter-2026-10-11 native-fanout copy
 """
 from pathlib import Path
 import os
+import re
 import unittest
 from lupa.lua51 import LuaRuntime
 
 SOURCE = (Path(os.environ["VANILLAFORGE_ADDON_ROOT"]) /
           "mods/unitframes/core.lua").read_text("utf-8-sig")
+
+# Extracted by tools/extract_framexml.py; Blizzard code stays in .private.
+FRAMEXML = Path(os.environ.get("VANILLAFORGE_FRAMEXML",
+                               Path(__file__).resolve().parents[2] / ".private" / "framexml")) / "Interface" / "FrameXML"
 
 UNIT_FRAME = ["UNIT_NAME_UPDATE", "UNIT_PORTRAIT_UPDATE", "UNIT_DISPLAYPOWER"]
 HEALTH_BAR = ["UNIT_HEALTH", "UNIT_MAXHEALTH"]
@@ -97,6 +102,30 @@ class NativeFrameRestoreTests(unittest.TestCase):
         lua.execute('UF:RestorePlayerFrame(); UF:RestoreTargetFrame()')
         for name in NATIVE:
             self.assertEqual(registered(lua, name), set(NATIVE[name]), name)
+
+
+def registered_in(text, function=None):
+    """RegisterEvent names in one Lua function body, or in a whole file."""
+    if function:
+        start = text.index("function %s(" % function)
+        text = text[start:text.index("\nend", start)]
+    return re.findall(r'RegisterEvent\("([A-Z_]+)"\)', text)
+
+
+@unittest.skipUnless(FRAMEXML.is_dir(), "Run tools/extract_framexml.py --client <client-root> first")
+class NativeEventProvenanceTests(unittest.TestCase):
+    def test_native_sets_match_the_deployed_framexml(self):
+        def read(name):
+            return (FRAMEXML / name).read_text("utf-8-sig")
+        unit = read("UnitFrame.lua")
+        self.assertEqual(registered_in(unit, "UnitFrame_Initialize"), UNIT_FRAME)
+        self.assertEqual(registered_in(unit, "UnitFrameHealthBar_Initialize"), HEALTH_BAR)
+        self.assertEqual(registered_in(unit, "UnitFrameManaBar_Initialize"), MANA_BAR)
+        self.assertEqual(UNIT_FRAME + registered_in(read("PlayerFrame.lua"), "PlayerFrame_OnLoad"),
+                         NATIVE["PlayerFrame"])
+        self.assertEqual(UNIT_FRAME + registered_in(read("TargetFrame.lua"), "TargetFrame_OnLoad"),
+                         NATIVE["TargetFrame"])
+        self.assertEqual(registered_in(read("ComboFrame.xml")), NATIVE["ComboFrame"])
 
 
 if __name__ == '__main__':
