@@ -28,13 +28,15 @@ function CreateFrame(_, name) local f = setmetatable({ name = name }, { __index 
 UIParent = CreateFrame("Frame", "UIParent")
 local handle = { Cancel = function() end }
 C_Timer = { NewTicker = function() return handle end }
-C_UnitAuras = { GetAuraSlots = function() return nil, 0 end }
+auraScans = 0
+C_UnitAuras = { GetAuraSlots = function() auraScans = auraScans + 1; return nil, 0 end }
+function SpellInfo(id) if id == 46392 then return "Focused Assault" end return "Other" end
 function GetRealZoneText() return "Warsong Gulch" end
 function UnitTokenFromName(name) if name == "Grom" then return "raid3" end end
 function UnitExists(u) return u == "raid3" end
 function UnitIsPlayer(u) return u == "raid3" end
 function UnitName(u) if u == "raid3" then return "Grom" end end
-function UnitGUID() return nil end
+function UnitGUID(u) if u == "raid3" then return "0x00000000000000C3" end end
 function UnitDistanceSquared() return 0, false end
 hp, maxHp = 3690, 4500
 function UnitHealth() return hp end
@@ -71,6 +73,21 @@ class CarrierHealthTests(unittest.TestCase):
         lua.execute('local f = AutoBG_FCEventFrame; f.scripts.OnEvent(f, "CHAT_MSG_BG_SYSTEM_HORDE", "The Horde flag was picked up by Grom!")')
         lua.execute('AutoBG_FC_UpdateVisibility()')
         self.assertEqual(lua.eval('AutoBG_AllianceFC.hpText.text'), "3690 / 4500")
+
+    def test_assault_stacks_follow_nampower_debuff_events(self):
+        lua = runtime(3690, 4500)
+        stacks = 'AutoBG_AllianceFC.debuffText.text'
+        debuff = ('arg1, arg3, arg4, arg7 = "0x00000000000000C3", 46392, %d, %d; '
+                  'local f = AutoBG_FCEventFrame; f.scripts.OnEvent(f, "%s")')
+        lua.execute(debuff % (2, 0, "DEBUFF_ADDED_OTHER"))
+        self.assertEqual(lua.eval(stacks), "|cFFFF2020[2]|r")
+        lua.execute(debuff % (0, 1, "DEBUFF_REMOVED_OTHER"))
+        self.assertEqual(lua.eval(stacks), "")
+
+    def test_auras_are_read_once_per_carrier_not_every_tick(self):
+        lua = runtime(3690, 4500)
+        lua.execute('for i = 1, 5 do AutoBG_FC_UpdateVisibility() end')
+        self.assertEqual(lua.eval('auraScans'), 1)
 
     def test_percentage_health_stays_a_percent(self):
         lua = runtime(82, 100)

@@ -97,6 +97,16 @@ Eleven more cover the redesign in AutoBG `dfb923d`..`20e7936`:
 
 Nine of these fail on `f005e24`. The rest are controls.
 
+The DLL batch (AutoBG `5438b7e`, `0b528fa`) extends `test_spy_nearby.py`,
+`test_carrier_health.py` and adds `test_targets_guid_events.py`:
+- NamPower `UNIT_HEALTH_GUID`, `UNIT_DIED` and `BUFF_ADDED/REMOVED_OTHER` drive enemy-frame
+  health, death, stealth and trinket timers for enemies off every unit token.
+- Spy lists standing enemies through ClassicAPI `nameplate1..40`, and takes stealth and
+  death from the same NamPower events.
+- Carrier stacks follow `DEBUFF_ADDED/REMOVED_OTHER`; auras are read once per carrier.
+
+Nine of these fail on `20e7936`. Native event delivery and timing remain in-game checks.
+
 ```text
 python -B tools/audit_addon.py "<AddOns>/AutoBG" --run-tests --test-start regressions/AutoBG --output .private/autobg-current.json
 ```
