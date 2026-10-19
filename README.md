@@ -14,14 +14,15 @@ references only when the task needs them.
 
 | Component | Environment baseline |
 | --- | --- |
-| [ClassicAPI](https://github.com/brues-code/ClassicAPI) | v1.15.16+ |
+| [ClassicAPI](https://github.com/brues-code/ClassicAPI) | v1.16.0+ (all maintained addons) |
 | [SuperWoW](https://github.com/balakethelock/SuperWoW) | v2.2+ |
 | [NamPower](https://github.com/Emyrk/nampower) | v4.6.2+ |
 | [UnitXP SP3](https://github.com/brues-code/UnitXP_SP3) | v90+ |
 | [DXVK](https://github.com/doitsujin/dxvk) / [VanillaFixes](https://github.com/hannesmann/vanillafixes) | Runtime / loader infrastructure |
 
-Verify the active installation against this supported baseline. Addons use and
-declare only components they consume; minimum versions follow required APIs and fixes.
+Verify the active installation against this supported baseline. Every maintained
+addon requires ClassicAPI v1.16.0+; other minimum versions follow the capabilities
+each addon consumes.
 DXVK is never a Lua API or addon dependency. Server content revisions do not
 change the underlying client/API generation.
 
@@ -111,7 +112,8 @@ python -B tools/check_audit_index.py
 
 | Audit | Status |
 | --- | --- |
-| [v1.15.16 audit](docs/CLASSICAPI_1.15.16_AUDIT.md) | Current reference |
+| [v1.16.0 audit](docs/CLASSICAPI_1.16.0_AUDIT.md) | Current reference |
+| [v1.15.16 audit](docs/CLASSICAPI_1.15.16_AUDIT.md) | Historical release audit |
 | [v1.15.15 audit](docs/CLASSICAPI_1.15.15_AUDIT.md) | Historical release audit |
 | [v1.15.14 audit](docs/CLASSICAPI_1.15.14_AUDIT.md) | Historical release audit |
 | [v1.15.13 audit](docs/CLASSICAPI_1.15.13_AUDIT.md) | Historical release audit |

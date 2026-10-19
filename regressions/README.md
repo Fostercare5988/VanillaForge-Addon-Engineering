@@ -34,3 +34,20 @@ The harness executes complete selected Lua function/event bodies with explicit
 state and widget mocks. It uses Lua 5.1 and does not prove WoW Lua 5.0/native widget
 semantics, appearance, frame times or gameplay. Native acceptance stays with the
 [current runtime checklist](../audit/OCTOWOW_RUNTIME_VERIFICATION.md#current-acceptance-pass-2026-10-12).
+
+## MikScrollingBattleText
+
+Ten regressions cover the six [MSBT audit](../audit/MSBT_2026-10-12_AUDIT.md)
+findings repaired in MSBT 1.0.1: aura stack decreases (F1), Notification row font
+owner (F2), disabled-state game-damage CVar (F3), color-picker profile ownership
+(F4), external 0-255 message colors through the installed BigWigs caller (F5) and
+the mana-gain baseline on enable (F6). Eight fail on the preceding installed
+source; two picker controls pass on both. They reuse the audit replay harness, so
+the client's MPQs must be readable and the adjacent BigWigs checkout present:
+
+```text
+python -B tools/audit_addon.py "<AddOns>/MikScrollingBattleText" --run-tests --test-start regressions/MikScrollingBattleText --output .private/msbt-current.json
+```
+
+The audit reproductions in `audit/replays/msbt-2026-10-12` now fail by design on
+1.0.1; they remain historical demonstrations of the defects.
