@@ -35,17 +35,34 @@ function Widget:CreateFontString() return setmetatable({}, { __index = Widget })
 function CreateFrame(_, name) local f = setmetatable({ name = name }, { __index = Widget }); if name then _G[name] = f end; return f end
 UIParent = CreateFrame("Frame", "UIParent")
 GameTooltip = CreateFrame("Frame", "GameTooltip")
-now, tickers = 1000, {}
+now, tickers, deferred = 1000, {}, {}
 function GetTime() return now end
-local handle = { Cancel = function() end }
 C_Timer = { After = function() end,
-            NewTimer = function() return handle end,
+            NewTimer = function(_, fn) table.insert(deferred, fn); return { Cancel = function() for i, f in ipairs(deferred) do if f == fn then table.remove(deferred, i) end end end } end,
             NewTicker = function(_, fn) table.insert(tickers, fn); return { Cancel = function() for i, f in ipairs(tickers) do if f == fn then table.remove(tickers, i) end end end } end }
-visible = true
-function UnitExists(u) return u ~= nil end
+visible, plates, names = true, {}, { ["0x0000000000000001"] = "Grom" }
+function UnitExists(u)
+    if string.find(u or "", "^nameplate") then return plates[u] ~= nil end
+    return u ~= nil
+end
 function UnitIsVisible() return visible end
-function UnitName(u) if u == "player" then return "Tester" end end
-function UnitGUID(u) if u == "player" then return "0x00000000000000AA" end end
+function UnitIsPlayer() return 1 end
+function UnitIsDead() return nil end
+function UnitIsGhost() return nil end
+function UnitClass() return "Warrior", "WARRIOR" end
+function UnitLevel() return 60 end
+function UnitHealth() return 100 end
+function UnitHealthMax() return 100 end
+function UnitName(u)
+    if u == "player" then return "Tester" end
+    if plates[u] then return plates[u].name end
+    return names[u]
+end
+function UnitGUID(u)
+    if u == "player" then return "0x00000000000000AA" end
+    if plates[u] then return plates[u].guid end
+    if names[u] then return u end
+end
 function UnitFactionGroup() return "Alliance" end
 function UnitIsFriend() return nil end
 function UnitCanAttack() return 1 end
@@ -59,6 +76,7 @@ AutoBG_Targets = {
     ResolveClassToken = function(c) return string.upper(c) end,
     GetClassColor = function() return { r = 1, g = 1, b = 1 } end,
     CheckUnitStealth = function() return false end,
+    CheckIsStealthSpell = function(id) if id == 1787 then return true, "Stealth", "tex", 0 end return false end,
     CheckIsStealthName = function() return false end,
 }
 AutoBG_Settings = { Spy = { Enabled = true, SoundAlert = false, StealthAlert = false, Timeout = 30, MaxRows = 5 } }
@@ -75,9 +93,17 @@ def runtime():
     return lua
 
 
+FLUSH = 'local d = deferred; deferred = {}; for _, fn in ipairs(d) do fn() end'
+
+
 def advance(lua, seconds):
     for _ in range(seconds):
-        lua.execute('now = now + 1; for _, fn in ipairs(tickers) do fn() end')
+        lua.execute('now = now + 1; for _, fn in ipairs(tickers) do fn() end; ' + FLUSH)
+
+
+def fire(lua, *args):
+    values = ", ".join(repr(a) if isinstance(a, str) else str(a) for a in args)
+    lua.execute('AutoBG_SpyEventFrame.scripts.OnEvent(AutoBG_SpyEventFrame, %s); %s' % (values, FLUSH))
 
 
 class SpyNearbyTests(unittest.TestCase):
@@ -102,6 +128,30 @@ class SpyNearbyTests(unittest.TestCase):
         lua = runtime()
         lua.execute('visible = false')
         advance(lua, 32)
+        self.assertFalse(lua.eval('AutoBG_SpyRow1.shown'))
+
+    def test_nameplate_scan_lists_a_standing_enemy(self):
+        lua = runtime()
+        lua.execute('plates.nameplate3 = { guid = "0x0000000000000002", name = "Thrall" }')
+        advance(lua, 1)
+        self.assertEqual(lua.eval('AutoBG_SpyRow1.targetName'), "Thrall")
+        self.assertEqual(lua.eval('AutoBG_SpyRow2.targetName'), "Grom")
+
+    def test_nampower_buff_events_set_and_clear_stealth(self):
+        lua = runtime()
+        fire(lua, "BUFF_ADDED_OTHER", "0x0000000000000001", 1, 1787, 1, 60, 5, 0)
+        self.assertTrue(lua.eval('AutoBG_SpyRow1.targetStealth'))
+        fire(lua, "BUFF_REMOVED_OTHER", "0x0000000000000001", 1, 1787, 0, 60, 5, 1)
+        self.assertFalse(lua.eval('AutoBG_SpyRow1.targetStealth'))
+
+    def test_unit_died_dims_at_once_and_a_visible_corpse_stays_dim(self):
+        lua = runtime()
+        fire(lua, "UNIT_DIED", "0x0000000000000001")
+        self.assertEqual(lua.eval('AutoBG_SpyRow1.alpha'), 0.45)
+        self.assertTrue(lua.eval('AutoBG_SpyRow1.targetDead'))
+        advance(lua, 3)
+        self.assertEqual(lua.eval('AutoBG_SpyRow1.alpha'), 0.45)
+        advance(lua, 30)
         self.assertFalse(lua.eval('AutoBG_SpyRow1.shown'))
 
     def test_window_width_does_not_change_when_list_empties(self):
