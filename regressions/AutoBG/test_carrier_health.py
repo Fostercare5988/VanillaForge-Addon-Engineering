@@ -89,6 +89,14 @@ class CarrierHealthTests(unittest.TestCase):
         lua.execute('for i = 1, 5 do AutoBG_FC_UpdateVisibility() end')
         self.assertEqual(lua.eval('auraScans'), 1)
 
+    def test_live_carrier_returns_after_timer_test_mode(self):
+        lua = runtime(3690, 4500)
+        lua.execute('AutoBG_Settings.TestAllTimers = true; AutoBG_FC_UpdateVisibility()')
+        self.assertIn("Alliance Druid", lua.eval('AutoBG_AllianceFC.nameText.text'))
+        lua.execute('AutoBG_Settings.TestAllTimers = false; AutoBG_FC_UpdateVisibility()')
+        self.assertEqual(lua.eval('AutoBG_AllianceFC.nameText.text'), "Grom")
+        self.assertEqual(lua.eval('AutoBG_AllianceFC.hpText.text'), "3690 / 4500")
+
     def test_percentage_health_stays_a_percent(self):
         lua = runtime(82, 100)
         self.assertEqual(lua.eval('AutoBG_AllianceFC.hpText.text'), "82%")

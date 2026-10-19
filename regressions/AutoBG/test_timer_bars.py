@@ -78,6 +78,19 @@ class TimerBarTests(unittest.TestCase):
         self.assertEqual(lua.eval('AutoBG_StartTimerFrame.rows[1].icon.texture'), "Interface\\Icons\\INV_Misc_PocketWatch_01")
         self.assertEqual(lua.eval('AutoBG_StartTimerFrame.rows[1].timeFs.text'), "0:45")
 
+    def test_open_world_arathi_highlands_is_not_arathi_basin(self):
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(BASE + r'''
+            AutoBG_Settings.TestAllTimers = false
+            AutoBG_Settings.ABProjection = true
+            function GetRealZoneText() return "Arathi Highlands" end
+            worldStateReads = 0
+            function GetNumWorldStateUI() worldStateReads = worldStateReads + 1; return 0 end
+        ''')
+        lua.execute(TIMERS)
+        lua.execute('local f = AutoBG_TimersEventFrame; f.scripts.OnEvent(f, "PLAYER_ENTERING_WORLD")')
+        self.assertEqual(lua.eval('worldStateReads'), 0)
+
     def test_group_height_fits_title_and_rows(self):
         lua = runtime()
         # 15 title + 2 rows * 22 + 1 gap * 2
