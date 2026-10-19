@@ -62,6 +62,7 @@ Core Python tools use the standard library. From this repository:
 python -B tools/vanillaforge_linter.py "<addon-path>"
 python -B tools/audit_addon.py "<addon-path>" --output "<private-report.json>"
 python -B tools/extract_framexml.py --client "<client-root>"
+python -B tools/fetch_upstream_docs.py
 python -B tools/check_audit_index.py
 python -B tools/check_framework_docs.py
 python -B -m unittest discover -s tests -p "test_*.py" -v
@@ -71,6 +72,9 @@ DLLs are assumed installed and are never inspected or hashed (see [CORE](CORE.md
 the user reports DLL changes. The audit is source-only and prints a one-line
 summary. `extract_framexml.py` copies the native FrameXML files that regressions
 need into `.private/framexml`, outside the repository.
+`fetch_upstream_docs.py` downloads the DLL maintainers' docs at the commits pinned in
+`UPSTREAM_VERSIONS.json` into `.private/upstream` (docs only, pinned SHAs checked; the
+SuperWoW wiki is copied at its current head and recorded as unpinned).
 Framework maintenance can run its own tests without an installed game.
 
 For a quick view of every installed Git project (the tool reads addon checkouts only):
