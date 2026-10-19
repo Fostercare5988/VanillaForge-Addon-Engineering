@@ -15,8 +15,10 @@ Evidence: CORE forbids inspecting or hashing DLLs, while the workflow required
 only because SuperWoW and UnitXP builds had no recorded hashes.
 
 Consequences: Addon audits report source evidence only, plus a one-line summary.
-The manifest tool's `--check-environment` mode, DLL hashing and reference hash
-table were removed the same day; `--addons-only` remains for portfolio status.
+The manifest tool's `--check-environment` mode, DLL hashing, reference hash table
+and full client manifest (executable, loader, MPQ and FrameXML hashes) were removed
+the same day. It is now an addon Git/TOC inventory; `--addons-only` is accepted
+for existing commands. The MPQ reader moved to `tools/extract_framexml.py`.
 
 ## 2026-10-15 — Bind addon evidence to the selected client and required stack
 Status: SUPERSEDED (2026-10-19) for the addon audit preflight

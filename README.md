@@ -73,7 +73,7 @@ summary. `extract_framexml.py` copies the native FrameXML files that regressions
 need into `.private/framexml`, outside the repository.
 Framework maintenance can run its own tests without an installed game.
 
-For a quick view of every installed Git project, without hashing game archives:
+For a quick view of every installed Git project (the tool reads addon checkouts only):
 
 ```text
 python -B tools/octowow_client_manifest.py --client "<client-root>" --addons-only --output .private/portfolio-status.json

@@ -1,12 +1,10 @@
-"""Client inventory never opens DLLs and keeps addon evidence separate."""
+"""The addon inventory reads Git checkouts only, never the client installation."""
 import contextlib
-import hashlib
 import importlib.util
 import io
 import json
 from pathlib import Path
 import subprocess
-import struct
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -15,39 +13,6 @@ SPEC = importlib.util.spec_from_file_location(
     'client_manifest', Path(__file__).resolve().parents[1] / 'tools/octowow_client_manifest.py')
 MANIFEST = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MANIFEST)
-
-
-def versioned_pe(version, *, pe32_plus=False):
-    """Minimal PE/resource fixture; version evidence resides in RT_VERSION."""
-    parts = [int(part) for part in version.split('.')]
-    parts += [0] * (4 - len(parts))
-    ms, ls = parts[0] << 16 | parts[1], parts[2] << 16 | parts[3]
-    blob = bytearray(92)
-    struct.pack_into('<3H', blob, 0, len(blob), 52, 0)
-    key = 'VS_VERSION_INFO\0'.encode('utf-16le')
-    blob[6:6 + len(key)] = key
-    struct.pack_into('<13I', blob, 40, 0xFEEF04BD, 0x10000, ms, ls, ms, ls, *([0] * 7))
-    resource = bytearray(88) + blob
-    for offset in (0, 24, 48):
-        struct.pack_into('<2H', resource, offset + 12, 0, 1)
-    struct.pack_into('<2I', resource, 16, 16, 0x80000018)
-    struct.pack_into('<2I', resource, 40, 1, 0x80000030)
-    struct.pack_into('<2I', resource, 64, 1033, 72)
-    struct.pack_into('<4I', resource, 72, 4096 + 88, len(blob), 0, 0)
-    image = bytearray(1024)
-    image[:2] = b'MZ'
-    struct.pack_into('<I', image, 0x3C, 128)
-    image[128:132] = b'PE\0\0'
-    optional_size, directory = (240, 112) if pe32_plus else (224, 96)
-    struct.pack_into('<HHIIIHH', image, 132, 0x8664 if pe32_plus else 0x14C, 1, 0, 0, 0, optional_size, 0x102)
-    struct.pack_into('<H', image, 152, 0x20B if pe32_plus else 0x10B)
-    struct.pack_into('<I', image, 152 + directory - 4, 16)
-    struct.pack_into('<2I', image, 152 + directory + 16, 4096, len(resource))
-    section = 152 + optional_size
-    image[section:section + 8] = b'.rsrc\0\0\0'
-    struct.pack_into('<4I', image, section + 8, len(resource), 4096, 512, 512)
-    image[512:512 + len(resource)] = resource
-    return bytes(image)
 
 
 class ClientManifestTests(unittest.TestCase):
@@ -105,86 +70,61 @@ class ClientManifestTests(unittest.TestCase):
         self.assertFalse(remote['remoteMatchesHead'])
         self.assertEqual(remote['remoteVerification'], 'verified')
 
-    def test_loader_comments_and_unreadable_archives_are_recorded(self):
-        (self.client / 'dlls.txt').write_text('# disabled.dll\n; another.dll\nD3D9.DLL\nmissing.dll\n')
-        data = self.client / 'Data'
-        data.mkdir()
-        (data / 'patch-5.mpq').write_bytes(b'invalid archive')
-        report = MANIFEST.generate_manifest(self.client)
-        self.assertEqual(report['loaderConfiguration']['dlls_txt']['entries'], ['D3D9.DLL', 'missing.dll'])
-        self.assertNotIn('missingEntries', report['loaderConfiguration'])
-        self.assertEqual(report['frameXMLReadErrors'][0]['archive'], 'patch-5.mpq')
-
-    def test_dlls_are_never_opened_or_reported(self):
-        # CORE: the DLL stack is assumed installed; no hashing or version reads.
-        for name in ('ClassicAPI.dll', 'SuperWoWhook.dll', 'nampower.dll', 'UnitXP_SP3.dll', 'd3d9.dll'):
-            (self.client / name).write_bytes(b'native fixture')
+    def test_inventory_touches_only_addon_folders(self):
+        # CORE: never open the client installation, its DLLs or its archives.
+        for name in ('ClassicAPI.dll', 'WoW.exe', 'dlls.txt', 'realmlist.wtf'):
+            (self.client / name).write_bytes(b'client fixture')
+        (self.client / 'Data').mkdir()
+        (self.client / 'Data' / 'patch.MPQ').write_bytes(b'archive fixture')
+        addon = self.client / 'Interface/AddOns/Example'
+        (addon / '.git').mkdir(parents=True)
+        (addon / 'Example.toc').write_text('## Interface: 11200\n')
         opened = []
         original_open, original_bytes = Path.open, Path.read_bytes
 
         def watch_open(path, *args, **kwargs):
-            opened.append(path.name.casefold())
+            opened.append(path)
             return original_open(path, *args, **kwargs)
 
         def watch_bytes(path):
-            opened.append(path.name.casefold())
+            opened.append(path)
             return original_bytes(path)
 
-        with patch.object(Path, 'open', watch_open), patch.object(Path, 'read_bytes', watch_bytes):
-            report = MANIFEST.generate_manifest(self.client)
-        self.assertFalse([name for name in opened if name.endswith('.dll')])
-        self.assertNotIn('nativeExtensions', report)
-        self.assertNotIn('environment', report)
-        for removed in ('inspect_environment', 'native_extension_info', 'NATIVE_REFERENCES', 'pe_architecture'):
+        output = self.root / 'inventory.json'
+        with patch.object(Path, 'open', watch_open), patch.object(Path, 'read_bytes', watch_bytes), \
+             patch.object(MANIFEST, 'get_git_info', return_value={'head': 'a' * 40, 'clean': True}), \
+             contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(MANIFEST.main(['--client', str(self.client), '--output', str(output)]), 0)
+        addons = (self.client / 'Interface' / 'AddOns').resolve()
+        client_reads = [path for path in opened
+                        if Path(path).resolve().is_relative_to(self.client.resolve())
+                        and not Path(path).resolve().is_relative_to(addons)]
+        self.assertEqual(client_reads, [])
+        report = json.loads(output.read_text())
+        self.assertEqual(set(report), {'generatedAt', 'authoritativeClientRoot', 'scope',
+                                       'deployedAddons', 'unmanagedAddons'})
+        for removed in ('generate_manifest', 'MPQArchive', 'get_pe_version_strings', 'sha256_file'):
             self.assertFalse(hasattr(MANIFEST, removed), removed)
 
-    def test_environment_check_option_is_gone(self):
-        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as exit:
-            MANIFEST.main(['--client', str(self.client), '--check-environment'])
-        self.assertEqual(exit.exception.code, 2)
+    def test_full_manifest_options_are_gone(self):
+        for option in ('--check-environment', '--historical'):
+            with self.subTest(option=option), contextlib.redirect_stderr(io.StringIO()), \
+                 self.assertRaises(SystemExit) as exit:
+                MANIFEST.main(['--client', str(self.client), option, str(self.root)])
+            self.assertEqual(exit.exception.code, 2)
 
-    def test_quick_inventory_does_not_hash_game_or_report_removed_native_files(self):
+    def test_old_client_fields_in_a_baseline_produce_no_deltas(self):
         output = self.root / 'inventory.json'
         previous = self.root / 'previous.json'
         previous.write_text(json.dumps({'clientExecutableInfo': {'sha256': 'old'},
                                        'nativeExtensions': {'old.dll': {'sha256': 'old'}}}))
-        with patch.object(MANIFEST, 'generate_manifest', side_effect=AssertionError('must not inspect runtime')):
-            with contextlib.redirect_stdout(io.StringIO()) as printed:
-                result = MANIFEST.main(['--client', str(self.client), '--addons-only',
-                                        '--output', str(output), '--compare', str(previous)])
+        with contextlib.redirect_stdout(io.StringIO()) as printed, contextlib.redirect_stderr(io.StringIO()):
+            result = MANIFEST.main(['--client', str(self.client), '--addons-only',
+                                    '--output', str(output), '--compare', str(previous)])
         self.assertEqual(result, 0)
         self.assertEqual(json.loads(output.read_text())['scope'], 'addon Git/TOC inventory')
         self.assertNotIn('removed extension', printed.getvalue())
         self.assertNotIn('EXE:', printed.getvalue())
-
-    def test_invalid_archive_closes_handle_when_constructor_fails(self):
-        path = self.client / 'bad.mpq'
-        path.write_bytes(b'not an MPQ')
-        handle = path.open('rb')
-        self.addCleanup(handle.close)
-        with patch('builtins.open', return_value=handle):
-            with self.assertRaises(ValueError):
-                MANIFEST.MPQArchive(path)
-        self.assertTrue(handle.closed)
-
-    def test_unknown_patches_and_loose_framexml_stay_visible_as_scoped_evidence(self):
-        data = self.client / 'Data'
-        data.mkdir()
-        (data / 'patch-custom.mpq').write_bytes(b'custom archive fixture')
-        loose = self.client / 'Interface/FrameXML/ChatFrame.lua'
-        loose.parent.mkdir(parents=True)
-        loose.write_bytes(b'-- loose override candidate')
-        report = MANIFEST.generate_manifest(self.client)
-        scope = report['frameXMLInspection']
-        self.assertEqual(scope['status'], 'scoped_inventory')
-        self.assertEqual(scope['uninspectedArchives'], ['patch-custom.mpq'])
-        self.assertEqual(scope['looseCandidates']['Interface\\FrameXML\\ChatFrame.lua']['sha256'],
-                         hashlib.sha256(loose.read_bytes()).hexdigest())
-        self.assertNotIn('Interface\\FrameXML\\ChatFrame.lua', report['frameXML'])
-        previous = json.loads(json.dumps(report))
-        loose.write_bytes(b'-- changed loose candidate')
-        self.assertTrue(any('loose candidate evidence changed' in delta for delta in
-                            MANIFEST.compare_manifests(MANIFEST.generate_manifest(self.client), previous)))
 
     def test_same_commit_does_not_hide_toc_or_working_tree_changes(self):
         previous = {'deployedAddons': {'Example': {'toc': {'Interface': '11200'},
@@ -197,15 +137,6 @@ class ClientManifestTests(unittest.TestCase):
         self.assertTrue(any('TOC metadata' in delta for delta in deltas))
         self.assertTrue(any('working-tree' in delta for delta in deltas))
         self.assertFalse(any('git commit updated' in delta for delta in deltas))
-
-    def test_version_resource_parser_handles_pe32_plus_and_rejects_bad_bounds(self):
-        path = self.client / 'WoW.exe'
-        path.write_bytes(versioned_pe('1.12.1.5875', pe32_plus=True))
-        self.assertEqual(MANIFEST.get_pe_version_strings(path)['FileVersion'], '1.12.1.5875')
-        for blob in (versioned_pe('2.2')[:550], b'MZ' + bytes(200),
-                     b'FileVersion\0' + '999.0\0'.encode('utf-16le')):
-            path.write_bytes(blob)
-            self.assertEqual(MANIFEST.get_pe_version_strings(path), {})
 
     def test_reports_cannot_be_written_inside_game(self):
         output = self.client / 'report.json'

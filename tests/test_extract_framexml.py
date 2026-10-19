@@ -82,6 +82,16 @@ class ExtractFrameXMLTests(unittest.TestCase):
                 self.assertIn("FrameXML extraction failed", err)
                 self.assertFalse(destination.exists())
 
+    def test_invalid_archive_closes_handle_when_constructor_fails(self):
+        path = self.client / "Data" / "bad.mpq"
+        path.write_bytes(b"not an MPQ")
+        handle = path.open("rb")
+        self.addCleanup(handle.close)
+        with mock.patch("builtins.open", return_value=handle):
+            with self.assertRaises(ValueError):
+                EXTRACT.MPQArchive(path)
+        self.assertTrue(handle.closed)
+
     def test_default_output_is_ignored_private_folder(self):
         self.assertEqual(EXTRACT.DEFAULT_OUTPUT, EXTRACT.ROOT / ".private" / "framexml")
         self.assertIn("/.private/", (EXTRACT.ROOT / ".gitignore").read_text("utf-8").splitlines())
