@@ -135,6 +135,10 @@ table.getn(t)
 math.mod(a, b)
 ```
 
+Preserve intentional Lua 5.0 stored-length contracts, including weak-valued
+tables after GC. Syntax support alone does not make these replacements
+equivalent; see [ClassicAPI table lengths](CLASSICAPI_MASTER_REFERENCE.md#46-table-lengths-and-weak-values).
+
 ------------------------------------------------------------------------
 
 ## 2. Event and State Patterns
@@ -760,13 +764,19 @@ Example from the old prompt: quest-log capacity assumptions.
 
 ------------------------------------------------------------------------
 
-### KP-43 --- Unverified SuperWoW Version Arithmetic
+### KP-43 --- Unverified Native Provider Version Arithmetic
 
 Do not assume a version global is always numeric or encoded in a
 particular arithmetic format.
 
 Check presence/type and verify the actual version contract before
 comparison.
+
+The verified SuperWoW `"2.2"` value is parsed with `tonumber(SUPERWOW_VERSION)`;
+do not apply ClassicAPI's integer encoding. Release and runtime versions can also
+differ: NamPower release v4.6.3 still reports `4, 6, 2`, and UnitXP's version
+command returns a PE timestamp rather than `90`. Use the provider-specific
+[identity evidence](ENGINE_REFERENCE.md#6-nampower), not one generic comparison.
 
 ------------------------------------------------------------------------
 
@@ -902,15 +912,21 @@ not an ordinary TOC runtime entry.
 
 ### KP-49 --- Enhanced Stack Availability vs Declared Addon Dependencies
 
-**Problem:** Addon metadata or README files declare DLL dependencies simply
-because the full enhanced stack is installed in the client.
+**Problem:** The framework's required client DLLs are confused with an individual
+addon's API dependencies, or shared functions are mistaken for provider loading.
 
 **Action:**
-- Distinguish between environment availability and actual addon dependency.
+- Require and verify all four modern API DLLs for the supported client environment;
+  distinguish that requirement from an individual addon's API dependencies.
 - An addon should declare dependencies only for components whose APIs it directly consumes.
-- UnitXP SP3 may be documented as optional/recommended when core functionality works
-  without it but verified distance, sight or client utilities improve it (see ENGINE_REFERENCE.md).
+- An individual addon may describe UnitXP features as optional when its core works
+  without them; the framework's client installation still requires UnitXP (see ENGINE_REFERENCE.md).
 - DXVK is D3D9-to-Vulkan translation runtime infrastructure, never a Lua addon API or dependency.
+
+ClassicAPI and SuperWoW both expose GUID/position APIs, and native WoW already
+has `UnitXP`. Their presence cannot prove all required providers are loaded.
+Use exact file/release identity and current-session provider evidence; a loader
+list, a historical log or a passing Lua mock alone does not establish loading.
 
 Choose a replacement for its verified semantics, restrictions, lifecycle and
 cost, not its newer name. Native aggregates suit count-only questions but do not

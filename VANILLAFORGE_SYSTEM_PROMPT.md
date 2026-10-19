@@ -1,24 +1,27 @@
 # VanillaForge Engineering Contract
 
-**Framework version: 3.1.** This is the authoritative contract for enhanced
-WoW 1.12.1 addon engineering. AGENTS.md routes it; procedures and references
-support it. Build correct addons through bounded implementation and verification.
+**Framework version: 3.2.** Authoritative contract for enhanced WoW 1.12.1
+addon engineering, routed by AGENTS.md. Use bounded implementation and verification.
 
 ## Target
 
 WoW 1.12.1, Build 5875, Interface `11200` defines client, Lua and FrameXML
 semantics. This workspace modernizes addons for the deployed OctoWoW client;
-Turtle WoW ancestry does not prove OctoWoW content or newer client APIs.
+Turtle ancestry proves neither OctoWoW content nor newer APIs.
 Preserve native callback conventions (`this`, `event`, `arg1`, XML
 handlers) unless a verified extension changes them. Verify modern syntax and
 widget methods rather than assuming later Lua or Retail behavior.
 
-The supported environment baseline is ClassicAPI v1.16.0+, SuperWoW v2.2+,
-NamPower v4.6.2+, UnitXP SP3 v90+, and DXVK. Verify active file identity and
-runtime loading before relying on it. Change this baseline only deliberately.
-All 16 maintained addons require ClassicAPI v1.16.0+ by policy. Other
-dependencies remain capability-specific; DXVK is infrastructure, never an
-addon API dependency.
+The required environment is OctoWoW client revision `2026.10.10`, with ClassicAPI
+v1.16.0+, SuperWoW v2.2+, NamPower v4.6.2+, and UnitXP SP3 v89+. All four DLLs
+are mandatory; these minimums remain supported. Prefer reviewed stable releases;
+`UPSTREAM_VERSIONS.json` records minimums and provenance. Change floors deliberately.
+Before target-dependent addon implementation, follow [target preflight](docs/TARGET_ENVIRONMENT.md):
+identify the selected server/client, installed source, patches and consumed APIs.
+Separate target policy, observed files, configured loading and runtime proof.
+Missing evidence stays unresolved; repository-only maintenance needs no game download.
+Addon guards reflect consumed providers; the full environment remains required.
+DXVK is rendering infrastructure, never an addon dependency.
 
 Do not add stock-client compatibility. Remove obsolete fallbacks
 after proving replacements. Correct native 1.12 primitives remain appropriate;
@@ -53,16 +56,15 @@ Preserve specialized providers when replacements are only partially equivalent.
 After verified replacement, remove dead mechanisms, helpers and dependency docs;
 never remove globally installed DLLs to simplify one addon.
 
-The shared ClassicAPI 1.16.0+ floor is an explicit maintainer policy for every
-maintained addon. Keep TOC metadata, dependency declarations, runtime guards and
-installation docs consistent with it. Other component guards remain capability-
-specific. Future framework baseline refreshes do not automatically raise this
-floor; require a deliberate policy update.
+The shared ClassicAPI 1.16.0+ floor is explicit maintainer policy for every
+maintained addon; keep TOC metadata, dependency declarations, runtime guards and
+installation docs consistent. Other component guards remain capability-specific. Baseline refreshes do not raise this floor without a
+deliberate policy update.
 
 ## Scope and implementation
 
-Inspect enough surrounding architecture before editing. Classify the task and
-bound its scope; a bug fix needs focused inspection, repair and validation.
+Inspect surrounding architecture before editing. Bound scope; focused fixes
+need relevant inspection, repair and validation.
 Reuse completed discovery unless new evidence invalidates it. Finish coherent
 subsystems before expanding scope. Do not change unrelated addons or framework
 infrastructure because an issue was noticed.
@@ -96,7 +98,7 @@ native input behavior, widget boundaries, owner side effects and reversible fore
 frame state; consult ENGINE_REFERENCE.md for UI integration details. Lua pcall
 and mocks cannot prove native pointer safety.
 
-Use English for code, comments, docs and player text unless localization is requested.
+Use English unless localization is requested.
 Keep player text factual and concise.
 Inventory existing controls and defaults before adding options. Give each new
 control a distinct player benefit; prioritize frequent tasks over recovery actions.

@@ -3,6 +3,11 @@
 > **Historical deployed snapshot; verify the active installation before reuse.**
 > Generated from static reverse-engineering and byte-level audits of the earlier OctoWoW runtime.
 
+Use [target preflight](../docs/TARGET_ENVIRONMENT.md) and
+[TARGET_ENVIRONMENT.json](../TARGET_ENVIRONMENT.json) for current task requirements.
+This file preserves dated deployment evidence. Its personal paths, version labels
+and logs do not establish the installation on another computer or a later session.
+
 ## Current installation correction — 19 October 2026
 
 The active game remains `C:\Users\Fostercare\Desktop\client-2026-10-10`.
@@ -27,12 +32,12 @@ and the earlier records below remain historical evidence.
 
 ## Earlier installation correction — 12 October 2026
 
-The sole active game is now `C:\Users\Fostercare\Desktop\client-2026-10-10`, launched
-with its `VanillaFixes.exe`. Maintained addon repositories live directly in
+The 12 October record selected `C:\Users\Fostercare\Desktop\client-2026-10-10`, launched
+with its `VanillaFixes.exe`. Maintained addon repositories lived directly in
 `C:\Users\Fostercare\Desktop\client-2026-10-10\Interface\AddOns\<addon>`.
-Edit, validate, commit and push from those installed folders; do not maintain a
-second source checkout or copy-deploy addons over them. Keep developer tools,
-tests, audit evidence and recovery outside the game. Earlier checkouts and the
+For that installation, engineering used those installed folders rather than a
+second source checkout. Select the actual source/client root for each new task;
+keep developer tools, tests, audit evidence and recovery outside the game. Earlier checkouts and the
 retired `FostercareClient` workspace are preserved under
 `C:\Users\Fostercare\Documents\VanillaForge\.private\addon-consolidation-2026-10-11\recovery`.
 The earlier `client` and `client-2026-10-06` games are historical/recovery only.
@@ -76,6 +81,14 @@ in the current `dlls.txt`; no listed file is missing. These are current file and
 loader-list observations, not proof of runtime loading or performance. The
 manifest now distinguishes declared PE versions from reference hash identity.
 Native updates require a full client restart.
+
+The 15 October upstream recheck refines the labels without rewriting these
+observations: the recorded NamPower hash matches the official `v4.6.3` asset,
+whose version dispatcher still reports `4.6.2`. The recorded UnitXP hash differs
+from the official brues-code `v90` asset, so its remembered build-90 label alone
+does not prove release identity. Supported minimums remain NamPower 4.6.2 and
+UnitXP SP3 v89. See [engine provenance](../ENGINE_REFERENCE.md) and the registry
+for supported floors, source pins and released artifacts as separate evidence.
 
 Sections below preserve the earlier audit's original source scope.
 
