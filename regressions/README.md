@@ -51,3 +51,22 @@ python -B tools/audit_addon.py "<AddOns>/MikScrollingBattleText" --run-tests --t
 
 The audit reproductions in `audit/replays/msbt-2026-10-12` now fail by design on
 1.0.1; they remain historical demonstrations of the defects.
+## FostercareTweaks
+
+Eighteen regressions cover the 2026-10-19 private audit
+repairs in FostercareTweaks 1.3.1.
+- P2-1: the raid buff switches on a profile with no saved count.
+- P2-2: suppressing and restoring Blizzard frames. Native event sets are taken from
+  the deployed FrameXML OnLoad code.
+- P3-1 to P3-4: operation counts for raid and modern-frame text, badge geometry and
+  player aura rescans.
+- P3-5 and P3-6: castbar and reagent fan-out.
+
+Fourteen fail on the 1.3.0 source for the intended reason. The other four are
+controls that pass on both. They run complete selected functions or module files
+with counting widget mocks, under Lua 5.1. They do not prove native widget
+behavior, real event payloads or frame times.
+
+```text
+python -B tools/audit_addon.py "<AddOns>/FostercareTweaks" --run-tests --test-start regressions/FostercareTweaks --output .private/fct-current.json
+```
