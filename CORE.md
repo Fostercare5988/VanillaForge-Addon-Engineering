@@ -8,8 +8,9 @@ Read the full VANILLAFORGE_SYSTEM_PROMPT.md only when asked to run a **Gate** or
 
 WoW 1.12.1 (build 5875, Interface 11200) on OctoWoW, with ClassicAPI 1.16.0+,
 SuperWoW 2.2+, NamPower 4.6.2+ and UnitXP SP3 v89+. Treat these as installed and
-loaded. **Do not inspect, hash or verify DLLs or client files.** The user says when
-a DLL changes.
+loaded. **Do not inspect, hash or verify the DLLs or the client installation;
+reading game archives with `tools/extract_framexml.py` is allowed when a test
+needs it.** The user says when a DLL changes.
 
 The base runtime is Lua 5.0. ClassicAPI rewrites and backports part of Lua 5.1;
 see `CLASSICAPI_MASTER_REFERENCE.md` §4.

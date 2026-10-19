@@ -2,8 +2,9 @@
 """Deterministic, read-only client manifest generator and update diff tool for OctoWoW.
 
 Standard library only. No process interaction, no binary mutation, no private/WTF data.
-Tracks authoritative client binaries, native extensions, loader configuration,
-Data MPQs, scoped FrameXML candidates, and maintained addon working tree state.
+Tracks the client executable, loader configuration, Data MPQs, scoped FrameXML
+candidates, and maintained addon working tree state. DLLs are never opened or
+hashed (CORE): the required stack is assumed installed.
 """
 
 from __future__ import annotations
@@ -24,16 +25,6 @@ import bz2
 ROOT = Path(__file__).resolve().parents[1]
 TARGET_PROFILE = ROOT / 'TARGET_ENVIRONMENT.json'
 UPSTREAM_CONFIG = ROOT / 'UPSTREAM_VERSIONS.json'
-
-# These hashes identify the dated reference files; they do not prove runtime
-# loading or compatibility. Only ClassicAPI has upstream asset provenance here.
-NATIVE_REFERENCES = {
-    'ClassicAPI.dll': ('1.16.0', 'ae88fc0461b58eff37171e10015ddaf8c27b1f428794c4ff927429389fc2535b'),
-    'SuperWoWhook.dll': ('2.2', 'bd214b32c878649e94ce654835946bd05e0ce7710e8f01bae10d8ab50a89351d'),
-    'nampower.dll': ('4.6.2', '96af1722ee6b1a76cbb11e59e452fe54a83f54a3da80ae24f9c7571a0a6392fe'),
-    'UnitXP_SP3.dll': ('90', '74a0a80aef02be28187fd67e9ec3945d54828ef3302a827754b4c40b69cdaed8'),
-    'd3d9.dll': ('3.1.1', '265888c31ca78dffa290c39cb7e50bfb02762590e41927906e46fb32f01497fa'),
-}
 
 # Data archive load order; a later archive overrides an earlier one.
 MPQ_ORDER = [
@@ -340,23 +331,6 @@ def numeric_version(value: str) -> tuple[int, ...] | None:
     return tuple(parts)
 
 
-def pe_architecture(path: Path) -> str | None:
-    """Check the COFF machine and optional-header magic without loading code."""
-    try:
-        with path.open('rb') as handle:
-            dos = handle.read(64)
-            if len(dos) != 64 or dos[:2] != b'MZ':
-                return None
-            handle.seek(struct.unpack_from('<I', dos, 0x3C)[0])
-            header = handle.read(26)
-        if len(header) != 26 or header[:4] != b'PE\0\0':
-            return None
-        machine, magic = struct.unpack_from('<H', header, 4)[0], struct.unpack_from('<H', header, 24)[0]
-        return {(0x14C, 0x10B): 'x86', (0x8664, 0x20B): 'x64'}.get((machine, magic))
-    except (OSError, ValueError, struct.error):
-        return None
-
-
 def client_file(root: Path, filename: str) -> Path:
     """Match Windows file identity on case-sensitive fixture hosts as well."""
     expected = root / filename
@@ -370,14 +344,6 @@ def read_loader_entries(path: Path) -> list[str]:
         return []
     return [line.strip().strip('"') for line in path.read_text(encoding='utf-8-sig').splitlines()
             if line.strip() and not line.lstrip().startswith(('#', ';'))]
-
-
-def loader_configures(root: Path, filename: str, entries: list[str]) -> bool:
-    def identity(path):
-        return str(path.resolve()).replace('\\', '/').casefold()
-
-    expected = identity(root / filename)
-    return any(identity(root / entry.replace('\\', '/')) == expected for entry in entries)
 
 
 def configured_realm(path: Path) -> str | None:
@@ -433,100 +399,6 @@ def load_environment_requirements(target_path: Path = TARGET_PROFILE,
     inputs = {'target_profile_sha256': hashlib.sha256(target_bytes).hexdigest(),
               'upstream_registry_sha256': hashlib.sha256(upstream_bytes).hexdigest()}
     return target, upstream, inputs
-
-
-def inspect_environment(client_root: Path, *, target_path: Path = TARGET_PROFILE,
-                        upstream_path: Path = UPSTREAM_CONFIG) -> dict:
-    """Assess current files/configuration; native loading and server content stay pending."""
-    root = Path(client_root).resolve()
-    report = {
-        'status': 'blocked', 'client_root': str(root), 'target': None,
-        'observed': {}, 'requirements': {}, 'errors': [], 'inputs': {},
-        'runtime': {'status': 'pending', 'limitation':
-                    'File identity, declared versions and loader configuration do not prove native loading, API behavior or connected server content.'},
-    }
-    errors = report['errors']
-    try:
-        target, upstream, inputs = load_environment_requirements(target_path, upstream_path)
-        client, server, extensions = target['client'], target['server'], target['required_extensions']
-        report['target'], report['inputs'] = target, inputs
-        report['distribution_revision'] = {'target': client['distribution_revision'],
-                                           'observed': None, 'status': 'unverified',
-                                           'reason': 'Folder names and engine version do not establish a distribution revision.'}
-        if not root.is_dir():
-            errors.append('Selected client directory does not exist')
-        realm = configured_realm(client_file(root, 'realmlist.wtf'))
-        report['observed']['realm'] = realm
-        if realm is None or realm.casefold() != server['realmlist'].casefold():
-            errors.append(f'Configured realm {realm!r} does not match target {server["realmlist"]!r}')
-        executable = client_file(root, client['executable'])
-        exe = {'filename': client['executable'], 'present': executable.is_file()}
-        report['observed']['executable'] = exe
-        if executable.is_file():
-            version = get_pe_version_strings(executable).get('FileVersion')
-            architecture = pe_architecture(executable)
-            exe.update(sha256=sha256_file(executable), version=version,
-                       architecture=architecture,
-                       version_evidence='PE fixed file version' if version else 'unknown')
-            if architecture != 'x86':
-                errors.append('Executable must be a valid x86 PE image')
-            if numeric_version(version) != numeric_version(client['engine_version']):
-                errors.append(f'Executable version {version!r} does not match target {client["engine_version"]}')
-        else:
-            errors.append(f'Missing executable: {client["executable"]}')
-        launcher = client_file(root, client['launcher'])
-        report['observed']['launcher'] = {'filename': client['launcher'], 'present': launcher.is_file()}
-        if not launcher.is_file():
-            errors.append(f'Missing launcher: {client["launcher"]}')
-        loader = client_file(root, 'dlls.txt')
-        entries = read_loader_entries(loader)
-        report['observed']['loader'] = {'present': loader.is_file(), 'entries': entries,
-                                        'sha256': sha256_file(loader) if loader.is_file() else None}
-        if not loader.is_file():
-            errors.append('Missing loader configuration: dlls.txt')
-        for component, filename in extensions.items():
-            config = upstream.get(component)
-            minimum = config.get('minimum_version') if isinstance(config, dict) else None
-            if numeric_version(minimum) is None:
-                raise ValueError(f'{component}.minimum_version must be a numeric version string')
-            path = client_file(root, filename)
-            requirement = {'filename': filename, 'minimum_version': minimum,
-                           'present': path.is_file(), 'loader_configured': loader_configures(root, filename, entries),
-                           'version': None, 'version_evidence': 'unknown', 'status': 'blocked'}
-            report['requirements'][component] = requirement
-            if not path.is_file():
-                errors.append(f'Missing required extension: {filename}')
-                continue
-            digest = sha256_file(path)
-            architecture = pe_architecture(path)
-            version = get_pe_version_strings(path).get('FileVersion')
-            declared_version = version
-            evidence = 'PE fixed file version' if version else 'unknown'
-            provenance = [config.get('release_provenance') or {}, *config.get('supported_release_provenance', [])]
-            artifact_matches = False
-            for release in provenance:
-                release_version = release.get('version') or str(release.get('tag', '')).lstrip('vV')
-                if digest == release.get('dll_sha256') and numeric_version(release_version) is not None:
-                    version, evidence, artifact_matches = release_version, 'upstream release SHA-256', True
-                    break
-            requirement.update(sha256=digest, version=version, declared_version=declared_version,
-                               architecture=architecture,
-                               version_evidence=evidence,
-                               artifact_identity='matched_release' if artifact_matches else 'unrecognized')
-            if not requirement['loader_configured']:
-                errors.append(f'Required extension is not configured in dlls.txt: {filename}')
-            if architecture != 'x86':
-                errors.append(f'Required extension must be a valid x86 PE image: {filename}')
-            if numeric_version(version) is None:
-                errors.append(f'Cannot establish the installed version of {filename}')
-            elif numeric_version(version) < numeric_version(minimum):
-                errors.append(f'{filename} version {version} is below required {minimum}')
-            elif requirement['loader_configured'] and architecture == 'x86':
-                requirement['status'] = 'checks_passed'
-    except (OSError, UnicodeError, ValueError, KeyError, TypeError) as error:
-        errors.append(f'Environment inspection failed: {error}')
-    report['status'] = 'blocked' if errors else 'checks_passed'
-    return report
 
 
 def get_git_info(repo_path: Path, verify_remote: bool = False) -> dict:
@@ -610,27 +482,6 @@ def inspect_addons(client_root: Path, verify_remotes: bool = False) -> dict:
     return result
 
 
-def native_extension_info(path: Path, loader_entries: list[str]) -> dict:
-    data = path.read_bytes()
-    info = {
-        'filename': path.name, 'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest(),
-        'listedInDllsTxt': loader_configures(path.parent, path.name, loader_entries),
-        'versionStrings': get_pe_version_strings(path),
-    }
-    # A missing version resource is unknown, never the framework's target.
-    info['declaredVersion'] = info['versionStrings'].get('FileVersion')
-    reference = NATIVE_REFERENCES.get(path.name)
-    if reference:
-        version, digest = reference
-        info.update(referenceHashMatches=info['sha256'] == digest,
-                    referenceVersion=version,
-                    referenceEvidence='audit/OCTOWOW_NATIVE_STACK.md and OCTOWOW_CLIENT_BASELINE.md')
-        if path.name == 'ClassicAPI.dll':
-            info['sha256MatchesUpstreamRelease'] = info['sha256'] == digest
-            info['knownUpstreamTag'] = 'v' + version
-    return info
-
-
 def generate_manifest(client_root: Path, historical_root: Path | None = None) -> dict:
     client_root = client_root.resolve()
     manifest: dict = {
@@ -638,10 +489,8 @@ def generate_manifest(client_root: Path, historical_root: Path | None = None) ->
         'authoritativeClientRoot': str(client_root),
         'historicalClientRoot': str(historical_root.resolve()) if historical_root else None,
         'clientExecutable': 'WoW.exe',
-        'environment': inspect_environment(client_root),
         'realm': None,
         'loaderConfiguration': {},
-        'nativeExtensions': {},
         'dataArchives': {},
         'frameXML': {},
         'frameXMLReadErrors': [],
@@ -673,8 +522,6 @@ def generate_manifest(client_root: Path, historical_root: Path | None = None) ->
             'sha256': sha256_file(dlls_txt),
             'entries': loader_entries
         }
-        manifest['loaderConfiguration']['missingEntries'] = [
-            entry for entry in loader_entries if not (client_root / entry.replace('\\', '/')).is_file()]
 
     dlls_cache = client_root / 'dlls.txt.cache'
     if dlls_cache.is_file():
@@ -683,18 +530,6 @@ def generate_manifest(client_root: Path, historical_root: Path | None = None) ->
             'sha256': sha256_file(dlls_cache),
             'cached_dlls': [l.strip() for l in dlls_cache.read_text(errors='ignore').splitlines() if l.strip()]
         }
-
-    # Native extensions
-    ext_files = [
-        'ClassicAPI.dll', 'SuperWoWhook.dll', 'nampower.dll', 'UnitXP_SP3.dll',
-        'AuctionQueryThrottle.dll', 'transmogfix.dll', 'd3d9.dll', 'dxgi.dll',
-        'VanillaFixes.exe', 'VanillaHelpers.dll', 'VanillaMultiMonitorFix.dll', 'VfPatcher.dll'
-    ]
-    for ext_name in ext_files:
-        p = client_root / ext_name
-        if not p.is_file():
-            continue
-        manifest['nativeExtensions'][ext_name] = native_extension_info(p, loader_entries)
 
     # Data MPQ inventory
     data_dir = client_root / 'Data'
@@ -770,9 +605,6 @@ def generate_manifest(client_root: Path, historical_root: Path | None = None) ->
 
 def compare_manifests(curr: dict, prev: dict) -> list[str]:
     deltas = []
-    if curr.get('environment', {}).get('status') in {'checks_passed', 'blocked'}:
-        if curr['environment'] != prev.get('environment'):
-            deltas.append('ENVIRONMENT: client/native file or configuration evidence changed; runtime review remains pending')
     # Realmlist
     if curr.get('realm') != prev.get('realm'):
         deltas.append(f"REALM: changed from {prev.get('realm')} to {curr.get('realm')}")
@@ -782,17 +614,6 @@ def compare_manifests(curr: dict, prev: dict) -> list[str]:
     pe = prev.get('clientExecutableInfo', {})
     if ce.get('sha256') != pe.get('sha256'):
         deltas.append(f"EXE: WoW.exe hash changed ({pe.get('sha256', '')[:12]} -> {ce.get('sha256', '')[:12]})")
-
-    # Native extensions
-    cext = curr.get('nativeExtensions', {})
-    pext = prev.get('nativeExtensions', {})
-    for k in sorted(set(cext.keys()) | set(pext.keys())):
-        if k not in pext:
-            deltas.append(f"NATIVE: + added extension {k}")
-        elif k not in cext:
-            deltas.append(f"NATIVE: - removed extension {k}")
-        elif cext[k]['sha256'] != pext[k]['sha256']:
-            deltas.append(f"NATIVE: ~ changed extension {k} (hash {pext[k]['sha256'][:10]}... -> {cext[k]['sha256'][:10]}...)")
 
     # MPQ archives
     cmpq = curr.get('dataArchives', {})
@@ -851,16 +672,9 @@ def main(argv: list[str] | None = None) -> int:
                         help='Previous manifest JSON file to compare against')
     parser.add_argument('--addons-only', action='store_true',
                         help='Quick portfolio status without hashing game archives')
-    parser.add_argument('--check-environment', action='store_true',
-                        help='Check the required client/native files and configuration without scanning MPQs; native runtime remains pending')
     parser.add_argument('--verify-remotes', action='store_true',
                         help='Read origin branch heads over the network; no fetch or push')
     args = parser.parse_args(argv)
-
-    if args.addons_only and args.check_environment:
-        parser.error('--addons-only and --check-environment are mutually exclusive')
-    if args.check_environment and args.verify_remotes:
-        parser.error('--verify-remotes requires an addon inventory')
 
     if not args.client.is_dir():
         print(f"ERROR: Authoritative client directory not found: {args.client}", file=sys.stderr)
@@ -873,14 +687,9 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     print(f"Auditing deployed client: {args.client}", file=sys.stderr)
-    if args.check_environment:
-        manifest = dict(generatedAt=datetime.datetime.now(datetime.timezone.utc).isoformat(),
-                        authoritativeClientRoot=str(args.client.resolve()), scope='client environment file/configuration checks',
-                        environment=inspect_environment(args.client.resolve()), deployedAddons={})
-    elif args.addons_only:
+    if args.addons_only:
         manifest = dict(generatedAt=datetime.datetime.now(datetime.timezone.utc).isoformat(),
                         authoritativeClientRoot=str(args.client.resolve()), scope='addon Git/TOC inventory',
-                        environment={'status': 'not_checked', 'reason': 'Addon-only inventory does not inspect the client environment.'},
                         **inspect_addons(args.client.resolve(), args.verify_remotes))
     else:
         manifest = generate_manifest(args.client, args.historical if args.historical and args.historical.is_dir() else None)
@@ -910,8 +719,6 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\nComparing with baseline manifest: {args.compare}", file=sys.stderr)
         if args.addons_only:
             prev_manifest = {'deployedAddons': prev_manifest.get('deployedAddons', {})}
-        elif args.check_environment:
-            prev_manifest = {'environment': prev_manifest.get('environment')}
         deltas = compare_manifests(manifest, prev_manifest)
         if not deltas:
             print("No material engineering deltas detected.", file=sys.stderr)
@@ -920,18 +727,13 @@ def main(argv: list[str] | None = None) -> int:
             for d in deltas:
                 print(f"  {d}", file=sys.stderr)
 
-    environment = manifest.get('environment', {})
-    environment_blocked = environment.get('status') == 'blocked'
-    if environment_blocked:
-        for error in environment['errors']:
-            print(f'ERROR: {error}', file=sys.stderr)
     incomplete = bool(manifest.get('frameXMLReadErrors'))
     if incomplete:
         print('ERROR: FrameXML inspection was incomplete; see frameXMLReadErrors.', file=sys.stderr)
     remote_failed = args.verify_remotes and any(
         addon['git'].get('remoteVerification') != 'verified' or not addon['git'].get('remoteMatchesHead')
         for addon in manifest['deployedAddons'].values())
-    return int(incomplete or remote_failed or environment_blocked)
+    return int(incomplete or remote_failed)
 
 
 if __name__ == '__main__':
