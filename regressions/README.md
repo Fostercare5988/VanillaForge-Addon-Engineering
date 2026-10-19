@@ -73,3 +73,21 @@ behavior, real event payloads or frame times.
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareTweaks" --run-tests --test-start regressions/FostercareTweaks --output .private/fct-current.json
 ```
+
+## AutoBG
+
+Six regressions cover the 2026-10-19 private audit repairs (AutoBG `f005e24`):
+- P1-1: Cancel All leaves queues with a nil flag, like Blizzard's Leave Queue.
+- P2-1: scoreboard class colors reach `WorldStateScoreButton<i>NameButtonName`.
+- P2-2: taskbar flashing goes through `UnitXP("notify", "taskbarIcon")`.
+
+Three fail on 1.0.0 (`e92b86f`). One is a setting control. Two check the
+assumptions against the client's FrameXML and are skipped without
+`tools/extract_framexml.py --file Interface\FrameXML\BattlefieldFrame.lua --file
+Interface\FrameXML\WorldStateFrame.xml`. The complete AutoBG.lua file runs under Lua 5.1
+with generic widget mocks. These tests do not prove how the game handles the native
+flag, the taskbar flash or scoreboard drawing.
+
+```text
+python -B tools/audit_addon.py "<AddOns>/AutoBG" --run-tests --test-start regressions/AutoBG --output .private/autobg-current.json
+```
