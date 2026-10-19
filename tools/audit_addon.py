@@ -16,6 +16,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path, PureWindowsPath
 
 from vanillaforge_linter import HeuristicStructuralScanner as Scanner, VanillaForgeAuditor
+from octowow_client_manifest import inspect_environment
 
 LIMITS = {"files": 1024, "edges": 8192, "file_bytes": 2_000_000, "total_bytes": 32_000_000,
           "depth": 64, "sites_per_module": 500, "lint_records_per_kind": 100}
@@ -76,7 +77,8 @@ def source_sites(text, suffix):
     return sorted(sites, key=lambda site: (site["line"], site["kind"], site["api"]))
 
 
-def audit(addon, toc_name=None):
+def audit(addon, toc_name=None, *, source_only=False):
+    """Collect loaded source; source_only skips repeated lint and review-site scans."""
     addon = Path(addon).resolve()
     if not addon.is_dir():
         raise ValueError("Addon directory does not exist")
@@ -85,12 +87,14 @@ def audit(addon, toc_name=None):
         raise ValueError("No root TOC found; use --toc for an explicit manifest")
     report = {"format": 1, "addon": str(addon), "limits": LIMITS, "graph": [], "modules": [],
               "graph_errors": [], "tests": {"status": "not_run"},
+              "environment": {"status": "not_checked", "reason": "Source-only audit; no selected client was inspected."},
               "review": {"status": "pending", "scenarios": SCENARIOS,
                          "api_provider_semantics_and_cost": "pending", "measured_baseline_and_after": "pending"},
               "limitations": ["Lexical sites and lint are candidates, not defect or performance proof.",
                               "No Lua compilation, dynamic load discovery, API equivalence or native gameplay verification.",
                               "TOC/XML source closure only; referenced media and dependencies need separate review.",
-                              "No code, configuration or runtime changes; optional tests execute local Python when requested."]}
+                              "Unittest runner success and counts include skipped tests; inspect test output and coverage before relying on them.",
+                              "Audit collection is read-only; explicitly requested Python tests may have side effects."]}
     visited, active, total = set(), set(), 0
     auditor = VanillaForgeAuditor()
 
@@ -129,12 +133,14 @@ def audit(addon, toc_name=None):
         module = {"path": relative, "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data),
                   "review_status": "pending", "review_fields": ["ownership/lifecycle", "frequency/fanout",
                   "identity/invalidation", "API capability alternatives", "UI delta writes", "cleanup/integration"]}
-        if suffix in {".lua", ".xml", ".toc"}:
-            lint = (auditor.audit_toc_file(str(path), str(addon))[:3] if suffix == ".toc"
+        if not source_only and suffix in {".lua", ".xml", ".toc"}:
+            target_tocs = {addon.name.casefold() + ending for ending in ('.toc', '_classicapi.toc', '_turtle.toc')}
+            lint = (auditor.audit_toc_file(str(path), str(addon),
+                    require_target_interface=toc_name is not None or path.name.casefold() in target_tocs)[:3] if suffix == ".toc"
                     else auditor.audit_file(str(path)))
             module["lint"] = {kind: {"count": len(items), "records": items[:LIMITS["lint_records_per_kind"]]}
                               for kind, items in zip(("errors", "warnings", "infos"), lint)}
-        if suffix in {".lua", ".xml"}:
+        if not source_only and suffix in {".lua", ".xml"}:
             sites = source_sites(text, suffix)
             module.update(sites=sites[:LIMITS["sites_per_module"]], site_count=len(sites),
                           sites_truncated=len(sites) > LIMITS["sites_per_module"])
@@ -198,10 +204,11 @@ def compare_reports(current, previous):
         "removed_modules": sorted(before.keys() - after.keys()),
         "load_graph_changed": previous["graph"] != current["graph"],
         "graph_errors_changed": previous.get("graph_errors") != current.get("graph_errors"),
+        "environment_changed": previous.get("environment") != current.get("environment"),
         "limitations": "Source equality does not verify APIs, settings, test coverage or native runtime; human review remains pending.",
     }
     result["status"] = "changed" if any(result[key] for key in (
-        "changed_modules", "added_modules", "removed_modules", "load_graph_changed", "graph_errors_changed")) else "unchanged"
+        "changed_modules", "added_modules", "removed_modules", "load_graph_changed", "graph_errors_changed", "environment_changed")) else "unchanged"
     return result
 
 
@@ -230,6 +237,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("addon", type=Path)
     parser.add_argument("--toc", help="Explicit root TOC filename; otherwise inspect all root *.toc files")
+    parser.add_argument("--client", type=Path, help="Selected deployed client; require the addon under its Interface/AddOns and check mandatory native files/configuration")
     parser.add_argument("--output", type=Path, help="JSON destination outside addon; default stdout")
     parser.add_argument("--compare", type=Path, help="Previous audit JSON; report source/load-graph changes without transferring review approval")
     parser.add_argument("--run-tests", action="store_true", help="Execute local Python unittest discovery explicitly")
@@ -239,26 +247,56 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         addon = args.addon.resolve()
-        if args.output and inside(args.output.resolve(), addon):
-            raise ValueError("Output must be outside the addon directory")
-        if args.compare and args.output and args.compare.resolve() == args.output.resolve():
-            raise ValueError("Comparison input and output must differ; preserve previous evidence")
+        if args.client:
+            addons = (args.client.resolve() / "Interface" / "AddOns").resolve()
+            if addon == addons or not inside(addon, addons):
+                raise ValueError("Selected addon must be inside the selected client's Interface/AddOns")
+        def checked_output():
+            destination = args.output.resolve()
+            if inside(destination, addon):
+                raise ValueError("Output must be outside the addon directory")
+            if args.client and inside(destination, args.client.resolve()):
+                raise ValueError("Output must be outside the selected client directory")
+            if args.compare and args.compare.resolve() == destination:
+                raise ValueError("Comparison input and output must differ; preserve previous evidence")
+            return destination
+
+        if args.output:
+            checked_output()
         if not 0 < args.test_timeout <= 600:
             raise ValueError("Test timeout must be > 0 and <= 600 seconds")
         if not args.run_tests and (args.test_start or args.test_pattern != "test*.py"):
             raise ValueError("Test options require --run-tests")
         report = audit(addon, args.toc)
+        if args.client:
+            report["environment"] = inspect_environment(args.client.resolve())
         if args.compare:
             report["comparison"] = compare_reports(report, json.loads(args.compare.read_text(encoding="utf-8-sig")))
         if args.run_tests:
             report["tests"] = run_tests((args.test_start or addon / "tests").resolve(),
                                         args.test_pattern, args.test_timeout, addon)
+            report["tests"]["runner_status"] = report["tests"]["status"]
+            try:
+                after = audit(addon, args.toc, source_only=True)
+                if args.client:
+                    after["environment"] = inspect_environment(args.client.resolve())
+                verification = compare_reports(after, report)
+            except (OSError, ValueError) as error:
+                verification = {"status": "failed", "reason": str(error)}
+            verification["scope"] = (
+                "Loaded-source and selected environment endpoint comparison only; it cannot detect edits restored before "
+                "the recheck or prove which source the external tests actually consumed.")
+            report["tests"]["source_verification"] = verification
+            if verification["status"] != "unchanged":
+                report["tests"]["status"] = "invalidated"
         output = json.dumps(report, indent=2, ensure_ascii=True) + "\n"
         if args.output:
-            args.output.resolve().write_text(output, encoding="utf-8")
+            # Explicit tests may change the output path or its parent symlinks.
+            checked_output().write_text(output, encoding="utf-8")
         else:
             print(output, end="")
-        return int(report["status"] == "source_checks_failed" or report["tests"]["status"] in {"failed", "timeout"})
+        return int(report["status"] == "source_checks_failed" or report["environment"]["status"] == "blocked"
+                   or report["tests"]["status"] in {"failed", "timeout", "invalidated"})
     except (OSError, ValueError) as error:
         print(f"Audit failed: {error}", file=sys.stderr)
         return 2

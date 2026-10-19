@@ -4,6 +4,11 @@
 > Focused client/server checks after static and Lua-model validation. These are
 > verification scenarios, not a claim that the current addon has a known defect.
 
+For a new session, establish the selected client/server and required four-DLL
+environment using [target preflight](../docs/TARGET_ENVIRONMENT.md). Minimums,
+current reference releases and dated observations are distinct. The acceptance
+pass below keeps its original 12 October scope; adapt it to the current task.
+
 ---
 
 ## Current acceptance pass (2026-10-12)

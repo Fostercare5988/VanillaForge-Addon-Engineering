@@ -3,6 +3,11 @@
 > **Reverse-Engineered UI Architecture of the Authoritative OctoWoW Client**
 > Based on byte-level diffs against stock Blizzard WoW 1.12.1 `patch.MPQ` and effective files in `patch-4.mpq` / `patch-5.mpq`.
 
+This is historical, scoped extraction evidence. Its archive order and hashes do
+not certify another installation's complete runtime resolution. Inspect current
+custom patches and loose overrides, record extraction gaps, and confirm affected
+UI behavior using [target preflight](../docs/TARGET_ENVIRONMENT.md).
+
 ---
 
 ## 1. Effective FrameXML Load Precedence
