@@ -6,7 +6,7 @@
 >
 > Source basis: `brues-code/ClassicAPI`, default branch `master`, official `README.md`, official `docs/API.md`, and selected implementation/source references.
 >
-> Snapshot baseline used by VanillaForge: **ClassicAPI v1.15.16+**.
+> Snapshot baseline used by VanillaForge: **ClassicAPI v1.16.0+** (the explicit minimum for all 16 maintained addons).
 >
 > IMPORTANT: ClassicAPI is actively developed. This document is a local snapshot, not a claim that future versions cannot add or change functionality. If installed ClassicAPI is newer and a task depends on newly added behavior not present here, inspect the installed/current source and update this reference deliberately.
 
@@ -61,31 +61,33 @@ v1.15.13 -> 11513
 v1.15.14 -> 11514
 v1.15.15 -> 11515
 v1.15.16 -> 11516
+v1.16.0 -> 11600
 ```
 
-The VanillaForge framework baseline is:
+The VanillaForge support baseline is:
 
 ```text
-ClassicAPI v1.15.16+
+ClassicAPI v1.16.0+
 ```
 
 Do not assume a future version's new API exists solely because a similarly named Retail API exists.
 
 [SOURCE-VERIFIED] `CLASSIC_API_VERSION` identifies a build's version stamp, not
-the complete loaded DLL stack. The pinned [version publisher](https://github.com/brues-code/ClassicAPI/blob/7ccbbaaf68bcde6b29b71806981d0338e0577189/src/api/Version.cpp)
+the complete loaded DLL stack. The pinned [version publisher](https://github.com/brues-code/ClassicAPI/blob/99de63755bdc368cf8d35ce3a09dc46dafc20930/src/api/Version.cpp)
 sets this global at startup and on `/reload`. Unstamped developer builds use
 `99999999` so minimum-version comparisons pass; see the pinned
-[build configuration](https://github.com/brues-code/ClassicAPI/blob/7ccbbaaf68bcde6b29b71806981d0338e0577189/CMakeLists.txt).
+[build configuration](https://github.com/brues-code/ClassicAPI/blob/99de63755bdc368cf8d35ce3a09dc46dafc20930/CMakeLists.txt).
 That sentinel does not prove a published release or all capabilities of any
 later stable version. Record artifact/source identity separately, and verify
 the consumed API and its behavior on the loaded target.
 
-This environment/reference baseline does not mandate `MIN_CLASSIC_API=11516` in
-every addon. Declare the minimum required by the capabilities and semantic fixes
-the addon actually consumes. An explicitly chosen maintainer support floor may
-be higher; document that policy separately from an API's introduction version.
-Keep startup guards and installation requirements consistent. Do not automatically
-raise the support floor on every upstream release.
+Every maintained VanillaForge addon has the explicit maintainer support floor
+`MIN_CLASSIC_API=11600` / ClassicAPI v1.16.0+. Keep TOC metadata, synthetic-addon
+dependencies, runtime guards and installation documentation consistent. This
+policy is separate from each API's introduction version; for other components,
+declare the minimum required by the capabilities and semantic fixes the addon
+actually consumes. Future upstream releases do not automatically raise the
+support floor.
 
 ClassicAPI is one required component of VanillaForge's full enhanced environment;
 its version global does not establish that SuperWoW, NamPower and UnitXP SP3 are
@@ -3019,3 +3021,12 @@ Set action placements persist in the per-character native equipment-set file, no
 
 ## v1.15.16 source-verified addon contracts
 [SOURCE-VERIFIED] Compatibility-only release; no new public Lua API symbols, events, or return signature changes. Bundled `!!!ClassicAPI` compatibility module `AddOns/!!!ClassicAPI/Util/AddOnCompat.lua` intercepts `Turtle_GroupUI` via `EventUtil.ContinueOnAddOnLoaded` and wraps the global `GroupFrame_ToggleMovement(state)` function. Under modern script dispatch, frame buttons pass the widget (`self`) as the first argument to `OnClick`; this wrapper sanitizes any non-numeric `state` argument to `nil` before calling the original function, preventing an arithmetic error (`1 - state` at `Turtle_GroupUI.lua:409`). See [v1.15.16 audit](docs/CLASSICAPI_1.15.16_AUDIT.md).
+
+## v1.16.0 source-verified API and behavior contracts
+[SOURCE-VERIFIED] The pinned [v1.16.0 API reference](https://github.com/brues-code/ClassicAPI/blob/99de63755bdc368cf8d35ce3a09dc46dafc20930/docs/API.md) documents `C_QuestLog.GetInfo(index)` as a row-info table which does not contain completion state. `C_QuestLog.GetQuestLogTitle(index)` returns a modern row tuple; `isComplete` is `1` for complete, `-1` for failed, and `nil` otherwise. Its third value is `suggestedGroup` (always `0` here), unlike the legacy global `GetQuestLogTitle` third-value quest tag.
+
+[SOURCE-VERIFIED] `CreateFrame("Cooldown", ...)` creates a native sweep widget; Lua methods set its start and duration in seconds. `SetReverse` and `SetDrawEdge` store flags, but this release's API reference says they do not alter the rendered sweep. XML cannot create this frame type. Do not assume Retail rendering semantics.
+
+[SOURCE-VERIFIED] `GameTooltip:AddTexture` inserts an icon only on an eligible line and returns success/failure. `HookScript` forwards the same script arguments to both handlers; `hooksecurefunc` runs its callback after the original, forwards arguments, and preserves original return values. Macro APIs accept names as well as indexes. For an unknown name, `GetMacroInfo` returns nils, `PickupMacro` / `DeleteMacro` do nothing, and `EditMacro` changes no macro and returns the first empty slot or 0. `string.trim` and `string.join` are also documented.
+
+This release adds 4.3.4-era API coverage plus behavior fixes across frames, tooltips, hooks, XML, nameplate/unit events, quest-log behavior and Lua compatibility. See the [v1.16.0 audit](docs/CLASSICAPI_1.16.0_AUDIT.md) for upstream provenance, deployment evidence and portfolio displacement candidates. In-game behavior remains unverified locally.

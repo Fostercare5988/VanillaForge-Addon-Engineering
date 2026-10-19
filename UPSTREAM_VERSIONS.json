@@ -1,21 +1,21 @@
 {
   "classicapi": {
-    "minimum_version": "1.15.16",
-    "minimum_version_scope": "framework environment, not every addon's dependency guard",
-    "reference_version": "1.15.16",
+    "minimum_version": "1.16.0",
+    "minimum_version_scope": "all 16 maintained VanillaForge addons share the explicit ClassicAPI 1.16.0+ support floor",
+    "reference_version": "1.16.0",
     "repository": "brues-code/ClassicAPI",
-    "reference_commit": "7ccbbaaf68bcde6b29b71806981d0338e0577189",
+    "reference_commit": "99de63755bdc368cf8d35ce3a09dc46dafc20930",
     "file_shas": {
-      "docs/API.md": "a162057257ebe44c13e512d940eedf994c351a35",
-      "README.md": "cf885d857ce6fedbe1559a01cba1c3ea25e2a35c"
+      "docs/API.md": "f29534e77618bc68a0286f781202b156ea66fb19",
+      "README.md": "52363d11d206393ce96fe4a9a21b1703ee885eab"
     },
     "release_provenance": {
-      "tag": "v1.15.16",
-      "tag_object": "ec18cc1ebacf39d79aaa37d9411f10719ef29256",
-      "published_at": "2026-09-30T20:04:08Z",
-      "dll_asset_id": 601705195,
-      "dll_size_bytes": 1449984,
-      "dll_sha256": "e34886fb9725b9059375a5c37bff81ce220633c4e2c39719ef3223a6b8fc703d"
+      "tag": "v1.16.0",
+      "tag_object": "65d499000ddb6d11e1eda15b463aaeb13f92e67e",
+      "published_at": "2026-10-18T22:18:18Z",
+      "dll_asset_id": 654614703,
+      "dll_size_bytes": 1512448,
+      "dll_sha256": "ae88fc0461b58eff37171e10015ddaf8c27b1f428794c4ff927429389fc2535b"
     }
   },
   "superwow": {
