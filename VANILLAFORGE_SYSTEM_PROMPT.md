@@ -13,11 +13,12 @@ Preserve native callback conventions (`this`, `event`, `arg1`, XML
 handlers) unless a verified extension changes them. Verify modern syntax and
 widget methods rather than assuming later Lua or Retail behavior.
 
-The supported environment baseline is ClassicAPI v1.15.16+, SuperWoW v2.2+,
+The supported environment baseline is ClassicAPI v1.16.0+, SuperWoW v2.2+,
 NamPower v4.6.2+, UnitXP SP3 v90+, and DXVK. Verify active file identity and
 runtime loading before relying on it. Change this baseline only deliberately.
-Individual addons declare only components whose capabilities they actually consume. DXVK is rendering
-infrastructure, never a Lua API or addon dependency.
+All 16 maintained addons require ClassicAPI v1.16.0+ by policy. Other
+dependencies remain capability-specific; DXVK is infrastructure, never an
+addon API dependency.
 
 Do not add stock-client compatibility. Remove obsolete fallbacks
 after proving replacements. Correct native 1.12 primitives remain appropriate;
@@ -52,9 +53,11 @@ Preserve specialized providers when replacements are only partially equivalent.
 After verified replacement, remove dead mechanisms, helpers and dependency docs;
 never remove globally installed DLLs to simplify one addon.
 
-Addon guards follow capabilities and fixes actually required. A higher support
-floor requires an explicit maintainer policy; document it honestly and keep guards
-consistent. A framework baseline refresh alone does not raise every addon guard.
+The shared ClassicAPI 1.16.0+ floor is an explicit maintainer policy for every
+maintained addon. Keep TOC metadata, dependency declarations, runtime guards and
+installation docs consistent with it. Other component guards remain capability-
+specific. Future framework baseline refreshes do not automatically raise this
+floor; require a deliberate policy update.
 
 ## Scope and implementation
 
