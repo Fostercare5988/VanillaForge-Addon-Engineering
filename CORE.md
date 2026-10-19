@@ -12,6 +12,11 @@ loaded. **Do not inspect, hash or verify the DLLs or the client installation;
 reading game archives with `tools/extract_framexml.py` is allowed when a test
 needs it.** The user says when a DLL changes.
 
+Server: OctoWoW (octowow.st), custom patch 1.18.1 on the 1.12.1 client. 'Native' or
+'Blizzard' UI means the FrameXML in this client's archives. Game rules — battlegrounds,
+spells, items, talents, quests — may differ from vanilla 1.12: never assume vanilla data
+or numbers; check octowow.st/db or mark the code -- UNVERIFIED: test in game.
+
 The base runtime is Lua 5.0. ClassicAPI rewrites and backports part of Lua 5.1;
 see `CLASSICAPI_MASTER_REFERENCE.md` §4.
 - Supported: `#t`, `...` (in functions and as the file-level
