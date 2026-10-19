@@ -51,7 +51,10 @@ function UnitIsVisible() return 1 end
 function UnitIsDeadOrGhost() return nil end
 function UnitIsDead() return nil end
 function UnitIsGhost() return nil end
-function UnitName(u) if u == "player" then return "Tester" end if u == "target" then return target end end
+guidNames = {}
+spellInfoCalls = 0
+function SpellInfo(id) spellInfoCalls = spellInfoCalls + 1; return "Arcane Intellect" end
+function UnitName(u) if u == "player" then return "Tester" end if u == "target" then return target end return guidNames[u] end
 function UnitGUID(u) if u == "target" and target then return "0x0000000000000042" end if u == "0x0000000000000042" then return u end end
 health = { hp = 4000, max = 4000 }
 function GetUnitField(unit, field)
@@ -64,14 +67,15 @@ AutoBG_Settings = {}
 '''
 
 
-def runtime():
+def runtime(sighting=True):
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(BASE)
     lua.execute(TARGETS)
     for event in ("PLAYER_LOGIN", "UPDATE_BATTLEFIELD_STATUS"):
         lua.execute('AutoBG_Targets.scripts.OnEvent(AutoBG_Targets, "%s")' % event)
-    # One sighting maps the GUID; afterwards no token is needed.
-    lua.execute('target = "Grom"; AutoBG_Targets.scripts.OnEvent(AutoBG_Targets, "PLAYER_TARGET_CHANGED"); target = nil')
+    if sighting:
+        # One sighting maps the GUID; afterwards no token is needed.
+        lua.execute('target = "Grom"; AutoBG_Targets.scripts.OnEvent(AutoBG_Targets, "PLAYER_TARGET_CHANGED"); target = nil')
     return lua
 
 
@@ -112,6 +116,17 @@ class TargetsGuidEventTests(unittest.TestCase):
         lua = runtime()
         fire(lua, "BUFF_ADDED_OTHER", GROM, 1, 23276, 1, 60, 5, 0)
         self.assertEqual(lua.eval('AutoBG_TargetButton1.Trinket.Text.text'), "3:00")
+
+    def test_never_targeted_enemy_is_learned_from_its_guid(self):
+        lua = runtime(sighting=False)
+        lua.execute('guidNames["%s"] = "Grom"; health.hp = 2000' % GROM)
+        fire(lua, "UNIT_HEALTH_GUID", GROM, 0, 0, 0, 0, 0, 0)
+        self.assertEqual(row_text(lua), "50%")
+
+    def test_stealth_check_names_each_spell_once(self):
+        lua = runtime()
+        lua.execute('spellInfoCalls = 0; for i = 1, 100 do AutoBG_Targets.CheckIsStealthSpell(10157) end')
+        self.assertEqual(lua.eval('spellInfoCalls'), 1)
 
     def test_unknown_guids_are_ignored(self):
         lua = runtime()

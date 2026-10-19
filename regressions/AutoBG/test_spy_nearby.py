@@ -47,7 +47,8 @@ function UnitExists(u)
 end
 function UnitIsVisible() return visible end
 function UnitIsPlayer() return 1 end
-function UnitIsDead() return nil end
+deadUnits = {}
+function UnitIsDead(u) return deadUnits[u] end
 function UnitIsGhost() return nil end
 function UnitClass() return "Warrior", "WARRIOR" end
 function UnitLevel() return 60 end
@@ -146,6 +147,7 @@ class SpyNearbyTests(unittest.TestCase):
 
     def test_unit_died_dims_at_once_and_a_visible_corpse_stays_dim(self):
         lua = runtime()
+        lua.execute('deadUnits["0x0000000000000001"] = true')
         fire(lua, "UNIT_DIED", "0x0000000000000001")
         self.assertEqual(lua.eval('AutoBG_SpyRow1.alpha'), 0.45)
         self.assertTrue(lua.eval('AutoBG_SpyRow1.targetDead'))
@@ -153,6 +155,15 @@ class SpyNearbyTests(unittest.TestCase):
         self.assertEqual(lua.eval('AutoBG_SpyRow1.alpha'), 0.45)
         advance(lua, 30)
         self.assertFalse(lua.eval('AutoBG_SpyRow1.shown'))
+
+    def test_resurrected_enemy_becomes_active_again(self):
+        lua = runtime()
+        lua.execute('deadUnits["0x0000000000000001"] = true')
+        fire(lua, "UNIT_DIED", "0x0000000000000001")
+        lua.execute('deadUnits["0x0000000000000001"] = nil')
+        advance(lua, 1)
+        self.assertEqual(lua.eval('AutoBG_SpyRow1.alpha'), 1)
+        self.assertFalse(lua.eval('AutoBG_SpyRow1.targetDead'))
 
     def test_window_width_does_not_change_when_list_empties(self):
         lua = runtime()
