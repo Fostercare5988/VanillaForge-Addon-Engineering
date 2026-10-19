@@ -8,7 +8,29 @@ Use [target preflight](../docs/TARGET_ENVIRONMENT.md) and
 This file preserves dated deployment evidence. Its personal paths, version labels
 and logs do not establish the installation on another computer or a later session.
 
-## Current installation correction — 12 October 2026
+## Current installation correction — 19 October 2026
+
+The active game remains `C:\Users\Fostercare\Desktop\client-2026-10-10`.
+Its `ClassicAPI.dll` was replaced with the official v1.16.0 release asset:
+1,512,448 bytes, SHA-256
+`ae88fc0461b58eff37171e10015ddaf8c27b1f428794c4ff927429389fc2535b`.
+The bytes match GitHub's published asset digest. The v1.15.16 recovery copy is
+stored outside the game at
+`C:\Users\Fostercare\Documents\VanillaForge\.private\ClassicAPI-v1.16.0-upgrade-2026-10-19\ClassicAPI-v1.15.16.dll`
+and its prior SHA-256 was verified. `dlls.txt` and the other native binaries
+were not changed. No game process was active at replacement time, so v1.16.0
+runtime loading and addon startup guards remain unverified; a full client restart
+is required.
+
+All 16 maintained addon repositories now declare ClassicAPI v1.16.0+ as their
+shared support minimum in TOC metadata and startup guards. See the [v1.16.0
+upstream audit](../docs/CLASSICAPI_1.16.0_AUDIT.md) for provenance and validation.
+
+The [current client manifest](octowow-client-manifest.json) and native inventory
+are refreshed from this install. The [12 October manifest](octowow-client-manifest-2026-10-12.json)
+and the earlier records below remain historical evidence.
+
+## Earlier installation correction — 12 October 2026
 
 The 12 October record selected `C:\Users\Fostercare\Desktop\client-2026-10-10`, launched
 with its `VanillaFixes.exe`. Maintained addon repositories lived directly in
@@ -36,7 +58,7 @@ the cause of the reported stutters or native crash safety.
 The active executable remains WoW 1.12.1.5875, Interface `11200`; SHA-256:
 `cb599a39b7cbc6fc2d63cc1d2fb18fac62546b81b08c407512d1bdec4471614b`.
 
-The [current client manifest](octowow-client-manifest.json) records the new active
+The 12 October client manifest recorded the then-current active
 installation. The archived private workspace's `client-baseline.json` and
 `docs/STUTTER_REVIEW.md` describe the previous installation. DXVK 3.1.1
 D3D9/Vulkan presentation was established in that older installation after

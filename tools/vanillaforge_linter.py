@@ -3,8 +3,9 @@
 VanillaForge Addon Linter & Heuristic Static Analysis Scanner (v3.1)
 Part of the VanillaForge Enhanced WoW 1.12.1 Addon Engineering Framework.
 Targets World of Warcraft 1.12.1 Build 5875 / Interface 11200 with an enhanced-client baseline:
-ClassicAPI v1.15.16+, SuperWoW v2.2+, NamPower v4.6.2+, UnitXP SP3 v89+, and DXVK runtime.
-The full environment is required, while individual addons only declare components they actually consume.
+ClassicAPI v1.16.0+, SuperWoW v2.2+, NamPower v4.6.2+, UnitXP SP3 v89+, and DXVK runtime.
+The full environment is required. All maintained addons require ClassicAPI v1.16.0+ by policy;
+other component dependencies are declared only where an addon actually consumes them.
 """
 
 import os
@@ -735,7 +736,7 @@ def main():
         results, has_guard, readme_warnings, structure_warnings, total_errors, total_warnings, total_infos = auditor.audit_addon_dir(target)
 
         if has_guard:
-            print(f"  {INFO_BADGE} Dependency Guard: ClassicAPI guard detected; minimum requires capability-specific review")
+            print(f"  {INFO_BADGE} Dependency Guard: ClassicAPI guard detected; verify the 1.16.0+ support floor")
         else:
             print(f"  {INFO_BADGE} Dependency Guard: None detected (optional; dependencies are capability-driven)")
 

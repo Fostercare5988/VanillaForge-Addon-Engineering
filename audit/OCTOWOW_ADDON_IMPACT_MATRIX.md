@@ -1,7 +1,20 @@
 # OctoWoW Addon Impact & Capability Displacement Matrix
 
 > **Cross-Addon Audit for the VanillaForge Maintained Addon Portfolio**
-> Evaluated against deployed ClassicAPI v1.15.16, SuperWoW 2.2, NamPower 4.6.2, UnitXP SP3 Build 90, and OctoWoW FrameXML.
+> The 12 October portfolio review evaluated ClassicAPI v1.15.16, SuperWoW 2.2, NamPower 4.6.2, UnitXP SP3 Build 90, and OctoWoW FrameXML.
+
+---
+
+## Current support policy — 19 October 2026
+
+ClassicAPI v1.16.0+ is now the explicit minimum for all 16 maintained addon
+repositories listed in the dated portfolio below. Each TOC declares the minimum
+and synthetic `!!!ClassicAPI` dependency, every addon has a startup version guard,
+and installation docs state the same requirement. This is a shared support
+standard, not a claim that every addon uses a v1.16.0-only API; no addon feature
+modernization or package version change was included. The active client DLL
+matches the official v1.16.0 release asset by size and SHA-256; runtime loading
+still needs a full client restart. See the [v1.16.0 audit](../docs/CLASSICAPI_1.16.0_AUDIT.md).
 
 ---
 
@@ -40,7 +53,7 @@ navigation hub; source ownership stays with each standalone addon.
 The current [client manifest](octowow-client-manifest.json) records the source
 root, native file identity, loader entries and all Git/TOC states. Native capture
 time and later addon reconciliation time are separate. Current DLL observations
-belong to the [installation correction](OCTOWOW_CLIENT_BASELINE.md#current-installation-correction--12-october-2026).
+belong to the [installation correction](OCTOWOW_CLIENT_BASELINE.md#current-installation-correction--19-october-2026).
 Do not reuse a historical warning as an unresolved current defect without checking.
 
 All 16 projects passed TOC/XML closure and scoped VanillaForge lint: 465 loaded
@@ -216,7 +229,8 @@ This supersedes the older AutoLazy-specific findings; the native/FrameXML audit
 and unrelated portfolio rows are not newly certified.
 
 - Load order: `AutoLazy.lua`, `AutoLazy_MinimapTray.lua`, `AutoLazy_GUI.lua`.
-  SavedVariables: `AutoLazyDB`; declared ClassicAPI minimum remains 1.15.15.
+  SavedVariables: `AutoLazyDB`; the minimum was 1.15.15 at this 4 October audit
+  and was raised to the shared 1.16.0+ policy on 19 October.
 - Automatic rolls match 39 officially verified item IDs and the configured
   dungeon. `GetLootRollItemID` supplies active roll identity; content definitions
   were checked independently against official OctoWoW records. Third-party addon

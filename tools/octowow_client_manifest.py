@@ -28,7 +28,7 @@ UPSTREAM_CONFIG = ROOT / 'UPSTREAM_VERSIONS.json'
 # These hashes identify the dated reference files; they do not prove runtime
 # loading or compatibility. Only ClassicAPI has upstream asset provenance here.
 NATIVE_REFERENCES = {
-    'ClassicAPI.dll': ('1.15.16', 'e34886fb9725b9059375a5c37bff81ce220633c4e2c39719ef3223a6b8fc703d'),
+    'ClassicAPI.dll': ('1.16.0', 'ae88fc0461b58eff37171e10015ddaf8c27b1f428794c4ff927429389fc2535b'),
     'SuperWoWhook.dll': ('2.2', 'bd214b32c878649e94ce654835946bd05e0ce7710e8f01bae10d8ab50a89351d'),
     'nampower.dll': ('4.6.2', '96af1722ee6b1a76cbb11e59e452fe54a83f54a3da80ae24f9c7571a0a6392fe'),
     'UnitXP_SP3.dll': ('90', '74a0a80aef02be28187fd67e9ec3945d54828ef3302a827754b4c40b69cdaed8'),

@@ -13,7 +13,7 @@ handlers) unless a verified extension changes them. Verify modern syntax and
 widget methods rather than assuming later Lua or Retail behavior.
 
 The required environment is OctoWoW client revision `2026.10.10`, with ClassicAPI
-v1.15.16+, SuperWoW v2.2+, NamPower v4.6.2+, and UnitXP SP3 v89+. All four DLLs
+v1.16.0+, SuperWoW v2.2+, NamPower v4.6.2+, and UnitXP SP3 v89+. All four DLLs
 are mandatory; these minimums remain supported. Prefer reviewed stable releases;
 `UPSTREAM_VERSIONS.json` records minimums and provenance. Change floors deliberately.
 Before target-dependent addon implementation, follow [target preflight](docs/TARGET_ENVIRONMENT.md):
@@ -56,9 +56,10 @@ Preserve specialized providers when replacements are only partially equivalent.
 After verified replacement, remove dead mechanisms, helpers and dependency docs;
 never remove globally installed DLLs to simplify one addon.
 
-Addon guards follow capabilities and fixes actually required. A higher support
-floor requires an explicit maintainer policy; document it honestly and keep guards
-consistent. A framework baseline refresh alone does not raise every addon guard.
+The shared ClassicAPI 1.16.0+ floor is explicit maintainer policy for every
+maintained addon; keep TOC metadata, dependency declarations, runtime guards and
+installation docs consistent. Other component guards remain capability-specific.
+Baseline refreshes do not raise this floor without a deliberate policy update.
 
 ## Scope and implementation
 

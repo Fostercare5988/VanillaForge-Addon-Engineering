@@ -220,7 +220,7 @@ class EnvironmentPreflightTests(unittest.TestCase):
         self.profile = self.root / 'target.json'
         self.registry = self.root / 'upstream.json'
         self.target = json.loads(MANIFEST.TARGET_PROFILE.read_text(encoding='utf-8'))
-        self.versions = {'classicapi': '1.15.16', 'superwow': '2.2', 'nampower': '4.6.3', 'unitxp_sp3': '90'}
+        self.versions = {'classicapi': '1.16.0', 'superwow': '2.2', 'nampower': '4.6.3', 'unitxp_sp3': '90'}
         self.upstream = {key: {'minimum_version': version} for key, version in self.versions.items()}
         self.upstream['nampower']['minimum_version'] = '4.6.2'
         self.upstream['unitxp_sp3'].update(minimum_version='89', reference_version='90')

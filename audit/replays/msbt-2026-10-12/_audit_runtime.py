@@ -11,7 +11,7 @@ def lua50(s):
     return re.sub(r'for ([\w_, ]+) in ([\w.\[\]"\']+) do', r'for \1 in pairs(\2) do', s)
 
 BOOT = r'''
-CLASSIC_API_VERSION=11516; SUPERWOW_VERSION="2.2";
+CLASSIC_API_VERSION=11600; SUPERWOW_VERSION="2.2";
 now=1; timers={}; scheduled=0; tickers=0; sent={}; messages={}; sounds=0;
 units={player={guid="0xPLAYER",name="Hero",health=1000,max=1000,mana=100,maxmana=100,class="PRIEST"},
  pet={guid="0xPET",name="Wolf",health=500,max=500,class="WARRIOR"},
