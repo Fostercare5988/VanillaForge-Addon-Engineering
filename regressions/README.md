@@ -88,6 +88,15 @@ Interface\FrameXML\WorldStateFrame.xml`. The complete AutoBG.lua file runs under
 with generic widget mocks. These tests do not prove how the game handles the native
 flag, the taskbar flash or scoreboard drawing.
 
+Eleven more cover the redesign in AutoBG `dfb923d`..`20e7936`:
+- `test_spy_nearby.py`: visible enemies stay listed, unseen ones dim before removal,
+  fixed window width (Spy-superwow's Nearby model).
+- `test_timer_bars.py`: titles, faction fills, icons and group height of the bars.
+- `test_carrier_health.py`: carrier health shows real values from NamPower
+  `GetUnitField` or `UnitHealth`, and stays a percent otherwise.
+
+Nine of these fail on `f005e24`. The rest are controls.
+
 ```text
 python -B tools/audit_addon.py "<AddOns>/AutoBG" --run-tests --test-start regressions/AutoBG --output .private/autobg-current.json
 ```
