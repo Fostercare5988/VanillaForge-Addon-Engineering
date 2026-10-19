@@ -10,7 +10,7 @@ Retrieve only what the task needs:
 
 | Need | Reference |
 | --- | --- |
-| Required DLL stack and selected client/server preflight | [Target environment](docs/TARGET_ENVIRONMENT.md) |
+| Required DLL stack and addon session start | [Target environment](docs/TARGET_ENVIRONMENT.md) |
 | Local addon source and Git ownership | [Current installation correction](audit/OCTOWOW_CLIENT_BASELINE.md#current-installation-correction--19-october-2026) |
 | Portfolio status and next work | [Current portfolio](audit/OCTOWOW_ADDON_IMPACT_MATRIX.md#current-portfolio--12-october-2026) |
 | ClassicAPI capabilities | [API reference](CLASSICAPI_MASTER_REFERENCE.md) |

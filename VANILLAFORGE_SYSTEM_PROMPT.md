@@ -16,10 +16,10 @@ The required environment is OctoWoW client revision `2026.10.10`, with ClassicAP
 v1.16.0+, SuperWoW v2.2+, NamPower v4.6.2+, and UnitXP SP3 v89+. All four DLLs
 are mandatory; these minimums remain supported. Prefer reviewed stable releases;
 `UPSTREAM_VERSIONS.json` records minimums and provenance. Change floors deliberately.
-Before target-dependent addon implementation, follow [target preflight](docs/TARGET_ENVIRONMENT.md):
-identify the selected server/client, installed source, patches and consumed APIs.
-Separate target policy, observed files, configured loading and runtime proof.
-Missing evidence stays unresolved; repository-only maintenance needs no game download.
+Treat the DLLs as installed; never inspect, hash or verify them or the client
+installation. Before target-dependent work, read the
+[target environment](docs/TARGET_ENVIRONMENT.md) and identify consumed APIs.
+Native behavior stays an in-game check; framework maintenance needs no game.
 Addon guards reflect consumed providers; the full environment remains required.
 DXVK is rendering infrastructure, never an addon dependency.
 

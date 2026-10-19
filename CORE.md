@@ -11,9 +11,19 @@ SuperWoW 2.2+, NamPower 4.6.2+ and UnitXP SP3 v89+. Treat these as installed and
 loaded. **Do not inspect, hash or verify DLLs or client files.** The user says when
 a DLL changes.
 
-Lua is 5.0: no `#` (use `table.getn`), varargs use `arg`, `string.gfind` not
-`gmatch`. Handlers use the globals `this`, `event`, `arg1`... unless an extension
-documents otherwise.
+The base runtime is Lua 5.0. ClassicAPI rewrites and backports part of Lua 5.1;
+see `CLASSICAPI_MASTER_REFERENCE.md` §4.
+- Supported: `#t`, `...` (in functions and as the file-level
+  `local addonName, ns = ...`), `a % b`, `0xFF`, `[=[ ]=]`, `select`,
+  `string.match`/`gmatch`, `s:match()`-style string methods, and up to 60 upvalues.
+- `#` is not `table.getn`. It uses a separate border path. Leave
+  `table.getn`/`table.setn` where code relies on their stored-length rules (§4.6).
+- Still undocumented: mixing the implicit `arg` table with `...`, and other 5.1
+  features. Check the reference first; Lua 5.0 forms remain valid.
+- Handlers always get the globals `this`, `event`, `arg1`... Positional
+  `(self, event, ...)` arguments work when `GetModernScriptArgs()` is on. That is
+  the default, but the switch is global and can be turned off (§4.4). Follow the
+  addon's existing convention.
 
 ## Rules
 

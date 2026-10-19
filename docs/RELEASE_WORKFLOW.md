@@ -50,8 +50,8 @@ Before commit: inspect status and the working-tree diff before staging, stage on
 When pushing, verify local HEAD, `origin/<primary>` HEAD, intended tag if tags are used, and final working-tree status.
 
 Report static validation, repository reconciliation, commit/push and runtime verification separately.
-An audit's source-only or pending environment status does not become runtime
-acceptance through a successful commit or push. See [target preflight](TARGET_ENVIRONMENT.md).
+A source-only audit does not become runtime acceptance through a successful
+commit or push. See the [target environment](TARGET_ENVIRONMENT.md).
 
 ## Downloadable Package
 
