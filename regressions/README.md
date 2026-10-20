@@ -34,7 +34,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 
 | Addon | Location | Tests | Portable | Run |
 | --- | --- | ---: | --- | --- |
-| AutoBG | `regressions/AutoBG` | 46 | Yes | [AutoBG](#autobg) |
+| AutoBG | `regressions/AutoBG` | 48 | Yes | [AutoBG](#autobg) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 19 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 10 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
@@ -152,6 +152,8 @@ the Blood Ring removal: every Auto-Queue choice reaches a native OctoWoW queue t
 and an old saved `AutoQueue_BR` is cleared on load. Both fail on `0c33a7c`.
 The placeholder-name cases (Spy and enemy frames ignore the client's `UNKNOWNOBJECT`
 name until the real one is cached) fail on `f90e342`.
+`test_no_chat_parsing.py` keeps enemy detection on DLL events instead of English
+combat-log text (P3-14); it fails on `c7138b9`.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/AutoBG" --run-tests --test-start regressions/AutoBG --output .private/autobg-current.json
