@@ -1,10 +1,9 @@
 # VanillaForge Agent Entry Point
 
-Read [VANILLAFORGE_SYSTEM_PROMPT.md](VANILLAFORGE_SYSTEM_PROMPT.md) once at the
-start of a fresh engineering session. It is the authoritative contract; this file
-routes it. Reread only if relevant context was lost or changed.
-
-CORE.md is the default for everyday work; read the full contract only for Gate or Framework passes.
+Read [CORE.md](CORE.md) at the start of every session. It is the default
+working contract. Read the full [VANILLAFORGE_SYSTEM_PROMPT.md](VANILLAFORGE_SYSTEM_PROMPT.md)
+only when asked for a Gate or Framework pass. Reread only if relevant context was
+lost or changed.
 
 Retrieve only what the task needs:
 
@@ -12,11 +11,12 @@ Retrieve only what the task needs:
 | --- | --- |
 | Required DLL stack and addon session start | [Target environment](docs/TARGET_ENVIRONMENT.md) |
 | Local addon source and Git ownership | [Current installation correction](audit/OCTOWOW_CLIENT_BASELINE.md#current-installation-correction--19-october-2026) |
-| Portfolio status and next work | [Current portfolio](audit/OCTOWOW_ADDON_IMPACT_MATRIX.md#current-portfolio--12-october-2026) |
+| Portfolio status and next work | [Portfolio record](audit/OCTOWOW_ADDON_IMPACT_MATRIX.md) (dated sections, newest first) |
 | ClassicAPI capabilities | [API reference](CLASSICAPI_MASTER_REFERENCE.md) |
 | SuperWoW, NamPower, UnitXP, DXVK, native UI | [Engine reference](ENGINE_REFERENCE.md) |
 | Recurring hazards and solutions | [Known patterns](KNOWN_PATTERNS.md) |
 | Broad addon work | [Workflow](docs/WORKFLOW.md) |
+| Addon regression suites and how to run them | [Regression index](regressions/README.md#suite-index) |
 | Release/reconciliation | [Release workflow](docs/RELEASE_WORKFLOW.md) |
 | Reusable session starter | [Bootstrap](docs/AGENT_BOOTSTRAP.md) |
 | Deployed OctoWoW evidence | [Dated baseline](audit/OCTOWOW_CLIENT_BASELINE.md), then relevant audit sections |
