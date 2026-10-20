@@ -38,6 +38,53 @@ class AuditReproductions(unittest.TestCase):
         lua.execute('plate.fnpUnitGUID = "0xF1"')
         self.assertEqual(lua.eval("FostercareNameplates.GetNameplateUnit(plate)"), "0xF1")
 
+    def test_p3_plate_binding_checked_on_slow_cadence(self):
+        """P3-1: every plate re-validated its GUID binding every frame (60 lookups a second)."""
+        lua = load()
+        lua.execute('plate = nativePlate("0xF1", "nameplate1"); calls = {}; runFrames(plate, 60)')
+        self.assertLessEqual(lua.eval('calls.GetNamePlateForGUID or 0'), 3)
+
+    def test_p3_no_plate_work_when_nothing_renders(self):
+        """P3-1: after the per-frame modules were switched off in settings, the
+        per-plate hook kept running its lookup every frame."""
+        lua = load()
+        lua.execute('''
+            plate = nativePlate("0xF1", "nameplate1")
+            for _, title in ipairs({ "Nameplate Details", "Nameplate Castbar", "Nameplate Class Colors" }) do
+                FostercareNameplates_Config[title] = 0
+                FostercareNameplates.mods[title]:enable()
+            end
+            calls = {}; runFrames(plate, 60)
+        ''')
+        self.assertEqual(lua.eval('calls.GetNamePlateForGUID or 0'), 0)
+
+    def test_p3_own_auras_walk_once(self):
+        """P3-2: own debuffs were read with by-index UnitAura, which re-walks the aura array per index."""
+        lua = load()
+        lua.execute('''
+            plate = nativePlate("0xF1", "nameplate1"); calls = {}
+            FostercareNameplates.Nameplates:Auras(plate, "0xF1")
+        ''')
+        self.assertIsNone(lua.eval('calls["UnitAura HARMFUL|PLAYER"]'))
+        self.assertEqual(lua.eval('calls.GetAuraSlots'), 1)
+
+    def test_p3_idle_castbar_query_backstop(self):
+        """P3-3: an idle plate re-queried cast info five times a second despite cast events."""
+        lua = load()
+        lua.execute('plate = nativePlate("0xF1", "nameplate1"); calls = {}; runFrames(plate, 60)')
+        self.assertLessEqual(lua.eval('calls.UnitCastingInfo or 0'), 2)
+
+    def test_p3_layout_slider_does_not_requery_plates(self):
+        """P3-4: every slider step re-queued health, auras and targeting for every plate."""
+        lua = load()
+        lua.execute('''
+            plate = nativePlate("0xF1", "nameplate1"); calls = {}
+            FostercareNameplates.Nameplates.pending = {}
+            FNPPlateSlidernameplate_scale:SetValue(1.5)
+            FNPPlateSlidernameplate_scale.scripts.OnValueChanged()
+        ''')
+        self.assertIsNone(lua.eval('next(FostercareNameplates.Nameplates.pending)'))
+
 
 if __name__ == "__main__":
     unittest.main()
