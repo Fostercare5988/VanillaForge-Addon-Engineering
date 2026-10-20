@@ -15,6 +15,7 @@ GROM = "0x0000000000000042"
 BASE = r'''
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 CLASSIC_API_VERSION, SUPERWOW_VERSION = 11600, "2.2"
+UNKNOWNOBJECT, UKNOWNBEING = "Unknown", "Unknown Being"
 local Widget = {}
 -- Unknown keys on real frames are nil; only fields the module checks before creating need this.
 local DATA_FIELDS = { MainFrame = true, TargetButton = true }
@@ -122,6 +123,14 @@ class TargetsGuidEventTests(unittest.TestCase):
         lua.execute('guidNames["%s"] = "Grom"; health.hp = 2000' % GROM)
         fire(lua, "UNIT_HEALTH_GUID", GROM, 0, 0, 0, 0, 0, 0)
         self.assertEqual(row_text(lua), "50%")
+
+    def test_uncached_name_is_asked_again_on_the_next_event(self):
+        lua = runtime(sighting=False)
+        lua.execute('guidNames["%s"] = "Unknown"; health.hp = 2000' % GROM)
+        fire(lua, "UNIT_HEALTH_GUID", GROM, 0, 0, 0, 0, 0, 0)
+        lua.execute('guidNames["%s"] = "Grom"; health.hp = 1000' % GROM)
+        fire(lua, "UNIT_HEALTH_GUID", GROM, 0, 0, 0, 0, 0, 0)
+        self.assertEqual(row_text(lua), "25%")
 
     def test_stealth_check_names_each_spell_once(self):
         lua = runtime()
