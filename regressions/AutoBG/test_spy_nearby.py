@@ -15,6 +15,7 @@ SPY = (ROOT / "AutoBG_Spy.lua").read_text("utf-8-sig")
 BASE = r'''
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 CLASSIC_API_VERSION, SUPERWOW_VERSION = 11600, "2.2"
+UNKNOWNOBJECT, UKNOWNBEING = "Unknown", "Unknown Being"
 local Widget = {}
 setmetatable(Widget, { __index = function(_, name)
     if string.find(name, "^%u") then return function() end end
@@ -164,6 +165,18 @@ class SpyNearbyTests(unittest.TestCase):
         advance(lua, 1)
         self.assertEqual(lua.eval('AutoBG_SpyRow1.alpha'), 1)
         self.assertFalse(lua.eval('AutoBG_SpyRow1.targetDead'))
+
+    def test_uncached_name_never_adds_an_unknown_row(self):
+        # One warlock: the client names it "Unknown" until its name is cached.
+        lua = runtime()
+        lua.execute('names["0x0000000000000003"] = "Unknown"')
+        fire(lua, "UNIT_CASTEVENT", "0x0000000000000003", "", "CAST", 686, 0)
+        lua.execute('plates.nameplate1 = { guid = "0x0000000000000003", name = "Unknown" }')
+        advance(lua, 1)
+        lua.execute('names["0x0000000000000003"] = "Pelk"; plates.nameplate1.name = "Pelk"')
+        advance(lua, 1)
+        lua.execute('rows = {}; for i = 1, 5 do local r = _G["AutoBG_SpyRow" .. i]; if r and r.shown then table.insert(rows, r.targetName) end end')
+        self.assertEqual(sorted(lua.eval('rows').values()), ["Grom", "Pelk"])
 
     def test_window_width_does_not_change_when_list_empties(self):
         lua = runtime()
