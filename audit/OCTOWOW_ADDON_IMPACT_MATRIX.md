@@ -5,6 +5,22 @@
 
 ---
 
+## Current portfolio — 20 October 2026
+
+The maintained portfolio is the 14 addons in the
+[Fostercare-Addons hub](https://github.com/Fostercare5988/Fostercare-Addons):
+MikScrollingBattleText, FostercareTweaks, FostercareNameplates, Bagnon, AutoBG,
+GearRack, FostercareAuras, aux-addon, BetterCharacterStats, AutoLazy, TWThreat,
+ActionBarProfiles, UnitXP_SP3_Addon and OctoMail.
+
+- **Removed:** BigWigs, SuperAPI and AtlasLoot are no longer maintained here. Their
+  GitHub forks stay untouched; VanillaForge does not audit or modernize them, and
+  older sections below that include them are historical.
+- **Added:** OctoMail, forked to [Fostercare5988/OctoMail](https://github.com/Fostercare5988/OctoMail)
+  from gralle1981/OctoMail (Roby_Brok), itself from sica42/TurtleMail and shirsig/Mail.
+  No upstream license was found; keep the author credits. Its cleanup and
+  modernization (English only, ClassicAPI minimum) are pending an audit.
+
 ## Current support policy — 19 October 2026
 
 ClassicAPI v1.16.0+ is now the explicit minimum for all 16 maintained addon
