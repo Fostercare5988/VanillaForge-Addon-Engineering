@@ -49,7 +49,9 @@ collect the loaded module inventory, source hashes, registrations, candidate
 query/UI sites and scoped lint results. It prints a one-line summary and never
 inspects the client or its DLLs. Add `--run-tests` to run local Python
 unittest discovery when that is the repository's test contract. Other test
-frameworks need their documented command. After explicit tests, the audit rechecks
+frameworks need their documented command. Add `--private-suites` to also run the
+addon's older private suite, when one exists; a failure shows in the summary and
+fails the command. After explicit tests, the audit rechecks
 loaded hashes and the TOC/XML closure without repeating lint or review-site scans.
 Changed or unreadable source sets test status to `invalidated` and fails the command;
 `runner_status` and output retain the process result, and the original snapshot
