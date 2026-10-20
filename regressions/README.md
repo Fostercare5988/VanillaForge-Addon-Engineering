@@ -35,7 +35,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | Addon | Location | Tests | Portable | Run |
 | --- | --- | ---: | --- | --- |
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 3 | Yes | [ActionBarProfiles](#actionbarprofiles) |
-| AutoBG | `regressions/AutoBG` | 64 | Yes | [AutoBG](#autobg) |
+| AutoBG | `regressions/AutoBG` | 88 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 14 | Yes | [FostercareNameplates](#fostercarenameplates) |
@@ -161,6 +161,10 @@ The placeholder-name cases (Spy and enemy frames ignore the client's `UNKNOWNOBJ
 name until the real one is cached) fail on `f90e342`.
 `test_no_chat_parsing.py` keeps enemy detection on DLL events instead of English
 combat-log text (P3-14); it fails on `c7138b9`.
+`test_ab_projection.py` covers the Arathi Basin projection: an equal finish shows a
+tie instead of a stale win, a winning side is told what to hold, final scores carry
+their faction, and a completed capture adds only the capturer's base (assaulted and
+neutral nodes). Five of its six fail on `e1eb810`; tick rates stay an in-game check.
 `test_spy_stealth_alert.py` follows a stealthed hostile rogue through each open-world
 detection path (nameplate, stealth cast, NamPower `BUFF_ADDED_OTHER`) to the alert
 window and the `RaidWarning` sound, and covers the 10-yard and line-of-sight gates,
@@ -171,7 +175,13 @@ toggle starts and ends every preview (and closing the window ends it), the remov
 per-page test, reset and Close buttons stay gone, switches save their settings,
 refreshes show saved slider values without writing them, and **Only within 10
 yards** dims while stealth warnings are off. `addon_loader.py` runs `ForgeUI.lua`
-first and passes `("AutoBG", ns)` to each file, as the client does.
+first and passes `("AutoBG", ns)` to each file, as the client does. The same file
+also covers the enemy-frame size presets, **Custom size** and the row-feature switches.
+`test_targets_row_features.py` covers enemy cast bars (ClassicAPI cast, interrupt,
+cleared cast, finished cast, the event-duration fallback, channel drain, switch off),
+range fading (far, never seen, switch off), raid icons on `RAID_TARGET_UPDATE`,
+group target counts and the preview samples. `test_targets_guid_events.py` adds the
+locked "Enemies alive/total" header and its preview-only drag hint.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/AutoBG" --run-tests --test-start regressions/AutoBG --output .private/autobg-current.json

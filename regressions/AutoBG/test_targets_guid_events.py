@@ -8,6 +8,8 @@ import os
 import unittest
 from lupa.lua51 import LuaRuntime
 
+import addon_loader
+
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 TARGETS = (ROOT / "AutoBG_Targets.lua").read_text("utf-8-sig")
 GROM = "0x0000000000000042"
@@ -23,6 +25,7 @@ setmetatable(Widget, { __index = function(_, name)
     if not DATA_FIELDS[name] and string.find(name, "^%u") then return function() end end
 end })
 function Widget:SetText(text) self.text = text end
+function Widget:EnableMouse(on) self.mouse = on end
 function Widget:SetScript(kind, fn) self.scripts = self.scripts or {}; self.scripts[kind] = fn end
 function Widget:IsShown() return self.shown end
 function Widget:Show() self.shown = true end
@@ -56,7 +59,11 @@ guidNames = {}
 spellInfoCalls = 0
 function SpellInfo(id) spellInfoCalls = spellInfoCalls + 1; return "Arcane Intellect" end
 function UnitName(u) if u == "player" then return "Tester" end if u == "target" then return target end return guidNames[u] end
-function UnitGUID(u) if u == "target" and target then return "0x0000000000000042" end if u == "0x0000000000000042" then return u end end
+function UnitGUID(u)
+    if u == "target" and target then return "0x0000000000000042" end
+    if u == "0x0000000000000042" then return u end
+    return raidTargets[u]
+end
 health = { hp = 4000, max = 4000 }
 function GetUnitField(unit, field)
     if field == "health" then return health.hp elseif field == "maxHealth" then return health.max end
@@ -64,6 +71,21 @@ function GetUnitField(unit, field)
 end
 function UnitHealth() return 100 end
 function UnitHealthMax() return 100 end
+function Widget:SetAlpha(a) self.alpha = a end
+-- Group, range, raid icon and cast state the row features read.
+raidSize, raidTargets = 0, {}
+function GetNumRaidMembers() return raidSize end
+function GetNumPartyMembers() return 0 end
+yards = {}
+function UnitDistanceSquared(u) local d = yards[u]; if not d then return 0, false end return d * d, true end
+raidIcons = {}
+function GetRaidTargetIndex(u) return raidIcons[u] end
+function SetRaidTargetIconTexture(texture, index) texture.raidIndex = index end
+casts, channels = {}, {}
+C_Spell = {
+    UnitCastingInfo = function(u) local c = casts[u]; if c then return c.name, c.name, c.icon, c.start, c.finish, false, nil, c.locked end end,
+    UnitChannelInfo = function(u) local c = channels[u]; if c then return c.name, c.name, c.icon, c.start, c.finish, false, c.locked end end,
+}
 AutoBG_Settings = {}
 '''
 
@@ -71,7 +93,7 @@ AutoBG_Settings = {}
 def runtime(sighting=True):
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(BASE)
-    lua.execute(TARGETS)
+    addon_loader.load(lua, TARGETS, "AutoBG_Targets.lua")
     for event in ("PLAYER_LOGIN", "UPDATE_BATTLEFIELD_STATUS"):
         lua.execute('AutoBG_Targets.scripts.OnEvent(AutoBG_Targets, "%s")' % event)
     if sighting:
@@ -136,6 +158,19 @@ class TargetsGuidEventTests(unittest.TestCase):
         lua = runtime()
         lua.execute('spellInfoCalls = 0; for i = 1, 100 do AutoBG_Targets.CheckIsStealthSpell(10157) end')
         self.assertEqual(lua.eval('spellInfoCalls'), 1)
+
+    def test_header_counts_living_enemies_and_stays_locked_in_a_match(self):
+        lua = runtime()
+        self.assertEqual(lua.eval('AutoBG_TargetsMainFrame.MoveText.text'), "Enemies 1/1")
+        self.assertFalse(lua.eval('AutoBG_TargetsMainFrame.DragHeader.mouse'))
+        fire(lua, "UNIT_DIED", GROM)
+        self.assertEqual(lua.eval('AutoBG_TargetsMainFrame.MoveText.text'), "Enemies 0/1")
+
+    def test_header_offers_dragging_only_in_preview(self):
+        lua = runtime()
+        lua.execute('AutoBG_Targets:EnableConfigMode(10)')
+        self.assertEqual(lua.eval('AutoBG_TargetsMainFrame.MoveText.text'), "Drag to move")
+        self.assertTrue(lua.eval('AutoBG_TargetsMainFrame.DragHeader.mouse'))
 
     def test_unknown_guids_are_ignored(self):
         lua = runtime()

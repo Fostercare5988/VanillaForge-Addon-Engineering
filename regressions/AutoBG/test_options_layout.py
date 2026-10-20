@@ -20,6 +20,7 @@ function Widget:SetValue(v)
     if self.scripts and self.scripts.OnValueChanged then self.scripts.OnValueChanged(self) end
 end
 function Widget:GetValue() return self.value or 0 end
+function Widget:SetHeight(h) self.height = h end
 calls = {}
 AutoBG_Targets.DisableConfigMode = function(self) self.isConfig = false; table.insert(calls, "targets off") end
 AutoBG_Targets.EnableConfigMode = function(self, size) self.isConfig = true; table.insert(calls, "targets " .. size) end
@@ -99,6 +100,38 @@ class OptionsLayoutTests(unittest.TestCase):
         lua.execute('AutoBG_Opt_AcceptDelay:SetValue(0)')
         self.assertEqual(lua.eval('AutoBG_Settings.AutoAcceptDelay'), 0)
         self.assertEqual(lua.eval('AutoBG_Opt_AcceptDelay.valueText.text'), "Instant")
+
+    def test_size_presets_set_the_size_and_light_up(self):
+        lua = runtime()
+        lua.execute('AutoBG_OpenOptions("targets")')
+        click(lua, "AutoBG_Tgt_Preset1")
+        self.assertEqual(lua.eval('AutoBG_Settings.Targets.ButtonWidth[10]'), 170)
+        self.assertEqual(lua.eval('AutoBG_Settings.Targets.ButtonHeight[10]'), 20)
+        self.assertEqual(lua.eval('AutoBG_Settings.Targets.ButtonFontSize[10]'), 10)
+        self.assertTrue(lua.eval('AutoBG_Tgt_Preset1.selected'))
+        self.assertFalse(lua.eval('AutoBG_Tgt_Preset2.selected'))
+        # A custom width no longer matches any preset.
+        lua.execute('AutoBG_Tgt_CustomSize.scripts.OnClick(AutoBG_Tgt_CustomSize); AutoBG_Tgt_Width:SetValue(185)')
+        self.assertFalse(lua.eval('AutoBG_Tgt_Preset1.selected'))
+
+    def test_custom_size_reveals_the_sliders(self):
+        lua = runtime()
+        lua.execute('AutoBG_OpenOptions("targets")')
+        self.assertFalse(lua.eval('AutoBG_Tgt_Width.shown'))
+        self.assertEqual(lua.eval('AutoBG_OptionsPanel.height'), 424)
+        click(lua, "AutoBG_Tgt_CustomSize")
+        self.assertTrue(lua.eval('AutoBG_Tgt_Width.shown'))
+        self.assertEqual(lua.eval('AutoBG_OptionsPanel.height'), 524)
+        self.assertEqual(lua.eval('AutoBG_Tgt_CustomSize.text'), "Hide custom size")
+
+    def test_row_feature_switches_save(self):
+        lua = runtime()
+        lua.execute('AutoBG_OpenOptions("targets")')
+        for name, key in (("AutoBG_Tgt_CastBars", "ShowCastBars"), ("AutoBG_Tgt_FadeRange", "FadeOutOfRange"),
+                          ("AutoBG_Tgt_RaidIcons", "ShowRaidIcons"), ("AutoBG_Tgt_TargetCount", "ShowTargetCount")):
+            self.assertTrue(lua.eval('%s.checked' % name), name)
+            toggle(lua, name)
+            self.assertFalse(lua.eval('AutoBG_Settings.Targets.%s' % key), key)
 
     def test_nearby_only_dims_while_stealth_warnings_are_off(self):
         lua = runtime()
