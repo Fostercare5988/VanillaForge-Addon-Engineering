@@ -62,6 +62,25 @@ class AuditReproductions(unittest.TestCase):
         lua.execute('fire("MAIL_FAILED")')
         self.assertFalse(lua.eval("OctoMail.sendmail_sending"))
 
+    def test_p2_mail_failed_between_mails_keeps_the_queue(self):
+        """Regression of P2-5: a MAIL_FAILED with no mail in flight (an empty send slot click) cancelled every mail after the first."""
+        lua = load()
+        lua.execute('''
+            local click = ClickSendMailItemButton
+            ClickSendMailItemButton = function()
+                if not cursor and not attached then fire("MAIL_FAILED") end
+                click()
+            end
+            bag["0:1"] = { texture = "t" }; bag["0:2"] = { texture = "t" }; bag["0:3"] = { texture = "t" }
+            MailAttachment1.item = { 0, 1 }; MailAttachment2.item = { 0, 2 }; MailAttachment3.item = { 0, 3 }
+            SendMailNameEditBox:SetText("Bob")
+            SendMailMailButton_OnClick()
+            fire("MAIL_SEND_SUCCESS"); fire("MAIL_FAILED"); frame()
+            fire("MAIL_SEND_SUCCESS"); frame(); fire("MAIL_SEND_SUCCESS"); frame()
+        ''')
+        self.assertEqual(lua.eval("table.getn(sent)"), 3)
+        self.assertFalse(lua.eval("OctoMail.sendmail_sending"))
+
     def test_p2_cod_is_logged_only_on_mails_that_carry_it(self):
         """P2-6: with "All mails" unchecked only mail 1 is C.O.D., but every later entry logs the C.O.D."""
         lua = load()
