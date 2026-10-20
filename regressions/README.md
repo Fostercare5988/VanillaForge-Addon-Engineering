@@ -34,6 +34,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 
 | Addon | Location | Tests | Portable | Run |
 | --- | --- | ---: | --- | --- |
+| ActionBarProfiles | `regressions/ActionBarProfiles` | 3 | Yes | [ActionBarProfiles](#actionbarprofiles) |
 | AutoBG | `regressions/AutoBG` | 48 | Yes | [AutoBG](#autobg) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 19 | Yes | [FostercareTweaks](#fostercaretweaks) |
@@ -178,4 +179,21 @@ behavior, event order or how the server handles mail.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/OctoMail" --run-tests --test-start regressions/OctoMail --output .private/octomail-current.json
+```
+
+## ActionBarProfiles
+
+Three regressions cover the 2026-10-20 private audit
+(`.private/audit-ActionBarProfiles-2026-10-20.md`), from the in-game report "Cannot
+load slot 19 (Elixir of the Mongoose)":
+- a slot that already holds its saved item stays, even with none in the bags;
+- slots that cannot be filled are skipped and named in chat, and the rest still load;
+- each skipped slot names its reason, such as "item is locked".
+
+All three fail on 1.0.0 (`a62c656`). `abp_env.py` runs `ActionBarProfiles.lua` under
+Lua 5.1 with action-bar, spellbook, bag and cursor mocks shaped like the ClassicAPI and
+SuperWoW docs. They do not prove native placement or zero-count item buttons.
+
+```text
+python -B tools/audit_addon.py "<AddOns>/ActionBarProfiles" --run-tests --test-start regressions/ActionBarProfiles --output .private/abp-current.json
 ```
