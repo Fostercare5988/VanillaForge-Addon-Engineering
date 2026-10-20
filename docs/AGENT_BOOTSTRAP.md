@@ -21,8 +21,8 @@ SCOPE: <subsystems; behavior and settings that must remain>
 STOP CONDITION: <concrete completion boundary>
 GIT AUTHORIZATION: <none, or the specific requested Git/release actions>
 
-Read AGENTS.md, then VANILLAFORGE_SYSTEM_PROMPT.md as the contract.
-Use the relevant workflow and references only for concrete questions. For the
+Read AGENTS.md, then CORE.md as the contract. For a Gate or Framework pass,
+also read VANILLAFORGE_SYSTEM_PROMPT.md. Use the relevant workflow and references only for concrete questions. For the
 selected OctoWoW client, follow docs/TARGET_ENVIRONMENT.md. Historical paths and
 DLL observations in audit/OCTOWOW_CLIENT_BASELINE.md need current applicability.
 Reuse completed discovery unless repository evidence invalidates it.
@@ -45,8 +45,8 @@ git status. Distinguish static/model evidence from in-game verification.
 ## Resume
 
 ```text
-Continue under AGENTS.md and VANILLAFORGE_SYSTEM_PROMPT.md.
-Reload the contract if its context was lost or changed; retrieve references selectively.
+Continue under AGENTS.md and CORE.md (plus VANILLAFORGE_SYSTEM_PROMPT.md for
+a Gate or Framework pass). Reload the contract if its context was lost or changed; retrieve references selectively.
 VERIFIED STATE: <completed work and source/test evidence>
 CURRENT OBJECTIVE: <next bounded phase>
 SCOPE / INVARIANTS: <what may change; what must remain>

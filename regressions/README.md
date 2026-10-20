@@ -22,6 +22,41 @@ loaded modules and load-graph changes. Preserve the previous report. Matching
 source supports selective reuse of earlier review; it does not transfer review
 approval or establish matching DLLs, settings, test coverage or native behavior.
 
+## Suite index
+
+Every addon regression suite VanillaForge knows about. "Portable" suites read the
+addon through `VANILLAFORGE_ADDON_ROOT` and run on any checkout with the audit
+runner command in each section below. "Private" suites are adapted copies kept in
+`.private/portfolio-review-2026-10-12/external-tests/` (not in git); they hard-code
+the installed addon path and some archived development fixtures, so they run only
+on the maintainer's PC. Source revisions and hashes for the private suites are in
+that folder's `verified-repositories.json` and `validation.json`.
+
+| Addon | Location | Tests | Portable | Run |
+| --- | --- | ---: | --- | --- |
+| AutoBG | `regressions/AutoBG` | 43 | Yes | [AutoBG](#autobg) |
+| FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
+| FostercareTweaks | `regressions/FostercareTweaks` | 19 | Yes | [FostercareTweaks](#fostercaretweaks) |
+| MikScrollingBattleText | `regressions/MikScrollingBattleText` | 10 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
+| AutoLazy | private `external-tests/AutoLazy` | 132 | No | private command below |
+| aux-addon | private `external-tests/aux-addon` | 5 | No | private command below |
+| BetterCharacterStats | private `external-tests/BetterCharacterStats` | 9 | No | private command below |
+| BigWigs | private `external-tests/BigWigs` | 7 | No | private command below |
+| FostercareAuras (older) | private `external-tests/FostercareAuras` | 33 | No | private command below |
+| SuperAPI | private `external-tests/SuperAPI` | 12 | No | private command below |
+| TWThreat | private `external-tests/TWThreat` | 4 | No | private command below |
+| UnitXP_SP3_Addon | private `external-tests/UnitXP_SP3_Addon` | 4 | No | private command below |
+
+Private suites, from VanillaForge (replace `<Addon>` with the folder name):
+
+```text
+python -B -m unittest discover -s .private/portfolio-review-2026-10-12/external-tests/<Addon> -p "test*.py"
+```
+
+Counts are test methods as of 20 October 2026; update this table when a suite
+gains or loses tests. Moving a private suite here means switching it to
+`VANILLAFORGE_ADDON_ROOT` and removing archived fixture paths.
+
 ## FostercareAuras
 
 Eleven actual-source regressions cover bag changes with an intervening snapshot,
