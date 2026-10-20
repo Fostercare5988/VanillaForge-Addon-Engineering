@@ -392,10 +392,16 @@ and ownership constraints before changing traversal.
 
 ### Preferred settings theme
 
-Use the dark plum and lavender style of the GearRack settings hub as the default
-for addon-owned configuration. The user approved its native rendering on
-2026-10-05. Apply it during requested UI work; preserve native game frames and
-useful controls rather than reskinning unrelated interfaces.
+Use the ForgeUI kit in [`templates/ForgeUI/`](templates/ForgeUI/README.md) for
+addon-owned configuration: the AutoLazy 1.2 layout with the `Ember` palette
+(warm mid-grey surface, orange headings and controls, peach text), approved in
+game by the user on 2026-10-20 as the standard for every addon. Apply it during
+requested UI work; preserve native game frames and useful controls rather than
+reskinning unrelated interfaces.
+
+The flat GearRack plum and lavender style below, approved 2026-10-05, is
+superseded. Keep it only in addons that already use it until they are moved
+to ForgeUI.
 
 | Element | RGBA color |
 | --- | --- |

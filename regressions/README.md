@@ -35,7 +35,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | Addon | Location | Tests | Portable | Run |
 | --- | --- | ---: | --- | --- |
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 3 | Yes | [ActionBarProfiles](#actionbarprofiles) |
-| AutoBG | `regressions/AutoBG` | 48 | Yes | [AutoBG](#autobg) |
+| AutoBG | `regressions/AutoBG` | 64 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 14 | Yes | [FostercareNameplates](#fostercarenameplates) |
@@ -161,6 +161,17 @@ The placeholder-name cases (Spy and enemy frames ignore the client's `UNKNOWNOBJ
 name until the real one is cached) fail on `f90e342`.
 `test_no_chat_parsing.py` keeps enemy detection on DLL events instead of English
 combat-log text (P3-14); it fails on `c7138b9`.
+`test_spy_stealth_alert.py` follows a stealthed hostile rogue through each open-world
+detection path (nameplate, stealth cast, NamPower `BUFF_ADDED_OTHER`) to the alert
+window and the `RaidWarning` sound, and covers the 10-yard and line-of-sight gates,
+the sound setting and auto-hide. The detection cases pass on `e1eb810`; the preview
+sound case fails there. Real distances, screen position and audio stay in-game checks.
+`test_options_layout.py` covers the ForgeUI options window: one **Preview frames**
+toggle starts and ends every preview (and closing the window ends it), the removed
+per-page test, reset and Close buttons stay gone, switches save their settings,
+refreshes show saved slider values without writing them, and **Only within 10
+yards** dims while stealth warnings are off. `addon_loader.py` runs `ForgeUI.lua`
+first and passes `("AutoBG", ns)` to each file, as the client does.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/AutoBG" --run-tests --test-start regressions/AutoBG --output .private/autobg-current.json

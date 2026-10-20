@@ -8,6 +8,8 @@ import os
 import unittest
 from lupa.lua51 import LuaRuntime
 
+import addon_loader
+
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 OPTIONS = (ROOT / "AutoBG_Options.lua").read_text("utf-8-sig")
 
@@ -28,6 +30,11 @@ function Widget:Show()
 end
 function Widget:Hide() self.shown = false end
 function Widget:GetValue() return 0 end
+function Widget:SetFontString(fs) self.fontString = fs end
+function Widget:GetFontString() return self.fontString end
+function Widget:SetText(text) self.text = text end
+function Widget:GetText() return self.text end
+function GetAddOnMetadata() return "1.0.0" end
 function Widget:CreateTexture() return setmetatable({}, { __index = Widget }) end
 function Widget:CreateFontString() return setmetatable({}, { __index = Widget }) end
 function CreateFrame(_, name, parent, template)
@@ -61,7 +68,7 @@ def runtime(in_battleground):
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(BASE)
     lua.execute('AutoBG_Targets.activeBG = %s' % ('true' if in_battleground else 'false'))
-    lua.execute(OPTIONS)
+    addon_loader.load(lua, OPTIONS, "AutoBG_Options.lua")
     lua.execute('AutoBG_OpenOptions("targets")')
     return lua
 

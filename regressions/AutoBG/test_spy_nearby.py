@@ -9,6 +9,8 @@ import os
 import unittest
 from lupa.lua51 import LuaRuntime
 
+import addon_loader
+
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 SPY = (ROOT / "AutoBG_Spy.lua").read_text("utf-8-sig")
 
@@ -88,7 +90,7 @@ AutoBG_Settings = { Spy = { Enabled = true, SoundAlert = false, StealthAlert = f
 def runtime():
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(BASE)
-    lua.execute(SPY)
+    addon_loader.load(lua, SPY, "AutoBG_Spy.lua")
     lua.execute('AutoBG_SpyEventFrame.scripts.OnEvent(AutoBG_SpyEventFrame, "PLAYER_LOGIN")')
     lua.execute('AutoBG_Spy:RecordEnemy("Grom", "WARRIOR", 60, "0x0000000000000001", 100, nil, nil, "Orc")')
     lua.execute('AutoBG_Spy:RenderRows()')
