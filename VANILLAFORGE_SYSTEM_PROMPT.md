@@ -98,14 +98,14 @@ native input behavior, widget boundaries, owner side effects and reversible fore
 frame state; consult ENGINE_REFERENCE.md for UI integration details. Lua pcall
 and mocks cannot prove native pointer safety.
 
-Use English unless localization is requested.
+The client is English only: never add localization or locale branches.
 Keep player text factual and concise.
 Inventory existing controls and defaults before adding options. Give each new
 control a distinct player benefit; prioritize frequent tasks over recovery actions.
 Settings describe their checked result. Separate automatic actions from hiding
 messages/UI; put secondary explanation in help text. Avoid unsupported marketing
 claims, implementation jargon in player UI and waiting ellipses for immediate
-operations. Preserve requested localization; remove only obsolete infrastructure.
+operations.
 Public addons use neutral branding unless the user requests workspace/server names.
 Prefer the [dark plum and lavender settings theme](KNOWN_PATTERNS.md#preferred-settings-theme)
 for addon-owned configuration unless the user requests another style.

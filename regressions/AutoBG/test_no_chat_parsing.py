@@ -1,8 +1,9 @@
 """Enemy detection uses DLL events, not English combat-log text (audit 2026-10-19b, P3-14).
 
 NamPower BUFF_ADDED/REMOVED_OTHER and SuperWoW UNIT_CASTEVENT carry GUIDs and
-spell IDs, so stealth, trinkets and melee work in any client language. The
-behavior itself is covered by test_spy_nearby.py and test_targets_guid_events.py.
+spell IDs, so stealth, trinkets and melee keep the enemy's identity instead of
+adding name-only rows. The behavior itself is covered by test_spy_nearby.py and
+test_targets_guid_events.py.
 """
 from pathlib import Path
 import os
