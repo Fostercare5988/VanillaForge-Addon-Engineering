@@ -59,7 +59,8 @@ focus.
 
 **Problem:** addon parses chat/combat strings to infer casts.
 
-**Risk:** localization failures and inaccurate timing/identity.
+**Risk:** inaccurate timing and name-only identity (no GUID), and duplicate work
+beside DLL events. The client is English only, so language is not the reason.
 
 **Preferred direction:** use verified structured cast APIs,
 `UNIT_CASTEVENT`, or another authoritative enhanced event.

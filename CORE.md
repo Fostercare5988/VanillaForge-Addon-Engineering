@@ -17,6 +17,11 @@ Server: OctoWoW (octowow.st), custom patch 1.18.1 on the 1.12.1 client. 'Native'
 spells, items, talents, quests — may differ from vanilla 1.12: never assume vanilla data
 or numbers; check octowow.st/db or mark the code -- UNVERIFIED: test in game.
 
+Language: the client and server are English (enUS) only. Never add localization,
+locale tables or `GetLocale()` branches, and never count "works in other languages"
+as a reason for a change. Matching English game text is fine when no API or DLL event
+gives the data; when one does, prefer it for identity and accuracy (rule 5).
+
 The base runtime is Lua 5.0. ClassicAPI rewrites and backports part of Lua 5.1;
 see `CLASSICAPI_MASTER_REFERENCE.md` §4.
 - Supported: `#t`, `...` (in functions and as the file-level
