@@ -60,6 +60,8 @@ function Widget:CreateFontString() return widget() end
 function Widget:GetChecked() return self.checked end
 function Widget:SetChecked(v) self.checked = v end
 function Widget:GetValue() return self.value or 0 end
+function Widget:GetAlpha() return self.alpha or 1 end
+function Widget:SetAlpha(v) self.alpha = v end
 function Widget:SetValue(v) self.value = v end
 UIParent = widget("UIParent")
 setmetatable(_G, { __index = function(_, k)
@@ -79,6 +81,13 @@ function UnitHealth() return 50 end
 function UnitHealthMax() return 100 end
 function UnitIsUnit() end
 function GetComboPoints() return 0 end
+-- Unit kind for the fade filters, keyed by GUID; CreatureType.dbc ids.
+units = {}
+function UnitCreatureTypeID(u) return units[u] and units[u].type end
+function UnitIsOtherPlayersPet(u) return units[u] and units[u].pet or false end
+function UnitIsTrivial(u) return units[u] and units[u].trivial end
+function UnitReaction(u) return units[u] and units[u].reaction or 2 end
+function UnitAffectingCombat(u) return units[u] and units[u].combat end
 C_NamePlate = { GetNamePlateGUIDs = function() return {} end, GetNamePlateForUnit = function() end,
     GetNamePlateForGUID = function() end }
 C_Timer = { After = function() count("After") end,

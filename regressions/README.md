@@ -37,6 +37,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 3 | Yes | [ActionBarProfiles](#actionbarprofiles) |
 | AutoBG | `regressions/AutoBG` | 48 | Yes | [AutoBG](#autobg) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
+| FostercareNameplates | `regressions/FostercareNameplates` | 14 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 19 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 10 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 16 | Yes | [OctoMail](#octomail) |
@@ -179,6 +180,29 @@ behavior, event order or how the server handles mail.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/OctoMail" --run-tests --test-start regressions/OctoMail --output .private/octomail-current.json
+```
+
+## FostercareNameplates
+
+Fourteen regressions cover the 2026-10-20 private audit
+(`.private/audit-FostercareNameplates-2026-10-20.md`), repaired in FostercareNameplates
+1.1.0 (`eed7478`..`a811010`):
+- `AuditReproductions`: saved master switch and module choices are restored before
+  file scope reads them, GUID plate lookups use `GetNamePlateForGUID`, the plate
+  binding is rechecked on a 0.5 s cadence and not at all with every per-frame module
+  off, own debuffs walk the aura array once, idle castbars re-query once a second,
+  layout sliders do not re-query plates.
+- `UnitFilters`: critter, totem, pet, grey-level and idle-neutral fading, the opacity
+  setting, filters off by default, and the target never fading.
+
+Eight fail on 1.0.0 or the preceding batch for the stated reason; the other six guard
+behavior that must stay unchanged. `fnp_env.py` runs the TOC files under Lua 5.1 with
+permissive widget mocks and models the SavedVariables load order from the TOC's
+`LoadSavedVariablesFirst` line. They do not prove native plate rendering, input or
+engine timing.
+
+```text
+python -B tools/audit_addon.py "<AddOns>/FostercareNameplates" --run-tests --test-start regressions/FostercareNameplates --output .private/fnp-current.json
 ```
 
 ## ActionBarProfiles
