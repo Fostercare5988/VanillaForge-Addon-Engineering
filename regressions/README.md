@@ -38,6 +38,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 19 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 10 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
+| OctoMail | `regressions/OctoMail` | 16 | Yes | [OctoMail](#octomail) |
 | AutoLazy | private `external-tests/AutoLazy` | 132 | No | private command below |
 | aux-addon | private `external-tests/aux-addon` | 5 | No | private command below |
 | BetterCharacterStats | private `external-tests/BetterCharacterStats` | 9 | No | private command below |
@@ -155,4 +156,26 @@ combat-log text (P3-14); it fails on `c7138b9`.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/AutoBG" --run-tests --test-start regressions/AutoBG --output .private/autobg-current.json
+```
+
+## OctoMail
+
+Sixteen regressions cover the 2026-10-20 private audit
+(`.private/audit-OctoMail-2026-10-20.md`), repaired in OctoMail 1.6.0
+(`464e7a1`..`2252498`):
+- `test_audit_2026_10_20.py`: ClassicAPI 1.16.0 guard, no locale layer or global `L`,
+  `MAIL_FAILED` releases the send queue, sent gold and per-mail C.O.D. in the log,
+  inbox senders reach autocomplete, auction markers follow the inbox page, the
+  gold-send confirmation and C.O.D. cap, and the calendar tooltip on empty days.
+- `test_performance_2026_10_20.py`: no OnUpdate while idle (inbox refresh on
+  `C_Timer.NewTicker`), no allocation in the closed-mailbox `GetContainerItemInfo`
+  path, one Send Mail refresh per bag burst, one log filter per view.
+
+All sixteen fail on 1.5.0 (`0abd851`). `octomail_env.py` loads the Script files named
+in the selected `OctoMail.xml` under Lua 5.1, rewriting Lua 5.0 `for k, v in t do`
+loops to `pairs(t)`, with permissive widget mocks. They do not prove native widget
+behavior, event order or how the server handles mail.
+
+```text
+python -B tools/audit_addon.py "<AddOns>/OctoMail" --run-tests --test-start regressions/OctoMail --output .private/octomail-current.json
 ```
