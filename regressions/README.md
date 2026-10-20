@@ -36,12 +36,13 @@ that folder's `verified-repositories.json` and `validation.json`.
 | --- | --- | ---: | --- | --- |
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 3 | Yes | [ActionBarProfiles](#actionbarprofiles) |
 | AutoBG | `regressions/AutoBG` | 48 | Yes | [AutoBG](#autobg) |
+| AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 14 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 19 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 10 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 16 | Yes | [OctoMail](#octomail) |
-| AutoLazy | private `external-tests/AutoLazy` | 132 | No | private command below |
+| AutoLazy (older) | private `external-tests/AutoLazy` | 130 | No | private command below |
 | aux-addon | private `external-tests/aux-addon` | 5 | No | private command below |
 | BetterCharacterStats | private `external-tests/BetterCharacterStats` | 9 | No | private command below |
 | FostercareAuras (older) | private `external-tests/FostercareAuras` | 33 | No | private command below |
@@ -220,4 +221,24 @@ SuperWoW docs. They do not prove native placement or zero-count item buttons.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/ActionBarProfiles" --run-tests --test-start regressions/ActionBarProfiles --output .private/abp-current.json
+```
+
+## AutoLazy
+
+Seven regressions cover the 2026-10-20 private audit
+(`.private/audit-AutoLazy-2026-10-20.md`), repaired in AutoLazy 1.2.0
+(`86e171f`..`b9c90bf`): exact dungeon identity (AQ40 is not Ruins of Ahn'Qiraj; the
+Blasted Lands "The Dark Portal" subzone is not The Black Morass), stuck stock Shift
+after Alt-Tab does not turn in quests, and a gossip opener is selected once per NPC.
+Four fail on 1.1.0 (`2337d29`) for those reasons; the instance-name control also fails
+there because 1.1.0 did not read `GetInstanceInfo`. Two controls pass on both.
+The test loads only `AutoLazy.lua` under Lua 5.1 with minimal mocks; OctoWoW zone and
+instance names remain an in-game check.
+
+The older private suite was updated the same day for the 1.16.0 guard,
+`GetInstanceInfo`/L-R Shift mocks and theme widget methods; two name-matching tests
+were removed with the helpers they covered.
+
+```text
+python -B tools/audit_addon.py "<AddOns>/AutoLazy" --run-tests --test-start regressions/AutoLazy --output .private/autolazy-current.json
 ```
