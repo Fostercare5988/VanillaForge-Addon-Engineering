@@ -67,11 +67,60 @@ setmetatable(_G, { __index = function(_, k)
 end })
 function CreateFrame(_, name) return widget(name) end
 function SetRaidTargetIconTexture() end
-function GetTime() return 100 end
+now = 100
+function GetTime() return now end
+calls = {}
+local function count(name) calls[name] = (calls[name] or 0) + 1 end
 function UnitGUID() return nil end
+function UnitIsPlayer() end
+function UnitClass() end
+function UnitCanAttack() return 1 end
+function UnitHealth() return 50 end
+function UnitHealthMax() return 100 end
+function UnitIsUnit() end
+function GetComboPoints() return 0 end
 C_NamePlate = { GetNamePlateGUIDs = function() return {} end, GetNamePlateForUnit = function() end,
     GetNamePlateForGUID = function() end }
-C_Timer = { After = function() end, NewTicker = function() return { Cancel = function() end } end }
+C_Timer = { After = function() count("After") end,
+    NewTicker = function() return { Cancel = function() end } end }
+C_Spell = { UnitCastingInfo = function() count("UnitCastingInfo") end,
+    UnitChannelInfo = function() count("UnitChannelInfo") end }
+C_UnitAuras = { UnitAura = function(_, _, filter) count("UnitAura " .. tostring(filter)) end,
+    GetAuraSlots = function() count("GetAuraSlots"); return nil, 0 end,
+    UnitAuraBySlot = function() count("UnitAuraBySlot") end }
+
+-- A native-shaped plate: a Button whose first region is the stock border.
+function nativePlate(guid, token)
+    local plate = CreateFrame("Button")
+    local border = CreateFrame("Texture")
+    function border:GetObjectType() return "Texture" end
+    function border:GetTexture() return "Interface\\Tooltips\\Nameplate-Border" end
+    function plate:GetObjectType() return "Button" end
+    function plate:GetRegions() return border end
+    function plate:GetChildren() return CreateFrame("StatusBar") end
+    local forUnit, forGUID = C_NamePlate.GetNamePlateForUnit, C_NamePlate.GetNamePlateForGUID
+    C_NamePlate.GetNamePlateForUnit = function(u)
+        if u == token then return plate end
+        return forUnit(u)
+    end
+    C_NamePlate.GetNamePlateForGUID = function(g)
+        count("GetNamePlateForGUID")
+        if g == guid then return plate end
+        return forGUID(g)
+    end
+    local unitGUID = UnitGUID
+    UnitGUID = function(u) if u == token or u == guid then return guid end return unitGUID(u) end
+    fire("NAME_PLATE_UNIT_ADDED", token)
+    return plate
+end
+
+-- Run the plate's hooked OnUpdate for `frames` frames at 60 fps.
+function runFrames(plate, frames)
+    for _ = 1, frames do
+        now = now + 1 / 60
+        plate.scripts.OnUpdate(plate)
+    end
+end
 
 function fire(ev, a1)
     for _, f in ipairs(frames) do
