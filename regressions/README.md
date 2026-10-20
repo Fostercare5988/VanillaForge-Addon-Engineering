@@ -55,6 +55,11 @@ Private suites, from VanillaForge (replace `<Addon>` with the folder name):
 python -B -m unittest discover -s .private/portfolio-review-2026-10-12/external-tests/<Addon> -p "test*.py"
 ```
 
+`tools/audit_addon.py --private-suites` runs the same suite during an audit and puts
+its result in the summary line (`private tests failed (5 failures/errors, 33 run)`),
+so a suite broken by a floor or API change is not missed. Use it in every Gate pass
+for an addon listed here.
+
 Counts are test methods as of 20 October 2026; update this table when a suite
 gains or loses tests. Moving a private suite here means switching it to
 `VANILLAFORGE_ADDON_ROOT` and removing archived fixture paths.

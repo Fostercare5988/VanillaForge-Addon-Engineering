@@ -36,6 +36,8 @@ CALLS = {
 PATTERNS = {kind: re.compile(r"(?<![\w])(" + names + r")\s*\(") for kind, names in CALLS.items()}
 HANDLER = re.compile(r"<(On\w+|Binding)\b[^>]*>(.*?)</\1\s*>", re.S)
 ARGUMENT = re.compile(r"\s*(['\"])([^'\"\n]*)\1\s*(?=[,)])")
+# Older adapted suites, one folder per addon (regressions/README.md, "Private suites").
+PRIVATE_SUITES = Path(__file__).resolve().parents[1] / ".private" / "portfolio-review-2026-10-12" / "external-tests"
 
 
 def inside(path, root):
@@ -224,20 +226,42 @@ def run_tests(start, pattern, timeout, source_root=None):
         output = completed.stdout + completed.stderr
         matches = re.findall(r"^Ran (\d+) tests? in ", output, re.M)
         count = int(matches[-1]) if matches else 0
+        failed = re.findall(r"^FAILED \(([^)]*)\)", output, re.M)
+        # unittest counts failures and errors, including subtests, so this can exceed tests_run.
+        problems = sum(int(n) for n in re.findall(r"(?:failures|errors)=(\d+)", failed[-1])) if failed else 0
         return dict(result, status="passed" if completed.returncode == 0 and count > 0 else "failed",
-                    tests_run=count, returncode=completed.returncode, output_tail=output[-16000:],
+                    tests_run=count, problems=problems, returncode=completed.returncode,
+                    output_tail=output[-16000:],
                     reason=None if count else "No unittest summary with a nonzero test count")
     except subprocess.TimeoutExpired:
         return dict(result, status="timeout", tests_run=None)
 
 
+def run_private_suite(addon, root, timeout):
+    """Run the addon's older private suite, if it has one. Absence is not a failure."""
+    start = Path(root) / addon.name
+    if not start.is_dir():
+        return {"status": "absent", "start": str(start)}
+    return dict(run_tests(start, "test*.py", timeout, addon), start=str(start))
+
+
+def describe_tests(label, tests):
+    text = f"{label} {tests['status']}"
+    if tests.get("tests_run") is None:
+        return text
+    if tests["status"] == "failed" and tests.get("problems"):
+        return text + f" ({tests['problems']} failures/errors, {tests['tests_run']} run)"
+    return text + f" ({tests['tests_run']})"
+
+
 def summary(report, destination=None):
     """One line for the terminal; the JSON report holds the evidence."""
     lint = sum(module.get("lint", {}).get("errors", {}).get("count", 0) for module in report["modules"])
-    tests = report["tests"]
     parts = [f"{Path(report['addon']).name}: {report['module_count']} modules",
              f"{len(report['graph_errors'])} graph errors", f"{lint} lint errors",
-             "tests " + tests["status"] + (f" ({tests['tests_run']})" if tests.get("tests_run") is not None else "")]
+             describe_tests("tests", report["tests"])]
+    if "private_tests" in report:
+        parts.append(describe_tests("private tests", report["private_tests"]))
     comparison = report.get("comparison")
     if comparison:
         changed = sum(len(comparison[key]) for key in ("changed_modules", "added_modules", "removed_modules"))
@@ -256,6 +280,9 @@ def main(argv=None):
     parser.add_argument("--test-start", type=Path, help="Test directory; default <addon>/tests")
     parser.add_argument("--test-pattern", default="test*.py")
     parser.add_argument("--test-timeout", type=float, default=60)
+    parser.add_argument("--private-suites", action="store_true",
+                        help="Also run the addon's older private suite (<private root>/<addon folder>), if present")
+    parser.add_argument("--private-suite-root", type=Path, default=PRIVATE_SUITES, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     try:
         addon = args.addon.resolve()
@@ -276,6 +303,8 @@ def main(argv=None):
         report = audit(addon, args.toc)
         if args.compare:
             report["comparison"] = compare_reports(report, json.loads(args.compare.read_text(encoding="utf-8-sig")))
+        if args.private_suites:
+            report["private_tests"] = run_private_suite(addon, args.private_suite_root, args.test_timeout)
         if args.run_tests:
             report["tests"] = run_tests((args.test_start or addon / "tests").resolve(),
                                         args.test_pattern, args.test_timeout, addon)
@@ -301,7 +330,8 @@ def main(argv=None):
             print(output, end="")
             print(summary(report), file=sys.stderr)
         return int(report["status"] == "source_checks_failed"
-                   or report["tests"]["status"] in {"failed", "timeout", "invalidated"})
+                   or report["tests"]["status"] in {"failed", "timeout", "invalidated"}
+                   or report.get("private_tests", {}).get("status") in {"failed", "timeout"})
     except (OSError, ValueError) as error:
         print(f"Audit failed: {error}", file=sys.stderr)
         return 2

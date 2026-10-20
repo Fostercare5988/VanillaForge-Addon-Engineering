@@ -215,6 +215,43 @@ class AddonAuditTests(unittest.TestCase):
         self.assertEqual(lines[0], "Addon: 2 modules, 0 graph errors, 0 lint errors, tests not_run, "
                          "compare unchanged (0 modules); status human_review_pending -> " + str(destination.resolve()))
 
+    def private_suite_summary(self, body=None):
+        private = self.root / "private"
+        if body is not None:
+            suite = private / "Addon"
+            suite.mkdir(parents=True)
+            (suite / "test_old.py").write_text("import unittest\nclass T(unittest.TestCase):\n" + body, encoding="utf-8")
+        destination = self.root / "report.json"
+        with contextlib.redirect_stdout(io.StringIO()) as output, contextlib.redirect_stderr(io.StringIO()):
+            code = AUDIT.main([str(self.addon), "--output", str(destination), "--private-suites",
+                               "--private-suite-root", str(private)])
+        return code, output.getvalue(), json.loads(destination.read_text(encoding="utf-8"))
+
+    def test_private_suite_failures_reach_summary_and_exit_code(self):
+        code, line, report = self.private_suite_summary(
+            " def test_ok(self): pass\n def test_bad(self): self.fail('stale')\n"
+            " def test_broken(self): raise RuntimeError('setup')\n")
+        self.assertEqual(code, 1)
+        self.assertIn("private tests failed (2 failures/errors, 3 run)", line)
+        self.assertEqual(report["private_tests"]["problems"], 2)
+        self.assertEqual(report["tests"]["status"], "not_run")
+
+    def test_passing_private_suite_is_reported(self):
+        code, line, _ = self.private_suite_summary(" def test_ok(self): pass\n")
+        self.assertEqual(code, 0)
+        self.assertIn("private tests passed (1)", line)
+
+    def test_absent_private_suite_does_not_fail_the_audit(self):
+        code, line, report = self.private_suite_summary()
+        self.assertEqual(code, 0)
+        self.assertIn("private tests absent", line)
+        self.assertEqual(report["private_tests"]["status"], "absent")
+
+    def test_private_suites_are_not_run_unless_requested(self):
+        with contextlib.redirect_stdout(io.StringIO()) as output, contextlib.redirect_stderr(io.StringIO()):
+            AUDIT.main([str(self.addon)])
+        self.assertNotIn("private_tests", json.loads(output.getvalue()))
+
     def test_summary_goes_to_stderr_when_json_uses_stdout(self):
         with contextlib.redirect_stdout(io.StringIO()) as output, \
              contextlib.redirect_stderr(io.StringIO()) as error:
