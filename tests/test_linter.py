@@ -207,15 +207,45 @@ table.insert(args, nil)
         _, warnings, _ = self.audit("local remainder = math.mod(5, 2)\n")
         self.assertTrue(any("Legacy math.mod" in warning for warning in warnings))
 
-    def test_localization_is_not_treated_as_a_defect(self):
-        errors, warnings, infos = self.audit('''
-if GetLocale() == "deDE" then
-    PLAYER_CLASS = "KRIEGER"
-end
-''')
-        joined = "\\n".join(errors + warnings + infos)
-        self.assertNotIn("Foreign Locale", joined)
-        self.assertNotIn("Foreign Localization", joined)
+    def test_locale_code_is_reported_english_only(self):
+        for source in ('if GetLocale() == "deDE" then PLAYER_CLASS = "KRIEGER" end\n',
+                       'local L = AceLocale:GetInstance("MyAddon")\n',
+                       'local L = LibStub("AceLocale-3.0"):NewLocale("MyAddon", "enUS", true)\n'):
+            errors, warnings, _ = self.audit(source)
+            self.assertEqual(errors, [])
+            self.assertTrue(any("Rule L1" in w for w in warnings), source)
+
+    def test_locale_words_in_comments_and_strings_are_ignored(self):
+        _, warnings, _ = self.audit('-- old GetLocale() branch removed\nlocal s = "AceLocale"\n')
+        self.assertFalse(any("Rule L1" in w for w in warnings))
+
+    def test_similar_names_are_not_locale_code(self):
+        _, warnings, _ = self.audit('local x = MyGetLocaleName()\nlocal y = NotAceLocaleLike\n')
+        self.assertFalse(any("Rule L1" in w for w in warnings))
+
+    def test_locale_code_is_suppressible(self):
+        _, warnings, _ = self.audit('local loc = GetLocale() -- vanillaforge-ignore: L1\n')
+        self.assertFalse(any("Rule L1" in w for w in warnings))
+
+    def test_per_locale_files_are_reported(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for rel in ("Locales/enUS.lua", "Locale-deDE.lua", "localization.frFR.lua"):
+                path = Path(tmp) / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("local x = 1\n", encoding="utf-8")
+                _, warnings, _ = self.auditor.audit_file(str(path))
+                self.assertTrue(any("Locale File" in w for w in warnings), rel)
+            plain = Path(tmp) / "Core.lua"
+            plain.write_text("local x = 1\n", encoding="utf-8")
+            self.assertFalse(any("Rule L1" in w for w in self.auditor.audit_file(str(plain))[1]))
+
+    def test_translated_toc_fields_are_reported(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            toc = Path(tmp) / "Demo.toc"
+            toc.write_text("## Interface: 11200\n## Title: Demo\n## Title-deDE: Demo DE\n## Notes-frFR: Note\n",
+                           encoding="utf-8")
+            _, warnings, _, _ = self.auditor.audit_toc_file(str(toc), tmp)
+            self.assertEqual(sum("Locale TOC Field" in w for w in warnings), 2)
 
     def test_manual_wipe_in_comment_or_string_does_not_trigger_b10(self):
         errors, warnings, _ = self.audit(
