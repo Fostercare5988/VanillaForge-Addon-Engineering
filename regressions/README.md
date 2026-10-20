@@ -195,7 +195,7 @@ Fourteen regressions cover the 2026-10-20 private audit
 - `UnitFilters`: critter, totem, pet, grey-level and idle-neutral fading, the opacity
   setting, filters off by default, and the target never fading.
 
-Eight fail on 1.0.0 or the preceding batch for the stated reason; the other six guard
+Eleven fail on the code before their batch for the stated reason; the other three guard
 behavior that must stay unchanged. `fnp_env.py` runs the TOC files under Lua 5.1 with
 permissive widget mocks and models the SavedVariables load order from the TOC's
 `LoadSavedVariablesFirst` line. They do not prove native plate rendering, input or
