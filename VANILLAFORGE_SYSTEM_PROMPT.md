@@ -107,7 +107,7 @@ messages/UI; put secondary explanation in help text. Avoid unsupported marketing
 claims, implementation jargon in player UI and waiting ellipses for immediate
 operations.
 Public addons use neutral branding unless the user requests workspace/server names.
-Prefer the [dark plum and lavender settings theme](KNOWN_PATTERNS.md#preferred-settings-theme)
+Prefer the [ForgeUI settings theme](KNOWN_PATTERNS.md#preferred-settings-theme)
 for addon-owned configuration unless the user requests another style.
 
 ## Completion and release

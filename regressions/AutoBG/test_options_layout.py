@@ -1,0 +1,113 @@
+"""ForgeUI options window: one preview toggle, one reset, switches bound to settings.
+
+The complete AutoBG_Options.lua runs with ForgeUI under Lua 5.1 and the options
+widget mocks. Drawing, dragging and text fit stay in-game checks.
+"""
+import unittest
+from lupa.lua51 import LuaRuntime
+
+import addon_loader
+from test_options_preview import BASE, OPTIONS
+
+EXTRA = r'''
+local Widget = getmetatable(UIParent).__index
+function Widget:SetChecked(v) self.checked = v and true or nil end
+function Widget:GetChecked() return self.checked end
+function Widget:Enable() self.enabled = true end
+function Widget:Disable() self.enabled = false end
+function Widget:SetValue(v)
+    self.value = v
+    if self.scripts and self.scripts.OnValueChanged then self.scripts.OnValueChanged(self) end
+end
+function Widget:GetValue() return self.value or 0 end
+calls = {}
+AutoBG_Targets.DisableConfigMode = function(self) self.isConfig = false; table.insert(calls, "targets off") end
+AutoBG_Targets.EnableConfigMode = function(self, size) self.isConfig = true; table.insert(calls, "targets " .. size) end
+AutoBG_Spy.EnableTestMode = function(self) self.isTestMode = true; table.insert(calls, "spy on") end
+AutoBG_Spy.DisableTestMode = function(self) self.isTestMode = false; table.insert(calls, "spy off") end
+AutoBG_Settings.Spy = { Enabled = true, SoundAlert = true, StealthAlert = true, Timeout = 30, MaxRows = 5, Scale = 1 }
+AutoBG_Settings.AutoAcceptDelay = 12
+AutoBG_Settings.Targets.StealthAlert = true
+'''
+
+
+def runtime():
+    lua = LuaRuntime(unpack_returned_tuples=True)
+    lua.execute(BASE)
+    lua.execute(EXTRA)
+    lua.execute('AutoBG_Targets.activeBG = true')  # no automatic enemy-frame preview
+    addon_loader.load(lua, OPTIONS, "AutoBG_Options.lua")
+    return lua
+
+
+def click(lua, name):
+    lua.execute('local w = _G["%s"]; w.scripts.OnClick(w)' % name)
+
+
+def toggle(lua, name):
+    """A native checkbutton flips its state before OnClick."""
+    lua.execute('local w = _G["%s"]; w:SetChecked(not w.checked); w.scripts.OnClick(w)' % name)
+
+
+class OptionsLayoutTests(unittest.TestCase):
+    def test_removed_test_buttons_stay_gone(self):
+        lua = runtime()
+        for name in ("AutoBG_BtnSpyTestSoundStealth", "AutoBG_BtnSpyTestSoundDetect", "AutoBG_BtnSpyTest",
+                     "AutoBG_BtnTestTimers", "AutoBG_BtnTgtPreview", "AutoBG_BtnSpyResetPos",
+                     "AutoBG_BtnTgtResetPos", "AutoBG_BtnResetTimersPos", "AutoBG_BtnClose"):
+            self.assertIsNone(lua.eval('_G["%s"]' % name), name)
+
+    def test_one_preview_toggle_shows_and_hides_every_frame(self):
+        lua = runtime()
+        lua.execute('AutoBG_OpenOptions("spy")')
+        click(lua, "AutoBG_BtnTestAll")
+        self.assertEqual(list(lua.eval('calls').values()), ["targets 10", "spy on"])
+        self.assertTrue(lua.eval('AutoBG_Settings.TestAllTimers'))
+        self.assertTrue(lua.eval('AutoBG_BtnTestAll.selected'))
+        self.assertEqual(lua.eval('AutoBG_BtnTestAll.text'), "Hide preview")
+        click(lua, "AutoBG_BtnTestAll")
+        self.assertFalse(lua.eval('AutoBG_Settings.TestAllTimers'))
+        self.assertFalse(lua.eval('AutoBG_Spy.isTestMode'))
+        self.assertFalse(lua.eval('AutoBG_BtnTestAll.selected'))
+        self.assertEqual(lua.eval('AutoBG_BtnTestAll.text'), "Preview frames")
+
+    def test_closing_the_window_ends_the_preview(self):
+        lua = runtime()
+        lua.execute('AutoBG_OpenOptions("spy")')
+        click(lua, "AutoBG_BtnTestAll")
+        lua.execute('AutoBG_OptionsPanel:Hide(); AutoBG_OptionsPanel.scripts.OnHide()')
+        self.assertFalse(lua.eval('AutoBG_Spy.isTestMode'))
+        self.assertFalse(lua.eval('AutoBG_Targets.isConfig'))
+        self.assertFalse(lua.eval('AutoBG_Settings.TestAllTimers'))
+
+    def test_switches_save_their_settings(self):
+        lua = runtime()
+        lua.execute('AutoBG_OpenOptions("general")')
+        toggle(lua, "AutoBG_Opt_AutoAccept")
+        self.assertTrue(lua.eval('AutoBG_Settings.AutoAccept'))
+        lua.execute('AutoBG_OpenOptions("spy")')
+        self.assertTrue(lua.eval('AutoBG_Spy_SoundAlert.checked'))
+        toggle(lua, "AutoBG_Spy_SoundAlert")
+        self.assertFalse(lua.eval('AutoBG_Settings.Spy.SoundAlert'))
+
+    def test_refresh_shows_saved_values_without_writing_them(self):
+        lua = runtime()
+        lua.execute('AutoBG_OpenOptions("general")')
+        self.assertEqual(lua.eval('AutoBG_Opt_AcceptDelay.value'), 12)
+        self.assertEqual(lua.eval('AutoBG_Opt_AcceptDelay.valueText.text'), "12s")
+        self.assertEqual(lua.eval('AutoBG_Settings.AutoAcceptDelay'), 12)
+        lua.execute('AutoBG_Opt_AcceptDelay:SetValue(0)')
+        self.assertEqual(lua.eval('AutoBG_Settings.AutoAcceptDelay'), 0)
+        self.assertEqual(lua.eval('AutoBG_Opt_AcceptDelay.valueText.text'), "Instant")
+
+    def test_nearby_only_dims_while_stealth_warnings_are_off(self):
+        lua = runtime()
+        lua.execute('AutoBG_OpenOptions("spy")')
+        self.assertFalse(lua.eval('AutoBG_Spy_StealthProximityOnly.disabled'))
+        toggle(lua, "AutoBG_Spy_StealthAlert")
+        self.assertFalse(lua.eval('AutoBG_Settings.Spy.StealthAlert'))
+        self.assertTrue(lua.eval('AutoBG_Spy_StealthProximityOnly.disabled'))
+
+
+if __name__ == "__main__":
+    unittest.main()

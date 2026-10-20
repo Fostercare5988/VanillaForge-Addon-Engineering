@@ -55,8 +55,8 @@ see `CLASSICAPI_MASTER_REFERENCE.md` §4.
 2. Change only what the task needs. Keep existing behavior, settings and
    SavedVariables unless asked to change them.
 3. Prefer events and timers over OnUpdate polling, except for animation and dragging.
-4. English for code, comments and player text. Settings use the dark plum and
-   lavender theme unless told otherwise.
+4. English for code, comments and player text. Settings use the ForgeUI kit in
+   `templates/ForgeUI/` (AutoLazy layout, Ember palette) unless told otherwise.
 5. **Use the DLLs.** ClassicAPI, NamPower, SuperWoW and UnitXP SP3 are installed to be
    used: prefer them wherever they give better data, events or identity than stock
    1.12. Never call something impossible before checking the maintainers' docs and
