@@ -98,7 +98,7 @@ native input behavior, widget boundaries, owner side effects and reversible fore
 frame state; consult ENGINE_REFERENCE.md for UI integration details. Lua pcall
 and mocks cannot prove native pointer safety.
 
-The client is English only: never add localization or locale branches.
+The client is English only: never add localization; modernization removes locale layers.
 Keep player text factual and concise.
 Inventory existing controls and defaults before adding options. Give each new
 control a distinct player benefit; prioritize frequent tasks over recovery actions.

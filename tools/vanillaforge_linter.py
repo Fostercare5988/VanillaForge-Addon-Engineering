@@ -297,6 +297,13 @@ class HeuristicStructuralScanner:
         return lines, lines
 
 
+# English only: locale lookups, locale libraries and per-locale files or TOC fields.
+LOCALE_CODE_PATTERN = re.compile(r'\bGetLocale\s*\(|\bAceLocale\b|:NewLocale\s*\(|\bLibBabble\b')
+LOCALE_TAGS = r'(?:enUS|enGB|deDE|frFR|esES|esMX|ruRU|zhCN|zhTW|koKR|ptBR|itIT)'
+LOCALE_FILE_PATTERN = re.compile(r'(?:^|[\\/])(?:Locales?|Localization)[\\/]|(?:^|[\\/._-])' + LOCALE_TAGS + r'\.(?:lua|xml)$', re.IGNORECASE)
+LOCALE_TOC_FIELD = re.compile(r'^(?:title|notes)-' + LOCALE_TAGS + r'$', re.IGNORECASE)
+
+
 class VanillaForgeAuditor:
     """
     Audits enhanced WoW 1.12.1 addon files against VanillaForge v3 standards.
@@ -344,6 +351,9 @@ class VanillaForgeAuditor:
             code_lines = raw_lines
             no_comment_lines = raw_lines
 
+        if LOCALE_FILE_PATTERN.search(filepath) and not self._is_suppressed(raw_lines[0] if raw_lines else "", "L1"):
+            warnings.append("[Rule L1 - Locale File] This file is a per-locale string table. The client is English only: move the English strings inline and remove the file.")
+
         current_button_name = ""
         for idx, raw_line in enumerate(raw_lines, 1):
             code_line = code_lines[idx - 1]
@@ -388,9 +398,12 @@ class VanillaForgeAuditor:
                 if '144Hz+' in no_comment_line or '144Hz/240Hz+' in no_comment_line:
                     infos.append(f"[Style - Marketing Phrase] Line {idx}: '144Hz+' notation detected. Use clean 'DXVK' or 'DXVK Vulkan'.")
 
-            # 7. Localization policy
-            # VanillaForge v3 does not treat localization support as a defect.
-            # Remove unused localization only when project scope explicitly calls for it.
+            # 7. Rule L1: English only (CORE "Language"). Locale lookups and locale
+            # libraries are removed when an addon is modernized; strings stay inline.
+            if not self._is_suppressed(raw_line, "L1"):
+                locale_code = LOCALE_CODE_PATTERN.search(code_line)
+                if locale_code:
+                    warnings.append(f"[Rule L1 - Locale Code] Line {idx}: '{locale_code.group(0).strip()}' detected. The client is English only: keep the English strings inline and remove the locale layer.")
 
             # 8. Rule A4: Obsolete Lua 5.0 Constructs
             # A3 retired: getn/setn preserve intentional stored-length contracts,
@@ -509,6 +522,11 @@ class VanillaForgeAuditor:
                     value = meta.group(2).strip()
                     if key == 'interface':
                         interface_entries.append((idx, value))
+                    if LOCALE_TOC_FIELD.match(key) and not self._is_suppressed(raw_line, "L1"):
+                        warnings.append(
+                            f"[Rule L1 - Locale TOC Field] Line {idx}: '## {meta.group(1).strip()}' "
+                            "is a translated title or note. The client is English only: keep the English field."
+                        )
                     if key in dependency_fields and re.search(r'\bdxvk\b', value, re.IGNORECASE):
                         warnings.append(
                             f"[Rule H8 - Invalid Addon Dependency] Line {idx}: "

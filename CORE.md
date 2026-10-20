@@ -19,8 +19,11 @@ or numbers; check octowow.st/db or mark the code -- UNVERIFIED: test in game.
 
 Language: the client and server are English (enUS) only. Never add localization,
 locale tables or `GetLocale()` branches, and never count "works in other languages"
-as a reason for a change. Matching English game text is fine when no API or DLL event
-gives the data; when one does, prefer it for identity and accuracy (rule 5).
+as a reason for a change. New addons never get a locale layer. When modernizing an
+addon, remove its locale layer (locale files and `L[...]` tables, `GetLocale()`
+branches, AceLocale/Babble, translated `## Title-xxXX` TOC fields) and keep the English
+strings inline; linter rule L1 flags these. Matching English game text is fine when no
+API or DLL event gives the data; when one does, prefer it for identity and accuracy (rule 5).
 
 The base runtime is Lua 5.0. ClassicAPI rewrites and backports part of Lua 5.1;
 see `CLASSICAPI_MASTER_REFERENCE.md` §4.

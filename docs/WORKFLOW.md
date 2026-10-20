@@ -28,7 +28,7 @@ Use when the addon/subsystem is not yet understood. Establish TOC/load graph, mo
 Deliver a concise architecture map plus uncertainties. Do not edit during an inspect-only phase.
 
 ## 3. Modernization Audit
-Prioritize correctness and architectural simplification. Look for scraping where structured APIs exist, combat-log text parsing where structured events exist, target swapping/fuzzy identity, unnecessary OnUpdate polling, obsolete compatibility layers, redundant caches, hot-path allocation churn, and ambiguous asynchronous ownership.
+Prioritize correctness and architectural simplification. Look for scraping where structured APIs exist, combat-log text parsing where structured events exist, target swapping/fuzzy identity, unnecessary OnUpdate polling, obsolete compatibility layers, locale layers (the client is English only; linter rule L1), redundant caches, hot-path allocation churn, and ambiguous asynchronous ownership.
 
 Record finding, location, evidence, impact and direction. Do not implement during audit-only work.
 
