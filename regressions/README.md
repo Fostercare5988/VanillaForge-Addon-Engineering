@@ -41,9 +41,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | AutoLazy | private `external-tests/AutoLazy` | 132 | No | private command below |
 | aux-addon | private `external-tests/aux-addon` | 5 | No | private command below |
 | BetterCharacterStats | private `external-tests/BetterCharacterStats` | 9 | No | private command below |
-| BigWigs | private `external-tests/BigWigs` | 7 | No | private command below |
 | FostercareAuras (older) | private `external-tests/FostercareAuras` | 33 | No | private command below |
-| SuperAPI | private `external-tests/SuperAPI` | 12 | No | private command below |
 | TWThreat | private `external-tests/TWThreat` | 4 | No | private command below |
 | UnitXP_SP3_Addon | private `external-tests/UnitXP_SP3_Addon` | 4 | No | private command below |
 
