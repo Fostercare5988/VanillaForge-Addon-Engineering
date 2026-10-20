@@ -34,7 +34,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 
 | Addon | Location | Tests | Portable | Run |
 | --- | --- | ---: | --- | --- |
-| AutoBG | `regressions/AutoBG` | 43 | Yes | [AutoBG](#autobg) |
+| AutoBG | `regressions/AutoBG` | 44 | Yes | [AutoBG](#autobg) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 19 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 10 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
@@ -147,8 +147,9 @@ batch C (`0c33a7c`) cases: `test_player_state.py` (ClassicAPI `UnitIsAFK`, one D
 lookup), `test_match_flow.py` (one auto-accept, `LeaveBattlefield()`),
 `test_options_preview.py` (no automatic preview inside a battleground), GUID learning,
 spell-classification caching, resurrection, carrier restore after test mode and
-battleground-only zone detection. Ten fail on `0b528fa`. `test_queue_types.py` keeps
-the Blood Ring finding as an expected failure until audit batch A is decided.
+battleground-only zone detection. Ten fail on `0b528fa`. `test_queue_types.py` covers
+the Blood Ring removal: every Auto-Queue choice reaches a native OctoWoW queue type,
+and an old saved `AutoQueue_BR` is cleared on load. Both fail on `0c33a7c`.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/AutoBG" --run-tests --test-start regressions/AutoBG --output .private/autobg-current.json

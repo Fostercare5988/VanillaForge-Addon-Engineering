@@ -1,5 +1,7 @@
 """Every Auto-Queue choice must reach a native OctoWoW queue type (audit 2026-10-19b, P2-1).
 
+Blood Ring had no OctoWoW queue type and was removed on 2026-10-20.
+
 OctoWoW's FrameXML Minimap.lua defines JoinBattlegroundQueue(bgType) and offers
 the types "Warsong", "Arathi", "ThornGorge" and "Alterac". The complete
 AutoBG.lua file runs under Lua 5.1 with generic widget mocks; the server's
@@ -50,8 +52,6 @@ function JoinBattlegroundQueue(bgType) table.insert(queued, bgType) end
 
 
 class QueueTypeTests(unittest.TestCase):
-    # Held with audit batch A (the Blood Ring decision); remove the marker when it is fixed.
-    @unittest.expectedFailure
     def test_every_selectable_battleground_reaches_a_native_queue_type(self):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(BASE)
@@ -71,6 +71,14 @@ class QueueTypeTests(unittest.TestCase):
         unreached = list(lua.eval('unreached').values())
         self.assertEqual(unreached, [], "these choices never reach JoinBattlegroundQueue")
         self.assertTrue(set(lua.eval('queued').values()) <= NATIVE_TYPES)
+
+    def test_old_blood_ring_setting_is_cleared_on_load(self):
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(BASE)
+        lua.execute('AutoBG_Settings = { AutoQueue_BR = true }')
+        lua.execute(CORE)
+        lua.execute('AutoBGFrame.scripts.OnEvent(AutoBGFrame, "ADDON_LOADED", "AutoBG")')
+        self.assertIsNone(lua.eval('AutoBG_Settings.AutoQueue_BR'))
 
     def test_framexml_queue_types(self):
         source = FRAMEXML / "Minimap.lua"
