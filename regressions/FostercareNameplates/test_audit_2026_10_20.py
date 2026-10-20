@@ -86,5 +86,55 @@ class AuditReproductions(unittest.TestCase):
         self.assertIsNone(lua.eval('next(FostercareNameplates.Nameplates.pending)'))
 
 
+FADE = '''
+    plate = nativePlate("0xF1", "nameplate1")
+    function fade(key) FostercareNameplates.SetOverride(key, 1); FostercareNameplates.Nameplates:ApplyConfiguration() end
+'''
+
+
+class UnitFilters(unittest.TestCase):
+    """F3: fade critters, totems, other players' minions, grey and idle neutral units."""
+
+    def alpha(self, lua, frames=2):
+        lua.execute("runFrames(plate, %d)" % frames)
+        return round(lua.eval("plate:GetAlpha()"), 2)
+
+    def test_off_by_default(self):
+        lua = load(prelude='units["0xF1"] = { type = 8 }')
+        lua.execute(FADE)
+        self.assertEqual(self.alpha(lua), 1)
+
+    def test_each_fixed_filter_fades(self):
+        for key, unit in (("nameplate_fade_critters", "{ type = 8 }"),
+                          ("nameplate_fade_totems", "{ type = 11 }"),
+                          ("nameplate_fade_pets", "{ type = 1, pet = true }"),
+                          ("nameplate_fade_trivial", "{ type = 7, trivial = 1 }")):
+            lua = load(prelude='units["0xF1"] = %s' % unit)
+            lua.execute(FADE + 'fade("%s")' % key)
+            self.assertEqual(self.alpha(lua), 0.3, key)
+
+    def test_other_kinds_stay_opaque(self):
+        lua = load(prelude='units["0xF1"] = { type = 7 }')
+        lua.execute(FADE + 'fade("nameplate_fade_critters"); fade("nameplate_fade_totems")')
+        self.assertEqual(self.alpha(lua), 1)
+
+    def test_target_is_never_faded(self):
+        lua = load(prelude='units["0xF1"] = { type = 8 }')
+        lua.execute(FADE + 'fade("nameplate_fade_critters"); FostercareNameplates.Nameplates.targetGUID = "0xF1"')
+        self.assertEqual(self.alpha(lua), 1)
+
+    def test_neutral_fades_only_out_of_combat(self):
+        lua = load(prelude='units["0xF1"] = { type = 1, reaction = 4, combat = 1 }')
+        lua.execute(FADE + 'fade("nameplate_fade_neutral")')
+        self.assertEqual(self.alpha(lua), 1)
+        lua.execute('units["0xF1"].combat = nil')
+        self.assertEqual(self.alpha(lua, 40), 0.3)
+
+    def test_opacity_setting_applies(self):
+        lua = load(prelude='units["0xF1"] = { type = 8 }')
+        lua.execute(FADE + 'FostercareNameplates.SetOverride("nameplate_fade_alpha", 0.5); fade("nameplate_fade_critters")')
+        self.assertEqual(self.alpha(lua), 0.5)
+
+
 if __name__ == "__main__":
     unittest.main()
