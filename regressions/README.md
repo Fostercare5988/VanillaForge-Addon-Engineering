@@ -182,7 +182,7 @@ also covers the enemy-frame size presets, **Custom size** and the row-feature sw
 `test_targets_row_features.py` covers enemy cast bars (ClassicAPI cast, interrupt,
 cleared cast, finished cast, the event-duration fallback, channel drain, switch off,
 click to target or focus the caster, the side setting and placement outside the
-trinket), range darkening of the health bar only (far, never seen, switch off), raid icons on `RAID_TARGET_UPDATE`,
+trinket), range shown as grey name and health text, bars untouched (far, never seen, switch off), raid icons on `RAID_TARGET_UPDATE`,
 group target counts and the preview samples. `test_targets_guid_events.py` adds the
 locked "Enemies alive/total" header and its preview-only drag hint.
 `test_spell_tables.py` checks the spell tables against octowow.st/db: Spy names
