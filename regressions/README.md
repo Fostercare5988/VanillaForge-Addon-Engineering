@@ -35,7 +35,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | Addon | Location | Tests | Portable | Run |
 | --- | --- | ---: | --- | --- |
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 5 | Yes | [ActionBarProfiles](#actionbarprofiles) |
-| AutoBG | `regressions/AutoBG` | 98 | Yes | [AutoBG](#autobg) |
+| AutoBG | `regressions/AutoBG` | 102 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 17 | Yes | [BrainwasherPro](#brainwasherpro) |
 | EasyPoisons | `regressions/EasyPoisons` | 13 | Yes | [EasyPoisons](#easypoisons) |
@@ -180,8 +180,9 @@ yards** dims while stealth warnings are off. `addon_loader.py` runs `ForgeUI.lua
 first and passes `("AutoBG", ns)` to each file, as the client does. The same file
 also covers the enemy-frame size presets, **Custom size** and the row-feature switches.
 `test_targets_row_features.py` covers enemy cast bars (ClassicAPI cast, interrupt,
-cleared cast, finished cast, the event-duration fallback, channel drain, switch off),
-range fading (far, never seen, switch off), raid icons on `RAID_TARGET_UPDATE`,
+cleared cast, finished cast, the event-duration fallback, channel drain, switch off,
+click to target or focus the caster, the side setting and placement outside the
+trinket), range greying of the health bar only (far, never seen, switch off), raid icons on `RAID_TARGET_UPDATE`,
 group target counts and the preview samples. `test_targets_guid_events.py` adds the
 locked "Enemies alive/total" header and its preview-only drag hint.
 `test_spell_tables.py` checks the spell tables against octowow.st/db: Spy names

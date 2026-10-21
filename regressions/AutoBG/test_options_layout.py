@@ -118,10 +118,10 @@ class OptionsLayoutTests(unittest.TestCase):
         lua = runtime()
         lua.execute('AutoBG_OpenOptions("targets")')
         self.assertFalse(lua.eval('AutoBG_Tgt_Width.shown'))
-        self.assertEqual(lua.eval('AutoBG_OptionsPanel.height'), 424)
+        self.assertEqual(lua.eval('AutoBG_OptionsPanel.height'), 444)
         click(lua, "AutoBG_Tgt_CustomSize")
         self.assertTrue(lua.eval('AutoBG_Tgt_Width.shown'))
-        self.assertEqual(lua.eval('AutoBG_OptionsPanel.height'), 524)
+        self.assertEqual(lua.eval('AutoBG_OptionsPanel.height'), 544)
         self.assertEqual(lua.eval('AutoBG_Tgt_CustomSize.text'), "Hide custom size")
 
     def test_row_feature_switches_save(self):
@@ -132,6 +132,15 @@ class OptionsLayoutTests(unittest.TestCase):
             self.assertTrue(lua.eval('%s.checked' % name), name)
             toggle(lua, name)
             self.assertFalse(lua.eval('AutoBG_Settings.Targets.%s' % key), key)
+
+    def test_cast_bar_side_switch_saves_and_dims_without_cast_bars(self):
+        lua = runtime()
+        lua.execute('AutoBG_OpenOptions("targets")')
+        self.assertTrue(lua.eval('AutoBG_Tgt_CastLeft.checked'))  # old default: away from the trinket
+        toggle(lua, "AutoBG_Tgt_CastLeft")
+        self.assertEqual(lua.eval('AutoBG_Settings.Targets.CastPos'), "RIGHT")
+        toggle(lua, "AutoBG_Tgt_CastBars")
+        self.assertFalse(lua.eval('AutoBG_Tgt_CastLeft.enabled'))
 
     def test_nearby_only_dims_while_stealth_warnings_are_off(self):
         lua = runtime()
