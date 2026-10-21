@@ -118,10 +118,18 @@ class OptionsLayoutTests(unittest.TestCase):
         # A new player sees every size control without hunting for a toggle.
         lua = runtime()
         lua.execute('AutoBG_OpenOptions("targets")')
-        for name in ("AutoBG_Tgt_FontSize", "AutoBG_Tgt_Scale", "AutoBG_Tgt_Width", "AutoBG_Tgt_Height"):
+        for name in ("AutoBG_Tgt_FontSize", "AutoBG_Tgt_Scale", "AutoBG_Tgt_Width", "AutoBG_Tgt_Height", "AutoBG_Tgt_Opacity"):
             self.assertNotEqual(lua.eval('%s.shown' % name), False, name)
         self.assertIsNone(lua.eval('AutoBG_Tgt_CustomSize'))
-        self.assertEqual(lua.eval('AutoBG_OptionsPanel.height'), 500)
+        self.assertEqual(lua.eval('AutoBG_OptionsPanel.height'), 542)
+
+    def test_opacity_is_saved_per_battleground_size(self):
+        lua = runtime()
+        lua.execute('AutoBG_OpenOptions("targets")')
+        self.assertEqual(lua.eval('AutoBG_Tgt_Opacity.value'), 100)
+        lua.execute('AutoBG_Tgt_Opacity:SetValue(60)')
+        self.assertAlmostEqual(lua.eval('AutoBG_Settings.Targets.ButtonOpacity[10]'), 0.6)
+        self.assertIsNone(lua.eval('AutoBG_Settings.Targets.ButtonOpacity[15]'))
 
     def test_bg_stealth_warnings_live_on_the_spy_tab(self):
         lua = runtime()
