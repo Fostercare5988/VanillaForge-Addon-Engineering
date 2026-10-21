@@ -28,6 +28,14 @@ def animate(lua, seconds=0):
     lua.execute('clock = clock + %s; local c = AutoBG_TargetCast1; c.scripts.OnUpdate(c)' % seconds)
 
 
+def record_fill(lua, row=1):
+    lua.execute('local hb = AutoBG_TargetButton%d.HealthBar; function hb:SetVertexColor(r) self.r = r end' % row)
+
+
+def fill_red(lua, row=1):
+    return lua.eval('AutoBG_TargetButton%d.HealthBar.r' % row)
+
+
 def cast_shown(lua):
     return bool(lua.eval('AutoBG_TargetCast1.shown'))
 
@@ -79,6 +87,38 @@ class CastBarTests(unittest.TestCase):
         # Half way through a channel: half of the 93-pixel bar remains.
         self.assertEqual(lua.eval('AutoBG_TargetCast1.barWidth'), 47)
 
+    def test_clicking_the_cast_bar_targets_the_caster(self):
+        lua = setup()
+        self.start_heal(lua)
+        lua.execute('guidNames["%s"] = "Grom"' % GROM)
+        lua.execute('targeted = {}; function TargetUnit(u) table.insert(targeted, u) end; function FocusUnit(u) focused = u end')
+        lua.execute('local c = AutoBG_TargetCast1; c.scripts.OnClick(c, "LeftButton")')
+        self.assertEqual(lua.eval('targeted[1]'), GROM)
+        lua.execute('local c = AutoBG_TargetCast1; c.scripts.OnClick(c, "RightButton")')
+        self.assertEqual(lua.eval('focused'), GROM)
+
+    def cast_anchor(self, lua):
+        lua.execute('local c = AutoBG_TargetCast1; anchor = {}; function c:SetPoint(p, rel, rp) anchor = { p, rel, rp } end')
+        lua.execute('AutoBG_Targets:SetupButtonLayout(10)')
+        point, rel, _ = lua.eval('anchor[1]'), lua.eval('anchor[2]'), lua.eval('anchor[3]')
+        if lua.eval('anchor[2] == AutoBG_TargetButton1'):
+            rel = "row"
+        elif lua.eval('anchor[2] == AutoBG_TargetButton1.Trinket'):
+            rel = "trinket"
+        return point, rel
+
+    def test_cast_bar_side_follows_the_setting(self):
+        lua = setup()
+        lua.execute('AutoBG_Settings.Targets.CastPos = "RIGHT"; AutoBG_Settings.Targets.ShowTrinket[10] = false')
+        self.assertEqual(self.cast_anchor(lua), ("LEFT", "row"))
+        lua.execute('AutoBG_Settings.Targets.CastPos = "LEFT"')
+        self.assertEqual(self.cast_anchor(lua), ("RIGHT", "row"))
+
+    def test_cast_bar_on_the_trinket_side_sits_outside_the_trinket(self):
+        lua = setup()
+        lua.execute('local o = AutoBG_Settings.Targets; o.CastPos, o.TrinketPos = "RIGHT", "RIGHT"; o.ShowTrinket[10] = true')
+        self.assertEqual(self.cast_anchor(lua), ("LEFT", "trinket"))
+
     def test_cast_bars_switch_off(self):
         lua = setup()
         lua.execute('AutoBG_Settings.Targets.ShowCastBars = false')
@@ -87,14 +127,20 @@ class CastBarTests(unittest.TestCase):
 
 
 class RowStatusTests(unittest.TestCase):
-    def test_far_enemy_fades_and_returns_when_close(self):
+    def test_far_enemy_greys_its_health_bar_and_regains_color_when_close(self):
+        # The row itself stays fully visible; only the bar fill changes.
         lua = setup()
-        lua.execute('yards["%s"] = 55' % GROM)
-        tick(lua)
-        self.assertEqual(lua.eval('AutoBG_TargetButton1.alpha'), 0.7)
+        record_fill(lua)
         lua.execute('yards["%s"] = 20' % GROM)
         tick(lua)
+        near = fill_red(lua)
+        lua.execute('yards["%s"] = 55' % GROM)
+        tick(lua)
         self.assertEqual(lua.eval('AutoBG_TargetButton1.alpha'), 1.0)
+        self.assertLess(fill_red(lua), near - 0.2)
+        lua.execute('yards["%s"] = 20' % GROM)
+        tick(lua)
+        self.assertEqual(fill_red(lua), near)
 
     def test_enemy_not_seen_yet_stays_bright(self):
         lua = setup(sighting=False)
@@ -131,7 +177,8 @@ class RowStatusTests(unittest.TestCase):
         lua.execute('AutoBG_Targets:EnableConfigMode(10)')
         self.assertTrue(lua.eval('AutoBG_TargetButton1.RaidIcon.shown'))
         self.assertEqual(lua.eval('AutoBG_TargetButton1.TargetCount.text'), "3")
-        self.assertEqual(lua.eval('AutoBG_TargetButton6.alpha'), 0.7)
+        self.assertEqual(lua.eval('AutoBG_TargetButton6.alpha'), 1.0)
+        self.assertTrue(lua.eval('AutoBG_TargetButton6.fillFar'))
         self.assertTrue(lua.eval('AutoBG_TargetCast2.shown'))
         self.assertEqual(lua.eval('AutoBG_TargetCast2.Text.text'), "Flash Heal")
         lua.execute('AutoBG_Targets:DisableConfigMode()')
