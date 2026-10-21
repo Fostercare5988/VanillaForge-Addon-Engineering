@@ -58,6 +58,21 @@ class StealthAndTrinketTableTests(unittest.TestCase):
     def test_vanish_aura_counts_as_stealth(self):
         self.assertTrue(self.stealth(11327))
 
+    def show(self, spell, name, icon):
+        self.lua.execute('function SpellInfo() return "%s", "", "%s" end' % (name, icon))
+        targets_base.fire(self.lua, "UNIT_CASTEVENT", targets_base.GROM, "", "CAST", spell, 0)
+        return (targets_base.row_text(self.lua), self.lua.eval('AutoBG_TargetButton1.stealthTexture'))
+
+    def test_each_kind_of_hiding_shows_its_own_label_and_icon(self):
+        icon = "Icons/Ability_Vanish"
+        self.assertEqual(self.show(1856, "Vanish", icon), ("|cffd2c2ffVANISH|r", icon))
+        self.setUp()
+        icon = "Icons/INV_Potion_112"
+        self.assertEqual(self.show(11392, "Invisibility", icon), ("|cff00ffffINVIS POT|r", icon))
+        self.setUp()
+        icon = "Icons/INV_Misc_EngGizmos_06"
+        self.assertEqual(self.show(4079, "Cloaking", icon), ("|cff00ffffCLOAK|r", icon))
+
     def test_wrong_old_ids_are_not_stealth(self):
         for spell in (8342, 23133, 23134):
             self.assertFalse(self.stealth(spell), spell)

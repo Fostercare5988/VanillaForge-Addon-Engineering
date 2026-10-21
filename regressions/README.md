@@ -35,7 +35,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | Addon | Location | Tests | Portable | Run |
 | --- | --- | ---: | --- | --- |
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 3 | Yes | [ActionBarProfiles](#actionbarprofiles) |
-| AutoBG | `regressions/AutoBG` | 96 | Yes | [AutoBG](#autobg) |
+| AutoBG | `regressions/AutoBG` | 97 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 14 | Yes | [FostercareNameplates](#fostercarenameplates) |
@@ -184,7 +184,8 @@ group target counts and the preview samples. `test_targets_guid_events.py` adds 
 locked "Enemies alive/total" header and its preview-only drag hint.
 `test_spell_tables.py` checks the spell tables against octowow.st/db: Spy names
 a race only from race-only spells, by name (10793 and 10795 are mounts), and the
-Vanish aura counts as stealth while 8342, 23133 and 23134 do not. Three of its four
+Vanish aura counts as stealth while 8342, 23133 and 23134 do not; Vanish, an Invisibility Potion and the
+Gnomish Cloaking Device each show their own label and SpellInfo icon. Three of its four
 fail on AutoBG `9b69782`.
 
 ```text
