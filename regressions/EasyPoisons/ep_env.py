@@ -191,6 +191,23 @@ function deliver()
     delivered = #purchases
     fire("BAG_UPDATE", 0); advance(0)
 end
+-- Delivers purchases as they are made, like the server answering each one.
+-- drop = { [n] = true } loses the nth purchase, as a burst did on OctoWoW.
+drop = {}
+function settle(seconds)
+    for _ = 1, 200 do
+        if delivered < #purchases then
+            for i = delivered + 1, #purchases do
+                if not drop[i] then addItem(purchases[i].id, purchases[i].items) end
+            end
+            delivered = #purchases
+            fire("BAG_UPDATE", 0)
+        end
+        advance(0.1)
+        seconds = (seconds or 10) - 0.1
+        if seconds <= 0 then break end
+    end
+end
 function openVendor() merchant.open = true; MerchantFrame.shown = true; fire("MERCHANT_SHOW"); advance(0) end
 function closeVendor() merchant.open = false; MerchantFrame.shown = false; fire("MERCHANT_CLOSED"); advance(0) end
 

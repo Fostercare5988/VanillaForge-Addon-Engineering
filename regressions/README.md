@@ -38,7 +38,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | AutoBG | `regressions/AutoBG` | 102 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 17 | Yes | [BrainwasherPro](#brainwasherpro) |
-| EasyPoisons | `regressions/EasyPoisons` | 13 | Yes | [EasyPoisons](#easypoisons) |
+| EasyPoisons | `regressions/EasyPoisons` | 16 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 14 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 19 | Yes | [FostercareTweaks](#fostercaretweaks) |
@@ -291,9 +291,12 @@ Poison VI, purchase size read from the vendor, recipes learned from the Poisons
 window, rogue-only window, and no bag walk while the window is closed. Eleven fail
 on the original 1.3 (`5376485`) for those reasons; the open/reset control and the
 hidden-window check pass on both. `ep_env.py` loads the files the TOC lists and
-rewrites Lua 5.0 `for k, v in t do` loops so 1.3 runs under Lua 5.1. Server
-purchase limits, purchase sizes and the Dissolvent/Corrosive recipes stay in-game
-checks.
+rewrites Lua 5.0 `for k, v in t do` loops so 1.3 runs under Lua 5.1. Three more
+cover EasyPoisons 1.4.1, after 80 Instant Poison VI in game gave 60 of 80 vials:
+purchases go out one at a time, a lost purchase is bought again, and a vendor
+that never delivers ends the order. All three fail on 1.4.0. `settle()` in
+`ep_env.py` delivers each purchase as it is made and `drop` loses chosen ones.
+Purchase sizes and the Dissolvent/Corrosive recipes stay in-game checks.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/EasyPoisons" --run-tests --test-start regressions/EasyPoisons --output .private/easypoisons-current.json

@@ -12,7 +12,7 @@ class Buying(unittest.TestCase):
     def test_a1_big_order_is_split_into_one_stack_purchases(self):
         """A1: 70 Deathweed went out as one purchase; the stock vendor window caps one at a stack."""
         lua = load("poisonVendor()")
-        lua.execute("openVendor(); setQty(POISON.Deadly, 10); buy()")
+        lua.execute("openVendor(); setQty(POISON.Deadly, 10); buy(); settle()")
         self.assertEqual(lua.eval("bought(5173)"), 70)
         self.assertLessEqual(lua.eval("largestPurchase(5173)"), 20)
 
@@ -22,14 +22,34 @@ class Buying(unittest.TestCase):
         lua.execute("openVendor(); setQty(POISON.Deadly, 2); buy(); buy()")
         self.assertEqual(lua.eval("bought(5173)"), 14)
 
+    def test_lost_purchase_is_bought_again(self):
+        """2026-10-21 in game: 80 Instant Poison VI gave 60 of 80 vials; a purchase in the burst was lost."""
+        lua = load("poisonVendor(); bags[1] = { size = 16, family = 0, slots = {} }")
+        lua.execute("drop[3] = true; openVendor(); setQty(POISON.Instant, 80); buy(); settle()")
+        self.assertGreaterEqual(lua.eval("C_Item.GetItemCount(8925)"), 80)
+        self.assertGreaterEqual(lua.eval("C_Item.GetItemCount(8924)"), 320)
+
+    def test_purchases_go_out_one_at_a_time(self):
+        """Each purchase waits until the previous one is in the bags."""
+        lua = load("poisonVendor()")
+        lua.execute("openVendor(); setQty(POISON.Deadly, 10); buy()")
+        self.assertEqual(lua.eval("#purchases"), 1)
+
+    def test_purchase_that_never_arrives_gives_up(self):
+        """A vendor that refuses every purchase ends the order with a message."""
+        lua = load("poisonVendor()")
+        lua.execute("for i = 1, 50 do drop[i] = true end; openVendor(); setQty(POISON.Deadly, 1); buy(); settle(20)")
+        self.assertLessEqual(lua.eval("#purchases"), 3)
+        self.assertIn("did not sell", lua.eval("table.concat(messages, '\\n')"))
+
     def test_a2_order_frees_the_button_once_delivered(self):
         """A2: after delivery the plan is met and a stale timeout must not touch a newer order."""
         lua = load("poisonVendor()")
-        lua.execute("openVendor(); setQty(POISON.Deadly, 1); buy(); deliver()")
+        lua.execute("openVendor(); setQty(POISON.Deadly, 1); buy(); settle()")
         self.assertIn("You have all the reagents.", lua.eval("allText()"))
-        lua.execute("advance(3); setQty(POISON.Deadly, 3); buy()")
-        self.assertEqual(lua.eval("bought(5173)"), 21)
-        lua.execute("advance(3); buy()")   # first order's timeout fires; second is still in flight
+        lua.execute("setQty(POISON.Deadly, 3); buy(); buy()")
+        self.assertEqual(lua.eval("#purchases"), 3, "second click while buying adds nothing")
+        lua.execute("settle()")
         self.assertEqual(lua.eval("bought(5173)"), 21)
 
     def test_a3_reagent_the_vendor_lacks_blocks_the_order(self):
@@ -77,7 +97,7 @@ class GameData(unittest.TestCase):
     def test_c_purchase_size_comes_from_the_vendor(self):
         """C: vials were assumed to come in fives; the vendor reports one per purchase here."""
         lua = load("for _, id in ipairs({8924, 2931, 8925, 8923, 5173}) do sells(id, 25, 1) end")
-        lua.execute("openVendor(); setQty(POISON.Deadly, 3); buy()")
+        lua.execute("openVendor(); setQty(POISON.Deadly, 3); buy(); settle()")
         self.assertEqual(lua.eval("bought(8925)"), 3)
 
     def test_c_recipes_are_learned_from_the_poisons_window(self):
@@ -86,7 +106,7 @@ class GameData(unittest.TestCase):
         lua.execute('''
             tradeskills = { { item = 47409, reagents = { {8924, 2}, {5173, 5}, {8925, 1} } } }
             fire("TRADE_SKILL_SHOW"); advance(0)
-            openVendor(); setQty(POISON.Corrosive, 1); buy()
+            openVendor(); setQty(POISON.Corrosive, 1); buy(); settle()
         ''')
         self.assertEqual(lua.eval("EasyPoisonsDB.Recipes[47409][5173]"), 5)
         self.assertEqual(lua.eval("bought(5173)"), 5)
