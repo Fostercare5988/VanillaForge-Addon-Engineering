@@ -25,6 +25,7 @@ end })
 function Widget:SetText(text) self.text = text end
 function Widget:GetText() return self.text end
 function Widget:SetScript(kind, fn) self.scripts = self.scripts or {}; self.scripts[kind] = fn end
+function Widget:GetFrameLevel() return 1 end
 function Widget:IsShown() return self.shown end
 function Widget:Show() self.shown = true end
 function Widget:Hide() self.shown = false end
