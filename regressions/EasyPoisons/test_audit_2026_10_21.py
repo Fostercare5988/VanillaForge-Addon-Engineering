@@ -114,6 +114,20 @@ class GameData(unittest.TestCase):
 
 
 class Behaviour(unittest.TestCase):
+    def test_opens_only_at_a_poison_vendor(self):
+        """The window opens for Crystal Vials plus another reagent, not for one stray reagent."""
+        for stock, opens in (("sells(5173, 25)", False), ("sells(8925, 25)", False),
+                             ("sells(8925, 25); sells(5173, 25)", True)):
+            lua = load(stock)
+            lua.execute("openVendor()")
+            self.assertEqual(lua.eval("window() ~= nil and window():IsShown()"), opens, stock)
+
+    def test_slash_command_still_works_at_any_reagent_vendor(self):
+        """/ep opens the window by hand where it did not open by itself."""
+        lua = load("sells(5173, 25); addItem(8925, 1)")
+        lua.execute('openVendor(); SlashCmdList.EASYPOISONS(""); advance(0); setQty(POISON.Deadly, 1); buy(); settle()')
+        self.assertEqual(lua.eval("bought(5173)"), 7)
+
     def test_a6_window_stays_closed_for_other_classes(self):
         """A6: a warrior at a herb vendor got the poison window."""
         lua = load('playerClass = "WARRIOR"; poisonVendor()')

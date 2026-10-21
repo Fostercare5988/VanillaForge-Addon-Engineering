@@ -38,7 +38,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | AutoBG | `regressions/AutoBG` | 102 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 17 | Yes | [BrainwasherPro](#brainwasherpro) |
-| EasyPoisons | `regressions/EasyPoisons` | 16 | Yes | [EasyPoisons](#easypoisons) |
+| EasyPoisons | `regressions/EasyPoisons` | 18 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 14 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 19 | Yes | [FostercareTweaks](#fostercaretweaks) |
@@ -296,7 +296,10 @@ cover EasyPoisons 1.4.1, after 80 Instant Poison VI in game gave 60 of 80 vials:
 purchases go out one at a time, a lost purchase is bought again, and a vendor
 that never delivers ends the order. All three fail on 1.4.0. `settle()` in
 `ep_env.py` delivers each purchase as it is made and `drop` loses chosen ones.
-Purchase sizes and the Dissolvent/Corrosive recipes stay in-game checks.
+Two cover 1.4.2: the window opens by itself only at a vendor selling Crystal
+Vials and another reagent, and `/ep` still opens it at any vendor; the first
+fails on 1.4.1. Purchase sizes and the Dissolvent/Corrosive recipes stay in-game
+checks.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/EasyPoisons" --run-tests --test-start regressions/EasyPoisons --output .private/easypoisons-current.json
