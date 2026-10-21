@@ -2,8 +2,9 @@
 
 The player and target frames keep a 50% black square on the BACKGROUND layer
 where the name sits, so a class color on that layer read dark (a rogue's yellow
-looked olive). Class bars now sit on BORDER, above the square and below the
-frame art, using the raid frames' Luna bar; NPC targets keep Blizzard's own
+looked olive, only in some sessions since the draw order is not fixed). Class
+bars now sit on BORDER, above the square and below the
+frame art, with Blizzard's name-bar texture; NPC targets keep Blizzard's own
 name background. The complete module file runs with generic widget mocks; the
 look itself stays an in-game check.
 """
@@ -39,7 +40,7 @@ function UnitClass() return "Rogue", "ROGUE" end
 function UnitName() return "Claude" end
 '''
 
-LUNA = "Interface\\AddOns\\FostercareTweaks\\img\\bar-luna.tga"  # the raid frames' bar
+LUNA = "Interface\\TargetingFrame\\UI-TargetingFrame-LevelBackground"  # Blizzard's name-bar look
 
 
 def runtime():
