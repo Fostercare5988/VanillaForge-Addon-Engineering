@@ -82,6 +82,19 @@ class AutoAcceptTests(unittest.TestCase):
         lua.execute('hooks.StaticPopup_Show("CONFIRM_BATTLEFIELD_ENTRY", "Warsong Gulch", nil, 1)')
         self.assertEqual(self.accepted(lua), (1, 1))
 
+    def test_longest_delay_still_enters_before_an_octowow_invite_runs_out(self):
+        # OctoWoW invites ran out after 79 s in play; a saved 119 s delay lost one.
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(BASE)
+        lua.execute(CORE)
+        lua.execute('AutoBG_Settings = { AutoAccept = true, AutoAcceptDelay = 119 }')
+        fire(lua, "ADDON_LOADED", "AutoBG")
+        self.assertEqual(lua.eval('AutoBG_Settings.AutoAcceptDelay'), 75)
+        lua.execute('statuses[1] = { "confirm", "Arathi Basin" }')
+        fire(lua, "UPDATE_BATTLEFIELD_STATUS")
+        lua.execute('m = 0; for _, s in ipairs(messages) do if string.find(s, "Entering in |cFFFFFF0075s", 1, true) then m = m + 1 end end')
+        self.assertEqual(lua.eval('m'), 1)
+
     def test_auto_accept_off_never_accepts(self):
         lua = runtime()
         lua.execute('statuses[1] = { "confirm", "Warsong Gulch" }')
