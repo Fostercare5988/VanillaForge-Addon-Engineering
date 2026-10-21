@@ -114,6 +114,31 @@ class RealMenu(unittest.TestCase):
         self.assertIn("32", text)
 
 
+class LongNames(unittest.TestCase):
+    """Long spec or action bar names are cut to fit before the Edit button."""
+    LONG = "Assassination PvP Arena Burst Setup"
+
+    def setUp(self):
+        self.lua = device(f"BrainwasherProDB = {{ specs = {{ [2] = {{ name = '{self.LONG}', actionProfile = '{self.LONG}' }} }} }}")
+
+    def test_long_texts_are_cut_to_fit(self):
+        for font in ("BrainwasherProSlot2.name", "BrainwasherProSlot2.summary"):
+            lua_font = f"rows2 = {font}"
+            self.lua.execute(lua_font)
+            self.assertLessEqual(self.lua.eval("rows2:GetStringWidth()"), 146, font)
+            self.assertTrue(self.lua.eval("rows2.text:sub(-3) == '...'"), font)
+
+    def test_split_survives_the_cut(self):
+        self.assertIn("32", self.lua.eval("BrainwasherProSlot2.summary.text"))
+
+    def test_hover_shows_the_full_names(self):
+        self.lua.execute('run(BrainwasherProSlot2, "OnEnter")')
+        tip = self.lua.eval("table.concat(tooltip, '\\n')")
+        self.assertIn(self.LONG, tip)
+        self.assertIn("Action bars: " + self.LONG, tip)
+        self.assertIn("32/0/19", tip)
+
+
 class Icons(unittest.TestCase):
     def test_icons_are_not_read_at_login(self):
         """1.5 read every macro icon at login on every character."""

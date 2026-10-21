@@ -37,7 +37,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 5 | Yes | [ActionBarProfiles](#actionbarprofiles) |
 | AutoBG | `regressions/AutoBG` | 107 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
-| BrainwasherPro | `regressions/BrainwasherPro` | 20 | Yes | [BrainwasherPro](#brainwasherpro) |
+| BrainwasherPro | `regressions/BrainwasherPro` | 23 | Yes | [BrainwasherPro](#brainwasherpro) |
 | EasyPoisons | `regressions/EasyPoisons` | 18 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 14 | Yes | [FostercareNameplates](#fostercarenameplates) |
@@ -320,7 +320,11 @@ original, trainer reset option, save, unrelated spell events) pass on both.
 from one option list; its device menu is the wording read in play on OctoWoW.
 Three more cover 2.0.1 and fail on 2.0.0: the reset price `(1g0s0c)` is read,
 and the split the device gives in each Activate option is shown, including for
-a slot the addon has no record of. Swap timing stays an in-game check.
+a slot the addon has no record of. Three cover 2.0.2: long spec and bar
+profile names are cut with "..." before the Edit button and shown in full on
+hover (both fail on 2.0.1), and the split stays visible after a cut (a control).
+The mock measures text at 6 pixels a character, so real font widths and swap
+timing stay in-game checks.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/BrainwasherPro" --run-tests --test-start regressions/BrainwasherPro --output .private/brainwasherpro-current.json
