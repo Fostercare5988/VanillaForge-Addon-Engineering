@@ -1,7 +1,7 @@
 """Class-colored name bars show the true class color (2026-10-21).
 
 Blizzard's name background texture is grey and partly see-through, so a rogue's
-yellow read as olive. Players now get a plain fill; NPC targets keep Blizzard's
+yellow read as olive. Players now get the raid frames' Luna bar at full color; NPC targets keep Blizzard's
 texture so its reaction colors are unchanged. The complete module file runs with
 generic widget mocks; the look itself stays an in-game check.
 """
@@ -32,7 +32,7 @@ function UnitClass() return "Rogue", "ROGUE" end
 function UnitName() return "Claude" end
 '''
 
-WHITE = "Interface\\Buttons\\WHITE8X8"
+WHITE = "Interface\\AddOns\\FostercareTweaks\\img\\bar-luna.tga"  # the raid frames' bar
 LEVEL = "Interface\\TargetingFrame\\UI-TargetingFrame-LevelBackground"
 
 
