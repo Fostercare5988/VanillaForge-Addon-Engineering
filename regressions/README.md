@@ -297,7 +297,7 @@ cover EasyPoisons 1.4.1, after 80 Instant Poison VI in game gave 60 of 80 vials:
 purchases go out one at a time, a lost purchase is bought again, and a vendor
 that never delivers ends the order. All three fail on 1.4.0. `settle()` in
 `ep_env.py` delivers each purchase as it is made and `drop` loses chosen ones.
-Two cover 1.4.2: the window opens by itself only at a vendor selling Crystal
+Two cover 1.4.2 (released as 2.0.0): the window opens by itself only at a vendor selling Crystal
 Vials and another reagent, and `/ep` still opens it at any vendor; the first
 fails on 1.4.1. Purchase sizes and the Dissolvent/Corrosive recipes stay in-game
 checks.
