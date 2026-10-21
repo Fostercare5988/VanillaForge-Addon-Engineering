@@ -38,7 +38,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | AutoBG | `regressions/AutoBG` | 119 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 28 | Yes | [BrainwasherPro](#brainwasherpro) |
-| EasyPoisons | `regressions/EasyPoisons` | 27 | Yes | [EasyPoisons](#easypoisons) |
+| EasyPoisons | `regressions/EasyPoisons` | 31 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 14 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 22 | Yes | [FostercareTweaks](#fostercaretweaks) |
@@ -306,7 +306,11 @@ that match the table are saved too, bag events while a purchase is on its way
 skip planning, and Flash Powder tops up to 20 at any vendor when switched on.
 The rows moved in 2.0.0, so `POISON` in `ep_env.py` follows the new order and
 older tests fail on 1.4.2 for that reason too; the mock's Deadly IV recipe is a
-test value. Purchase sizes and the unverified recipes stay in-game checks.
+test value. Four (class `NewRanks`, all fail before it) cover automatic ranks: a
+higher rank in the Poisons window takes over its row with its recipe, a
+filtered window never moves a row down, ranks are per character, and roman
+numerals up to IX parse; item IDs 90001+ there are made up. Purchase sizes and
+the unverified recipes stay in-game checks.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/EasyPoisons" --run-tests --test-start regressions/EasyPoisons --output .private/easypoisons-current.json

@@ -27,7 +27,9 @@ local function count(name) calls[name] = (calls[name] or 0) + 1 end
 DEFAULT_CHAT_FRAME = { AddMessage = function(_, m) table.insert(messages, m) end }
 SlashCmdList, UISpecialFrames = {}, {}
 GameTooltip = { SetOwner = function() end, SetText = function() end, Show = function() end, Hide = function() end }
-playerClass, money = "ROGUE", 1000000
+playerClass, money, playerName = "ROGUE", 1000000, "Claude"
+function UnitName() return playerName end
+function GetRealmName() return "Y'Shaarj" end
 function UnitClass() return "Rogue", playerClass end
 function GetMoney() return money end
 function GetAddOnMetadata(_, key) if key == "Version" then return "test" end if key == "Author" then return "Horyoshi" end end
@@ -214,8 +216,9 @@ function openVendor() merchant.open = true; MerchantFrame.shown = true; fire("ME
 function closeVendor() merchant.open = false; MerchantFrame.shown = false; fire("MERCHANT_CLOSED"); advance(0) end
 
 -- Tradeskill window -----------------------------------------------------------
-tradeskills = {}   -- { { item = id, reagents = { { id, count }, ... } } }
+tradeskills = {}   -- { { item = id, name = "Deadly Poison IV", reagents = { { id, count }, ... } } }
 function GetNumTradeSkills() return #tradeskills end
+function GetTradeSkillInfo(i) local t = tradeskills[i]; return t.name, t.kind or "optimal" end
 function GetTradeSkillItemID(i) return tradeskills[i] and tradeskills[i].item end
 function GetTradeSkillNumReagents(i) return #tradeskills[i].reagents end
 function GetTradeSkillReagentItemID(i, r) return tradeskills[i].reagents[r][1] end

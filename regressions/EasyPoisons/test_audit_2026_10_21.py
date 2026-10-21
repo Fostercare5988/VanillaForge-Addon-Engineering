@@ -145,6 +145,51 @@ class Audit2(unittest.TestCase):
         self.assertEqual(lua.eval("calls.bagRead or 0"), 0)
 
 
+class NewRanks(unittest.TestCase):
+    """A higher rank learned later (AQ20 on OctoWoW) replaces its row by itself.
+    Item 90001 is a made-up ID: the real ones are read from the Poisons window."""
+
+    WINDOW = """tradeskills = {
+        { item = 8985, name = "Deadly Poison IV", reagents = { {5173, 5}, {8925, 1} } },
+        { item = 90001, name = "Deadly Poison V", reagents = { {5173, 7}, {8925, 1} } },
+    }; fire("TRADE_SKILL_SHOW"); advance(0)"""
+
+    def test_higher_rank_takes_over_its_row(self):
+        lua = load("poisonVendor()")
+        lua.execute(self.WINDOW + "; openVendor(); setQty(POISON.Deadly, 1); buy(); settle()")
+        self.assertIn("Deadly Poison V", lua.eval("allText()"))
+        self.assertNotIn("Deadly Poison IV", lua.eval("allText()"))
+        self.assertEqual(lua.eval("bought(5173)"), 7)
+
+    def test_a_filtered_window_never_moves_a_row_down(self):
+        lua = load("poisonVendor()")
+        lua.execute(self.WINDOW)
+        lua.execute('tradeskills = { { item = 8985, name = "Deadly Poison IV", reagents = { {5173, 5}, {8925, 1} } } }; fire("TRADE_SKILL_SHOW"); advance(0)')
+        lua.execute("openVendor()")
+        self.assertIn("Deadly Poison V", lua.eval("allText()"))
+
+    def test_ranks_are_per_character(self):
+        """An alt that knows only Instant Poison IV gets that rank; the main keeps VI."""
+        lua = load("poisonVendor()")
+        lua.execute('tradeskills = { { item = 8926, name = "Instant Poison IV", reagents = { {8924, 2}, {8925, 1} } } }; fire("TRADE_SKILL_SHOW"); advance(0)')
+        self.assertEqual(lua.eval("EasyPoisonsDB.Ranks[\"Claude-Y'Shaarj\"][8928].itemID"), 8926)
+        lua.execute("openVendor()")
+        self.assertIn("Instant Poison IV", lua.eval("allText()"))
+        main = load("poisonVendor(); playerName = 'Main'; EasyPoisonsDB.Ranks = { [\"Claude-Y'Shaarj\"] = { [8928] = { itemID = 8926, name = 'Instant Poison IV', rank = 4 } } }")
+        main.execute("openVendor()")
+        self.assertIn("Instant Poison VI", main.eval("allText()"))
+
+    def test_roman_numerals(self):
+        lua = load("poisonVendor()")
+        lua.execute("""tradeskills = {
+            { item = 90002, name = "Wound Poison IV", reagents = { {5173, 1}, {8925, 1} } },
+            { item = 90003, name = "Mind-numbing Poison IX", reagents = { {8924, 1}, {8925, 1} } },
+        }; fire("TRADE_SKILL_SHOW"); advance(0); openVendor()""")
+        text = lua.eval("allText()")
+        self.assertIn("Wound Poison IV", text)
+        self.assertIn("Mind-numbing Poison IX", text)
+
+
 class FlashPowder(unittest.TestCase):
     def vendor(self, have, keep=True, stock="poisonVendor(); sells(5140, 25)"):
         setup = stock + ("; EasyPoisonsDB.KeepFlashPowder = true" if keep else "")
