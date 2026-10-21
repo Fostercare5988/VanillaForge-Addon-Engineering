@@ -129,32 +129,29 @@ class CastBarTests(unittest.TestCase):
 
 
 class RowStatusTests(unittest.TestCase):
-    def test_far_enemy_greys_its_text_and_keeps_its_bar_color(self):
-        # The row and its class-colored bar stay as bright as ever.
+    def test_in_range_enemy_gets_the_stripe_and_nothing_else_changes(self):
         lua = setup()
         record_colors(lua)
-        lua.execute('yards["%s"] = 20' % GROM)
-        tick(lua)
-        self.assertEqual(shades(lua)[0], 1)
-        lua.execute('yards["%s"] = 95' % GROM)
-        tick(lua)
-        self.assertEqual(lua.eval('AutoBG_TargetButton1.alpha'), 1.0)
-        self.assertEqual(shades(lua)[0], 0.6)
-        self.assertIsNone(shades(lua)[1])  # the bar color was never touched
         lua.execute('yards["%s"] = 60' % GROM)  # within 80 yards counts as near
         tick(lua)
-        self.assertEqual(shades(lua)[0], 1)
+        self.assertTrue(lua.eval('AutoBG_TargetButton1.RangeMark.shown'))
+        lua.execute('yards["%s"] = 95' % GROM)
+        tick(lua)
+        self.assertFalse(lua.eval('AutoBG_TargetButton1.RangeMark.shown'))
+        self.assertEqual(lua.eval('AutoBG_TargetButton1.alpha'), 1.0)
+        self.assertEqual(shades(lua), (None, None))  # text and bar colors untouched
 
-    def test_enemy_not_seen_yet_stays_bright(self):
+    def test_enemy_not_seen_yet_gets_no_stripe(self):
         lua = setup(sighting=False)
         tick(lua)
         self.assertEqual(lua.eval('AutoBG_TargetButton1.alpha'), 1.0)
+        self.assertFalse(lua.eval('AutoBG_TargetButton1.RangeMark.shown'))
 
     def test_fading_can_be_turned_off(self):
         lua = setup()
-        lua.execute('AutoBG_Settings.Targets.FadeOutOfRange = false; yards["%s"] = 95' % GROM)
+        lua.execute('AutoBG_Settings.Targets.FadeOutOfRange = false; yards["%s"] = 20' % GROM)
         tick(lua)
-        self.assertEqual(lua.eval('AutoBG_TargetButton1.alpha'), 1.0)
+        self.assertFalse(lua.eval('AutoBG_TargetButton1.RangeMark.shown'))
 
     def test_raid_icon_follows_the_mark(self):
         lua = setup()
@@ -181,7 +178,8 @@ class RowStatusTests(unittest.TestCase):
         self.assertTrue(lua.eval('AutoBG_TargetButton1.RaidIcon.shown'))
         self.assertEqual(lua.eval('AutoBG_TargetButton1.TargetCount.text'), "3")
         self.assertEqual(lua.eval('AutoBG_TargetButton6.alpha'), 1.0)
-        self.assertTrue(lua.eval('AutoBG_TargetButton6.textFar'))
+        self.assertFalse(lua.eval('AutoBG_TargetButton6.RangeMark.shown'))
+        self.assertTrue(lua.eval('AutoBG_TargetButton1.RangeMark.shown'))
         self.assertTrue(lua.eval('AutoBG_TargetCast2.shown'))
         self.assertEqual(lua.eval('AutoBG_TargetCast2.Text.text'), "Flash Heal")
         lua.execute('AutoBG_Targets:DisableConfigMode()')
