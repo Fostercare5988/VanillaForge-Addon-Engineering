@@ -136,12 +136,12 @@ class RowStatusTests(unittest.TestCase):
         lua.execute('yards["%s"] = 20' % GROM)
         tick(lua)
         self.assertEqual(shades(lua)[0], 1)
-        lua.execute('yards["%s"] = 55' % GROM)
+        lua.execute('yards["%s"] = 95' % GROM)
         tick(lua)
         self.assertEqual(lua.eval('AutoBG_TargetButton1.alpha'), 1.0)
         self.assertEqual(shades(lua)[0], 0.6)
         self.assertIsNone(shades(lua)[1])  # the bar color was never touched
-        lua.execute('yards["%s"] = 20' % GROM)
+        lua.execute('yards["%s"] = 60' % GROM)  # within 80 yards counts as near
         tick(lua)
         self.assertEqual(shades(lua)[0], 1)
 
@@ -152,7 +152,7 @@ class RowStatusTests(unittest.TestCase):
 
     def test_fading_can_be_turned_off(self):
         lua = setup()
-        lua.execute('AutoBG_Settings.Targets.FadeOutOfRange = false; yards["%s"] = 55' % GROM)
+        lua.execute('AutoBG_Settings.Targets.FadeOutOfRange = false; yards["%s"] = 95' % GROM)
         tick(lua)
         self.assertEqual(lua.eval('AutoBG_TargetButton1.alpha'), 1.0)
 
