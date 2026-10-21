@@ -37,6 +37,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 3 | Yes | [ActionBarProfiles](#actionbarprofiles) |
 | AutoBG | `regressions/AutoBG` | 97 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
+| EasyPoisons | `regressions/EasyPoisons` | 13 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 14 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 19 | Yes | [FostercareTweaks](#fostercaretweaks) |
@@ -272,4 +273,22 @@ were removed with the helpers they covered.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/AutoLazy" --run-tests --test-start regressions/AutoLazy --output .private/autolazy-current.json
+```
+
+## EasyPoisons
+
+Thirteen regressions cover the 2026-10-21 audit, repaired in EasyPoisons 1.4.0
+(`5e958e6`): one-stack purchases, one order at a time with a stale timeout
+ignored, orders blocked when the vendor lacks a reagent or stock, away from a
+vendor or without general bag space (quivers excluded), item 8928 named Instant
+Poison VI, purchase size read from the vendor, recipes learned from the Poisons
+window, rogue-only window, and no bag walk while the window is closed. Eleven fail
+on the original 1.3 (`5376485`) for those reasons; the open/reset control and the
+hidden-window check pass on both. `ep_env.py` loads the files the TOC lists and
+rewrites Lua 5.0 `for k, v in t do` loops so 1.3 runs under Lua 5.1. Server
+purchase limits, purchase sizes and the Dissolvent/Corrosive recipes stay in-game
+checks.
+
+```text
+python -B tools/audit_addon.py "<AddOns>/EasyPoisons" --run-tests --test-start regressions/EasyPoisons --output .private/easypoisons-current.json
 ```
