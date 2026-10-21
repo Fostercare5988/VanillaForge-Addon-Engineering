@@ -318,11 +318,11 @@ edit window). Thirteen fail on the original 1.5 (`fe1f3dd`); four controls (show
 original, trainer reset option, save, unrelated spell events) pass on both.
 `bwp_env.py` drives both the stock GossipTitleButton widgets and C_GossipInfo
 from one option list; its device menu is the wording read in play on OctoWoW.
-Three more cover 2.0.1 and fail on 2.0.0: the reset price `(1g0s0c)` is read,
+Three more cover the in-game fixes of `4ce362a` and fail before it: the reset price `(1g0s0c)` is read,
 and the split the device gives in each Activate option is shown, including for
-a slot the addon has no record of. Three cover 2.0.2: long spec and bar
+a slot the addon has no record of. Three cover `1a7928b`: long spec and bar
 profile names are cut with "..." before the Edit button and shown in full on
-hover (both fail on 2.0.1), and the split stays visible after a cut (a control).
+hover (both fail before it), and the split stays visible after a cut (a control).
 The mock measures text at 6 pixels a character, so real font widths and swap
 timing stay in-game checks.
 
