@@ -35,7 +35,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | Addon | Location | Tests | Portable | Run |
 | --- | --- | ---: | --- | --- |
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 5 | Yes | [ActionBarProfiles](#actionbarprofiles) |
-| AutoBG | `regressions/AutoBG` | 105 | Yes | [AutoBG](#autobg) |
+| AutoBG | `regressions/AutoBG` | 106 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 17 | Yes | [BrainwasherPro](#brainwasherpro) |
 | EasyPoisons | `regressions/EasyPoisons` | 18 | Yes | [EasyPoisons](#easypoisons) |
@@ -169,7 +169,8 @@ their faction, and a completed capture adds only the capturer's base (assaulted 
 neutral nodes). Five of its six fail on `e1eb810`; tick rates stay an in-game check.
 `test_spy_stealth_alert.py` follows a stealthed hostile rogue through each open-world
 detection path (nameplate, stealth cast, NamPower `BUFF_ADDED_OTHER`) to the alert
-window and the `RaidWarning` sound, and covers the 10-yard and line-of-sight gates,
+window and the `RaidWarning` sound, alerts for a seen stealther at any distance,
+stays quiet for one you cannot see, targets or focuses on click,
 the sound setting and auto-hide. The detection cases pass on `e1eb810`; the preview
 sound case fails there. Real distances, screen position and audio stay in-game checks.
 `test_options_layout.py` covers the ForgeUI options window: one **Preview frames**
