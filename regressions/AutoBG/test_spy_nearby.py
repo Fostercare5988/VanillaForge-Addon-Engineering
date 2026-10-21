@@ -74,6 +74,12 @@ function UnitCanAttack() return 1 end
 function UnitIsUnit() return nil end
 function UnitRace() return "Orc" end
 function GetNumRaidMembers() return 0 end
+clock, zoneName, printed, shift, ctrl = 1700000000, "Orgrimmar", {}, false, false
+function time() return clock end
+function GetRealZoneText() return zoneName end
+function AutoBG_Print(msg) table.insert(printed, msg) end
+function IsShiftKeyDown() return shift end
+function IsControlKeyDown() return ctrl end
 function GetNumPartyMembers() return 0 end
 function PlaySound() end
 AutoBG_Targets = {
