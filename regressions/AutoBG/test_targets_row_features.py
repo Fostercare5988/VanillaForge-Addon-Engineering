@@ -177,7 +177,7 @@ class RowStatusTests(unittest.TestCase):
         lua.execute('AutoBG_Targets:EnableConfigMode(10)')
         self.assertTrue(lua.eval('AutoBG_TargetButton1.RaidIcon.shown'))
         self.assertEqual(lua.eval('AutoBG_TargetButton1.TargetCount.text'), "3")
-        self.assertEqual(lua.eval('AutoBG_TargetButton6.alpha'), 1.0)
+        self.assertEqual(lua.eval('AutoBG_TargetButton6.alpha'), 0.75)  # stealthed sample, dimmed by default
         self.assertFalse(lua.eval('AutoBG_TargetButton6.RangeMark.shown'))
         self.assertTrue(lua.eval('AutoBG_TargetButton1.RangeMark.shown'))
         self.assertTrue(lua.eval('AutoBG_TargetCast2.shown'))
