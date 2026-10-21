@@ -188,6 +188,24 @@ class TargetsGuidEventTests(unittest.TestCase):
         lua.execute('yards["%s"] = 30; AutoBG_Targets.UpdateRowStatus()' % GROM)
         self.assertEqual(lua.eval('AutoBG_TargetsMainFrame.MoveText.text'), "Enemies 1/1  |cff59ff721 in range|r")
 
+    def test_new_install_starts_with_the_chosen_look(self):
+        lua = runtime()
+        o = 'AutoBG_Settings.Targets.'
+        for size in (10, 15):
+            got = [lua.eval(o + k + '[%d]' % size) for k in ("ButtonFontSize", "ButtonWidth", "ButtonHeight", "ButtonScale",
+                                                              "ButtonHideRealm", "DimStealthed", "ShowTrinket")]
+            self.assertEqual(got, [20, 195, 25, 1, True, True, True], size)
+        self.assertEqual(lua.eval(o + 'ButtonFontSize[40]'), 11)  # 40v40 stays compact
+        self.assertEqual((lua.eval(o + 'TrinketPos'), lua.eval(o + 'CastPos')), ("LEFT", "LEFT"))
+
+    def test_old_save_keeps_its_cast_bars_away_from_the_trinket(self):
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(BASE)
+        lua.execute('AutoBG_Settings = { Targets = { TrinketPos = "LEFT" } }')
+        addon_loader.load(lua, TARGETS, "AutoBG_Targets.lua")
+        lua.execute('AutoBG_Targets.scripts.OnEvent(AutoBG_Targets, "PLAYER_LOGIN")')
+        self.assertEqual(lua.eval('AutoBG_Settings.Targets.CastPos'), "RIGHT")
+
     def test_unknown_guids_are_ignored(self):
         lua = runtime()
         lua.execute('health.hp = 1000')
