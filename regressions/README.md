@@ -35,7 +35,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | Addon | Location | Tests | Portable | Run |
 | --- | --- | ---: | --- | --- |
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 5 | Yes | [ActionBarProfiles](#actionbarprofiles) |
-| AutoBG | `regressions/AutoBG` | 106 | Yes | [AutoBG](#autobg) |
+| AutoBG | `regressions/AutoBG` | 107 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 17 | Yes | [BrainwasherPro](#brainwasherpro) |
 | EasyPoisons | `regressions/EasyPoisons` | 18 | Yes | [EasyPoisons](#easypoisons) |
