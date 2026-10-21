@@ -84,7 +84,9 @@ the addon's existing convention. Details: CLASSICAPI_MASTER_REFERENCE.md §4.
 ## 3. Measure in game
 
 Static checks cannot see frame time, so evidence from the game decides
-performance questions. The `!ErrorLog` addon is the measuring tool:
+performance questions. The `!ErrorLog` addon
+([Fostercare5988/ErrorLog](https://github.com/Fostercare5988/ErrorLog)) is the
+measuring tool:
 
 - `/err` lists every Lua error with its stack, zone and count.
 - `/lag on` starts the stutter profiler (it reloads the UI), `/lag` shows the
