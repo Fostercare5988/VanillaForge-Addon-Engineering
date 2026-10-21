@@ -111,18 +111,25 @@ class OptionsLayoutTests(unittest.TestCase):
         self.assertTrue(lua.eval('AutoBG_Tgt_Preset1.selected'))
         self.assertFalse(lua.eval('AutoBG_Tgt_Preset2.selected'))
         # A custom width no longer matches any preset.
-        lua.execute('AutoBG_Tgt_CustomSize.scripts.OnClick(AutoBG_Tgt_CustomSize); AutoBG_Tgt_Width:SetValue(185)')
+        lua.execute('AutoBG_Tgt_Width:SetValue(185)')
         self.assertFalse(lua.eval('AutoBG_Tgt_Preset1.selected'))
 
-    def test_custom_size_reveals_the_sliders(self):
+    def test_size_sliders_are_always_shown(self):
+        # A new player sees every size control without hunting for a toggle.
         lua = runtime()
         lua.execute('AutoBG_OpenOptions("targets")')
-        self.assertFalse(lua.eval('AutoBG_Tgt_Width.shown'))
-        self.assertEqual(lua.eval('AutoBG_OptionsPanel.height'), 444)
-        click(lua, "AutoBG_Tgt_CustomSize")
-        self.assertTrue(lua.eval('AutoBG_Tgt_Width.shown'))
-        self.assertEqual(lua.eval('AutoBG_OptionsPanel.height'), 544)
-        self.assertEqual(lua.eval('AutoBG_Tgt_CustomSize.text'), "Hide custom size")
+        for name in ("AutoBG_Tgt_FontSize", "AutoBG_Tgt_Scale", "AutoBG_Tgt_Width", "AutoBG_Tgt_Height"):
+            self.assertNotEqual(lua.eval('%s.shown' % name), False, name)
+        self.assertIsNone(lua.eval('AutoBG_Tgt_CustomSize'))
+        self.assertEqual(lua.eval('AutoBG_OptionsPanel.height'), 500)
+
+    def test_bg_stealth_warnings_live_on_the_spy_tab(self):
+        lua = runtime()
+        self.assertIsNone(lua.eval('AutoBG_Tgt_StealthAlert'))
+        lua.execute('AutoBG_OpenOptions("spy")')
+        self.assertTrue(lua.eval('AutoBG_Spy_BGStealthAlert.checked'))
+        toggle(lua, "AutoBG_Spy_BGStealthAlert")
+        self.assertFalse(lua.eval('AutoBG_Settings.Targets.StealthAlert'))
 
     def test_row_feature_switches_save(self):
         lua = runtime()
