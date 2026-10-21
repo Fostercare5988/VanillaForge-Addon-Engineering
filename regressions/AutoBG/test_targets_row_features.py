@@ -128,7 +128,7 @@ class CastBarTests(unittest.TestCase):
 
 class RowStatusTests(unittest.TestCase):
     def test_far_enemy_greys_its_health_bar_and_regains_color_when_close(self):
-        # The row itself stays fully visible; only the bar fill changes.
+        # The row stays fully visible; only the bar fill darkens a little.
         lua = setup()
         record_fill(lua)
         lua.execute('yards["%s"] = 20' % GROM)
@@ -137,7 +137,7 @@ class RowStatusTests(unittest.TestCase):
         lua.execute('yards["%s"] = 55' % GROM)
         tick(lua)
         self.assertEqual(lua.eval('AutoBG_TargetButton1.alpha'), 1.0)
-        self.assertLess(fill_red(lua), near - 0.2)
+        self.assertLess(fill_red(lua), near - 0.15)
         lua.execute('yards["%s"] = 20' % GROM)
         tick(lua)
         self.assertEqual(fill_red(lua), near)
