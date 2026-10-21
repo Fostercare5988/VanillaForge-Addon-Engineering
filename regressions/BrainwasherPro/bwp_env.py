@@ -154,12 +154,13 @@ C_GossipInfo = {
 DEVICE = "Goblin Brainwashing Device"
 function deviceMenu()
     return {
-        { id = 11, name = "Save 1st Specialization" },
-        { id = 12, name = "Save 2nd Specialization" },
-        { id = 22, name = "Activate 2nd Specialization" },
-        { id = 33, name = "Buy 3rd Specialization for 100 gold" },
-        { id = 44, name = "Buy 4th Specialization for 300 gold" },
-        { id = 90, name = "Reset my talents for 5 gold" },
+        -- Wording read in play on OctoWoW, 2026-10-21.
+        { id = 90, name = "Reset my talents. (1g0s0c)" },
+        { id = 11, name = "Save 1st Specialization." },
+        { id = 22, name = "Activate 2nd Specialization  (32/0/19)" },
+        { id = 12, name = "Save 2nd Specialization." },
+        { id = 33, name = "Buy 3rd Specialization tab for 100 gold." },
+        { id = 44, name = "Buy 4th Specialization tab for 300 gold." },
     }
 end
 

@@ -81,8 +81,37 @@ class SavedData(unittest.TestCase):
 
     def test_saved_split_is_shown(self):
         """The 31/20/0 summary was built but never displayed."""
-        lua = device("BrainwasherProDB = { specs = { [2] = { name = 'PvP', t1 = 31, t2 = 20, t3 = 0 } } }")
+        lua = load("BrainwasherProDB = { specs = { [2] = { name = 'PvP', t1 = 31, t2 = 20, t3 = 0 } } }")
+        lua.execute('talk(DEVICE, { { id = 22, name = "Activate 2nd Specialization" } })')
         self.assertIn("31", lua.eval("shownText()"))
+
+
+class RealMenu(unittest.TestCase):
+    """The device's menu as read in play on OctoWoW (2026-10-21)."""
+
+    def test_reset_price_is_read(self):
+        """The reset option gives its price as (1g0s0c), which 2.0.0 did not read."""
+        lua = device()
+        self.assertEqual(lua.eval("BrainwasherProReset:GetText()"), "Reset talents (1g)")
+        lua.execute("click(BrainwasherProReset)")
+        self.assertIn("for 1g", lua.eval("popups.BRAINWASHERPRO_RESET_TALENTS.text"))
+        lua.execute('accept("BRAINWASHERPRO_RESET_TALENTS")')
+        self.assertEqual(lua.eval("selected[1]"), 90)
+
+    def test_device_split_is_shown_and_kept(self):
+        """The Activate option carries the slot's split; it beats an old saved one."""
+        lua = device("BrainwasherProDB = { specs = { [2] = { name = 'PvP', t1 = 31, t2 = 20, t3 = 0 } } }")
+        text = lua.eval("shownText()")
+        self.assertIn("32", text)
+        self.assertIn("19", text)
+        self.assertEqual(lua.eval("BrainwasherProDB.specs[2].t3"), 19)
+
+    def test_slot_without_saved_data_shows_the_device_split(self):
+        """A slot saved outside the addon is not "Empty talent slot"."""
+        lua = device()
+        text = lua.eval("shownText()")
+        self.assertIn("Spec 2", text)
+        self.assertIn("32", text)
 
 
 class Icons(unittest.TestCase):
