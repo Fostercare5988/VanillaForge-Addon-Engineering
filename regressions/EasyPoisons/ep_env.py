@@ -230,7 +230,7 @@ function setQty(row, n)
 end
 function buy() click(buyButton()); advance(0) end
 -- 2.0.0 order; 1.4.2 and earlier used Dissolvent, Crippling, Instant, Corrosive, Deadly, Mind.
-POISON = { Instant = 1, Deadly = 2, Wound = 3, Crippling = 4, Mind = 5, Dissolvent = 6, Corrosive = 7, Agitating = 8 }
+POISON = { Instant = 1, Dissolvent = 2, Crippling = 3, Mind = 4, Deadly = 5, Corrosive = 6, Wound = 7, Agitating = 8 }
 -- A test recipe for Deadly Poison IV, whose real one is learned in game.
 EasyPoisonsDB = { Recipes = { [8985] = { [5173] = 7, [8925] = 1 } } }
 '''
