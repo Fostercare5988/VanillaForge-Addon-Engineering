@@ -1,6 +1,6 @@
 # VanillaForge --- Known Patterns & Pitfalls for Enhanced WoW 1.12.1
 
-> Companion knowledge base to `VANILLAFORGE_SYSTEM_PROMPT.md`.
+> Companion knowledge base to `VANILLAFORGE.md`.
 >
 > These are extracted and consolidated from the old v2 system prompt.
 > They are reference patterns, not mandatory ceremonies. Apply a pattern

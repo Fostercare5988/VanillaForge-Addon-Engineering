@@ -1,1 +1,1 @@
-@CORE.md
+@VANILLAFORGE.md

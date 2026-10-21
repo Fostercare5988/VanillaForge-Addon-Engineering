@@ -1,6 +1,6 @@
 # Enhanced WoW 1.12.1 Engine Reference
 
-> Reference companion to `VANILLAFORGE_SYSTEM_PROMPT.md`.
+> Reference companion to `VANILLAFORGE.md`.
 >
 > This file documents the **non-ClassicAPI engine stack**, client/runtime boundaries,
 > and cross-component selection rules. Detailed ClassicAPI knowledge belongs in
@@ -69,7 +69,7 @@ Lua VM, FrameXML generation, or Retail API.
 OctoWoW's `2026.10.10` distribution label is separate from this executable build
 and from the live realm/content revision. Select the actual client root,
 launcher, realmlist and relevant local patches before applying these references;
-see the [target preflight](docs/WORKFLOW.md).
+see the [target preflight](archive/docs/WORKFLOW.md).
 
 Therefore:
 
@@ -828,7 +828,7 @@ For outside-click dismissal, preserve the native click-up interaction. Where
 needed, defer dismissal and guard it against closing a newly opened session.
 Test child menus, tooltips and both mouse buttons in game; a Lua model cannot
 prove native pointer safety or input ordering. See the deployed
-[OctoWoW minimap notes](audit/OCTOWOW_FRAMEXML_CAPABILITIES.md#6-minimap-integration-evidence-2026-10-04).
+[OctoWoW minimap notes](archive/audit/OCTOWOW_FRAMEXML_CAPABILITIES.md#6-minimap-integration-evidence-2026-10-04).
 
 ---
 
