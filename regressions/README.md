@@ -284,6 +284,9 @@ python -B tools/audit_addon.py "<AddOns>/AutoLazy" --run-tests --test-start regr
 
 ## EasyPoisons
 
+Commit IDs below are in the addon's local `backup/pre-2.0.0` branch; on GitHub its
+history starts at a single 2.0.0 commit (2026-10-21).
+
 Thirteen regressions cover the 2026-10-21 audit, repaired in EasyPoisons 1.4.0
 (`5e958e6`): one-stack purchases, one order at a time with a stale timeout
 ignored, orders blocked when the vendor lacks a reagent or stock, away from a
@@ -317,6 +320,9 @@ python -B tools/audit_addon.py "<AddOns>/EasyPoisons" --run-tests --test-start r
 ```
 
 ## BrainwasherPro
+
+Commit IDs below are in the addon's local `backup/pre-2.0.0` branch; on GitHub its
+history starts at a single 2.0.0 commit (2026-10-21).
 
 Seventeen regressions cover the 2026-10-21 modernization to BrainwasherPro 2.0.0:
 the hidden native menu cannot take clicks, buying a slot asks first, server-confirmed
