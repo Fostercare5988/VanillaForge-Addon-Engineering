@@ -36,3 +36,11 @@ Do not trust for this server:
 - 2026-10-21: how long a battleground invite stays open is **unverified**.
   AutoBG assumes at most 120 seconds, enters 5 seconds early, and saves a
   shorter window (`AutoBG_Settings.InviteWindow`) if an invite runs out.
+- 2026-10-21, confirmed in play on Y'Shaarj: an Arathi Basin base takes 60 seconds
+  to capture, an Alterac Valley tower or graveyard 5 minutes, and a Warsong Gulch
+  flag returns 23 seconds after a capture. Every PvP trinket has a 3-minute cooldown.
+- 2026-10-21, from the database: the PvP trinket spells are 52317 (Insignia, all
+  crowd control) and 5579, 23273, 23274, 23276, 23277 (the Immune ... effects).
+  10793, 10795 and 10796 are mounts; 8342 is Defibrillate; 23133 and 23134 are
+  engineering summons; 32612 does not exist. Vanish casts 1856/1857 apply auras
+  11327/11329.
