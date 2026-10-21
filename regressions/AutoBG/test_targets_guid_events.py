@@ -55,6 +55,8 @@ function UnitIsVisible() return 1 end
 function UnitIsDeadOrGhost() return nil end
 function UnitIsDead() return nil end
 function UnitIsGhost() return nil end
+inCombat = false
+function UnitAffectingCombat() return inCombat end
 guidNames = {}
 spellInfoCalls = 0
 function SpellInfo(id) spellInfoCalls = spellInfoCalls + 1; return "Arcane Intellect" end
@@ -159,12 +161,18 @@ class TargetsGuidEventTests(unittest.TestCase):
         lua.execute('spellInfoCalls = 0; for i = 1, 100 do AutoBG_Targets.CheckIsStealthSpell(10157) end')
         self.assertEqual(lua.eval('spellInfoCalls'), 1)
 
-    def test_header_counts_living_enemies_and_stays_locked_in_a_match(self):
+    def test_header_counts_living_enemies_and_drags_only_out_of_combat(self):
         lua = runtime()
         self.assertEqual(lua.eval('AutoBG_TargetsMainFrame.MoveText.text'), "Enemies 1/1")
+        self.assertTrue(lua.eval('AutoBG_TargetsMainFrame.DragHeader.mouse'))
+        lua.execute('inCombat = true')
+        fire(lua, "PLAYER_REGEN_DISABLED", 0)
         self.assertFalse(lua.eval('AutoBG_TargetsMainFrame.DragHeader.mouse'))
         fire(lua, "UNIT_DIED", GROM)
         self.assertEqual(lua.eval('AutoBG_TargetsMainFrame.MoveText.text'), "Enemies 0/1")
+        lua.execute('inCombat = false')
+        fire(lua, "PLAYER_REGEN_ENABLED", 0)
+        self.assertTrue(lua.eval('AutoBG_TargetsMainFrame.DragHeader.mouse'))
 
     def test_header_offers_dragging_only_in_preview(self):
         lua = runtime()
