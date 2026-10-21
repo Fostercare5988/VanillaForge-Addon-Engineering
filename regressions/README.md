@@ -34,9 +34,10 @@ that folder's `verified-repositories.json` and `validation.json`.
 
 | Addon | Location | Tests | Portable | Run |
 | --- | --- | ---: | --- | --- |
-| ActionBarProfiles | `regressions/ActionBarProfiles` | 3 | Yes | [ActionBarProfiles](#actionbarprofiles) |
+| ActionBarProfiles | `regressions/ActionBarProfiles` | 5 | Yes | [ActionBarProfiles](#actionbarprofiles) |
 | AutoBG | `regressions/AutoBG` | 98 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
+| BrainwasherPro | `regressions/BrainwasherPro` | 17 | Yes | [BrainwasherPro](#brainwasherpro) |
 | EasyPoisons | `regressions/EasyPoisons` | 13 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 14 | Yes | [FostercareNameplates](#fostercarenameplates) |
@@ -247,6 +248,10 @@ load slot 19 (Elixir of the Mongoose)":
 - slots that cannot be filled are skipped and named in chat, and the rest still load;
 - each skipped slot names its reason, such as "item is locked".
 
+Two more (`test_public_api.py`, 2026-10-21) cover the API BrainwasherPro uses:
+`ABP_GetProfileNames` returns a copy of the names and `ABP_LoadProfileByName`
+loads or refuses by name. Both fail on 1.0.0 before the API (`fa0d19a`).
+
 All three fail on 1.0.0 (`a62c656`). `abp_env.py` runs `ActionBarProfiles.lua` under
 Lua 5.1 with action-bar, spellbook, bag and cursor mocks shaped like the ClassicAPI and
 SuperWoW docs. They do not prove native placement or zero-count item buttons.
@@ -291,4 +296,22 @@ checks.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/EasyPoisons" --run-tests --test-start regressions/EasyPoisons --output .private/easypoisons-current.json
+```
+
+## BrainwasherPro
+
+Seventeen regressions cover the 2026-10-21 modernization to BrainwasherPro 2.0.0:
+the hidden native menu cannot take clicks, buying a slot asks first, server-confirmed
+options are not asked twice, the device is found by its menu, only offered slots
+show, the unused talent snapshot is cleared, the point split shows, icons are read
+per page instead of at login, and the ActionBarProfiles link (loads after the
+talents settle, waits for combat, gives up without a talent change, cycles in the
+edit window). Thirteen fail on the original 1.5 (`fe1f3dd`); four controls (show
+original, trainer reset option, save, unrelated spell events) pass on both.
+`bwp_env.py` drives both the stock GossipTitleButton widgets and C_GossipInfo
+from one option list. The device's real Buy/Reset text and swap timing stay
+in-game checks.
+
+```text
+python -B tools/audit_addon.py "<AddOns>/BrainwasherPro" --run-tests --test-start regressions/BrainwasherPro --output .private/brainwasherpro-current.json
 ```
