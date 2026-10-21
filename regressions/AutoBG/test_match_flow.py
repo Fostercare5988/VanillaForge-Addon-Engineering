@@ -103,6 +103,21 @@ class AutoAcceptTests(unittest.TestCase):
         self.assertEqual(self.accepted(lua), (0, 0))
 
 
+class DefaultSettingsTests(unittest.TestCase):
+    def test_new_install_starts_with_the_chosen_countdown_look(self):
+        lua = runtime()
+        look = [lua.eval('AutoBG_Settings.%s' % k) for k in ("ObjectiveWidth", "ObjectiveHeight", "ObjectiveScale", "ObjectiveOpacity")]
+        self.assertEqual(look, [225, 25, 1, 0.9])
+
+    def test_saved_countdown_look_is_kept(self):
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(BASE)
+        lua.execute(CORE)
+        lua.execute('AutoBG_Settings = { ObjectiveWidth = 300 }')
+        fire(lua, "ADDON_LOADED", "AutoBG")
+        self.assertEqual(lua.eval('AutoBG_Settings.ObjectiveWidth'), 300)
+
+
 class AutoLeaveTests(unittest.TestCase):
     def test_auto_leave_calls_leavebattlefield_like_framexml(self):
         lua = runtime()

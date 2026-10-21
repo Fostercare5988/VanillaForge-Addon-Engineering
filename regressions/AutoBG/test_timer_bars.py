@@ -93,8 +93,8 @@ class TimerBarTests(unittest.TestCase):
 
     def test_group_height_fits_title_and_rows(self):
         lua = runtime()
-        # 15 title + 2 rows * 22 + 1 gap * 2
-        self.assertEqual(lua.eval('AutoBG_WSGFlagFrame.height'), 61)
+        # 15 title + 2 rows * 25 (the default bar height) + 1 gap * 2
+        self.assertEqual(lua.eval('AutoBG_WSGFlagFrame.height'), 67)
 
 
 if __name__ == '__main__':
