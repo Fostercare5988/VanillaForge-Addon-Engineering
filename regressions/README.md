@@ -37,8 +37,8 @@ that folder's `verified-repositories.json` and `validation.json`.
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 5 | Yes | [ActionBarProfiles](#actionbarprofiles) |
 | AutoBG | `regressions/AutoBG` | 119 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
-| BrainwasherPro | `regressions/BrainwasherPro` | 23 | Yes | [BrainwasherPro](#brainwasherpro) |
-| EasyPoisons | `regressions/EasyPoisons` | 18 | Yes | [EasyPoisons](#easypoisons) |
+| BrainwasherPro | `regressions/BrainwasherPro` | 28 | Yes | [BrainwasherPro](#brainwasherpro) |
+| EasyPoisons | `regressions/EasyPoisons` | 27 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 14 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 21 | Yes | [FostercareTweaks](#fostercaretweaks) |
@@ -299,8 +299,14 @@ that never delivers ends the order. All three fail on 1.4.0. `settle()` in
 `ep_env.py` delivers each purchase as it is made and `drop` loses chosen ones.
 Two cover 1.4.2 (released as 2.0.0): the window opens by itself only at a vendor selling Crystal
 Vials and another reagent, and `/ep` still opens it at any vendor; the first
-fails on 1.4.1. Purchase sizes and the Dissolvent/Corrosive recipes stay in-game
-checks.
+fails on 1.4.1. Nine cover the second audit (classes `Audit2` and
+`FlashPowder`): the poison list read in game (Deadly IV, Wound, Agitating, plain
+Corrosive), a poison with no known recipe asks for the Poisons window, recipes
+that match the table are saved too, bag events while a purchase is on its way
+skip planning, and Flash Powder tops up to 20 at any vendor when switched on.
+The rows moved in 2.0.0, so `POISON` in `ep_env.py` follows the new order and
+older tests fail on 1.4.2 for that reason too; the mock's Deadly IV recipe is a
+test value. Purchase sizes and the unverified recipes stay in-game checks.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/EasyPoisons" --run-tests --test-start regressions/EasyPoisons --output .private/easypoisons-current.json
@@ -323,8 +329,11 @@ and the split the device gives in each Activate option is shown, including for
 a slot the addon has no record of. Three cover `1a7928b`: long spec and bar
 profile names are cut with "..." before the Edit button and shown in full on
 hover (both fail before it), and the split stays visible after a cut (a control).
-The mock measures text at 6 pixels a character, so real font widths and swap
-timing stay in-game checks.
+Five cover the second audit (class `Audit2`; four fail on the earlier 2.0.0):
+the active spec is marked and not swapped to, Save names the spec it replaces,
+a deleted profile shows as missing and is not loaded, and talent events are
+heard only during a swap; activating another spec still works (a control). The mock measures text at 6 pixels a character, so
+real font widths and swap timing stay in-game checks.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/BrainwasherPro" --run-tests --test-start regressions/BrainwasherPro --output .private/brainwasherpro-current.json

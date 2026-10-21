@@ -104,13 +104,78 @@ class GameData(unittest.TestCase):
         """C: recipes read from the Poisons window replace the unverified defaults."""
         lua = load("poisonVendor()")
         lua.execute('''
-            tradeskills = { { item = 47409, reagents = { {8924, 2}, {5173, 5}, {8925, 1} } } }
+            tradeskills = { { item = 47408, reagents = { {8924, 2}, {5173, 5}, {8925, 1} } } }
             fire("TRADE_SKILL_SHOW"); advance(0)
             openVendor(); setQty(POISON.Corrosive, 1); buy(); settle()
         ''')
-        self.assertEqual(lua.eval("EasyPoisonsDB.Recipes[47409][5173]"), 5)
+        self.assertEqual(lua.eval("EasyPoisonsDB.Recipes[47408][5173]"), 5)
         self.assertEqual(lua.eval("bought(5173)"), 5)
         self.assertEqual(lua.eval("bought(8924)"), 2)
+
+
+class Audit2(unittest.TestCase):
+    """Second audit, 2026-10-21, after the Poisons window was read in game."""
+
+    def test_poisons_are_the_ones_known_on_octowow(self):
+        """Deadly V and Corrosive II cannot be made yet; Deadly IV, Wound and Agitating can."""
+        lua = load("poisonVendor()")
+        lua.execute("openVendor()")
+        text = lua.eval("allText()")
+        for name in ("Deadly Poison IV", "Wound Poison", "Agitating Poison", "Corrosive Poison"):
+            self.assertIn(name, text)
+        self.assertNotIn("Deadly Poison V\n", text + "\n")
+        self.assertNotIn("Corrosive Poison II", text)
+
+    def test_unknown_recipe_asks_for_the_poisons_window(self):
+        lua = load("poisonVendor()")
+        lua.execute("openVendor(); setQty(POISON.Wound, 5); buy()")
+        self.assertEqual(lua.eval("#purchases"), 0)
+        self.assertIn("Open your Poisons window once to learn Wound Poison.", lua.eval("allText()"))
+
+    def test_recipe_matching_the_table_is_saved_too(self):
+        """A recipe equal to the built-in one was not saved, so nothing showed it was checked."""
+        lua = load("poisonVendor()")
+        lua.execute('tradeskills = { { item = 8928, reagents = { {8924, 4}, {8925, 1} } } }; fire("TRADE_SKILL_SHOW"); advance(0)')
+        self.assertEqual(lua.eval("EasyPoisonsDB.Recipes[8928][8924]"), 4)
+
+    def test_waiting_for_a_purchase_skips_bag_work(self):
+        """While a purchase is on its way, bag events do not plan the order again."""
+        lua = load("poisonVendor()")
+        lua.execute('openVendor(); setQty(POISON.Deadly, 10); buy(); calls = {}; fire("BAG_UPDATE", 0); advance(0)')
+        self.assertEqual(lua.eval("calls.bagRead or 0"), 0)
+
+
+class FlashPowder(unittest.TestCase):
+    def vendor(self, have, keep=True, stock="poisonVendor(); sells(5140, 25)"):
+        setup = stock + ("; EasyPoisonsDB.KeepFlashPowder = true" if keep else "")
+        if have:
+            setup += f"; addItem(5140, {have})"
+        lua = load(setup)
+        lua.execute("openVendor()")
+        return lua
+
+    def test_tops_up_to_twenty(self):
+        lua = self.vendor(5)
+        self.assertEqual(lua.eval("bought(5140)"), 15)
+
+    def test_off_by_default(self):
+        lua = self.vendor(5, keep=False)
+        self.assertEqual(lua.eval("bought(5140)"), 0)
+
+    def test_full_bags_of_powder_buy_nothing(self):
+        lua = self.vendor(20)
+        self.assertEqual(lua.eval("#purchases"), 0)
+
+    def test_any_vendor_that_sells_it(self):
+        """A reagent vendor without poisons tops up too."""
+        lua = self.vendor(0, stock="sells(5140, 25)")
+        self.assertEqual(lua.eval("bought(5140)"), 20)
+
+    def test_switch_turns_it_on(self):
+        lua = self.vendor(0, keep=False)
+        lua.execute("EasyPoisons_Flash:SetChecked(true); run(EasyPoisons_Flash, 'OnClick')")
+        self.assertTrue(lua.eval("EasyPoisonsDB.KeepFlashPowder"))
+        self.assertEqual(lua.eval("bought(5140)"), 20)
 
 
 class Behaviour(unittest.TestCase):
