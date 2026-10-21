@@ -177,8 +177,16 @@ class TargetsGuidEventTests(unittest.TestCase):
     def test_header_offers_dragging_only_in_preview(self):
         lua = runtime()
         lua.execute('AutoBG_Targets:EnableConfigMode(10)')
-        self.assertEqual(lua.eval('AutoBG_TargetsMainFrame.MoveText.text'), "Drag to move")
+        # The preview also teaches the green stripe: 8 of its 10 samples are in range.
+        self.assertEqual(lua.eval('AutoBG_TargetsMainFrame.MoveText.text'), "Drag to move  |cff59ff728 in range|r")
         self.assertTrue(lua.eval('AutoBG_TargetsMainFrame.DragHeader.mouse'))
+
+    def test_header_counts_enemies_in_range_only_when_there_are_some(self):
+        lua = runtime()
+        lua.execute('yards["%s"] = 95; AutoBG_Targets.UpdateRowStatus()' % GROM)
+        self.assertEqual(lua.eval('AutoBG_TargetsMainFrame.MoveText.text'), "Enemies 1/1")
+        lua.execute('yards["%s"] = 30; AutoBG_Targets.UpdateRowStatus()' % GROM)
+        self.assertEqual(lua.eval('AutoBG_TargetsMainFrame.MoveText.text'), "Enemies 1/1  |cff59ff721 in range|r")
 
     def test_unknown_guids_are_ignored(self):
         lua = runtime()
