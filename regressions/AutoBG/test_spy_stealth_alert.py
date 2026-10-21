@@ -68,7 +68,7 @@ def show_plate(lua):
 class SpyStealthAlertTests(unittest.TestCase):
     def assertAlerted(self, lua):
         self.assertTrue(lua.eval('AutoBG_SpyAlertWindow ~= nil and AutoBG_SpyAlertWindow.shown'))
-        self.assertIn("Stealth Detected!", lua.eval('AutoBG_SpyAlertWindow.Title.text'))
+        self.assertEqual("|cff00ffffStealth|r", lua.eval('AutoBG_SpyAlertWindow.Title.text'))
         self.assertEqual(lua.eval('AutoBG_SpyAlertWindow.Name.text'), "Sneaky")
         self.assertEqual(lua.eval('sounds[1]'), "RaidWarning")
 

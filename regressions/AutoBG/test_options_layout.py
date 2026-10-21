@@ -123,6 +123,14 @@ class OptionsLayoutTests(unittest.TestCase):
         self.assertIsNone(lua.eval('AutoBG_Tgt_CustomSize'))
         self.assertEqual(lua.eval('AutoBG_OptionsPanel.height'), 542)
 
+    def test_text_size_zero_to_twenty_is_font_ten_to_thirty(self):
+        lua = runtime()
+        lua.execute('AutoBG_OpenOptions("targets")')
+        lua.execute('AutoBG_Tgt_FontSize:SetValue(0)')
+        self.assertEqual(lua.eval('AutoBG_Settings.Targets.ButtonFontSize[10]'), 10)
+        lua.execute('AutoBG_Tgt_FontSize:SetValue(20)')
+        self.assertEqual(lua.eval('AutoBG_Settings.Targets.ButtonFontSize[10]'), 30)
+
     def test_opacity_is_saved_per_battleground_size(self):
         lua = runtime()
         lua.execute('AutoBG_OpenOptions("targets")')
