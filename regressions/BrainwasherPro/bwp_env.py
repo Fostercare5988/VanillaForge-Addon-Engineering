@@ -24,7 +24,13 @@ YES, NO, NUMGOSSIPBUTTONS = "Yes", "No", 32
 messages, widgets, fonts, selected, calls = {}, {}, {}, {}, {}
 DEFAULT_CHAT_FRAME = { AddMessage = function(_, m) table.insert(messages, m) end }
 SlashCmdList, UISpecialFrames = {}, {}
-GameTooltip = { SetOwner = function() end, SetText = function() end, Show = function() end, Hide = function() end }
+tooltip = {}
+GameTooltip = {
+    SetOwner = function() tooltip = {} end,
+    SetText = function(_, t) table.insert(tooltip, t) end,
+    AddLine = function(_, t) table.insert(tooltip, t) end,
+    Show = function() end, Hide = function() end,
+}
 inCombat, talents = false, { 0, 0, 0 }
 function UnitAffectingCombat() return inCombat end
 function GetTalentTabInfo(tab) return "Tab" .. tab, "Icon", talents[tab] end
@@ -70,6 +76,11 @@ function Widget:SetAlpha(v) self.alpha = v end
 function Widget:GetAlpha() return self.alpha end
 function Widget:SetScale(v) self.scale = v end
 function Widget:GetScale() return self.scale end
+-- 6 pixels per visible character; colour codes take no room.
+function Widget:GetStringWidth()
+    local t = string.gsub(string.gsub(self.text or "", "|c%x%x%x%x%x%x%x%x", ""), "|r", "")
+    return string.len(t) * 6
+end
 function Widget:SetTexture(v) self.texture = v end
 function Widget:GetTexture() return self.texture end
 function Widget:CreateFontString() local f = newWidget("FontString"); table.insert(fonts, f); return f end
