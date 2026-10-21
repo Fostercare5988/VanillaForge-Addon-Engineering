@@ -69,6 +69,15 @@ the addon's existing convention. Details: CLASSICAPI_MASTER_REFERENCE.md §4.
   and options that do nothing.
 - **Retire features completely:** code, option, default, slash command and docs
   together, and clear the old saved setting (set it to `nil` on load).
+- **Learn the server's numbers instead of assuming them.** A duration or rule the
+  server decides (capture times, respawns, invite windows, cooldowns) is either
+  verified against the server profile, or measured from events in play and
+  saved, like AutoBG's invite window. A value that is still a guess looks like
+  one to the player (AutoBG's `~`), and it stops looking like a guess as soon
+  as evidence arrives.
+- **Fix the kind, not just the case.** After finding a problem, search the addon
+  for others of the same kind and list them with the fix. Fix them all when the
+  user asked for that kind of fix; otherwise ask once with the full list.
 - **Keep what works.** Change only what the task needs; keep existing behaviour
   and SavedVariables unless asked. Old but correct code is not a reason to
   rewrite.
