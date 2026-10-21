@@ -94,21 +94,27 @@ class SpyStealthAlertTests(unittest.TestCase):
         dispatch(lua, "BUFF_ADDED_OTHER", ROGUE, 1, 1787, 1, 60, 0, 0)
         self.assertAlerted(lua)
 
-    def test_distant_rogue_alerts_once_within_ten_yards(self):
+    def test_detected_rogue_far_away_still_alerts(self):
+        # Detection gear reveals stealthers farther out; seeing one is the warning.
         lua = runtime()
-        lua.execute('stealthed["%s"] = "Stealth"; yards["%s"] = 25' % (ROGUE, ROGUE))
+        lua.execute('stealthed["%s"] = "Stealth"; yards["%s"] = 25; los = false' % (ROGUE, ROGUE))
         show_plate(lua)
-        self.assertQuiet(lua)
-        lua.execute('yards["%s"] = 8' % ROGUE)
-        advance(lua, 1)
-        self.assertEqual(lua.eval('sounds[1]'), "RaidWarning")
-        self.assertEqual(lua.eval('table.getn(sounds)'), 1)
+        self.assertAlerted(lua)
 
-    def test_blocked_line_of_sight_stays_quiet(self):
+    def test_stealthed_rogue_you_cannot_see_stays_quiet(self):
         lua = runtime()
-        lua.execute('stealthed["%s"] = "Stealth"; los = false' % ROGUE)
-        show_plate(lua)
+        lua.execute('stealthed["%s"] = "Stealth"; visible = false' % ROGUE)
+        dispatch(lua, "UNIT_CASTEVENT", ROGUE, "", "CAST", 1787, 0)
         self.assertQuiet(lua)
+
+    def test_clicking_the_alert_targets_and_focuses_the_enemy(self):
+        lua = runtime()
+        lua.execute('stealthed["%s"] = "Stealth"' % ROGUE)
+        show_plate(lua)
+        lua.execute('picks = {}; AutoBG_Targets.SelectEnemy = function(n, g, b) table.insert(picks, n .. "|" .. tostring(g) .. "|" .. b) end')
+        lua.execute('local w = AutoBG_SpyAlertWindow; w.scripts.OnClick(w, "LeftButton"); w.scripts.OnClick(w, "RightButton")')
+        self.assertEqual(lua.eval('picks[1]'), "Sneaky|%s|LeftButton" % ROGUE)
+        self.assertEqual(lua.eval('picks[2]'), "Sneaky|%s|RightButton" % ROGUE)
 
     def test_unstealthed_rogue_raises_no_stealth_alert(self):
         lua = runtime()
