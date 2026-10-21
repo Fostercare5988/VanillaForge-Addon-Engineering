@@ -60,6 +60,8 @@ function Widget:GetName() return self.name end
 function Widget:Enable() self.disabled = false end
 function Widget:Disable() self.disabled = true end
 function Widget:IsEnabled() return not self.disabled end
+function Widget:SetChecked(v) self.checked = v and true or nil end
+function Widget:GetChecked() return self.checked end
 function Widget:GetText() return self.text end
 function Widget:SetText(v)
     self.text = v
@@ -104,9 +106,9 @@ function advance(dt)
 end
 
 -- Items and bags -----------------------------------------------------------
-MAXSTACK = { [8924] = 20, [2931] = 20, [8925] = 20, [8923] = 20, [5173] = 20, [999] = 1 }
+MAXSTACK = { [8924] = 20, [2931] = 20, [8925] = 20, [8923] = 20, [5173] = 20, [5140] = 20, [999] = 1 }
 NAMES = { [8924] = "Dust of Deterioration", [2931] = "Maiden's Anguish", [8925] = "Crystal Vial",
-          [8923] = "Essence of Agony", [5173] = "Deathweed" }
+          [8923] = "Essence of Agony", [5173] = "Deathweed", [5140] = "Flash Powder" }
 bags = { [0] = { size = 16, family = 0, slots = {} } }
 for b = 1, 4 do bags[b] = { size = 0, family = 0, slots = {} } end
 local function link(id) return "|cffffffff|Hitem:" .. id .. ":0:0:0|h[" .. (NAMES[id] or "Item") .. "]|h|r" end
@@ -227,7 +229,10 @@ function setQty(row, n)
     input:SetText(tostring(n)); advance(0)
 end
 function buy() click(buyButton()); advance(0) end
-POISON = { Dissolvent = 1, Crippling = 2, Instant = 3, Corrosive = 4, Deadly = 5, Mind = 6 }
+-- 2.0.0 order; 1.4.2 and earlier used Dissolvent, Crippling, Instant, Corrosive, Deadly, Mind.
+POISON = { Instant = 1, Deadly = 2, Wound = 3, Crippling = 4, Mind = 5, Dissolvent = 6, Corrosive = 7, Agitating = 8 }
+-- A test recipe for Deadly Poison IV, whose real one is learned in game.
+EasyPoisonsDB = { Recipes = { [8985] = { [5173] = 7, [8925] = 1 } } }
 '''
 
 LUA50_FOR = re.compile(r"(for\s+[\w\s,]+\s+in\s+)([A-Za-z_][\w.]*)(\s+do)")

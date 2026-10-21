@@ -119,7 +119,8 @@ class LongNames(unittest.TestCase):
     LONG = "Assassination PvP Arena Burst Setup"
 
     def setUp(self):
-        self.lua = device(f"BrainwasherProDB = {{ specs = {{ [2] = {{ name = '{self.LONG}', actionProfile = '{self.LONG}' }} }} }}")
+        self.lua = device(f"ABP_GetProfileNames = function() return {{ '{self.LONG}' }} end; "
+                          f"BrainwasherProDB = {{ specs = {{ [2] = {{ name = '{self.LONG}', actionProfile = '{self.LONG}' }} }} }}")
 
     def test_long_texts_are_cut_to_fit(self):
         for font in ("BrainwasherProSlot2.name", "BrainwasherProSlot2.summary"):
@@ -137,6 +138,48 @@ class LongNames(unittest.TestCase):
         self.assertIn(self.LONG, tip)
         self.assertIn("Action bars: " + self.LONG, tip)
         self.assertIn("32/0/19", tip)
+
+
+class Audit2(unittest.TestCase):
+    """Second audit, 2026-10-21."""
+
+    def test_active_spec_is_marked_and_not_swapped_to(self):
+        """Activate on the spec in use cost a debuff for nothing."""
+        lua = device("talents = { 32, 0, 19 }")
+        self.assertTrue(lua.eval("BrainwasherProSlot2.active ~= nil and BrainwasherProSlot2.active:IsShown()"))
+        lua.execute("click(BrainwasherProIcon2)")
+        self.assertIsNone(lua.eval("popups.BRAINWASHERPRO_LOAD_SPEC"))
+        self.assertEqual(lua.eval("#selected"), 0)
+        self.assertIn("already active", lua.eval("table.concat(messages, '\\n')"))
+
+    def test_other_spec_still_activates(self):
+        lua = device("talents = { 41, 10, 0 }")
+        lua.execute('click(BrainwasherProIcon2); accept("BRAINWASHERPRO_LOAD_SPEC")')
+        self.assertEqual(lua.eval("selected[1]"), 22)
+
+    def test_save_names_the_spec_it_replaces(self):
+        lua = device("BrainwasherProDB = { specs = { [2] = { name = 'PvP' } } }")
+        lua.execute("BrainwasherPro:SaveSlot(2)")
+        self.assertIn("PvP", lua.eval("popups.BRAINWASHERPRO_SAVE_SPEC.text"))
+
+    def test_missing_profile_is_shown_and_not_loaded(self):
+        """A deleted ActionBarProfiles profile was found out only at swap time."""
+        lua = device("BrainwasherProDB = { specs = { [2] = { name = 'PvP', actionProfile = 'Gone' } } }")
+        self.assertIn("missing", lua.eval("BrainwasherProSlot2.summary.text"))
+        lua.execute('click(BrainwasherProIcon2); accept("BRAINWASHERPRO_LOAD_SPEC"); leave()')
+        lua.execute('fire("CHARACTER_POINTS_CHANGED"); advance(5)')
+        self.assertEqual(lua.eval("#abpLoaded"), 0)
+        self.assertIn("no longer exists", lua.eval("table.concat(messages, '\\n')"))
+
+    def test_talent_events_are_heard_only_during_a_swap(self):
+        lua = device("BrainwasherProDB = { specs = { [2] = { name = 'PvP', actionProfile = 'PvP' } } }")
+        listening = "(function() for _, w in ipairs(widgets) do if w.events.SPELLS_CHANGED then return true end end return false end)()"
+        self.assertFalse(lua.eval(listening))
+        lua.execute('click(BrainwasherProIcon2); accept("BRAINWASHERPRO_LOAD_SPEC"); leave()')
+        self.assertTrue(lua.eval(listening))
+        lua.execute('fire("CHARACTER_POINTS_CHANGED"); advance(2)')
+        self.assertEqual(lua.eval("abpLoaded[1]"), "PvP")
+        self.assertFalse(lua.eval(listening))
 
 
 class Icons(unittest.TestCase):
