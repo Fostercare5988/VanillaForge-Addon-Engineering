@@ -91,15 +91,15 @@ class RowStatusTests(unittest.TestCase):
         lua = setup()
         lua.execute('yards["%s"] = 55' % GROM)
         tick(lua)
-        self.assertEqual(lua.eval('AutoBG_TargetButton1.alpha'), 0.4)
+        self.assertEqual(lua.eval('AutoBG_TargetButton1.alpha'), 0.7)
         lua.execute('yards["%s"] = 20' % GROM)
         tick(lua)
         self.assertEqual(lua.eval('AutoBG_TargetButton1.alpha'), 1.0)
 
-    def test_enemy_not_seen_yet_is_faded(self):
+    def test_enemy_not_seen_yet_stays_bright(self):
         lua = setup(sighting=False)
         tick(lua)
-        self.assertEqual(lua.eval('AutoBG_TargetButton1.alpha'), 0.4)
+        self.assertEqual(lua.eval('AutoBG_TargetButton1.alpha'), 1.0)
 
     def test_fading_can_be_turned_off(self):
         lua = setup()
@@ -131,7 +131,7 @@ class RowStatusTests(unittest.TestCase):
         lua.execute('AutoBG_Targets:EnableConfigMode(10)')
         self.assertTrue(lua.eval('AutoBG_TargetButton1.RaidIcon.shown'))
         self.assertEqual(lua.eval('AutoBG_TargetButton1.TargetCount.text'), "3")
-        self.assertEqual(lua.eval('AutoBG_TargetButton6.alpha'), 0.4)
+        self.assertEqual(lua.eval('AutoBG_TargetButton6.alpha'), 0.7)
         self.assertTrue(lua.eval('AutoBG_TargetCast2.shown'))
         self.assertEqual(lua.eval('AutoBG_TargetCast2.Text.text'), "Flash Heal")
         lua.execute('AutoBG_Targets:DisableConfigMode()')
