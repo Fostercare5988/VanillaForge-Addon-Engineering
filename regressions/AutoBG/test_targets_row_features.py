@@ -28,12 +28,14 @@ def animate(lua, seconds=0):
     lua.execute('clock = clock + %s; local c = AutoBG_TargetCast1; c.scripts.OnUpdate(c)' % seconds)
 
 
-def record_fill(lua, row=1):
-    lua.execute('local hb = AutoBG_TargetButton%d.HealthBar; function hb:SetVertexColor(r) self.r = r end' % row)
+def record_colors(lua, row=1):
+    lua.execute('''local b = AutoBG_TargetButton%d
+        function b.HealthBar:SetVertexColor(r) self.r = r end
+        function b.Name:SetTextColor(r) self.r = r end''' % row)
 
 
-def fill_red(lua, row=1):
-    return lua.eval('AutoBG_TargetButton%d.HealthBar.r' % row)
+def shades(lua, row=1):
+    return (lua.eval('AutoBG_TargetButton%d.Name.r' % row), lua.eval('AutoBG_TargetButton%d.HealthBar.r' % row))
 
 
 def cast_shown(lua):
@@ -127,20 +129,21 @@ class CastBarTests(unittest.TestCase):
 
 
 class RowStatusTests(unittest.TestCase):
-    def test_far_enemy_greys_its_health_bar_and_regains_color_when_close(self):
-        # The row stays fully visible; only the bar fill darkens a little.
+    def test_far_enemy_greys_its_text_and_keeps_its_bar_color(self):
+        # The row and its class-colored bar stay as bright as ever.
         lua = setup()
-        record_fill(lua)
+        record_colors(lua)
         lua.execute('yards["%s"] = 20' % GROM)
         tick(lua)
-        near = fill_red(lua)
+        self.assertEqual(shades(lua)[0], 1)
         lua.execute('yards["%s"] = 55' % GROM)
         tick(lua)
         self.assertEqual(lua.eval('AutoBG_TargetButton1.alpha'), 1.0)
-        self.assertLess(fill_red(lua), near - 0.15)
+        self.assertEqual(shades(lua)[0], 0.6)
+        self.assertIsNone(shades(lua)[1])  # the bar color was never touched
         lua.execute('yards["%s"] = 20' % GROM)
         tick(lua)
-        self.assertEqual(fill_red(lua), near)
+        self.assertEqual(shades(lua)[0], 1)
 
     def test_enemy_not_seen_yet_stays_bright(self):
         lua = setup(sighting=False)
@@ -178,7 +181,7 @@ class RowStatusTests(unittest.TestCase):
         self.assertTrue(lua.eval('AutoBG_TargetButton1.RaidIcon.shown'))
         self.assertEqual(lua.eval('AutoBG_TargetButton1.TargetCount.text'), "3")
         self.assertEqual(lua.eval('AutoBG_TargetButton6.alpha'), 1.0)
-        self.assertTrue(lua.eval('AutoBG_TargetButton6.fillFar'))
+        self.assertTrue(lua.eval('AutoBG_TargetButton6.textFar'))
         self.assertTrue(lua.eval('AutoBG_TargetCast2.shown'))
         self.assertEqual(lua.eval('AutoBG_TargetCast2.Text.text'), "Flash Heal")
         lua.execute('AutoBG_Targets:DisableConfigMode()')
