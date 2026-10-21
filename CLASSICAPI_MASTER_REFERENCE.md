@@ -268,7 +268,7 @@ The maintainer reports in-game verification of the three-slot case and disappear
 of Compost errors in that commit. That is **upstream-reported empirical evidence**,
 not Niko-local or VanillaForge runtime verification. [UNVERIFIED - TEST FIRST]
 for reproduction in the user's installed client. Full provenance is in
-[the release-range audit](docs/CLASSICAPI_1.15.12_AUDIT.md).
+[the release-range audit](archive/docs/CLASSICAPI_1.15.12_AUDIT.md).
 
 ---
 
@@ -648,7 +648,7 @@ managed. This is not a blanket promise that every macro survives every removal.
 
 Evidence: [v1.15.11 macro source and offsets](https://github.com/brues-code/ClassicAPI/commit/452f3c14fc3270420355edecd82e27868fc19d63).
 The complete range contains this one macro implementation commit and no further
-macro change in v1.15.12; see the [full audit](docs/CLASSICAPI_1.15.12_AUDIT.md)
+macro change in v1.15.12; see the [full audit](archive/docs/CLASSICAPI_1.15.12_AUDIT.md)
 for the earlier macro lineage and unchanged KP-53/KP-54 contracts.
 
 ### 14.2 Conditional slash-command families
@@ -2881,7 +2881,7 @@ The v1.15.12 API reference blob was:
 The v1.15.14 release makes the question-mark icon the first engine macro icon
 and selectable without a separate icon-injection workaround. No API signatures,
 event payloads, bag sorting or Lua table semantics change in this release. See
-[the v1.15.14 audit](docs/CLASSICAPI_1.15.14_AUDIT.md) for the full one-commit range,
+[the v1.15.14 audit](archive/docs/CLASSICAPI_1.15.14_AUDIT.md) for the full one-commit range,
 independently verified provenance and runtime requirements.
 
 The v1.15.13 release added:
@@ -2892,8 +2892,8 @@ The v1.15.13 release added:
 
 The complete three-commit `v1.15.12...v1.15.13` range, release/DLL provenance,
 review corrections and runtime requirements are recorded in
-[the v1.15.13 audit](docs/CLASSICAPI_1.15.13_AUDIT.md).
-The [earlier audit](docs/CLASSICAPI_1.15.12_AUDIT.md) retains v1.15.10 through
+[the v1.15.13 audit](archive/docs/CLASSICAPI_1.15.13_AUDIT.md).
+The [earlier audit](archive/docs/CLASSICAPI_1.15.12_AUDIT.md) retains v1.15.10 through
 v1.15.12 provenance; its macro and weak-table knowledge remains valid.
 
 ---
@@ -3017,10 +3017,10 @@ ClassicAPI exists specifically to make many of those limitations obsolete.
 [SOURCE-VERIFIED] C_EquipmentSet.PickupEquipmentSet(setID) puts a native set on the cursor; unknown IDs do nothing. GetCursorInfo and GetActionInfo return "equipmentset", setName; the second value is a name, not a numeric ID. CURSOR_CHANGED reports Enum.UICursorType.EquipmentSet. Action clicks fire WEAR_EQUIPMENT_SET(setID); the event alone does not equip. The bundled EquipmentManager checks item locks and casting, then calls UseEquipmentSet. Do not add duplicate equip handlers.
 
 Set action placements persist in the per-character native equipment-set file, not addon SavedVariables or server action type. Rename/save repaint buttons; deleting a set clears its buttons. Native sets do not automatically import addon outfit schemas. Item/spell trackers must classify type before inferring identity from icons.
-[UNVERIFIED - TEST FIRST] Verify tooltip tokens/events for live/offline roster units and action pickup/place/swap/use/delete/relogin. No local runtime verification is claimed. See [v1.15.15 audit](docs/CLASSICAPI_1.15.15_AUDIT.md).
+[UNVERIFIED - TEST FIRST] Verify tooltip tokens/events for live/offline roster units and action pickup/place/swap/use/delete/relogin. No local runtime verification is claimed. See [v1.15.15 audit](archive/docs/CLASSICAPI_1.15.15_AUDIT.md).
 
 ## v1.15.16 source-verified addon contracts
-[SOURCE-VERIFIED] Compatibility-only release; no new public Lua API symbols, events, or return signature changes. Bundled `!!!ClassicAPI` compatibility module `AddOns/!!!ClassicAPI/Util/AddOnCompat.lua` intercepts `Turtle_GroupUI` via `EventUtil.ContinueOnAddOnLoaded` and wraps the global `GroupFrame_ToggleMovement(state)` function. Under modern script dispatch, frame buttons pass the widget (`self`) as the first argument to `OnClick`; this wrapper sanitizes any non-numeric `state` argument to `nil` before calling the original function, preventing an arithmetic error (`1 - state` at `Turtle_GroupUI.lua:409`). See [v1.15.16 audit](docs/CLASSICAPI_1.15.16_AUDIT.md).
+[SOURCE-VERIFIED] Compatibility-only release; no new public Lua API symbols, events, or return signature changes. Bundled `!!!ClassicAPI` compatibility module `AddOns/!!!ClassicAPI/Util/AddOnCompat.lua` intercepts `Turtle_GroupUI` via `EventUtil.ContinueOnAddOnLoaded` and wraps the global `GroupFrame_ToggleMovement(state)` function. Under modern script dispatch, frame buttons pass the widget (`self`) as the first argument to `OnClick`; this wrapper sanitizes any non-numeric `state` argument to `nil` before calling the original function, preventing an arithmetic error (`1 - state` at `Turtle_GroupUI.lua:409`). See [v1.15.16 audit](archive/docs/CLASSICAPI_1.15.16_AUDIT.md).
 
 ## v1.16.0 source-verified API and behavior contracts
 [SOURCE-VERIFIED] The pinned [v1.16.0 API reference](https://github.com/brues-code/ClassicAPI/blob/99de63755bdc368cf8d35ce3a09dc46dafc20930/docs/API.md) documents `C_QuestLog.GetInfo(index)` as a row-info table which does not contain completion state. `C_QuestLog.GetQuestLogTitle(index)` returns a modern row tuple; `isComplete` is `1` for complete, `-1` for failed, and `nil` otherwise. Its third value is `suggestedGroup` (always `0` here), unlike the legacy global `GetQuestLogTitle` third-value quest tag.
@@ -3029,4 +3029,4 @@ Set action placements persist in the per-character native equipment-set file, no
 
 [SOURCE-VERIFIED] `GameTooltip:AddTexture` inserts an icon only on an eligible line and returns success/failure. `HookScript` forwards the same script arguments to both handlers; `hooksecurefunc` runs its callback after the original, forwards arguments, and preserves original return values. Macro APIs accept names as well as indexes. For an unknown name, `GetMacroInfo` returns nils, `PickupMacro` / `DeleteMacro` do nothing, and `EditMacro` changes no macro and returns the first empty slot or 0. `string.trim` and `string.join` are also documented.
 
-This release adds 4.3.4-era API coverage plus behavior fixes across frames, tooltips, hooks, XML, nameplate/unit events, quest-log behavior and Lua compatibility. See the [v1.16.0 audit](docs/CLASSICAPI_1.16.0_AUDIT.md) for upstream provenance, deployment evidence and portfolio displacement candidates. In-game behavior remains unverified locally.
+This release adds 4.3.4-era API coverage plus behavior fixes across frames, tooltips, hooks, XML, nameplate/unit events, quest-log behavior and Lua compatibility. See the [v1.16.0 audit](archive/docs/CLASSICAPI_1.16.0_AUDIT.md) for upstream provenance, deployment evidence and portfolio displacement candidates. In-game behavior remains unverified locally.
