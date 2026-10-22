@@ -42,7 +42,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 27 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 22 | Yes | [FostercareTweaks](#fostercaretweaks) |
-| GearRack | `regressions/GearRack` | 10 | Yes | [GearRack](#gearrack) |
+| GearRack | `regressions/GearRack` | 11 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 10 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 16 | Yes | [OctoMail](#octomail) |
 | AutoLazy (older) | private `external-tests/AutoLazy` | 130 | No | private command below |
@@ -371,7 +371,7 @@ python -B tools/audit_addon.py "<AddOns>/BrainwasherPro" --run-tests --test-star
 Commit IDs below are in the addon's local `backup/pre-1.0.0` branch; on GitHub its
 history starts at a single v1.0.0 commit (2026-10-22).
 
-Ten regressions cover the 2026-10-22 review (`b3997ec`) and the Ember restyle.
+Eleven regressions cover the 2026-10-22 review (`b3997ec`) and the Ember restyle.
 Two cover DLL use and fail on 1.0.0 (`7e1af41`): the ammo slot is named by
 NamPower `GetAmmo()` without a tooltip, and a one-hand weapon goes to the off
 hand only when ClassicAPI `CanDualWield()` allows it. One checks that the event
@@ -384,6 +384,8 @@ and the gear bars keep their backdrops while the windows lose the old art.
 templates included, and gives each file ClassicAPI's `("GearRack", ns)`
 varargs. How the windows look stays an in-game check. `SetRetry`: a saved set
 re-issues a weapon the client refused (the off hand in combat); fails before it.
+`NoWaitForWeapons`: weapon swaps skip the cast and global-cooldown wait, armor
+keeps it (casts do not stop weapon swaps, measured in play).
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/GearRack" --run-tests --test-start regressions/GearRack --output .private/gearrack-current.json
