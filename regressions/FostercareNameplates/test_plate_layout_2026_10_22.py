@@ -1,8 +1,11 @@
-"""Reproduction for a FostercareNameplates 1.1.0 problem seen in play on 2026-10-21.
+"""FostercareNameplates plate layout, from play on 2026-10-21 and 10-22.
 
 - Logout: Details.lua:87 "attempt to call method `SetWidth' (a nil value)" from
   Shutdown, after the client had freed the plate's raid mark.
-Engine timing stays an in-game check.
+- At plate size 0.6 the native level text spilled off the plate. Moving or
+  re-fonting it crashed the client, so the addon now hides it by alpha and
+  draws its own level inside the bar.
+Engine timing and the crash itself stay in-game checks.
 """
 import unittest
 from fnp_env import load
@@ -33,6 +36,54 @@ class PlateLayout(unittest.TestCase):
             fire("PLAYER_LOGOUT")
         ''')
         self.assertTrue(lua.eval('FNPLibNameplate.stopping'))
+
+
+LEVEL = '''
+    levels = { ["0xF1"] = 54 }
+    function UnitLevel(u) return levels[u] end
+    function GetDifficultyColor() return { r = 0.25, g = 0.75, b = 0.25 } end
+'''
+
+
+class OwnLevel(unittest.TestCase):
+    def level(self, saved="{ overwrites = { nameplate_scale = 0.6 }, settingsVersion = 1 }"):
+        lua = load(saved, prelude=LEVEL)
+        plate_with_regions(lua)
+        lua.execute('FostercareNameplates.Nameplates:Level(plate, "0xF1")')
+        return lua
+
+    def test_level_drawn_inside_bar(self):
+        """Level shows in our label with the difficulty color; native level
+        text and skull are only made transparent."""
+        lua = self.level()
+        self.assertEqual(lua.eval('plate.fnpLevel.fnpText'), 54)
+        self.assertEqual(lua.eval('plate.fnpLevel.fnpG'), 0.75)
+        self.assertEqual(lua.eval('plate.level:GetAlpha()'), 0)
+        self.assertEqual(lua.eval('plate.levelicon:GetAlpha()'), 0)
+
+    def test_native_level_never_moved_or_refonted(self):
+        """1.1.1 re-anchored and re-fonted the engine's level text and the
+        client crashed on login. Only alpha may change."""
+        lua = self.level()
+        self.assertEqual(lua.eval('plate.level.points[1][4]'), 40)
+        self.assertEqual(lua.eval('plate.levelicon.points[1][4]'), 50)
+        self.assertIsNone(lua.eval('plate.level.fontSize'))
+
+    def test_skull_level(self):
+        lua = self.level()
+        lua.execute('levels["0xF1"] = -1; FostercareNameplates.Nameplates:Level(plate, "0xF1")')
+        self.assertEqual(lua.eval('plate.fnpLevel.fnpText'), "??")
+
+    def test_setting_off_restores_native(self):
+        lua = self.level('{ overwrites = { nameplate_level = 0 }, settingsVersion = 1 }')
+        self.assertIsNone(lua.eval('plate.fnpLevel'))
+        self.assertEqual(lua.eval('plate.level:GetAlpha()'), 1)
+
+    def test_logout_restores_native_level(self):
+        lua = self.level()
+        lua.execute('fire("PLAYER_LOGOUT")')
+        self.assertEqual(lua.eval('plate.level:GetAlpha()'), 1)
+        self.assertEqual(lua.eval('plate.levelicon:GetAlpha()'), 1)
 
 
 if __name__ == "__main__":

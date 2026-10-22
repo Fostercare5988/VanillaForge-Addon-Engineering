@@ -40,7 +40,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | BrainwasherPro | `regressions/BrainwasherPro` | 28 | Yes | [BrainwasherPro](#brainwasherpro) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
-| FostercareNameplates | `regressions/FostercareNameplates` | 15 | Yes | [FostercareNameplates](#fostercarenameplates) |
+| FostercareNameplates | `regressions/FostercareNameplates` | 20 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 22 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 9 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 10 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
@@ -233,6 +233,9 @@ Fourteen regressions cover the 2026-10-20 private audit
   setting, filters off by default, and the target never fading.
 - `PlateLayout` (from play on 2026-10-21): logout skips a plate whose parts the client
   already freed. Fails on 1.1.0.
+- `OwnLevel` (1.2.0): the level is drawn inside the bar with difficulty color and ?? for
+  skulls; the native level text and skull only change alpha, never anchors or font
+  (moving them crashed the client in 1.1.1); the setting off and logout restore them.
 
 Eleven fail on the code before their batch for the stated reason; the other three guard
 behavior that must stay unchanged. `fnp_env.py` runs the TOC files under Lua 5.1 with
