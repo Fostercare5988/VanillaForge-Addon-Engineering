@@ -80,8 +80,8 @@ class AuditReproductions(unittest.TestCase):
         lua.execute('''
             plate = nativePlate("0xF1", "nameplate1"); calls = {}
             FostercareNameplates.Nameplates.pending = {}
-            FNPPlateSlidernameplate_scale:SetValue(1.5)
-            FNPPlateSlidernameplate_scale.scripts.OnValueChanged()
+            FNPOpt_nameplate_scale:SetValue(1.5)
+            FNPOpt_nameplate_scale.scripts.OnValueChanged()
         ''')
         self.assertIsNone(lua.eval('next(FostercareNameplates.Nameplates.pending)'))
 
