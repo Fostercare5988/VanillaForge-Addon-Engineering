@@ -40,7 +40,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | BrainwasherPro | `regressions/BrainwasherPro` | 28 | Yes | [BrainwasherPro](#brainwasherpro) |
 | EasyPoisons | `regressions/EasyPoisons` | 31 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
-| FostercareNameplates | `regressions/FostercareNameplates` | 14 | Yes | [FostercareNameplates](#fostercarenameplates) |
+| FostercareNameplates | `regressions/FostercareNameplates` | 17 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 22 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 9 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 10 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
@@ -231,6 +231,9 @@ Fourteen regressions cover the 2026-10-20 private audit
   layout sliders do not re-query plates.
 - `UnitFilters`: critter, totem, pet, grey-level and idle-neutral fading, the opacity
   setting, filters off by default, and the target never fading.
+- `PlateLayout` (1.1.1, from play on 2026-10-21): logout skips a plate whose parts the
+  client already freed; native anchor offsets and the level font follow the plate size;
+  logout restores stock offsets, font and opacity. All three fail on 1.1.0.
 
 Eleven fail on the code before their batch for the stated reason; the other three guard
 behavior that must stay unchanged. `fnp_env.py` runs the TOC files under Lua 5.1 with
