@@ -399,9 +399,9 @@ game by the user on 2026-10-20 as the standard for every addon. Apply it during
 requested UI work; preserve native game frames and useful controls rather than
 reskinning unrelated interfaces.
 
-The flat GearRack plum and lavender style below, approved 2026-10-05, is
-superseded. Keep it only in addons that already use it until they are moved
-to ForgeUI.
+The flat plum and lavender style below, approved for GearRack on 2026-10-05, is
+superseded; GearRack moved to ForgeUI on 2026-10-22. Keep it only in addons that
+still use it until they are moved to ForgeUI.
 
 | Element | RGBA color |
 | --- | --- |
