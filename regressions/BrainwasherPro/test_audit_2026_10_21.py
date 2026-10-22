@@ -212,6 +212,14 @@ class ActionBars(unittest.TestCase):
         self.assertEqual(lua.eval("abpLoaded[1]"), "PvP")
         self.assertEqual(lua.eval("#abpLoaded"), 1)
 
+    def test_swap_seen_by_spell_events_alone(self):
+        """2026-10-22 in play: the swap only unlearned and learned spells, with no
+        CHARACTER_POINTS_CHANGED, so the bars never loaded."""
+        lua = self.setup_swap("; talents = { 41, 10, 0 }")
+        lua.execute('talents = { 32, 0, 19 }; for i = 1, 6 do fire("SPELLS_CHANGED") end; advance(2)')
+        self.assertEqual(lua.eval("abpLoaded[1]"), "PvP")
+        self.assertEqual(lua.eval("#abpLoaded"), 1)
+
     def test_unrelated_spell_events_do_not_load_bars(self):
         lua = self.setup_swap()
         lua.execute('fire("SPELLS_CHANGED"); advance(5)')
