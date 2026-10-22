@@ -37,7 +37,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 5 | Yes | [ActionBarProfiles](#actionbarprofiles) |
 | AutoBG | `regressions/AutoBG` | 119 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
-| BrainwasherPro | `regressions/BrainwasherPro` | 28 | Yes | [BrainwasherPro](#brainwasherpro) |
+| BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 20 | Yes | [FostercareNameplates](#fostercarenameplates) |
@@ -353,7 +353,10 @@ hover (both fail before it), and the split stays visible after a cut (a control)
 Five cover the second audit (class `Audit2`; four fail on the earlier 2.0.0):
 the active spec is marked and not swapped to, Save names the spec it replaces,
 a deleted profile shows as missing and is not loaded, and talent events are
-heard only during a swap; activating another spec still works (a control). The mock measures text at 6 pixels a character, so
+heard only during a swap; activating another spec still works (a control).
+One more replays a swap seen in play on 2026-10-22: only `SPELLS_CHANGED`, no
+points event, with the split going from 41/10/0 to 32/0/19; the bars must load.
+It fails on the 2.0.0 commit. The mock measures text at 6 pixels a character, so
 real font widths and swap timing stay in-game checks.
 
 ```text
