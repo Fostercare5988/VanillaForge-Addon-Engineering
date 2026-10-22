@@ -234,6 +234,14 @@ class FlashPowder(unittest.TestCase):
         """A reagent vendor without poisons tops up too."""
         lua = self.vendor(0, stock="sells(5140, 25)")
         self.assertEqual(lua.eval("bought(5140)"), 20)
+        self.assertFalse(lua.eval("window() ~= nil and window():IsShown()"))
+
+    def test_repair_bot_tops_up_without_opening_the_window(self):
+        """A vendor with Flash Powder and vials but no whole poison only tops up."""
+        lua = self.vendor(0, stock="EasyPoisonsDB.Recipes[10918] = { [2930] = 1, [5173] = 1, [3372] = 1 }; "
+                                   "sells(5140, 25); sells(8925, 25); sells(3372, 25)")
+        self.assertEqual(lua.eval("bought(5140)"), 20)
+        self.assertFalse(lua.eval("window() ~= nil and window():IsShown()"))
 
     def test_switch_turns_it_on(self):
         lua = self.vendor(0, keep=False)
