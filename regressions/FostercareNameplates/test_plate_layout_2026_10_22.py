@@ -4,7 +4,7 @@
   Shutdown, after the client had freed the plate's raid mark.
 - At plate size 0.6 the native level text spilled off the plate. Moving or
   re-fonting it crashed the client, so the addon now hides it by alpha and
-  draws its own level inside the bar.
+  draws its own level in the border's oval.
 Engine timing and the crash itself stay in-game checks.
 """
 import unittest
@@ -60,6 +60,15 @@ class OwnLevel(unittest.TestCase):
         self.assertEqual(lua.eval('plate.fnpLevel.fnpG'), 0.75)
         self.assertEqual(lua.eval('plate.level:GetAlpha()'), 0)
         self.assertEqual(lua.eval('plate.levelicon:GetAlpha()'), 0)
+
+    def test_level_centered_in_oval(self):
+        """Inside the bar it crowded the health text and left the border's
+        level oval empty; the oval's center is a tenth of the bar width past
+        the bar's right end."""
+        lua = self.level()
+        point = lua.eval('{ plate.fnpLevel:GetPoint(1) }')
+        self.assertEqual((point[1], point[3], point[4]), ("CENTER", "RIGHT", 11))
+        self.assertTrue(lua.eval('select(2, plate.fnpLevel:GetPoint(1)) == plate.healthbar'))
 
     def test_native_level_never_moved_or_refonted(self):
         """1.1.1 re-anchored and re-fonted the engine's level text and the
