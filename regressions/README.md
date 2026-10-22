@@ -42,7 +42,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 14 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 22 | Yes | [FostercareTweaks](#fostercaretweaks) |
-| GearRack | `regressions/GearRack` | 8 | Yes | [GearRack](#gearrack) |
+| GearRack | `regressions/GearRack` | 9 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 10 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 16 | Yes | [OctoMail](#octomail) |
 | AutoLazy (older) | private `external-tests/AutoLazy` | 130 | No | private command below |
@@ -352,12 +352,12 @@ python -B tools/audit_addon.py "<AddOns>/BrainwasherPro" --run-tests --test-star
 
 ## GearRack
 
-Eight regressions cover the 2026-10-22 review (`b3997ec`) and the Ember restyle.
+Nine regressions cover the 2026-10-22 review (`b3997ec`) and the Ember restyle.
 Two cover DLL use and fail on 1.0.0 (`7e1af41`): the ammo slot is named by
 NamPower `GetAmmo()` without a tooltip, and a one-hand weapon goes to the off
 hand only when ClassicAPI `CanDualWield()` allows it. One checks that the event
 script tip names `GearRack.EquipSet`/`LoadSet`, not the missing `SaveSet()`.
-Five load `Skin.lua`: tabs become pills on a track with the selected tab filled,
+Six load `Skin.lua`: the set-list arrow is not covered by the name box, tabs become pills on a track with the selected tab filled,
 queue checkboxes sit on their tabs, buttons are control pills, selected event
 rows fill while trinket rows are outlined (item-quality names stay readable),
 and the gear bars keep their backdrops while the windows lose the old art.
