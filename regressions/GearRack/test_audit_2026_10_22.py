@@ -121,6 +121,12 @@ class Skin(unittest.TestCase):
         select(e.eval("GearRackTrinkets_Sort1"), False)
         self.assertTrue(self.color("GearRackTrinkets_Sort1.fill[5].color", "clear"))
 
+    def test_set_list_button_is_clickable(self):
+        # The name box spans the arrow button; it must not take the button's clicks.
+        e = self.e
+        self.assertGreaterEqual(e.eval("GearRackUI_Sets_Name.hitInsets[2]"), 24)
+        self.assertTrue(e.eval("GearRackUI_Sets_DropDownButton:GetFrameLevel() > GearRackUI_Sets_Name:GetFrameLevel()"))
+
     def test_gear_keeps_its_art(self):
         # The windows lose the old Blizzard button art and backdrops; the bars keep theirs.
         for name in ("Sets.xml", "TrinketOptions.xml", "TrinketQueues.xml"):

@@ -54,6 +54,7 @@ function Widget:IsVisible() return self.shown end
 function Widget:Enable() self.disabled = false end
 function Widget:Disable() self.disabled = true end
 function Widget:SetAlpha(a) self.alpha = a end
+function Widget:SetHitRectInsets(l, r, t, b) self.hitInsets = { l, r, t, b } end
 function Widget:SetVertexColor(r, g, b, a) self.color = { r, g, b, a } end
 function Widget:SetTextColor(r, g, b) self.textColor = { r, g, b } end
 function Widget:SetHighlightTextColor(r, g, b) self.highlightColor = { r, g, b } end
