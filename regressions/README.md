@@ -368,8 +368,8 @@ python -B tools/audit_addon.py "<AddOns>/BrainwasherPro" --run-tests --test-star
 
 ## GearRack
 
-Commit IDs below are in the addon's local `backup/pre-1.0.0` branch; on GitHub its
-history starts at a single v1.0.0 commit (2026-10-22).
+Commit IDs below are in the addon's local `backup/pre-1.0.0` and `backup/pre-1.0.0-b`
+branches; on GitHub its history is a single v1.0.0 commit (2026-10-22).
 
 Eleven regressions cover the 2026-10-22 review (`b3997ec`) and the Ember restyle.
 Two cover DLL use and fail on 1.0.0 (`7e1af41`): the ammo slot is named by
