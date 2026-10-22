@@ -101,6 +101,15 @@ class SetRetry(unittest.TestCase):
         self.assertIsNone(e.eval("GearRackEngine.SwapQueue[1].started"))
 
 
+class NoWaitForWeapons(unittest.TestCase):
+    def test_weapons_skip_the_cast_wait_armor_keeps_it(self):
+        # Measured in play: casts such as mounting do not stop a weapon swap.
+        e = env(CORE)
+        e.run("function GetCastInfo() return { castRemainingMs = 2500, gcdRemainingMs = 1000 } end")
+        self.assertEqual(e.eval("GearRack.GetEquipDelay(true)"), 0)
+        self.assertGreater(e.eval("GearRack.GetEquipDelay(false)"), 2)
+
+
 class Text(unittest.TestCase):
     def test_event_script_tip_names_real_functions(self):
         sets = gr_env.text("Sets.xml")
