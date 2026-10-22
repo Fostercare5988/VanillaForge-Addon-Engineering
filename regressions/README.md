@@ -38,7 +38,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | AutoBG | `regressions/AutoBG` | 119 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 28 | Yes | [BrainwasherPro](#brainwasherpro) |
-| EasyPoisons | `regressions/EasyPoisons` | 31 | Yes | [EasyPoisons](#easypoisons) |
+| EasyPoisons | `regressions/EasyPoisons` | 33 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 17 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 22 | Yes | [FostercareTweaks](#fostercaretweaks) |
@@ -316,7 +316,10 @@ older tests fail on 1.4.2 for that reason too; the mock's Deadly IV recipe is a
 test value. Four (class `NewRanks`, all fail before it) cover automatic ranks: a
 higher rank in the Poisons window takes over its row with its recipe, a
 filtered window never moves a row down, ranks are per character, and roman
-numerals up to IX parse; item IDs 90001+ there are made up. Purchase sizes and
+numerals up to IX parse; item IDs 90001+ there are made up. Two (class
+`TradeGoods`) cover 2026-10-22 in play: a vendor selling Crystal and Leaded
+Vials opened the window once Wound's learned recipe made Leaded Vial a reagent;
+now a vendor must sell a whole recipe. The first fails on the 2.0.0 commit. Purchase sizes and
 the unverified recipes stay in-game checks.
 
 ```text
