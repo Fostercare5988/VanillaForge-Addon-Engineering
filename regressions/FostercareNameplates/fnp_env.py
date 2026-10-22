@@ -76,6 +76,7 @@ setmetatable(_G, { __index = function(_, k)
 end })
 function CreateFrame(_, name) return widget(name) end
 function SetRaidTargetIconTexture() end
+function GetAddOnMetadata() return "test" end
 now = 100
 function GetTime() return now end
 calls = {}
@@ -161,9 +162,11 @@ def load(saved=None, prelude=""):
     restore = "FostercareNameplates_Config = %s" % saved if saved else ""
     if restore and SV_FIRST:
         lua.execute(restore)
+    # ClassicAPI passes each file the addon name and one shared table.
+    ns = lua.table()
     for name in FILES:
         source = (ROOT / name.replace("\\", "/")).read_text("utf-8-sig")
-        lua.execute(source)
+        lua.execute(source, "FostercareNameplates", ns)
     if restore and not SV_FIRST:
         lua.execute(restore)
     lua.execute('fire("VARIABLES_LOADED")')

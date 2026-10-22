@@ -40,7 +40,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
-| FostercareNameplates | `regressions/FostercareNameplates` | 20 | Yes | [FostercareNameplates](#fostercarenameplates) |
+| FostercareNameplates | `regressions/FostercareNameplates` | 27 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 22 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 10 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 10 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
@@ -236,6 +236,9 @@ Fourteen regressions cover the 2026-10-20 private audit
 - `OwnLevel` (1.2.0): the level is drawn in the border's oval with difficulty color and ?? for
   skulls; the native level text and skull only change alpha, never anchors or font
   (moving them crashed the client in 1.1.1); the setting off and logout restore them.
+- `SettingsWindow` (1.3.0, ForgeUI): every module option key has a control, all four
+  tabs open, switches and choices save the same keys as before, and reset restores
+  options while keeping feature switches.
 
 Eleven fail on the code before their batch for the stated reason; the other three guard
 behavior that must stay unchanged. `fnp_env.py` runs the TOC files under Lua 5.1 with
