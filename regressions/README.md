@@ -38,7 +38,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | AutoBG | `regressions/AutoBG` | 119 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 28 | Yes | [BrainwasherPro](#brainwasherpro) |
-| EasyPoisons | `regressions/EasyPoisons` | 33 | Yes | [EasyPoisons](#easypoisons) |
+| EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 15 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 22 | Yes | [FostercareTweaks](#fostercaretweaks) |
@@ -318,7 +318,9 @@ filtered window never moves a row down, ranks are per character, and roman
 numerals up to IX parse; item IDs 90001+ there are made up. Two (class
 `TradeGoods`) cover 2026-10-22 in play: a vendor selling Crystal and Leaded
 Vials opened the window once Wound's learned recipe made Leaded Vial a reagent;
-now a vendor must sell a whole recipe. The first fails on the 2.0.0 commit. Purchase sizes and
+now a vendor must sell a whole recipe. The first fails on the 2.0.0 commit, as
+does the Flash Powder test for a repair-bot-like vendor (powder and vials only),
+which must top up without opening the window. Purchase sizes and
 the unverified recipes stay in-game checks.
 
 ```text
