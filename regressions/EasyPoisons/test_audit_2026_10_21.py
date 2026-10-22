@@ -127,10 +127,12 @@ class Audit2(unittest.TestCase):
         self.assertNotIn("Corrosive Poison II", text)
 
     def test_unknown_recipe_asks_for_the_poisons_window(self):
-        lua = load("poisonVendor()")
-        lua.execute("openVendor(); setQty(POISON.Wound, 5); buy()")
+        """A rank known by name but whose recipe was never read asks for the window."""
+        lua = load("""poisonVendor(); EasyPoisonsDB.Ranks = { ["Claude-Y'Shaarj"] = {
+            [8985] = { itemID = 90001, name = "Deadly Poison V", rank = 5 } } }""")
+        lua.execute("openVendor(); setQty(POISON.Deadly, 5); buy()")
         self.assertEqual(lua.eval("#purchases"), 0)
-        self.assertIn("Open your Poisons window once to learn Wound Poison.", lua.eval("allText()"))
+        self.assertIn("Open your Poisons window once to learn Deadly Poison V.", lua.eval("allText()"))
 
     def test_recipe_matching_the_table_is_saved_too(self):
         """A recipe equal to the built-in one was not saved, so nothing showed it was checked."""
@@ -188,6 +190,23 @@ class NewRanks(unittest.TestCase):
         text = lua.eval("allText()")
         self.assertIn("Wound Poison IV", text)
         self.assertIn("Mind-numbing Poison IX", text)
+
+
+class TradeGoods(unittest.TestCase):
+    """2026-10-22 in game: a trade goods vendor (Crystal Vial, Leaded Vial, Dust
+    of Decay) opened the window, though no poison could be made from it."""
+
+    def test_vials_alone_do_not_open_the_window(self):
+        # Learned in play: Wound Poison uses a Leaded Vial (3372).
+        lua = load("EasyPoisonsDB.Recipes[10918] = { [2930] = 1, [5173] = 1, [3372] = 1 }; "
+                   "sells(8925, 25); sells(3372, 25); sells(2928, 25)")
+        lua.execute("openVendor()")
+        self.assertFalse(lua.eval("window() ~= nil and window():IsShown()"))
+
+    def test_one_complete_recipe_opens_it(self):
+        lua = load("sells(8925, 25); sells(3372, 25); sells(8924, 25)")
+        lua.execute("openVendor()")
+        self.assertTrue(lua.eval("window() ~= nil and window():IsShown()"))
 
 
 class FlashPowder(unittest.TestCase):
