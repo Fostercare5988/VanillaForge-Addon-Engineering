@@ -70,6 +70,13 @@ class OwnLevel(unittest.TestCase):
         self.assertEqual((point[1], point[3], point[4]), ("CENTER", "RIGHT", 11))
         self.assertTrue(lua.eval('select(2, plate.fnpLevel:GetPoint(1)) == plate.healthbar'))
 
+    def test_level_relaid_on_target_change(self):
+        """1.2.0 called PlaceLevel from LayoutExtras above its local definition:
+        "attempt to call global `PlaceLevel'" on every target change."""
+        lua = self.level()
+        lua.execute('FostercareNameplates.Nameplates:Select(plate, true)')
+        self.assertTrue(lua.eval('plate.fnpIsTarget'))
+
     def test_native_level_never_moved_or_refonted(self):
         """1.1.1 re-anchored and re-fonted the engine's level text and the
         client crashed on login. Only alpha may change."""
