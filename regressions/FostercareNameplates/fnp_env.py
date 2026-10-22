@@ -48,7 +48,14 @@ function Widget:UnregisterAllEvents() self.events = {} end
 function Widget:GetWidth() return 110 end
 function Widget:GetHeight() return 14 end
 function Widget:GetScale() return 1 end
-function Widget:GetFont() return STANDARD_TEXT_FONT, 12, "" end
+function Widget:GetFont() return STANDARD_TEXT_FONT, self.fontSize or 12, "" end
+function Widget:SetFont(_, size) self.fontSize = size end
+function Widget:GetNumPoints() return self.points and table.getn(self.points) or 0 end
+function Widget:GetPoint(i) local p = self.points and self.points[i or 1]; if p then return unpack(p) end end
+function Widget:SetPoint(p, a, r, x, y)
+    self.points = self.points or {}; table.insert(self.points, { p, a, r, x or 0, y or 0 })
+end
+function Widget:ClearAllPoints() self.points = {} end
 function Widget:GetFontString() self.fs = self.fs or widget(); return self.fs end
 function Widget:GetNormalTexture() return widget() end
 function Widget:GetPushedTexture() return widget() end
@@ -99,14 +106,21 @@ C_UnitAuras = { UnitAura = function(_, _, filter) count("UnitAura " .. tostring(
     UnitAuraBySlot = function() count("UnitAuraBySlot") end }
 
 -- A native-shaped plate: a Button whose first region is the stock border.
-function nativePlate(guid, token)
+-- `regions` optionally lists all native regions in client order.
+function nativePlate(guid, token, regions)
     local plate = CreateFrame("Button")
     local border = CreateFrame("Texture")
     function border:GetObjectType() return "Texture" end
     function border:GetTexture() return "Interface\\Tooltips\\Nameplate-Border" end
     function plate:GetObjectType() return "Button" end
-    function plate:GetRegions() return border end
-    function plate:GetChildren() return CreateFrame("StatusBar") end
+    if regions then
+        regions[1] = border
+        function plate:GetRegions() return unpack(regions) end
+    else
+        function plate:GetRegions() return border end
+    end
+    local bar = CreateFrame("StatusBar")
+    function plate:GetChildren() return bar end
     local forUnit, forGUID = C_NamePlate.GetNamePlateForUnit, C_NamePlate.GetNamePlateForGUID
     C_NamePlate.GetNamePlateForUnit = function(u)
         if u == token then return plate end
