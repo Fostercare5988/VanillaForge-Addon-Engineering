@@ -73,6 +73,34 @@ class DLLs(unittest.TestCase):
         self.assertIsNotNone(e.eval("GearRack.Requests[17]"))
 
 
+class SetRetry(unittest.TestCase):
+    def test_set_reissues_a_refused_weapon(self):
+        # In combat the client can refuse the off hand of a pair. A saved set must
+        # try the missing hand again before its deadline, not wait it out.
+        e = env(CORE)
+        e.run("""
+            function GetTime() return now end
+            now = 100
+            function CursorHasItem() return false end
+            function UnitIsDeadOrGhost() return false end
+            GearRackEngine.AnyLocked = function() return false end
+            GearRackEngine.SwapMatches = function() return false end
+            GearRackEngine.StartTimer = function() end
+            reissued = 0
+            GearRackEngine.IterateSwapQueue = function() reissued = reissued + 1 end
+            GearRackEngine.SwapRequest = { setname = "Dissolvent", items = {}, deferred = {} }
+            GearRackEngine.SwapQueue[1].direction = "BAGTOINV"
+            GearRackEngine.SwapQueue[1].started = true
+            GearRackEngine.SwapQueue[1].deadline = 110
+            GearRackEngine.SwapQueue[1].lastAttempt = 101
+            GearRackEngine.SwapQueueOrder = { 1 }
+            now = 102.5
+            GearRackEngine.OnItemLockChanged()
+        """)
+        self.assertEqual(e.eval("reissued"), 1)
+        self.assertIsNone(e.eval("GearRackEngine.SwapQueue[1].started"))
+
+
 class Text(unittest.TestCase):
     def test_event_script_tip_names_real_functions(self):
         sets = gr_env.text("Sets.xml")
