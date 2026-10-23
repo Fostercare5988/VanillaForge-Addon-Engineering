@@ -39,7 +39,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
-| FostercareAuras | `regressions/FostercareAuras` | 22 | Yes | [FostercareAuras](#fostercareauras) |
+| FostercareAuras | `regressions/FostercareAuras` | 27 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 27 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 22 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 11 | Yes | [GearRack](#gearrack) |
@@ -86,6 +86,11 @@ the eighth is a control.
 equipped item counts as on-use only when `C_Item.GetItemSpell` names an ON_USE
 spell, the slot tooltip is never read, and an item-cache miss is retried while a
 hit is cached. All three fail on the tooltip-parsing code.
+
+`test_condition_checks.py` runs the real talent and form checks. The talent mode
+is normalized once per mode string (fails on 1.1.0-local, which rebuilt its cache
+on every check); the paladin and druid form results are pinned across the move of
+the form name lists into tables built once.
 
 The harness executes complete selected Lua function/event bodies with explicit
 state and widget mocks. It uses Lua 5.1 and does not prove WoW Lua 5.0/native widget
