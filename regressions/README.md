@@ -115,6 +115,11 @@ test is skipped without them. They run complete selected functions or module fil
 with counting widget mocks, under Lua 5.1. They do not prove native widget
 behavior, real event payloads or frame times.
 
+FostercareTweaks 1.4.0 (ClassicAPI 1.17.3) adds `CastbarInterruptibleTests` in
+`test_event_fanout.py`: the target castbar listens for
+`UNIT_SPELLCAST_NOT_INTERRUPTIBLE` / `_INTERRUPTIBLE` and turns silver when a cast
+becomes uninterruptible mid-cast. It fails on 1.3.1, which never registered them.
+
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareTweaks" --run-tests --test-start regressions/FostercareTweaks --output .private/fct-current.json
 ```
