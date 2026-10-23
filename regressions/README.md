@@ -39,7 +39,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
-| FostercareAuras | `regressions/FostercareAuras` | 11 | Yes | [FostercareAuras](#fostercareauras) |
+| FostercareAuras | `regressions/FostercareAuras` | 22 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 27 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 22 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 11 | Yes | [GearRack](#gearrack) |
@@ -81,6 +81,11 @@ the unit that dodged (by GUID, not name), Revenge opens on any attacker's dodge,
 parry or block, and Riposte, Surprise Attack, Arcane Surge and Lacerate open on
 their miss types, resists and crits. Seven fail on 1.0.1, which parsed chat text;
 the eighth is a control.
+
+`test_item_use.py` (1.1.0-local) runs the real `_GetInventorySlotState`: an
+equipped item counts as on-use only when `C_Item.GetItemSpell` names an ON_USE
+spell, the slot tooltip is never read, and an item-cache miss is retried while a
+hit is cached. All three fail on the tooltip-parsing code.
 
 The harness executes complete selected Lua function/event bodies with explicit
 state and widget mocks. It uses Lua 5.1 and does not prove WoW Lua 5.0/native widget
