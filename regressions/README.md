@@ -39,7 +39,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
-| FostercareAuras | `regressions/FostercareAuras` | 29 | Yes | [FostercareAuras](#fostercareauras) |
+| FostercareAuras | `regressions/FostercareAuras` | 31 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 27 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 22 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 11 | Yes | [GearRack](#gearrack) |
@@ -95,6 +95,10 @@ the form name lists into tables built once.
 `test_lookups.py`: pet stack counts come from `FostercarePetAuras.GetStacks` with no
 aura rescan, and a spell NamPower reports missing from the spellbook costs no
 spellbook walk. Both fail on 1.1.0-local.
+
+`test_saved_settings.py` runs the real SavedVariables init block: the retired
+`FostercareAurasDB.settings` table is cleared on load (fails on 1.1.0-local) and
+kept settings survive.
 
 The harness executes complete selected Lua function/event bodies with explicit
 state and widget mocks. It uses Lua 5.1 and does not prove WoW Lua 5.0/native widget
