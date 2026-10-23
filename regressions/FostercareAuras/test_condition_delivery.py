@@ -55,7 +55,7 @@ def runtime():
     slots = '\n'.join(re.findall(r'local INV_SLOT_\w+ = \d+', SOURCE))
     helpers = SOURCE[SOURCE.index('local _TrinketFirstMemory = {}'):SOURCE.index('local function _ScanPlayerItemInstances(data)')]
     request = SOURCE[SOURCE.index('function FostercareConditions_RequestEvaluate()'):SOURCE.index('function FostercareConditions:EvaluateAbilities(')]
-    tick = SOURCE[SOURCE.index('function FostercareConditions_OnUpdate(dt)'):SOURCE.index('-- Avoid per-frame pcall')]
+    tick = SOURCE[SOURCE.index('function FostercareConditions_OnUpdate(dt)'):SOURCE.index('-- Drive the update loop')]
     events = SOURCE[SOURCE.index('local eventFrame = CreateFrame("Frame", "FostercareConditionsEventFrame")'):]
     lua.execute('''
         local dirty_ability,dirty_aura,dirty_target,dirty_power,dirty_ability_time=false,false,false,false,false
