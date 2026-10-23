@@ -9,7 +9,7 @@
 > **Canonical enhanced-client baseline**
 >
 > - World of Warcraft 1.12.1, Build 5875, `Interface: 11200`
-> - ClassicAPI v1.16.0+
+> - ClassicAPI v1.16.0+ (reference v1.17.3)
 > - SuperWoW v2.2+
 > - NamPower v4.6.2+
 > - UnitXP SP3 v89+
@@ -86,7 +86,7 @@ data rather than inferred from Retail or later-expansion databases:
 
 1. active deployed client/server source or data files
 2. active local DBC/MPQ data (`Spell.dbc`, local client tables)
-3. verified runtime behavior (tooltips, combat log, `/dump`)
+3. verified runtime behavior (tooltips, combat log, `/run print(...)`)
 4. project-specific documentation
 5. external version-specific references
 6. inference
@@ -834,19 +834,17 @@ prove native pointer safety or input ordering. See the deployed
 
 ## 13. Runtime Diagnostics
 
-The enhanced environment provides useful diagnostics, including ClassicAPI's bundled
-tools.
+The enhanced environment provides useful diagnostics. ClassicAPI's optional DebugTools
+addon (`/dump`, `/etrace`, `/fstack`) is not installed in this client.
 
 Common tools:
 
 ```text
 /reload
 /luaerrors 1
-/etrace
-/dump
-/framestack
-/fstack
+/run print(...)
 /classicapi
+/err, /lag   (!ErrorLog)
 ```
 
 Use them to verify:
