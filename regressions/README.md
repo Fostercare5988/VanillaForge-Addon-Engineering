@@ -75,6 +75,13 @@ evaluation, ongoing slides, removed frames and foreign global state. Six deliver
 and three slide tests fail the preceding installed source for the intended defects.
 The other two tests preserve existing slide and deferred-reflow behavior.
 
+`test_combat_log_procs.py` (1.1.0-local, ClassicAPI 1.17.3) feeds
+`COMBAT_LOG_EVENT_UNFILTERED` payloads to the real proc block: Overpower stays on
+the unit that dodged (by GUID, not name), Revenge opens on any attacker's dodge,
+parry or block, and Riposte, Surprise Attack, Arcane Surge and Lacerate open on
+their miss types, resists and crits. Seven fail on 1.0.1, which parsed chat text;
+the eighth is a control.
+
 The harness executes complete selected Lua function/event bodies with explicit
 state and widget mocks. It uses Lua 5.1 and does not prove WoW Lua 5.0/native widget
 semantics, appearance, frame times or gameplay. Native acceptance stays with the
