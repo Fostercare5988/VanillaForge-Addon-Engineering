@@ -401,6 +401,13 @@ re-issues a weapon the client refused (the off hand in combat); fails before it.
 `NoWaitForWeapons`: weapon swaps skip the cast and global-cooldown wait, armor
 keeps it (casts do not stop weapon swaps, measured in play).
 
+`test_dodged_trigger_2026_10_23.py` (1.1.0, ClassicAPI 1.17.3): the new
+`GEARRACK_DODGED` trigger fires with the dodger's GUID for your own dodged swing,
+spell or shot, and not for parries or other units' dodges. The combat log stays
+registered while either it or a user's own combat-log event needs it, and the
+stock Overpower presets move from chat text to the new trigger while an edited
+preset is left alone. Four fail on 1.0.0; the edited-preset test is a control.
+
 ```text
 python -B tools/audit_addon.py "<AddOns>/GearRack" --run-tests --test-start regressions/GearRack --output .private/gearrack-current.json
 ```
