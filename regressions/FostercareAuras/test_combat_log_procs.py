@@ -50,7 +50,7 @@ def runtime(cls, tracked):
     block = SOURCE[SOURCE.index('_G.FostercareConditions_ProcWindowDurations ='):
                    SOURCE.index('-- Helpers consumed by ability-usable override')]
     helpers = SOURCE[SOURCE.index('local function _Warrior_Overpower_OK()'):
-                     SOURCE.index('-- Remaining proc-window time')]
+                     SOURCE.index('-- FostercareAuras Slide Manager')]
     lua.execute('''
         local dirty_ability, dirty_ability_time = false, false
         local function _RequestImmediateEval() end
