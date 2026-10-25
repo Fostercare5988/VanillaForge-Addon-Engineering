@@ -102,7 +102,7 @@ class CastBarTests(unittest.TestCase):
     def test_ctrl_click_on_opening_enemy_announces_node(self):
         lua = setup()
         self.start_heal(lua)
-        lua.execute('announced = {}; function AutoBG_SendAnnouncement(msg) table.insert(announced, msg) end')
+        lua.execute('announced = {}; AutoBG_FlagAlert = { Announce = function(_, name, node) table.insert(announced, name .. " is opening " .. node) end }')
         lua.execute('function IsControlKeyDown() return true end')
         lua.execute('AutoBG_Targets.SetOpening("Grom", "Farm")')
         lua.execute('local b = AutoBG_TargetButton1; b.targetName = "Grom"; b.scripts.OnClick(b, "LeftButton")')

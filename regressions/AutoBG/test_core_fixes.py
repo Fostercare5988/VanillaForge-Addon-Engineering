@@ -16,7 +16,7 @@ FRAMEXML = Path(__file__).resolve().parents[2] / ".private" / "framexml" / "Inte
 
 BASE = r'''
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
-CLASSIC_API_VERSION, SUPERWOW_VERSION = 11600, "2.2"
+CLASSIC_API_VERSION, SUPERWOW_VERSION = 11707, "2.2"
 local Widget = {}
 setmetatable(Widget, { __index = function(_, name)
     if string.find(name, "^%u") then return function() end end
