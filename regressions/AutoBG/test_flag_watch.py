@@ -125,6 +125,23 @@ class FlagWatchTests(unittest.TestCase):
         lua.execute('AutoBG_FlagWatch.onEvent(AutoBG_FlagWatch, "UNIT_CASTEVENT", "%s", nil, "CAST", 90001, 0)' % BALLOON)
         self.assertEqual(list(lua.eval('learned').values()), [90001])
 
+    def test_revived_enemy_at_stale_death_spot_does_not_warn(self):
+        """2026-10-25: enemies revived at the Lumber Mill graveyard set off
+        "Opening Gold Mine", where they had died. The client keeps a ghost's
+        last spot until they move."""
+        lua = runtime()
+        learn_blacksmith(lua)
+        lua.execute('pos["%s"] = { 52, 49 }' % BALLOON)
+        lua.execute('function UnitIsDeadOrGhost() return 1 end')
+        ticks(lua, 3)
+        lua.execute('function UnitIsDeadOrGhost() return nil end')
+        ticks(lua, 6)  # alive again, client still shows the death spot
+        self.assertEqual(len(lua.eval('alerts')), 0)
+        # The first real move clears it; standing at the flag after that warns.
+        lua.execute('pos["%s"] = { 53, 50 }' % BALLOON)
+        ticks(lua, 3)
+        self.assertEqual(list(lua.eval('alerts').values()), ["Opening Blacksmith Balloon"])
+
     def test_switch_off_stops_warnings(self):
         lua = runtime()
         learn_blacksmith(lua)
