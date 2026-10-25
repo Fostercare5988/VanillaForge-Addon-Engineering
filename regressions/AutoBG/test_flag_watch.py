@@ -47,7 +47,11 @@ AutoBG_Targets = {
     GetGUID = function(name) if name == "Balloon" then return "0x0000000000000007" end end,
     SetOpening = function(name, node) opening[name] = node end,
 }
-AutoBG_Spy = { ShowAlert = function(_, kind, name, _, _, node) table.insert(alerts, kind .. " " .. node .. " " .. name) end }
+learned = {}
+AutoBG_FlagAlert = {
+    Show = function(_, name, _, _, node) table.insert(alerts, "Opening " .. node .. " " .. name) end,
+    LearnOpening = function(_, id) table.insert(learned, id) end,
+}
 '''
 
 
@@ -114,6 +118,12 @@ class FlagWatchTests(unittest.TestCase):
         lua.execute('pos["%s"] = { 300, 300 }' % BALLOON)
         lua.execute('AutoBG_FlagWatch:OnNodeMessage("Blacksmith", "Balloon has defended the Blacksmith!", "Horde")')
         self.assertEqual(lua.eval('AutoBG_Settings.FlagSpots[529].Blacksmith.n'), 2)
+
+    def test_any_opening_cast_teaches_the_spell_once(self):
+        lua = runtime()
+        lua.execute('AutoBG_FlagWatch.onEvent(AutoBG_FlagWatch, "UNIT_CASTEVENT", "%s", nil, "START", 90001, 5000)' % BALLOON)
+        lua.execute('AutoBG_FlagWatch.onEvent(AutoBG_FlagWatch, "UNIT_CASTEVENT", "%s", nil, "CAST", 90001, 0)' % BALLOON)
+        self.assertEqual(list(lua.eval('learned').values()), [90001])
 
     def test_switch_off_stops_warnings(self):
         lua = runtime()

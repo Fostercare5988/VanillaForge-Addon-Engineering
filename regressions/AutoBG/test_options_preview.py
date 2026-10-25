@@ -14,7 +14,7 @@ ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 OPTIONS = (ROOT / "AutoBG_Options.lua").read_text("utf-8-sig")
 
 BASE = r'''
-CLASSIC_API_VERSION, SUPERWOW_VERSION = 11600, "2.2"
+CLASSIC_API_VERSION, SUPERWOW_VERSION = 11707, "2.2"
 local Widget = {}
 -- Unknown keys on real frames are nil; only fields the panel checks before creating need this.
 local DATA_FIELDS = { SelectionMark = true }
