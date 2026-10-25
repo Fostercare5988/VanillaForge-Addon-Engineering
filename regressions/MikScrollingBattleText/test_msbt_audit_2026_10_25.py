@@ -1,0 +1,85 @@
+"""Reproductions for the 2026-10-25 MSBT audit (.private/audit-MikScrollingBattleText-2026-10-25.md).
+
+Each test states the desired behaviour and fails on MSBT 1.0.1 (0802282).
+Self-contained Lua model (_msbt_runtime.py); no client MPQs. Not in-game proof.
+"""
+import unittest
+
+import _msbt_runtime as m
+
+PLAYER_FLAGS = 0x400 + 0x100 + 0x40 + 0x8  # enemy player, outsider
+NPC_FLAGS = 0x800 + 0x200 + 0x40 + 0x8     # hostile NPC
+
+
+class KillingBlows(unittest.TestCase):  # P2-1
+    def kill(self, lua, name, guid, flags):
+        lua.execute(f'''
+        sent={{}}
+        Fire("COMBAT_LOG_EVENT_UNFILTERED", 1, "PARTY_KILL", nil, "0xPLAYER", "Hero", 0x511, 0,
+             "{guid}", "{name}", {flags}, 0)
+        Fire("CHAT_MSG_COMBAT_HOSTILE_DEATH", "You have slain {name}!")
+        ''')
+        return [e.NotificationType for e in lua.globals().sent.values()]
+
+    def test_untargeted_enemy_player_is_a_player_kill(self):
+        # An AoE kill on a player you never targeted (battlegrounds).
+        lua = m.runtime()
+        kinds = self.kill(lua, "Bob", "0xBOB", PLAYER_FLAGS)
+        ceh = lua.globals().MikCEH
+        self.assertEqual(kinds, [ceh.NOTIFICATIONTYPE_PC_KILLING_BLOW])
+
+    def test_npc_sharing_a_targeted_players_name_is_an_npc_kill(self):
+        lua = m.runtime()
+        lua.execute('Fire("PLAYER_TARGET_CHANGED")')  # target is the enemy player "Twin"
+        kinds = self.kill(lua, "Twin", "0xF130001234", NPC_FLAGS)
+        ceh = lua.globals().MikCEH
+        self.assertEqual(kinds, [ceh.NOTIFICATIONTYPE_NPC_KILLING_BLOW])
+
+
+class SharedClientState(unittest.TestCase):  # P2-2
+    def test_enabling_msbt_leaves_combat_log_cvar_alone(self):
+        lua = m.runtime()
+        lua.execute('cvars={}; MikSBT.SetOptionUserDisabled(true); MikSBT.SetOptionUserDisabled(false)')
+        self.assertIsNone(lua.globals().cvars["CombatLogPeriodicSpells"])
+
+
+class ForeignCombatHotPath(unittest.TestCase):  # P2-3
+    def test_nearby_combat_between_others_allocates_no_strings(self):
+        lua = m.runtime()
+        lua.execute('''
+        calls={}; sent={}
+        for i=1,100 do
+          Fire("SPELL_DAMAGE_EVENT_OTHER","0xF13000AAAA","0x0000BBBB",133,500,"0,0,0",0,2,"2,0,0,0")
+          Fire("AUTO_ATTACK_OTHER","0x0000BBBB","0xF13000AAAA",120,0,1,1,0,0,0)
+        end
+        ''')
+        g = lua.globals()
+        self.assertEqual(len(g.sent), 0)
+        self.assertEqual(g.calls["string.lower"], None, "string.lower per foreign event")
+
+
+class ManaRegenText(unittest.TestCase):  # P3-4
+    def test_observed_mana_gain_does_no_name_lookups(self):
+        lua = m.runtime()
+        lua.execute('''
+        MikSBT.CurrentProfile.ShowAllManaGains=true; MikCEH.ResetManaBaseline()
+        MikSBT.CombatEventsHandler=RealCombatEventsHandler
+        units.player.mana=147; calls={}
+        Fire("UNIT_MANA","player"); RunTimers()
+        ''')
+        g = lua.globals()
+        self.assertIsNone(g.calls["GetSpellIdForName"], "spell lookup for a regen tick")
+        self.assertIsNone(g.calls["GetItemInfo"], "item lookup for a regen tick")
+
+
+class DeflectText(unittest.TestCase):  # P3-5
+    def test_deflect_is_not_reported_as_reflect(self):
+        lua = m.runtime()
+        lua.execute('sent={}; Fire("SPELL_MISS_SELF","0xPLAYER","0xENEMY",133,9)')
+        g = lua.globals()
+        self.assertEqual(len(g.sent), 1)
+        self.assertNotEqual(g.sent[1].ActionType, g.MikCEH.ACTIONTYPE_REFLECT)
+
+
+if __name__ == "__main__":
+    unittest.main()
