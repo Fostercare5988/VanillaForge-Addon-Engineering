@@ -13,7 +13,7 @@ ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 SOURCE = (ROOT / "AutoLazy.lua").read_text("utf-8-sig")
 
 BASE = r'''
-CLASSIC_API_VERSION = 11600
+CLASSIC_API_VERSION = 11707
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 getglobal = function(n) return _G[n] end
 SlashCmdList = {}

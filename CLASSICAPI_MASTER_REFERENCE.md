@@ -6,7 +6,7 @@
 >
 > Source basis: `brues-code/ClassicAPI`, default branch `master`, official `README.md`, official `docs/API.md`, and selected implementation/source references.
 >
-> Snapshot used by VanillaForge: **ClassicAPI v1.17.7** (reference). Support floor: **v1.16.0+** for all maintained addons; an addon that uses a 1.17 API raises its own guard to the version that added it (`11703` for 1.17.0 to 1.17.3, `11704` to `11707` after that). The 1.17 additions and behavior changes are in [v1.17.0 to v1.17.3](#v1170-to-v1173-api-and-behavior-contracts) and [v1.17.4 to v1.17.7](#v1174-to-v1177-api-and-behavior-contracts).
+> Snapshot used by VanillaForge: **ClassicAPI v1.17.7** (reference). Support floor: **v1.17.7+** for all maintained addons (raised from v1.16.0 on 2026-10-26). The 1.17 additions and behavior changes are in [v1.17.0 to v1.17.3](#v1170-to-v1173-api-and-behavior-contracts) and [v1.17.4 to v1.17.7](#v1174-to-v1177-api-and-behavior-contracts).
 >
 > IMPORTANT: ClassicAPI is actively developed. This document is a local snapshot, not a claim that future versions cannot add or change functionality. If installed ClassicAPI is newer and a task depends on newly added behavior not present here, inspect the installed/current source and update this reference deliberately.
 
@@ -73,7 +73,7 @@ v1.17.7 -> 11707
 The VanillaForge support baseline is:
 
 ```text
-ClassicAPI v1.16.0+
+ClassicAPI v1.17.7+
 ```
 
 Do not assume a future version's new API exists solely because a similarly named Retail API exists.
@@ -88,7 +88,7 @@ later stable version. Record artifact/source identity separately, and verify
 the consumed API and its behavior on the loaded target.
 
 Every maintained VanillaForge addon has the explicit maintainer support floor
-`MIN_CLASSIC_API=11600` / ClassicAPI v1.16.0+. Keep TOC metadata, synthetic-addon
+`MIN_CLASSIC_API=11707` / ClassicAPI v1.17.7+. Keep TOC metadata, synthetic-addon
 dependencies, runtime guards and installation documentation consistent. This
 policy is separate from each API's introduction version; for other components,
 declare the minimum required by the capabilities and semantic fixes the addon
