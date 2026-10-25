@@ -151,7 +151,10 @@ COMBATLOG_OBJECT_TYPE_PLAYER=0x400; COMBATLOG_OBJECT_TYPE_NPC=0x800; COMBATLOG_O
 
 
 def runtime(saved=None):
-    """Boot the core files like the client: TOC files, XML OnLoad, ADDON_LOADED, PEW."""
+    """Boot the core files like the client: TOC files, XML OnLoad, ADDON_LOADED, PEW.
+
+    saved: optional Lua source that sets MikSBT_Save before ADDON_LOADED.
+    """
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(BOOT)
     lua.execute("MCEHEventFrame=NewWidget('MCEHEventFrame'); MSBTEventFrame=NewWidget('MSBTEventFrame')")
@@ -164,7 +167,7 @@ def runtime(saved=None):
     this=MSBTEventFrame; MikSBT.OnLoad()
     ''')
     if saved is not None:
-        lua.globals().MikSBT_Save = saved
+        lua.execute(saved)
     lua.execute('''
     Fire("ADDON_LOADED","MikScrollingBattleText")
     Fire("PLAYER_ENTERING_WORLD")

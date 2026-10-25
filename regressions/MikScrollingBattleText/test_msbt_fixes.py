@@ -21,7 +21,7 @@ class AuraStackChanges(unittest.TestCase):  # F1
           sent={}; Emit(name,"0xPLAYER",1,123,2,60,0,2); assert(#sent==0, name.." stack decrease faded");
           sent={}; Emit(name,"0xPLAYER",1,123,0,60,0,1);
           assert(#sent==1 and sent[1].NotificationType==MikCEH.NOTIFICATIONTYPE_BUFF_FADE, name.." removal lost");
-          sent={}; Emit(name,"0xPET",1,123,0,60,0,1); assert(#sent==1, name.." pet removal lost");
+          sent={}; Emit(name,"0xPET",1,123,0,60,0,1); assert(#sent==0, name.." pet auras arrive as _OTHER events");
           sent={}; Emit(name,"0xOTHER",1,123,0,60,0,1); assert(#sent==0, name.." foreign unit");
         end
         sent={}; Emit("BUFF_ADDED_SELF","0xPLAYER",1,123,3,60,0,2); assert(#sent==1); -- gains unchanged
