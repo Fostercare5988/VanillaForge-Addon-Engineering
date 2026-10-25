@@ -101,5 +101,15 @@ class StickyHoldWrites(unittest.TestCase):  # P3-13
         self.assertEqual(lua.globals().writes, 0)
 
 
+class Reputation(unittest.TestCase):  # P3-4
+    def test_reputation_comes_from_the_structured_event(self):
+        lua = m.runtime()
+        lua.execute('sent={}; Fire("FACTION_STANDING_CHANGED", 72, 3100, -25); Fire("FACTION_STANDING_CHANGED", 72, 3200, 100)')
+        g = lua.globals()
+        got = [(e.NotificationType, e.Amount, e.EffectName) for e in g.sent.values()]
+        self.assertEqual(got, [(g.MikCEH.NOTIFICATIONTYPE_REP_LOSS, 25, "Faction72"),
+                               (g.MikCEH.NOTIFICATIONTYPE_REP_GAIN, 100, "Faction72")])
+
+
 if __name__ == "__main__":
     unittest.main()

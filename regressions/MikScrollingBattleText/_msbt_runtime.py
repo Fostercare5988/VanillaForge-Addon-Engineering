@@ -110,6 +110,7 @@ function GetSpellInfo(id) return "Spell"..id,"Rank 1","Interface\\Icons\\Spell".
 function GetSpellRecField(id,field) if field=="name" then return "Spell"..id end return 1 end
 function GetSpellIdForName(n) count("GetSpellIdForName") return 0 end
 function GetItemInfo(n) count("GetItemInfo") end
+function GetFactionInfoByID(id) return "Faction"..id end
 function GetShapeshiftFormInfo() return "","",1 end
 function GetAddOnMetadata() return "1.0.1" end
 function SetCVar(k,v) cvars[k]=tostring(v) end
