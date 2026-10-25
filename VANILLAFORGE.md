@@ -8,6 +8,25 @@ they are played on.
 This file is the whole working contract. Everything else here is reference
 material: search it for the question at hand, never read it whole.
 
+## How we think
+
+We audit, clean, refactor, improve, develop and maintain. The work is not done
+when the code runs; it is done when nothing in it can be done better.
+
+- **Every line earns its place.** Deleting is the best fix. Code nobody uses,
+  code for things that do not exist, and options nobody turns on are holes.
+- **The DLLs first.** When a DLL does it, ours goes. Ask the docs before
+  writing a line, and again when reading old code: they grow every release.
+- **Low coupling, high cohesion.** Each addon owns its data; each module does
+  one job. Every connection between addons is visible, narrow and deliberate.
+  A hidden connection is a hole.
+- **Old is a question, not a verdict.** Working code still gets asked: why is
+  this here, is there a better way now? Keep it when the answer is good.
+- **Wonder.** Read the players' settings, the error log and the stutter report.
+  The best findings come from asking what is really used and what really costs.
+- **Evidence beats memory.** Docs, measurements and tests decide; a guess is
+  marked as one until the game confirms it.
+
 ## 1. Know the target before writing code
 
 An addon runs on three layers. Each answers different questions and has its
@@ -109,7 +128,35 @@ measuring tool:
 A stutter with almost no addon time is the engine (model loading, shader
 compiles, drawing), not addon code. Fix measured problems first.
 
-## 4. Before calling it done
+## 4. Audit: find the holes
+
+Start every audit with the hole finder; it reads the addon next to all the
+others, the game's own code, the DLL docs and every character's saved settings:
+
+```text
+python -B tools/find_holes.py "<addon folder>"
+```
+
+It needs `python -B tools/fetch_upstream_docs.py` and
+`python -B tools/extract_framexml.py --client "<client>" --all` once. Its
+findings are leads; read the code before acting. Then answer every question
+below, in this order, and write the answers in `.private/audit-<Addon>-<date>.md`:
+
+1. **What is unused?** Files, functions, images, options no character turns on,
+   saved settings no code reads.
+2. **What does a DLL do now?** Search the docs for the job, not just the name.
+   Add each new find to [tools/replacements.json](tools/replacements.json).
+3. **What reaches into another addon?** Globals read across addons, aliases,
+   shared tables. Make each connection visible and narrow, or remove it.
+4. **What is old or stale?** Code for other clients or missing libraries,
+   "unverified" notes the docs now cover, old migrations, version drift.
+5. **What runs too often?** Timers and per-frame work that run when nothing
+   changed, garbage built on hot paths (Lua 5.0 collects in one full pass).
+6. **What do players see and use?** Their settings, errors and stutters; what is
+   confusing in the settings window.
+7. **Of each finding: is it a kind?** Search for the rest of that kind (§2).
+
+## 5. Before calling it done
 
 1. From the VanillaForge folder, lint and run the addon's regression tests:
 
@@ -128,20 +175,21 @@ compiles, drawing), not addon code. Fix measured problems first.
 5. Git: run `git status` before editing. Commit each coherent step after its
    checks pass. Push only when the user says so. Never force-push.
 
-## 5. Where things are
+## 6. Where things are
 
 | Need | Where |
 | --- | --- |
 | A ClassicAPI function, event or argument | [CLASSICAPI_MASTER_REFERENCE.md](CLASSICAPI_MASTER_REFERENCE.md) |
 | SuperWoW, NamPower, UnitXP, native UI behaviour | [ENGINE_REFERENCE.md](ENGINE_REFERENCE.md) |
 | A recurring bug or performance hazard | [KNOWN_PATTERNS.md](KNOWN_PATTERNS.md) |
+| Old ways a DLL now does better | [tools/replacements.json](tools/replacements.json), read by `tools/find_holes.py` |
 | Server facts and data sources | [servers/](servers/) |
 | An addon's regression tests | [regressions/README.md](regressions/README.md) |
 | The settings style | `templates/ForgeUI/` |
 | DLL versions and upstream tracking | [UPSTREAM_VERSIONS.json](UPSTREAM_VERSIONS.json), `python -B tools/check_upstream.py` |
 | Earlier audits, workflows and decisions | [archive/](archive/README.md), for history only |
 
-## 6. Keeping VanillaForge lean
+## 7. Keeping VanillaForge lean
 
 - One fact lives in one place. Improve an existing entry before adding one.
 - Add a known pattern only when a hazard recurs and is not covered already.
