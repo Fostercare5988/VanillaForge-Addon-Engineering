@@ -1,10 +1,9 @@
-"""GEARRACK_DODGED: Overpower presets from the combat log (GearRack 1.1.0, ClassicAPI 1.17).
+"""GEARRACK_DODGED: Overpower templates from the combat log (ClassicAPI 1.17).
 
-The real registration, dispatch and migration code runs under Lua 5.1 with a
-recording register frame. 1.0.0 has no GEARRACK_DODGED trigger and kept the
-chat-text presets, so the dispatch, registration and migration tests fail on it;
-test_edited_preset_is_left_alone is a control. Real combat-log payloads remain
-an in-game check.
+The real registration and dispatch code runs under Lua 5.1 with a recording
+register frame. The first release had no GEARRACK_DODGED trigger and read
+chat text, so these tests fail on it. Real combat-log payloads remain an
+in-game check.
 """
 from pathlib import Path
 import os
@@ -52,22 +51,11 @@ def runtime():
     return lua
 
 
-def events_runtime(saved):
+def events_runtime():
     lua = LuaRuntime(unpack_returned_tuples=True)
-    lua.execute('GearRack = { enabled = true }; GearRackDB = { events = {} }')
+    lua.execute('GearRack = { enabled = true }')
     lua.execute(EVENTS)
-    for name, (trigger, delay, script) in saved.items():
-        lua.globals().GearRackDB.events[name] = lua.table_from(
-            {"trigger": trigger, "delay": delay, "script": script})
-    lua.execute('GearRackUI_MigrateDefaultEvents()')
     return lua
-
-
-OLD_BEGIN = ("--[[Equip a set when the opponent dodges.  Associate a heavy-hitting 2h set with this event. ]]\n"
-             "local _,_,i = GetShapeshiftFormInfo(1)\nif string.find(arg1 or \"\",\"^You.+dodge[sd]\") and i then\n"
-             "GearRack.EquipSet()\nGEARRACK_OVERPOWER=1\nend")
-OLD_END = ("--[[Equip a set five seconds after opponent dodged: your normal weapons. ]]\n"
-           "if GEARRACK_OVERPOWER==1 then\nGearRack.EquipSet()\nGEARRACK_OVERPOWER=nil\nend")
 
 
 class DodgedTriggerTests(unittest.TestCase):
@@ -98,25 +86,15 @@ class DodgedTriggerTests(unittest.TestCase):
         self.assertIsNone(lua.eval('registered.COMBAT_LOG_EVENT_UNFILTERED'))
 
 
-class MigrationTests(unittest.TestCase):
-    def test_stock_chat_text_presets_move_to_the_new_trigger(self):
-        lua = events_runtime({
-            "Warrior:Overpower Begin": ("CHAT_MSG_COMBAT_SELF_MISSES", 0, OLD_BEGIN),
-            "Warrior:Overpower End": ("CHAT_MSG_COMBAT_SELF_MISSES", 5, OLD_END),
-        })
-        begin = lua.eval('GearRackDB.events["Warrior:Overpower Begin"]')
-        end = lua.eval('GearRackDB.events["Warrior:Overpower End"]')
+class TemplateTests(unittest.TestCase):
+    def test_overpower_templates_use_the_combat_log_trigger(self):
+        lua = events_runtime()
+        begin = lua.eval('GearRackUI_DefaultEvents["Warrior:Overpower Begin"]')
+        end = lua.eval('GearRackUI_DefaultEvents["Warrior:Overpower End"]')
         self.assertEqual(begin.trigger, "GEARRACK_DODGED")
         self.assertNotIn("string.find", begin.script)
         self.assertEqual(end.trigger, "GEARRACK_DODGED")
         self.assertEqual(end.delay, 5)
-
-    def test_edited_preset_is_left_alone(self):
-        lua = events_runtime({
-            "Warrior:Overpower Begin": ("CHAT_MSG_COMBAT_SELF_MISSES", 0, OLD_BEGIN + " -- mine"),
-        })
-        self.assertEqual(lua.eval('GearRackDB.events["Warrior:Overpower Begin"].trigger'),
-                         "CHAT_MSG_COMBAT_SELF_MISSES")
 
 
 if __name__ == '__main__':

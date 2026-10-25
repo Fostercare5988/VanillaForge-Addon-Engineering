@@ -31,7 +31,6 @@ function CanDualWield() return canDualWield end
 C_PlayerInfo = { CanUseItem = function() return true end }
 C_Item = { GetItemGUID = function() end }
 GearRackTrinkets = { UpdateCombatQueue = function() end, CombatQueue = {}, QueueItemIDs = {} }
-newWidget("FontString", "GearRackUI_ItemTooltipTextLeft1").text = "Rough Arrow"
 function sameColor(c, ref)
     return c ~= nil and math.abs(c[1] - ref[1]) < 1e-6 and math.abs(c[2] - ref[2]) < 1e-6
         and math.abs(c[3] - ref[3]) < 1e-6 and math.abs((c[4] or 1) - (ref[4] or 1)) < 1e-6
@@ -60,8 +59,8 @@ class DLLs(unittest.TestCase):
         self.assertEqual(info[3], "Rough Arrow")
         self.assertEqual(info[4], "INVTYPE_AMMO")
         self.assertEqual(info[5], 1)
-        self.assertEqual(len(list(e.eval("GearRackUI_ItemTooltip.calls").values())), 0,
-                         "the ammo slot must not be read from a tooltip")
+        self.assertIsNone(e.eval("GearRackUI_ItemTooltip"),
+                          "the ammo slot must not be read from a tooltip")
 
     def test_off_hand_weapon_follows_can_dual_wield(self):
         e = env(CORE)

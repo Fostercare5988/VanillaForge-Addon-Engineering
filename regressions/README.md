@@ -434,6 +434,12 @@ registered while either it or a user's own combat-log event needs it, and the
 stock Overpower presets move from chat text to the new trigger while an edited
 preset is left alone. Four fail on 1.0.0; the edited-preset test is a control.
 
+`test_audit_2026_10_25.py` (refactored 1.0.0): Reset Events asks first and keeps
+every set's restore data, the Brainwashing Device's other options stay silent while
+Activate still fires `GEARRACK_GBD`, a two-hander save keeps the draft's off hand,
+and the version is 1.0.0. They fail on `03888af`. The dodged-trigger file now checks
+the templates directly; the old migration code is gone.
+
 ```text
 python -B tools/audit_addon.py "<AddOns>/GearRack" --run-tests --test-start regressions/GearRack --output .private/gearrack-current.json
 ```
