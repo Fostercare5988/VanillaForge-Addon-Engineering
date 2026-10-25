@@ -77,6 +77,7 @@ function GetNumRaidMembers() return 0 end
 clock, zoneName, printed, shift, ctrl = 1700000000, "Orgrimmar", {}, false, false
 function time() return clock end
 function GetRealZoneText() return zoneName end
+function IsInInstance() return nil, "none" end
 function AutoBG_Print(msg) table.insert(printed, msg) end
 function IsShiftKeyDown() return shift end
 function IsControlKeyDown() return ctrl end
