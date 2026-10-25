@@ -43,7 +43,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | FostercareNameplates | `regressions/FostercareNameplates` | 27 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 22 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 11 | Yes | [GearRack](#gearrack) |
-| MikScrollingBattleText | `regressions/MikScrollingBattleText` | 10 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
+| MikScrollingBattleText | `regressions/MikScrollingBattleText` | 16 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 16 | Yes | [OctoMail](#octomail) |
 | AutoLazy (older) | private `external-tests/AutoLazy` | 130 | No | private command below |
 | aux-addon | private `external-tests/aux-addon` | 5 | No | private command below |
@@ -107,20 +107,15 @@ semantics, appearance, frame times or gameplay. Native acceptance stays with the
 
 ## MikScrollingBattleText
 
-Ten regressions cover the six [MSBT audit](../archive/audit/MSBT_2026-10-12_AUDIT.md)
-findings repaired in MSBT 1.0.1: aura stack decreases (F1), Notification row font
-owner (F2), disabled-state game-damage CVar (F3), color-picker profile ownership
-(F4), external 0-255 message colors through the installed BigWigs caller (F5) and
-the mana-gain baseline on enable (F6). Eight fail on the preceding installed
-source; two picker controls pass on both. They reuse the audit replay harness, so
-the client's MPQs must be readable and the adjacent BigWigs checkout present:
+`test_msbt_fixes.py` (10) covers the [2026-10-12 audit](../archive/audit/MSBT_2026-10-12_AUDIT.md)
+repairs F1-F6. It uses `_replay*.py`, which reads the deployed FrameXML and GlobalStrings
+from the client's MPQs and needs the adjacent BigWigs checkout.
+`test_msbt_audit_2026_10_25.py` covers the 2026-10-25 audit on `_msbt_runtime.py`, a
+self-contained model of the core files (no MPQs). Both load files in TOC order.
 
 ```text
-python -B tools/audit_addon.py "<AddOns>/MikScrollingBattleText" --run-tests --test-start regressions/MikScrollingBattleText --output .private/msbt-current.json
+python -B tools/audit_addon.py "<AddOns>/MikScrollingBattleText" --run-tests --test-start regressions/MikScrollingBattleText
 ```
-
-The audit reproductions in `audit/replays/msbt-2026-10-12` now fail by design on
-1.0.1; they remain historical demonstrations of the defects.
 ## FostercareTweaks
 
 Eighteen regressions cover the 2026-10-19 private audit

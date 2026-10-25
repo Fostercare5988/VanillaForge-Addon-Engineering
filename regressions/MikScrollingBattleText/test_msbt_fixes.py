@@ -6,14 +6,11 @@ Requires VANILLAFORGE_ADDON_ROOT=<AddOns>/MikScrollingBattleText and lupa. Same 
 harness as the audit replays: mocked DLL APIs, deployed picker callbacks; no native
 widget, pointer or rendering proof.
 """
-from pathlib import Path
-import sys
 import unittest
 
-# Reuse the published audit harness (deployed picker callbacks, BigWigs caller,
-# native references read from the selected client's MPQs).
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "audit/replays/msbt-2026-10-12"))
-import audit_replays as a
+# Replay helpers: deployed picker callbacks, BigWigs caller, native references
+# read from the selected client's MPQs.
+import _replay as a
 
 
 class AuraStackChanges(unittest.TestCase):  # F1
