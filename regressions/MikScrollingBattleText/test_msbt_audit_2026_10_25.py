@@ -143,5 +143,84 @@ class PowerLoss(unittest.TestCase):  # Power Losses now has a source
         self.assertEqual(got, [(g.MikCEH.NOTIFICATIONTYPE_POWER_LOSS, "120 Mana", "Viper Sting")])
 
 
+RECORD_TRIGGERS = '''
+fired={}; MikSBT.TriggerHandler=function(e) table.insert(fired, e.TriggerKey) end
+'''
+
+
+class EventTriggers(unittest.TestCase):  # P3-3
+    def test_aura_trigger_fires_from_the_aura_event_not_chat(self):
+        lua = m.runtime()
+        lua.execute(RECORD_TRIGGERS + '''
+        spellNamesMock[8516]="Windfury Totem"
+        Fire("CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS", "You gain Windfury Totem.")
+        fromChat = table.getn(fired)
+        Fire("BUFF_ADDED_SELF", "0xPLAYER", 1, 8516, 1, 60, 0, 2)  -- stack change: no
+        Fire("BUFF_ADDED_SELF", "0xPLAYER", 1, 8516, 1, 60, 0, 0)
+        ''')
+        self.assertEqual(lua.globals().fromChat, 0, "trigger still reads chat text")
+        self.assertEqual(list(lua.globals().fired.values()), ["MSBT_TRIGGER_WINDFURY"])
+
+    def test_dodge_and_parry_triggers(self):
+        lua = m.runtime()
+        lua.execute(RECORD_TRIGGERS + '''
+        local function add(key, kind)
+          MikSBT.CurrentProfile.Triggers[key] = {EventSettings={Show=true, Message=key,
+            FontSettings={Color={r=1,g=1,b=1}, Normal={FontIndex=0,OutlineIndex=0,FontSize=0}}},
+            TriggerSettings={TriggerType=kind}}
+        end
+        add("DODGE", MikCEH.TRIGGERTYPE_YOU_DODGE); add("PARRY", MikCEH.TRIGGERTYPE_YOU_PARRY)
+        add("TARGET", MikCEH.TRIGGERTYPE_TARGET_DODGES); MikSBT.RegisterTriggers()
+        Fire("AUTO_ATTACK_OTHER", "0xENEMY", "0xPLAYER", 0, 0, 2, 1, 0, 0, 0)
+        Fire("AUTO_ATTACK_OTHER", "0xENEMY", "0xPLAYER", 0, 0, 3, 1, 0, 0, 0)
+        Fire("SPELL_MISS_OTHER", "0xENEMY", "0xPLAYER", 133, 4)
+        Fire("AUTO_ATTACK_SELF", "0xPLAYER", "0xENEMY", 0, 0, 2, 1, 0, 0, 0)
+        Fire("SPELL_MISS_SELF", "0xPLAYER", "0xENEMY", 133, 3)
+        Fire("AUTO_ATTACK_OTHER", "0xENEMY", "0xOTHER", 0, 0, 2, 1, 0, 0, 0)  -- not you
+        Fire("SPELL_MISS_OTHER", "0xENEMY", "0xPLAYER", 133, 9)               -- deflect
+        ''')
+        self.assertEqual(list(lua.globals().fired.values()), ["DODGE", "PARRY", "PARRY", "TARGET", "TARGET"])
+
+    def test_saved_chat_triggers_move_to_event_types(self):
+        lua = m.runtime(saved='''
+        local function chat(events, patterns) return {EventSettings={Show=true, Message="x",
+          FontSettings={Color={r=1,g=1,b=1}, Normal={FontIndex=0,OutlineIndex=0,FontSize=0}}},
+          TriggerSettings={TriggerType=6, Classes={WARRIOR=true}, Stance=1, TriggerEvents=events, SearchPatterns=patterns}} end
+        MikSBT_Save = {UserDisabled=false, CurrentProfile="Default", Profiles={Default={Triggers={
+          MSBT_TRIGGER_OVERPOWER=chat({"CHAT_MSG_COMBAT_SELF_MISSES"}, {"VSDODGESELFOTHER", "SPELLDODGEDSELFOTHER"}),
+          MSBT_TRIGGER_CLEARCAST=chat({"CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS"}, {"You gain Clearcasting."}),
+          MSBT_TRIGGER_RIPOSTE=chat({"CHAT_MSG_COMBAT_CREATURE_VS_SELF_MISSES"}, {"my own pattern"})}}}}
+        ''')
+        t = lua.globals().MikSBT_Save.Profiles.Default.Triggers
+        ceh = lua.globals().MikCEH
+        self.assertEqual(t.MSBT_TRIGGER_OVERPOWER.TriggerSettings.TriggerType, ceh.TRIGGERTYPE_TARGET_DODGES)
+        self.assertEqual(t.MSBT_TRIGGER_OVERPOWER.TriggerSettings.Stance, 1)
+        self.assertIsNone(t.MSBT_TRIGGER_OVERPOWER.TriggerSettings.SearchPatterns)
+        self.assertEqual(t.MSBT_TRIGGER_CLEARCAST.TriggerSettings.TriggerType, ceh.TRIGGERTYPE_AURA_GAIN)
+        self.assertEqual(t.MSBT_TRIGGER_CLEARCAST.TriggerSettings.AuraName, "Clearcasting")
+        self.assertEqual(t.MSBT_TRIGGER_RIPOSTE.TriggerSettings.TriggerType, 6)  # customised: kept
+
+
+class TriggerEditor(unittest.TestCase):  # P3-3, options UI on the deployed XML
+    def test_aura_trigger_edits_its_aura_name(self):
+        import _replay
+        lua = _replay.settings_runtime()
+        lua.execute('''
+        MikSBTOpt.TabOnClick(5)
+        MikSBTOpt.ShowTriggerConfig("MSBT_TRIGGER_WINDFURY")
+        assert(MSBTTriggerConfigFrameSearchPattern1EditboxLabel:GetText() == "Aura Name")
+        assert(MSBTTriggerConfigFrameSearchPattern1Editbox:GetText() == "Windfury Totem")
+        assert(not MSBTTriggerConfigFrameEventsScrollFrame:IsShown() and not MSBTTriggerConfigFrameThresholdSlider:IsShown())
+        MSBTTriggerConfigFrameSearchPattern1Editbox:SetText("Windfury Weapon")
+        MikSBTOpt.SaveTriggerConfig()
+        local t = MikSBT.CurrentProfile.Triggers.MSBT_TRIGGER_WINDFURY.TriggerSettings
+        assert(t.TriggerType == 7 and t.AuraName == "Windfury Weapon" and t.SearchPatterns == nil)
+        MikSBTOpt.ShowTriggerConfig("MSBT_TRIGGER_LOW_HEALTH")
+        assert(MSBTTriggerConfigFrameThresholdSlider:IsShown() and not MSBTTriggerConfigFrameStanceDropdown:IsShown())
+        MikSBTOpt.SaveTriggerConfig()
+        assert(MikSBT.CurrentProfile.Triggers.MSBT_TRIGGER_LOW_HEALTH.TriggerSettings.Threshold == 40)
+        ''')
+
+
 if __name__ == "__main__":
     unittest.main()

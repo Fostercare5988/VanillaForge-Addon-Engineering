@@ -106,7 +106,8 @@ function GetComboPoints() return 0 end
 function GetTime() return now end
 function GetNampowerVersion() return 4,6,2 end
 function SpellInfo(id) return "Spell"..id,"Rank 1","Interface\\Icons\\Spell"..id end
-function GetSpellInfo(id) return "Spell"..id,"Rank 1","Interface\\Icons\\Spell"..id end
+spellNamesMock={}
+function GetSpellInfo(id) return spellNamesMock[id] or "Spell"..id,"Rank 1","Interface\\Icons\\Spell"..id end
 function GetSpellRecField(id,field) if field=="name" then return "Spell"..id end return 1 end
 function GetSpellIdForName(n) count("GetSpellIdForName") return 0 end
 function GetItemInfo(n) count("GetItemInfo") end
