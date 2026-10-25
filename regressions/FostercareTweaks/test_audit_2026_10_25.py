@@ -254,3 +254,54 @@ class ModernFramesRetired(unittest.TestCase):
             bar:SetStatusBarColor(1, 0.5, 0); bar:SetStatusBarColor(1, 0.5, 0)''')
         self.assertEqual(lua.eval('native'), 1)
         self.assertEqual(lua.eval('bar.bg.r'), 0.2)
+
+
+class BadgeClicks(unittest.TestCase):
+    """2026-10-26: aura badges pass clicks to their raid button, which acts
+    through ClassicAPI's unit attributes, with the same mouse button."""
+    def test_click_forwards_mouse_button(self):
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute('''
+            owner = { unit = "raid4", Click = function(self, b) clicked = b end }
+            this = { GetParent = function() return owner end }
+            function GetMouseButtonClicked() return "RightButton" end
+        ''')
+        lua.execute(between(RAID, "local function AuraBadge_OnClick", "-- The unit attribute already")
+                    + "\nAuraBadge_OnClick()")
+        self.assertEqual(lua.eval("clicked"), "RightButton")
+        self.assertNotIn("TargetUnit(", RAID)
+        self.assertNotIn("FriendsDropDown", RAID)
+
+
+class DebuffTimerSlots(unittest.TestCase):
+    """2026-10-26: one GetAuraSlots walk instead of a by-index call per debuff."""
+    def test_one_walk_for_all_debuffs(self):
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(BASE)
+        lua.execute('''
+            FT.TimeConvert = function(s) return tostring(s) end
+            FT.UnitFrames = { IsImprovedStandardAuras = function() return false end }
+            MAX_TARGET_DEBUFFS = 16
+            walks, reads = 0, 0
+            C_UnitAuras = {
+                GetAuraSlots = function(_, _, _, _, t) walks = walks + 1; t[1], t[2] = 11, 12; return nil, 2 end,
+                UnitAuraBySlot = function(_, slot) reads = reads + 1
+                    return "Sunder", "icon", 3, "none", 30, 120, "player", nil, nil, 7386 end,
+            }
+            function UnitGUID() return "0xT" end
+            function GetTime() return 100 end
+            function CooldownFrame_SetTimer() end
+            C_Timer = { NewTicker = function() return { Cancel = function() end } end }
+            local Meta = { __index = function(t, k)
+                if k == "IsShown" or k == "IsVisible" then return function() return true end end
+                if k == "GetParent" then return function(s) return s.parent end end
+                if k == "GetFrameLevel" or k == "GetAlpha" then return function() return 1 end end
+                if k == "CreateFontString" then return function(s) return setmetatable({}, getmetatable(s)) end end
+                if string.find(k, "^%u") then return function() end end end }
+            function CreateFrame(_, _, parent) return setmetatable({ parent = parent }, Meta) end
+            for i = 1, 2 do _G["TargetFrameDebuff" .. i] = setmetatable({}, Meta) end
+        ''')
+        lua.execute(source("mods/target-debufftimer.lua"))
+        lua.execute('FT.module:enable(); hooks.TargetDebuffButton_Update()')
+        self.assertEqual(lua.eval("walks"), 1)
+        self.assertEqual(lua.eval("reads"), 2)

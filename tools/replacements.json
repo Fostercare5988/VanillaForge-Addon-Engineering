@@ -17,9 +17,9 @@
     },
     {
       "id": "hand-made-unit-click",
-      "pattern": "\\bTargetUnit\\s*\\(|FriendsDropDown|\\bSetMouseoverUnit\\s*\\(",
-      "finding": "A unit button that targets, opens the unit menu or sets the mouseover by hand.",
-      "better": "Unit button attributes: SetAttribute(\"unit\", u), type1 \"target\" (casts a cursor spell, drops a cursor item), type2 \"menu\"; hover becomes the mouseover.",
+      "pattern": "\\bTargetUnit\\s*\\(|FriendsDropDown|\\bUnitPopup_ShowMenu\\s*\\(|\\bSpellTargetUnit\\s*\\(",
+      "finding": "A unit button that targets, casts on or opens the unit menu by hand.",
+      "better": "Unit button attributes: SetAttribute(\"unit\", u), type1 \"target\" (casts a cursor spell, drops a cursor item), type2 \"menu\"; hover becomes the mouseover. A child that keeps its own tooltip passes clicks on with owner:Click(GetMouseButtonClicked()). NamPower's SetMouseoverUnit stays right for such a child.",
       "source": "ClassicAPI docs/API.md (unit attribute, type1/type2 verbs)"
     },
     {
