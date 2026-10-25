@@ -14,6 +14,8 @@ CORE = (ROOT / "AutoBG.lua").read_text("utf-8-sig")
 BASE = r'''
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 CLASSIC_API_VERSION, SUPERWOW_VERSION = 11707, "2.2"
+flashes = 0; function FlashClientIcon() flashes = flashes + 1 end
+function IsInRaid() return nil end; function IsInGroup() return nil end
 local Widget = {}
 setmetatable(Widget, { __index = function(_, name)
     if string.find(name, "^%u") then return function() end end

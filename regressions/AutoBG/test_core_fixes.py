@@ -17,6 +17,8 @@ FRAMEXML = Path(__file__).resolve().parents[2] / ".private" / "framexml" / "Inte
 BASE = r'''
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 CLASSIC_API_VERSION, SUPERWOW_VERSION = 11707, "2.2"
+flashes = 0; function FlashClientIcon() flashes = flashes + 1 end
+function IsInRaid() return nil end; function IsInGroup() return nil end
 local Widget = {}
 setmetatable(Widget, { __index = function(_, name)
     if string.find(name, "^%u") then return function() end end
@@ -31,7 +33,7 @@ function Widget:Hide() self.shown = false end
 function CreateFrame(_, name) local f = setmetatable({ name = name }, { __index = Widget }); if name then _G[name] = f end; return f end
 function NewWidget(name) return CreateFrame("Frame", name) end
 UIParent = CreateFrame("Frame", "UIParent")
-messages, ports, notifies, hooks = {}, {}, {}, {}
+messages, ports, hooks = {}, {}, {}
 DEFAULT_CHAT_FRAME = { AddMessage = function(_, msg) table.insert(messages, msg) end }
 function hooksecurefunc(name, fn) hooks[name] = fn end
 local timerObject = { Cancel = function() end }
@@ -90,22 +92,22 @@ class CancelQueueTests(unittest.TestCase):
 
 
 class TaskbarFlashTests(unittest.TestCase):
-    """P2-2: UnitXP SP3 'notify taskbarIcon' is the verified flash path."""
+    """ClassicAPI 1.17.7 FlashClientIcon flashes the taskbar on a queue pop."""
 
     def pop(self, lua):
         lua.execute('statuses[1] = { "confirm", "Warsong Gulch" }')
         lua.execute('AutoBGFrame.scripts.OnEvent(AutoBGFrame, "UPDATE_BATTLEFIELD_STATUS")')
 
-    def test_queue_pop_flashes_through_unitxp_when_no_flash_global(self):
-        lua = runtime('function UnitXP(...) table.insert(notifies, table.concat({...}, " ")) end')
+    def test_queue_pop_flashes_the_taskbar(self):
+        lua = runtime('')
         self.pop(lua)
-        self.assertIn("notify taskbarIcon", list(lua.eval('notifies').values()))
+        self.assertEqual(lua.eval('flashes'), 1)
 
     def test_flash_respects_setting_off(self):
-        lua = runtime('function UnitXP(...) table.insert(notifies, table.concat({...}, " ")) end')
+        lua = runtime('')
         lua.execute('AutoBG_Settings.FlashTaskbar = false')
         self.pop(lua)
-        self.assertEqual(lua.eval('#notifies'), 0)
+        self.assertEqual(lua.eval('flashes'), 0)
 
 
 class ScoreboardColorTests(unittest.TestCase):
