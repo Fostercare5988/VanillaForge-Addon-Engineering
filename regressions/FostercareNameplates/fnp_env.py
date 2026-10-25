@@ -87,6 +87,8 @@ function UnitClass() end
 function UnitCanAttack() return 1 end
 function UnitHealth() return 50 end
 function UnitHealthMax() return 100 end
+function UnitLevel() return 60 end
+function GetDifficultyColor() return { r = 1, g = 0.82, b = 0 } end
 function UnitIsUnit() end
 function GetComboPoints() return 0 end
 -- Unit kind for the fade filters, keyed by GUID; CreatureType.dbc ids.

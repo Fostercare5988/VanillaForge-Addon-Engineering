@@ -95,11 +95,13 @@ class OwnLevel(unittest.TestCase):
         self.assertIsNone(lua.eval('plate.fnpLevel'))
         self.assertEqual(lua.eval('plate.level:GetAlpha()'), 1)
 
-    def test_logout_restores_native_level(self):
+    def test_logout_leaves_plates_alone(self):
+        """Restoring plates at logout touched parts the client was freeing;
+        ERROR #124 (SGroupPtr invalid block) followed on 2026-10-22."""
         lua = self.level()
         lua.execute('fire("PLAYER_LOGOUT")')
-        self.assertEqual(lua.eval('plate.level:GetAlpha()'), 1)
-        self.assertEqual(lua.eval('plate.levelicon:GetAlpha()'), 1)
+        self.assertEqual(lua.eval('plate.level:GetAlpha()'), 0)
+        self.assertTrue(lua.eval('plate.fnpLevel.shown'))
 
 
 if __name__ == "__main__":
