@@ -81,5 +81,25 @@ class DeflectText(unittest.TestCase):  # P3-5
         self.assertNotEqual(g.sent[1].ActionType, g.MikCEH.ACTIONTYPE_REFLECT)
 
 
+class StickyHoldWrites(unittest.TestCase):  # P3-13
+    def test_still_sticky_writes_nothing_while_holding(self):
+        lua = m.runtime()
+        lua.execute('''
+        MikSBT.DisplayMessage("held", MikSBT.DISPLAYTYPE_NOTIFICATION, true)
+        local frame = MSBTFrameNotification
+        writes = 0
+        for i = 1, 20 do
+          local font = getglobal("MSBTFrameNotificationText" .. i)
+          for _, k in ipairs({"SetPoint", "SetAlpha", "SetTextHeight", "SetWidth", "SetHeight"}) do
+            font[k] = function() writes = writes + 1 end
+          end
+        end
+        now = now + 0.5; MikSBT.OnUpdateAnimationFrame(frame)   -- enter hold
+        writes = 0
+        for i = 1, 100 do now = now + 0.01; MikSBT.OnUpdateAnimationFrame(frame) end
+        ''')
+        self.assertEqual(lua.globals().writes, 0)
+
+
 if __name__ == "__main__":
     unittest.main()
