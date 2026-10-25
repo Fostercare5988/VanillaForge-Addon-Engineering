@@ -49,13 +49,14 @@ class ForeignCombatHotPath(unittest.TestCase):  # P2-3
         lua.execute('''
         calls={}; sent={}
         for i=1,100 do
-          Fire("SPELL_DAMAGE_EVENT_OTHER","0xF13000AAAA","0x0000BBBB",133,500,"0,0,0",0,2,"2,0,0,0")
-          Fire("AUTO_ATTACK_OTHER","0x0000BBBB","0xF13000AAAA",120,0,1,1,0,0,0)
+          CL("SPELL_DAMAGE","0xF13000AAAA","Ogre","0x0000BBBB","Ally",133,"Fireball",4,500,0,4)
+          CL("SWING_DAMAGE","0x0000BBBB","Ally","0xF13000AAAA","Ogre",120,0,1)
         end
         ''')
         g = lua.globals()
         self.assertEqual(len(g.sent), 0)
         self.assertEqual(g.calls["string.lower"], None, "string.lower per foreign event")
+        self.assertEqual(g.calls["CombatLogGetCurrentEventInfo"], None, "unpacked a foreign event")
 
 
 class ManaRegenText(unittest.TestCase):  # P3-4
@@ -75,7 +76,7 @@ class ManaRegenText(unittest.TestCase):  # P3-4
 class DeflectText(unittest.TestCase):  # P3-5
     def test_deflect_is_not_reported_as_reflect(self):
         lua = m.runtime()
-        lua.execute('sent={}; Fire("SPELL_MISS_SELF","0xPLAYER","0xENEMY",133,9)')
+        lua.execute('sent={}; CL("SPELL_MISSED","0xPLAYER","Hero","0xENEMY","Twin",133,"Fireball",4,"DEFLECT")')
         g = lua.globals()
         self.assertEqual(len(g.sent), 1)
         self.assertNotEqual(g.sent[1].ActionType, g.MikCEH.ACTIONTYPE_REFLECT)
@@ -157,8 +158,8 @@ class EventTriggers(unittest.TestCase):  # P3-3
         spellNamesMock[8516]="Windfury Totem"
         Fire("CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS", "You gain Windfury Totem.")
         fromChat = table.getn(fired)
-        Fire("BUFF_ADDED_SELF", "0xPLAYER", 1, 8516, 1, 60, 0, 2)  -- stack change: no
-        Fire("BUFF_ADDED_SELF", "0xPLAYER", 1, 8516, 1, 60, 0, 0)
+        CL("SPELL_AURA_APPLIED_DOSE", "0xPLAYER", "Hero", "0xPLAYER", "Hero", 8516, "Windfury Totem", 8, "BUFF", 2)
+        CL("SPELL_AURA_APPLIED", "0xPLAYER", "Hero", "0xPLAYER", "Hero", 8516, "Windfury Totem", 8, "BUFF")
         ''')
         self.assertEqual(lua.globals().fromChat, 0, "trigger still reads chat text")
         self.assertEqual(list(lua.globals().fired.values()), ["MSBT_TRIGGER_WINDFURY"])
@@ -173,13 +174,13 @@ class EventTriggers(unittest.TestCase):  # P3-3
         end
         add("DODGE", MikCEH.TRIGGERTYPE_YOU_DODGE); add("PARRY", MikCEH.TRIGGERTYPE_YOU_PARRY)
         add("TARGET", MikCEH.TRIGGERTYPE_TARGET_DODGES); MikSBT.RegisterTriggers()
-        Fire("AUTO_ATTACK_OTHER", "0xENEMY", "0xPLAYER", 0, 0, 2, 1, 0, 0, 0)
-        Fire("AUTO_ATTACK_OTHER", "0xENEMY", "0xPLAYER", 0, 0, 3, 1, 0, 0, 0)
-        Fire("SPELL_MISS_OTHER", "0xENEMY", "0xPLAYER", 133, 4)
-        Fire("AUTO_ATTACK_SELF", "0xPLAYER", "0xENEMY", 0, 0, 2, 1, 0, 0, 0)
-        Fire("SPELL_MISS_SELF", "0xPLAYER", "0xENEMY", 133, 3)
-        Fire("AUTO_ATTACK_OTHER", "0xENEMY", "0xOTHER", 0, 0, 2, 1, 0, 0, 0)  -- not you
-        Fire("SPELL_MISS_OTHER", "0xENEMY", "0xPLAYER", 133, 9)               -- deflect
+        CL("SWING_MISSED", "0xENEMY", "Twin", "0xPLAYER", "Hero", "DODGE")
+        CL("SWING_MISSED", "0xENEMY", "Twin", "0xPLAYER", "Hero", "PARRY")
+        CL("SPELL_MISSED", "0xENEMY", "Twin", "0xPLAYER", "Hero", 133, "Fireball", 4, "PARRY")
+        CL("SWING_MISSED", "0xPLAYER", "Hero", "0xENEMY", "Twin", "DODGE")
+        CL("SPELL_MISSED", "0xPLAYER", "Hero", "0xENEMY", "Twin", 78, "Heroic Strike", 1, "DODGE")
+        CL("SWING_MISSED", "0xENEMY", "Twin", "0xOTHER", "Ally", "DODGE")        -- not you
+        CL("SPELL_MISSED", "0xENEMY", "Twin", "0xPLAYER", "Hero", 133, "Fireball", 4, "DEFLECT")
         ''')
         self.assertEqual(list(lua.globals().fired.values()), ["DODGE", "PARRY", "PARRY", "TARGET", "TARGET"])
 
@@ -222,6 +223,74 @@ class TriggerEditor(unittest.TestCase):  # P3-3, options UI on the deployed XML
         MikSBTOpt.SaveTriggerConfig()
         assert(MikSBT.CurrentProfile.Triggers.MSBT_TRIGGER_LOW_HEALTH.TriggerSettings.Threshold == 40)
         ''')
+
+
+class CombatLogSource(unittest.TestCase):  # item 1: the combat log is the only combat source
+    def events(self, code):
+        lua = m.runtime()
+        lua.execute("sent={}; " + code)
+        return lua, [dict(e.items()) for e in lua.globals().sent.values()]
+
+    def test_melee_hit_crit_and_partials(self):
+        lua, got = self.events('''
+        CL("SWING_DAMAGE", "0xPLAYER", "Hero", "0xENEMY", "Twin", 150, 0, 1, nil, nil, nil, 1)
+        CL("SWING_DAMAGE", "0xENEMY", "Twin", "0xPLAYER", "Hero", 90, 0, 1, nil, 30, nil, nil, nil, 1)
+        CL("SWING_DAMAGE", "0xPLAYER", "Hero", "0xENEMY", "Twin", 60, 0, 1, nil, nil, 20, nil, 1)
+        ''')
+        c = lua.globals().MikCEH
+        self.assertEqual([(e["DirectionType"], e["Amount"], e["HitType"], e.get("EffectName"), e.get("Name")) for e in got],
+                         [(c.DIRECTIONTYPE_PLAYER_OUTGOING, 150, c.HITTYPE_CRIT, None, "Twin"),
+                          (c.DIRECTIONTYPE_PLAYER_INCOMING, 90, c.HITTYPE_NORMAL, None, "Twin"),
+                          (c.DIRECTIONTYPE_PLAYER_OUTGOING, 60, c.HITTYPE_NORMAL, None, "Twin")])
+        self.assertEqual(got[1]["PartialActionType"], c.PARTIALACTIONTYPE_CRUSHING)  # crushing wins over block
+        self.assertEqual(got[2]["PartialActionType"], c.PARTIALACTIONTYPE_GLANCING)
+
+    def test_spells_dots_and_partial_resist(self):
+        lua, got = self.events('''
+        CL("SPELL_DAMAGE", "0xPLAYER", "Hero", "0xENEMY", "Twin", 133, "Fireball", 4, 400, 0, 4, 100)
+        CL("SPELL_PERIODIC_DAMAGE", "0xPLAYER", "Hero", "0xENEMY", "Twin", 172, "Corruption", 32, 80, 0, 32)
+        CL("SPELL_DAMAGE", "0xENEMY", "Twin", "0xPLAYER", "Hero", 116, "Frostbolt", 16, 0, 0, 16, nil, nil, 250)
+        ''')
+        c = lua.globals().MikCEH
+        self.assertEqual([(e["EffectName"], e["Amount"], e["HitType"], e["DamageType"], e["SpellId"]) for e in got],
+                         [("Fireball", 400, c.HITTYPE_NORMAL, c.DAMAGETYPE_FIRE, 133),
+                          ("Corruption", 80, c.HITTYPE_OVER_TIME, c.DAMAGETYPE_SHADOW, 172),
+                          ("Frostbolt", 0, c.HITTYPE_NORMAL, c.DAMAGETYPE_FROST, 116)])
+        self.assertEqual((got[0]["PartialActionType"], got[0]["PartialAmount"]), (c.PARTIALACTIONTYPE_RESIST, 100))
+        self.assertEqual(got[2]["ActionType"], c.ACTIONTYPE_ABSORB)  # fully absorbed
+
+    def test_heals_power_environment_shield_and_pet(self):
+        lua, got = self.events('''
+        CL("SPELL_HEAL", "0xPLAYER", "Hero", "0xPLAYER", "Hero", 2061, "Flash Heal", 2, 900, 0, 0, 1)
+        CL("SPELL_PERIODIC_HEAL", "0xOTHER", "Ally", "0xPLAYER", "Hero", 139, "Renew", 2, 120, 0, 0)
+        CL("SPELL_ENERGIZE", "0xPLAYER", "Hero", "0xPLAYER", "Hero", 29166, "Innervate", 8, 300, 0)
+        CL("SPELL_ENERGIZE", "0xPLAYER", "Hero", "0xPLAYER", "Hero", 1, "Focus thing", 1, 30, 2)
+        CL("ENVIRONMENTAL_DAMAGE", nil, nil, "0xPLAYER", "Hero", "FALLING", 220, 0, 1)
+        CL("DAMAGE_SHIELD", "0xPLAYER", "Hero", "0xENEMY", "Twin", 0, nil, 8, 18, 0, 8)
+        CL("SWING_DAMAGE", "0xPET", "Wolf", "0xENEMY", "Twin", 40, 0, 1)
+        ''')
+        c = lua.globals().MikCEH
+        self.assertEqual(len(got), 6)  # focus is not shown
+        self.assertEqual((got[0]["DirectionType"], got[0]["HealType"], got[0]["Amount"]),
+                         (c.DIRECTIONTYPE_PLAYER_INCOMING, c.HEALTYPE_CRIT, 900))  # self-heal shown once
+        self.assertEqual((got[1]["HealType"], got[1]["Name"]), (c.HEALTYPE_OVER_TIME, "Ally"))
+        self.assertEqual((got[2]["Amount"], got[2]["EffectName"], got[2]["IsSpellManaGain"]), ("300 Mana", "Innervate", True))
+        self.assertEqual((got[3]["ActionType"], got[3]["Amount"]), (c.ACTIONTYPE_FALLING, 220))
+        self.assertEqual((got[4]["EffectName"], got[4]["DamageType"], got[4]["DirectionType"]),
+                         ("Damage Shield", c.DAMAGETYPE_NATURE, c.DIRECTIONTYPE_PLAYER_OUTGOING))
+        self.assertEqual(got[5]["DirectionType"], c.DIRECTIONTYPE_PET_OUTGOING)
+
+    def test_auras_stacks_and_fades(self):
+        lua, got = self.events('''
+        CL("SPELL_AURA_APPLIED", "0xENEMY", "Twin", "0xPLAYER", "Hero", 11597, "Sunder Armor", 1, "DEBUFF")
+        CL("SPELL_AURA_APPLIED_DOSE", "0xENEMY", "Twin", "0xPLAYER", "Hero", 11597, "Sunder Armor", 1, "DEBUFF", 2)
+        CL("SPELL_AURA_REMOVED_DOSE", "0xENEMY", "Twin", "0xPLAYER", "Hero", 11597, "Sunder Armor", 1, "DEBUFF", 1)
+        CL("SPELL_AURA_REMOVED", "0xENEMY", "Twin", "0xPLAYER", "Hero", 11597, "Sunder Armor", 1, "DEBUFF")
+        CL("SPELL_AURA_APPLIED", "0xPLAYER", "Hero", "0xENEMY", "Twin", 11597, "Sunder Armor", 1, "DEBUFF")
+        ''')
+        c = lua.globals().MikCEH
+        self.assertEqual([e["NotificationType"] for e in got],
+                         [c.NOTIFICATIONTYPE_DEBUFF, c.NOTIFICATIONTYPE_DEBUFF, c.NOTIFICATIONTYPE_BUFF_FADE])
 
 
 if __name__ == "__main__":

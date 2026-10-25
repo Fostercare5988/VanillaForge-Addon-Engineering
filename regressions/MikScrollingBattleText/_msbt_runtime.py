@@ -33,7 +33,7 @@ def toc_lua_files():
 
 
 BOOT = r'''
-CLASSIC_API_VERSION=11707; SUPERWOW_VERSION="2.2";
+CLASSIC_API_VERSION=11707;  -- ClassicAPI only: no SuperWoW or NamPower globals
 now=1; event=nil; this=nil; cvars={}; calls={}; frames={};
 local function count(name) calls[name]=(calls[name] or 0)+1 end
 
@@ -72,7 +72,14 @@ function Fire(e,...)
     if f.events[e] and h then this=f; h(f,e,unpack(a,1,a.n)) end
   end
 end
-function CombatLogGetCurrentEventInfo() return unpack(cleu,1,cleu.n) end
+function CombatLogGetCurrentEventInfo() count("CombatLogGetCurrentEventInfo"); return unpack(cleu,1,cleu.n) end
+-- One combat log event: subevent, source GUID/name, dest GUID/name, then the
+-- subevent's own values (position 12 on), as ClassicAPI documents them.
+function CL(sub, src, srcName, dst, dstName, ...)
+  local a={n=select("#",...),...}
+  local flags = (dst=="0xPLAYER" or dst=="0xPET") and 0x511 or 0x548
+  Fire("COMBAT_LOG_EVENT_UNFILTERED", 1, sub, false, src, srcName, 0x511, 0, dst, dstName, flags, 0, unpack(a,1,a.n))
+end
 
 -- Bit library (ClassicAPI ships one; lupa's 5.1 has none).
 bit={}
@@ -104,11 +111,8 @@ function UnitManaMax(u) local v=Resolve(u); return v and v.maxmana or 0 end
 function UnitPowerType() return 0 end
 function GetComboPoints() return 0 end
 function GetTime() return now end
-function GetNampowerVersion() return 4,6,2 end
-function SpellInfo(id) return "Spell"..id,"Rank 1","Interface\\Icons\\Spell"..id end
 spellNamesMock={}
 function GetSpellInfo(id) return spellNamesMock[id] or "Spell"..id,"Rank 1","Interface\\Icons\\Spell"..id end
-function GetSpellRecField(id,field) if field=="name" then return "Spell"..id end return 1 end
 function GetSpellIdForName(n) count("GetSpellIdForName") return 0 end
 function GetItemInfo(n) count("GetItemInfo") end
 function GetFactionInfoByID(id) return "Faction"..id end

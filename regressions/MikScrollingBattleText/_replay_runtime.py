@@ -18,6 +18,7 @@ units={player={guid="0xPLAYER",name="Hero",health=1000,max=1000,mana=100,maxmana
  target={guid="0xENEMY",name="Twin",health=1000,max=1000,class="MAGE"},
  other={guid="0xOTHER",name="Twin",health=500,max=1000,class="ROGUE"}}
 function Resolve(u) if units[u] then return units[u] end; for _,v in pairs(units) do if v.guid==u then return v end end end
+function UnitGUID(u) local v=Resolve(u); return v and v.guid end
 function UnitExists(u) local v=Resolve(u); if v then return 1,v.guid end end
 function UnitName(u) local v=Resolve(u); return v and v.name end
 function UnitClass(u) local v=Resolve(u); return v and v.class,v and v.class end
