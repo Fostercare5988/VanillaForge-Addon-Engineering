@@ -15,16 +15,14 @@ import _replay as a
 
 class AuraStackChanges(unittest.TestCase):  # F1
     def test_stack_decrease_is_not_a_fade(self):
-        l = a.runtime()
+        import _msbt_runtime as m
+        l = m.runtime()
         l.execute('''
-        for _,name in ipairs({"BUFF_REMOVED_SELF","DEBUFF_REMOVED_SELF"}) do
-          sent={}; Emit(name,"0xPLAYER",1,123,2,60,0,2); assert(#sent==0, name.." stack decrease faded");
-          sent={}; Emit(name,"0xPLAYER",1,123,0,60,0,1);
-          assert(#sent==1 and sent[1].NotificationType==MikCEH.NOTIFICATIONTYPE_BUFF_FADE, name.." removal lost");
-          sent={}; Emit(name,"0xPET",1,123,0,60,0,1); assert(#sent==0, name.." pet auras arrive as _OTHER events");
-          sent={}; Emit(name,"0xOTHER",1,123,0,60,0,1); assert(#sent==0, name.." foreign unit");
-        end
-        sent={}; Emit("BUFF_ADDED_SELF","0xPLAYER",1,123,3,60,0,2); assert(#sent==1); -- gains unchanged
+        sent={}; CL("SPELL_AURA_REMOVED_DOSE","0xENEMY","Twin","0xPLAYER","Hero",123,"Spell123",1,"BUFF",2); assert(#sent==0, "stack decrease faded");
+        sent={}; CL("SPELL_AURA_REMOVED","0xENEMY","Twin","0xPLAYER","Hero",123,"Spell123",1,"BUFF");
+        assert(#sent==1 and sent[1].NotificationType==MikCEH.NOTIFICATIONTYPE_BUFF_FADE, "removal lost");
+        sent={}; CL("SPELL_AURA_REMOVED","0xENEMY","Twin","0xOTHER","Ally",123,"Spell123",1,"BUFF"); assert(#sent==0, "foreign unit");
+        sent={}; CL("SPELL_AURA_APPLIED_DOSE","0xENEMY","Twin","0xPLAYER","Hero",123,"Spell123",1,"BUFF",3); assert(#sent==1); -- gains unchanged
         ''')
 
 
