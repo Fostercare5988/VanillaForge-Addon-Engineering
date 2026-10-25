@@ -43,7 +43,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | FostercareNameplates | `regressions/FostercareNameplates` | 27 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 22 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 11 | Yes | [GearRack](#gearrack) |
-| MikScrollingBattleText | `regressions/MikScrollingBattleText` | 24 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
+| MikScrollingBattleText | `regressions/MikScrollingBattleText` | 30 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 16 | Yes | [OctoMail](#octomail) |
 | AutoLazy (older) | private `external-tests/AutoLazy` | 130 | No | private command below |
 | aux-addon | private `external-tests/aux-addon` | 5 | No | private command below |
@@ -108,10 +108,10 @@ semantics, appearance, frame times or gameplay. Native acceptance stays with the
 ## MikScrollingBattleText
 
 `test_msbt_fixes.py` (10) covers the [2026-10-12 audit](../archive/audit/MSBT_2026-10-12_AUDIT.md)
-repairs F1-F6. It uses `_replay*.py`, which reads the deployed FrameXML and GlobalStrings
-from the client's MPQs and needs the adjacent BigWigs checkout.
-`test_msbt_audit_2026_10_25.py` covers the 2026-10-25 audit on `_msbt_runtime.py`, a
-self-contained model of the core files (no MPQs). Both load files in TOC order.
+repairs F1-F6; `test_msbt_audit_2026_10_25.py` (20) covers the 2026-10-25 audit, the
+combat-log source and the ForgeUI settings window. Both run on `_msbt_runtime.py`: every
+TOC file in a lupa model with ClassicAPI-only globals, a stateful widget model and `CL(...)`
+for combat log events. No client MPQs are needed; the BigWigs test uses the adjacent checkout.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/MikScrollingBattleText" --run-tests --test-start regressions/MikScrollingBattleText
