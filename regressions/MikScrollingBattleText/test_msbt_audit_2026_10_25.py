@@ -117,7 +117,8 @@ class RetiredSettings(unittest.TestCase):  # P3-6, P3-7
         MikSBT_Save = {UserDisabled=false, CurrentProfile="Default", Profiles={Default={
           ShowOverheals=true, ShowVigorGains=false, CreationVersion=6.52,
           EventSettings={MSBT_EVENTTYPE_NOTIFICATION_ITEM_BUFF={Show=true}},
-          Suppressions={MSBT_SUPPRESSION_ROGUE_VIGOR={Enabled=false, SearchPattern="Vigor"}}}}}
+          Suppressions={MSBT_SUPPRESSION_ROGUE_VIGOR={Enabled=false, SearchPattern="Vigor"},
+            MSBT_SUPPRESSION_WISDOM_MANA_GAINS={Enabled=true, SearchPattern="+[35][039] Mana"}}}}}
         ''')
         p = lua.globals().MikSBT_Save.Profiles.Default
         self.assertIsNone(p.ShowOverheals)
@@ -125,6 +126,7 @@ class RetiredSettings(unittest.TestCase):  # P3-6, P3-7
         self.assertIsNone(p.CreationVersion)
         self.assertIsNone(p.EventSettings.MSBT_EVENTTYPE_NOTIFICATION_ITEM_BUFF)
         self.assertTrue(p.Suppressions.MSBT_SUPPRESSION_ROGUE_VIGOR.Enabled)
+        self.assertEqual(p.Suppressions.MSBT_SUPPRESSION_WISDOM_MANA_GAINS.SearchPattern, "Judgement of Wisdom")
         self.assertIsNotNone(p.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE)
 
 
