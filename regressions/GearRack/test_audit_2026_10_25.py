@@ -109,6 +109,7 @@ class SetBuilderTests(unittest.TestCase):
         lua = runtime()
         lua.execute('''
             GearRackDB = { sets = { ["Me"] = { Sets = {} } } }
+            GearRack.UpdateSetMacro = function() end
             GearRackUI = { SetBuild = { [16] = 1, [17] = 1 }, SelectedIcon = "icon" }
             mainHand = "INVTYPE_2HWEAPON"
             setName = "Two"
