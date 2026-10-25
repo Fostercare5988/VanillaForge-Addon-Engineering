@@ -204,24 +204,31 @@ class EventTriggers(unittest.TestCase):  # P3-3
         self.assertEqual(t.MSBT_TRIGGER_RIPOSTE.TriggerSettings.TriggerType, 6)  # customised: kept
 
 
-class TriggerEditor(unittest.TestCase):  # P3-3, options UI on the deployed XML
+class TriggerEditor(unittest.TestCase):  # P3-3, ForgeUI trigger editor
     def test_aura_trigger_edits_its_aura_name(self):
-        import _replay
-        lua = _replay.settings_runtime()
+        lua = m.runtime()
         lua.execute('''
-        MikSBTOpt.TabOnClick(5)
-        MikSBTOpt.ShowTriggerConfig("MSBT_TRIGGER_WINDFURY")
-        assert(MSBTTriggerConfigFrameSearchPattern1EditboxLabel:GetText() == "Aura Name")
-        assert(MSBTTriggerConfigFrameSearchPattern1Editbox:GetText() == "Windfury Totem")
-        assert(not MSBTTriggerConfigFrameEventsScrollFrame:IsShown() and not MSBTTriggerConfigFrameThresholdSlider:IsShown())
-        MSBTTriggerConfigFrameSearchPattern1Editbox:SetText("Windfury Weapon")
-        MikSBTOpt.SaveTriggerConfig()
+        MikSBTOpt.EditTrigger("MSBT_TRIGGER_WINDFURY")
+        assert(MSBT_TriggerAura:IsShown() and MSBT_TriggerAura:GetText() == "Windfury Totem")
+        assert(not MSBT_TriggerThreshold:IsShown() and not MSBT_TriggerPattern1:IsShown())
+        MSBT_TriggerAura:SetText("Windfury Weapon")
+        MSBT_TriggerSave:Click()
         local t = MikSBT.CurrentProfile.Triggers.MSBT_TRIGGER_WINDFURY.TriggerSettings
         assert(t.TriggerType == 7 and t.AuraName == "Windfury Weapon" and t.SearchPatterns == nil)
-        MikSBTOpt.ShowTriggerConfig("MSBT_TRIGGER_LOW_HEALTH")
-        assert(MSBTTriggerConfigFrameThresholdSlider:IsShown() and not MSBTTriggerConfigFrameStanceDropdown:IsShown())
-        MikSBTOpt.SaveTriggerConfig()
+        MikSBTOpt.EditTrigger("MSBT_TRIGGER_LOW_HEALTH")
+        assert(MSBT_TriggerThreshold:IsShown() and not MSBT_TriggerStance:IsShown())
+        MSBT_TriggerSave:Click()
         assert(MikSBT.CurrentProfile.Triggers.MSBT_TRIGGER_LOW_HEALTH.TriggerSettings.Threshold == 40)
+        ''')
+
+    def test_cancel_keeps_the_saved_trigger(self):
+        lua = m.runtime()
+        lua.execute('''
+        MikSBTOpt.EditTrigger("MSBT_TRIGGER_EXECUTE")
+        MSBT_TriggerTypeNext:Click(); MSBT_TriggerAllClasses:Click()
+        MSBT_TriggerCancel:Click()
+        local t = MikSBT.CurrentProfile.Triggers.MSBT_TRIGGER_EXECUTE.TriggerSettings
+        assert(t.TriggerType == 4 and t.Classes.WARRIOR and t.Threshold == 20)
         ''')
 
 
@@ -291,6 +298,38 @@ class CombatLogSource(unittest.TestCase):  # item 1: the combat log is the only 
         c = lua.globals().MikCEH
         self.assertEqual([e["NotificationType"] for e in got],
                          [c.NOTIFICATIONTYPE_DEBUFF, c.NOTIFICATIONTYPE_DEBUFF, c.NOTIFICATIONTYPE_BUFF_FADE])
+
+
+class SettingsWindow(unittest.TestCase):  # item 2: ForgeUI settings write the profile
+    def test_rows_inline_edit_filters_areas_and_profiles(self):
+        lua = m.runtime()
+        lua.execute('''
+        local p = MikSBT.CurrentProfile
+        MikSBTOpt.ShowTab(3)
+        MSBT_IncomingRow1Show:Click(); assert(p.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE.Show == false)
+        MSBT_IncomingRow1Message:Click(); assert(MSBT_InlineEdit:IsShown())
+        MSBT_InlineEdit:SetText("-%a!"); MSBT_InlineEdit:PressEnter()
+        assert(p.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE.Message == "-%a!" and not MSBT_InlineEdit:IsShown())
+        MSBT_IncomingRow2Message:Click(); MSBT_InlineEdit:SetText("lost"); MSBT_InlineEdit:PressEscape()
+        assert(p.EventSettings.MSBT_EVENTTYPE_INCOMING_MISS.Message ~= "lost")
+        MSBT_IncomingRowPagerNext:Click(); assert(MSBT_IncomingRow1ShowText:GetText() ~= "Melee Damage")
+
+        MikSBTOpt.ShowTab(5); MSBT_NotificationRow1Sticky:Click()
+        assert(p.EventSettings.MSBT_EVENTTYPE_NOTIFICATION_DEBUFF.IsSticky == true)
+
+        MikSBTOpt.ShowTab(7); local before = 0; for _ in pairs(p.Suppressions) do before = before + 1 end
+        MSBT_FilterAdd:Click(); local after = 0; for _ in pairs(p.Suppressions) do after = after + 1 end
+        assert(after == before + 1)
+
+        MikSBTOpt.ShowTab(2); MSBT_Area2:Click(); MSBT_AreaStyle3:Click(); MSBT_AreaDirection2:Click()
+        assert(p.DisplaySettings.Outgoing.AnimationStyle == 3 and p.DisplaySettings.Outgoing.ScrollDirection == 2)
+        assert(p.DisplaySettings.Incoming.AnimationStyle == 1)
+
+        MikSBTOpt.ShowTab(8); MSBT_ProfileName:SetText("Raid"); MSBT_ProfileCreate:Click()
+        assert(MikSBT_Save.Profiles.Raid and MikSBT_Save.CurrentProfile == "Default")
+        for i = 1, 10 do local row = getglobal("MSBT_ProfileRow" .. i); if row.name == "Raid" then getglobal("MSBT_ProfileRow" .. i .. "Delete"):Click() end end
+        assert(MikSBT_Save.Profiles.Raid == nil)
+        ''')
 
 
 if __name__ == "__main__":

@@ -1,7 +1,8 @@
-"""Self-contained Lua model of MSBT's core files for regression tests.
+"""Self-contained Lua model of MSBT for regression tests.
 
-Loads the addon's TOC Lua files (options UI excluded) into lupa with mocked
-ClassicAPI / SuperWoW / NamPower globals. It needs no client MPQs. Lua 5.0
+Loads every TOC Lua file, including the ForgeUI settings window, into lupa with
+mocked ClassicAPI globals and a small stateful widget model (checked state,
+text, values, clicks, show/hide scripts). It needs no client MPQs. Lua 5.0
 generic `for k,v in t do` loops are adapted to `pairs`. Not in-game proof.
 
 Requires VANILLAFORGE_ADDON_ROOT=<AddOns>/MikScrollingBattleText and lupa.
@@ -16,7 +17,7 @@ ROOT = Path(os.environ.get("VANILLAFORGE_ADDON_ROOT", "")).resolve()
 if not (ROOT / "MikScrollingBattleText.toc").is_file():
     raise RuntimeError("Set VANILLAFORGE_ADDON_ROOT to the MikScrollingBattleText folder")
 
-CORE_SKIP = {"MSBTOptions.lua"}
+CORE_SKIP = set()
 
 
 def lua50(source):
@@ -39,25 +40,70 @@ local function count(name) calls[name]=(calls[name] or 0)+1 end
 
 -- Minimal widget model: every unknown method is a no-op; event registration is recorded.
 local Widget={}
+local function Run(w,script,...) local f=w.scripts[script]; if f then local old=this; this=w; f(w,...); this=old end end
 function Widget:RegisterEvent(e) self.events[e]=true end
 function Widget:UnregisterEvent(e) self.events[e]=nil end
 function Widget:UnregisterAllEvents() for k in pairs(self.events) do self.events[k]=nil end end
 function Widget:SetScript(k,f) self.scripts[k]=f end
 function Widget:GetScript(k) return self.scripts[k] end
 function Widget:GetName() return self.name end
+function Widget:GetParent() return self.parent end
+function Widget:SetParent(p) self.parent=p end
 function Widget:IsVisible() return self.shown end
 function Widget:IsShown() return self.shown end
-function Widget:Show() self.shown=true end
-function Widget:Hide() self.shown=false end
-function Widget:CreateTexture() return NewWidget() end
-local WidgetMeta={__index=function(t,k) return Widget[k] or function() end end}
-function NewWidget(name)
-  local w=setmetatable({name=name,events={},scripts={},shown=false},WidgetMeta)
+function Widget:Show() if not self.shown then self.shown=true; Run(self,"OnShow") end end
+function Widget:Hide() if self.shown then self.shown=false; Run(self,"OnHide") end end
+function Widget:CreateTexture(name) local t=NewWidget(name,"Texture",self); t.shown=true; return t end
+function Widget:CreateFontString(name) local t=NewWidget(name,"FontString",self); t.shown=true; return t end
+function Widget:SetFontString(fs) self.fontString=fs end
+function Widget:GetFontString() return self.fontString end
+function Widget:SetText(t) self.text=t; if self.fontString then self.fontString:SetText(t) end; if self.kind=="EditBox" then Run(self,"OnTextChanged") end end
+function Widget:GetText() return self.text or "" end
+function Widget:SetTextColor(r,g,b) self.color={r,g,b} end
+function Widget:SetChecked(v) self.checked=(v and v~=0) and 1 or nil end
+function Widget:GetChecked() return self.checked end
+function Widget:SetMinMaxValues(a,b) self.min,self.max=a,b end
+function Widget:SetValue(v) self.value=v; Run(self,"OnValueChanged") end
+function Widget:GetValue() return self.value or 0 end
+function Widget:Enable() self.disabled=nil end
+function Widget:Disable() self.disabled=true end
+function Widget:IsEnabled() return not self.disabled and 1 or nil end
+function Widget:SetWidth(v) self.width=v end
+function Widget:SetHeight(v) self.height=v end
+function Widget:GetWidth() return self.width or 0 end
+function Widget:GetHeight() return self.height or 0 end
+function Widget:GetFrameLevel() return 1 end
+function Widget:SetFocus() self.focus=true end
+function Widget:ClearFocus() if self.focus then self.focus=nil; Run(self,"OnEditFocusLost") end end
+-- A player click: a checkbutton toggles before OnClick, as natively.
+function Widget:Click()
+  if self.disabled then return end
+  if self.kind=="CheckButton" then self:SetChecked(not self.checked) end
+  Run(self,"OnClick")
+end
+function Widget:PressEnter() Run(self,"OnEnterPressed") end
+function Widget:PressEscape() Run(self,"OnEscapePressed") end
+-- Unknown methods (capitalised keys) are no-ops; unknown fields stay nil.
+local function NoOp() end
+local WidgetMeta={__index=function(t,k) return Widget[k] or (type(k)=="string" and string.find(k,"^%u") and NoOp) or nil end}
+function NewWidget(name,kind,parent)
+  local w=setmetatable({name=name,kind=kind,parent=parent,events={},scripts={},shown=false},WidgetMeta)
   table.insert(frames,w)
   if name then _G[name]=w end
   return w
 end
-function CreateFrame(kind,name) return NewWidget(name) end
+function CreateFrame(kind,name,parent) local w=NewWidget(name,kind,parent); w.shown=true; return w end
+UIParent=NewWidget("UIParent"); UIParent.shown=true
+GameTooltip=NewWidget("GameTooltip")
+function ShowUIPanel(f) f:Show() end
+function HideUIPanel(f) f:Hide() end
+-- ColorPickerFrame as the 1.12 FrameXML drives it: selecting a color calls func;
+-- Okay calls func and hides; Cancel calls cancelFunc(previousValues) and hides.
+ColorPickerFrame=NewWidget("ColorPickerFrame")
+function ColorPickerFrame:SetColorRGB(r,g,b) self.r,self.g,self.b=r,g,b; if self.func then self.func() end end
+function ColorPickerFrame:GetColorRGB() return self.r,self.g,self.b end
+function PickerOkay() if ColorPickerFrame.func then ColorPickerFrame.func() end; HideUIPanel(ColorPickerFrame) end
+function PickerCancel() if ColorPickerFrame.cancelFunc then ColorPickerFrame.cancelFunc(ColorPickerFrame.previousValues) end; HideUIPanel(ColorPickerFrame) end
 function getglobal(name) return rawget(_G,name) or NewWidget(name) end
 setglobal=function(k,v) _G[k]=v end
 
@@ -163,8 +209,14 @@ def runtime(saved=None):
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(BOOT)
     lua.execute("MCEHEventFrame=NewWidget('MCEHEventFrame'); MSBTEventFrame=NewWidget('MSBTEventFrame')")
+    # Each file runs like the client loads it: (addonName, shared namespace).
+    load_file = lua.eval('''function(source, name)
+      ADDON_NS = ADDON_NS or {}
+      local chunk = assert(loadstring(source, "@" .. name))
+      chunk("MikScrollingBattleText", ADDON_NS)
+    end''')
     for name in toc_lua_files():
-        lua.execute(lua50((ROOT / name).read_text("utf-8-sig")))
+        load_file(lua50((ROOT / name).read_text("utf-8-sig")), name)
     lua.execute('''
     MCEHEventFrame:SetScript("OnEvent", function() MikCEH.OnEvent() end)
     MSBTEventFrame:SetScript("OnEvent", function() MikSBT.OnEvent() end)
