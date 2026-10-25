@@ -99,6 +99,15 @@ class CastBarTests(unittest.TestCase):
         lua.execute('local c = AutoBG_TargetCast1; c.scripts.OnClick(c, "RightButton")')
         self.assertEqual(lua.eval('focused'), GROM)
 
+    def test_ctrl_click_on_opening_enemy_announces_node(self):
+        lua = setup()
+        self.start_heal(lua)
+        lua.execute('announced = {}; function AutoBG_SendAnnouncement(msg) table.insert(announced, msg) end')
+        lua.execute('function IsControlKeyDown() return true end')
+        lua.execute('AutoBG_Targets.SetOpening("Grom", "Farm")')
+        lua.execute('local b = AutoBG_TargetButton1; b.targetName = "Grom"; b.scripts.OnClick(b, "LeftButton")')
+        self.assertEqual(lua.eval('announced[1]'), "Grom is opening Farm")
+
     def cast_anchor(self, lua):
         lua.execute('local c = AutoBG_TargetCast1; anchor = {}; function c:SetPoint(p, rel, rp) anchor = { p, rel, rp } end')
         lua.execute('AutoBG_Targets:SetupButtonLayout(10)')

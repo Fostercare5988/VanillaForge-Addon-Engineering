@@ -76,6 +76,19 @@ class ListTests(unittest.TestCase):
         lua.execute('AutoBG_Spy:HandleCommand("kos Thrall")')
         self.assertEqual(lua.eval('AutoBG_Settings.Spy.KoS.thrall'), "Thrall")
 
+    def test_spy_disabled_in_raids(self):
+        lua = runtime()
+        lua.execute('function IsInInstance() return 1, "raid" end')
+        fire(lua, "ZONE_CHANGED_NEW_AREA")
+        self.assertTrue(lua.eval('AutoBG_Spy:IsRaidDisabled()'))
+        self.assertFalse(lua.eval('AutoBG_Spy.Frame.shown'))
+        lua.execute('AutoBG_Spy:RecordEnemy("Grom", "WARRIOR", 60, "%s", 100, nil, nil, "Orc")' % GROM)
+        advance(lua, 1)
+        self.assertFalse(lua.eval('AutoBG_Spy.Frame.shown'))
+        self.assertTrue(lua.eval('AutoBG_Spy:HandleCommand("raids")'))
+        self.assertFalse(lua.eval('AutoBG_Settings.Spy.DisableInRaids'))
+        self.assertFalse(lua.eval('AutoBG_Spy:IsRaidDisabled()'))
+
 
 class StatisticsTests(unittest.TestCase):
     def test_each_new_encounter_is_counted_with_zone(self):
