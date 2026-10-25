@@ -1,7 +1,7 @@
 {
   "classicapi": {
-    "minimum_version": "1.16.0",
-    "minimum_version_scope": "all maintained VanillaForge addons share the explicit ClassicAPI 1.16.0+ support floor; an addon that adopts a 1.17 API raises its own guard to the version that added it (11703 for 1.17.0 to 1.17.3 APIs, 11704 to 11707 for later ones)",
+    "minimum_version": "1.17.7",
+    "minimum_version_scope": "all maintained VanillaForge addons share the explicit ClassicAPI 1.17.7+ support floor (11707), raised from 1.16.0 on 2026-10-26",
     "reference_version": "1.17.7",
     "repository": "brues-code/ClassicAPI",
     "reference_commit": "3e83827ae9647b1f58219bedda4e653e2df0be64",
