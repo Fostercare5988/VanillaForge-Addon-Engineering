@@ -15,6 +15,8 @@ CORE = (ROOT / "AutoBG.lua").read_text("utf-8-sig")
 BASE = r'''
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 CLASSIC_API_VERSION, SUPERWOW_VERSION = 11707, "2.2"
+flashes = 0; function FlashClientIcon() flashes = flashes + 1 end
+function IsInRaid() return nil end; function IsInGroup() return nil end
 local Widget = {}
 setmetatable(Widget, { __index = function(_, name)
     if string.find(name, "^%u") then return function() end end
@@ -35,7 +37,7 @@ MAX_BATTLEFIELD_QUEUES = 3
 statuses = {}
 function GetBattlefieldStatus(i) local s = statuses[i]; if s then return s[1], s[2] end; return "none" end
 function AcceptBattlefieldPort(id, accept) table.insert(ports, { id = id, accept = accept }) end
-function GetTime() return 1000 end
+now = 1000; function GetTime() return now end
 zone, pvp = "Orgrimmar", false
 function GetRealZoneText() return zone end
 function IsInInstance() if pvp then return 1, "pvp" end return nil, "none" end
@@ -94,6 +96,25 @@ class AutoAcceptTests(unittest.TestCase):
         fire(lua, "UPDATE_BATTLEFIELD_STATUS")
         lua.execute('m = 0; for _, s in ipairs(messages) do if string.find(s, "Entering in |cFFFFFF0079s", 1, true) then m = m + 1 end end')
         self.assertEqual(lua.eval('m'), 1)
+
+    def missed(self, final_status):
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(BASE)
+        lua.execute(CORE)
+        lua.execute('AutoBG_Settings = { AutoAccept = true, AutoAcceptDelay = 79 }')
+        fire(lua, "ADDON_LOADED", "AutoBG")
+        lua.execute('statuses[1] = { "confirm", "Arathi Basin" }')
+        fire(lua, "UPDATE_BATTLEFIELD_STATUS")
+        lua.execute('now = 1078; statuses[1] = { "%s", "Arathi Basin" }' % final_status)
+        fire(lua, "UPDATE_BATTLEFIELD_STATUS")
+        lua.execute('m = 0; for _, s in ipairs(messages) do if string.find(s, "ended after |cFFFFFF0078s|r, before Auto-Enter at |cFFFFFF0079s|r", 1, true) then m = m + 1 end end')
+        return lua.eval('m')
+
+    def test_invite_that_ends_before_the_enter_is_reported_once(self):
+        self.assertEqual(self.missed("none"), 1)
+
+    def test_entering_by_hand_is_not_reported(self):
+        self.assertEqual(self.missed("active"), 0)
 
     def test_auto_accept_off_never_accepts(self):
         lua = runtime()
