@@ -38,13 +38,14 @@ def warn(lua):
 
 
 class FlagAlertTests(unittest.TestCase):
-    def test_warning_names_the_flag_and_plays_a_sound(self):
+    def test_warning_names_the_flag_and_plays_its_own_sound(self):
         lua = runtime()
         warn(lua)
         self.assertTrue(lua.eval('AutoBG_FlagAlertFrame.shown'))
         self.assertEqual(lua.eval('AutoBG_FlagAlertFrame.Title.text'), "|cff00ffffOpening Blacksmith|r")
         self.assertEqual(lua.eval('AutoBG_FlagAlertFrame.Name.text'), "Sneaky")
-        self.assertIn("RaidWarning", list(lua.eval('sounds').values()))
+        # Not RaidWarning, which the stealth warning plays.
+        self.assertEqual(list(lua.eval('sounds').values()), ["igPVPUpdate"])
 
     def test_ctrl_click_announces_and_plain_clicks_select(self):
         lua = runtime()
