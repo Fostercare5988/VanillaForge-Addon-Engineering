@@ -9,7 +9,7 @@
 > **Canonical enhanced-client baseline**
 >
 > - World of Warcraft 1.12.1, Build 5875, `Interface: 11200`
-> - ClassicAPI v1.16.0+ (reference v1.17.3)
+> - ClassicAPI v1.16.0+ (reference v1.17.7)
 > - SuperWoW v2.2+
 > - NamPower v4.6.2+
 > - UnitXP SP3 v89+
@@ -462,8 +462,10 @@ task specifically needs.
 [SOURCE-VERIFIED] The same pinned dispatcher's `notify` branch provides
 `UnitXP("notify", "taskbarIcon")` and `UnitXP("notify", "systemSound", soundName)`.
 These are OS notifications, not ordinary gameplay state APIs. The previously
-listed standalone `FlashClientIcon` and `SetClientWindowForeground` globals
-are not established by this source; do not assume they exist.
+listed standalone `SetClientWindowForeground` global is not established by
+this source; do not assume it exists. `FlashClientIcon([briefly])` exists from
+ClassicAPI 1.17.7 (see the ClassicAPI reference); before that, use the
+`notify` branch.
 
 ### 7.3 Documented project role
 

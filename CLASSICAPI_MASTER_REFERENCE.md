@@ -6,7 +6,7 @@
 >
 > Source basis: `brues-code/ClassicAPI`, default branch `master`, official `README.md`, official `docs/API.md`, and selected implementation/source references.
 >
-> Snapshot used by VanillaForge: **ClassicAPI v1.17.3** (reference). Support floor: **v1.16.0+** for all maintained addons; an addon that uses a 1.17 API raises its own guard to `11703`. The 1.17 additions and behavior changes are in [v1.17.0 to v1.17.3](#v1170-to-v1173-api-and-behavior-contracts).
+> Snapshot used by VanillaForge: **ClassicAPI v1.17.7** (reference). Support floor: **v1.16.0+** for all maintained addons; an addon that uses a 1.17 API raises its own guard to the version that added it (`11703` for 1.17.0 to 1.17.3, `11704` to `11707` after that). The 1.17 additions and behavior changes are in [v1.17.0 to v1.17.3](#v1170-to-v1173-api-and-behavior-contracts) and [v1.17.4 to v1.17.7](#v1174-to-v1177-api-and-behavior-contracts).
 >
 > IMPORTANT: ClassicAPI is actively developed. This document is a local snapshot, not a claim that future versions cannot add or change functionality. If installed ClassicAPI is newer and a task depends on newly added behavior not present here, inspect the installed/current source and update this reference deliberately.
 
@@ -64,6 +64,10 @@ v1.15.16 -> 11516
 v1.16.0 -> 11600
 v1.17.0 -> 11700
 v1.17.3 -> 11703
+v1.17.4 -> 11704
+v1.17.5 -> 11705
+v1.17.6 -> 11706
+v1.17.7 -> 11707
 ```
 
 The VanillaForge support baseline is:
@@ -91,7 +95,10 @@ declare the minimum required by the capabilities and semantic fixes the addon
 actually consumes. Future upstream releases do not automatically raise the
 support floor. An addon that adopts an API or fix from 1.17 (combat log, native
 Cooldown drawing, animations, Interface Options, interruptible cast events)
-raises its own guard and TOC note to `11703` / v1.17.3+.
+raises its own guard and TOC note to `11703` / v1.17.3+. An addon that adopts
+an API or fix from 1.17.4 to 1.17.7 (profiling, `FlashClientIcon`, the name
+cache lookup, the binding modifier fix) raises it to that release; see
+[v1.17.4 to v1.17.7](#v1174-to-v1177-api-and-behavior-contracts).
 
 ClassicAPI is one required component of VanillaForge's full enhanced environment;
 its version global does not establish that SuperWoW, NamPower and UnitXP SP3 are
@@ -2870,16 +2877,16 @@ This document was built from the official repository:
 
 ```text
 brues-code/ClassicAPI
-release: v1.17.3
-commit:  b5aed30a5db5ef033dd9a6619d8f74310787c4c9
+release: v1.17.7
+commit:  3e83827ae9647b1f58219bedda4e653e2df0be64
 branch:  master
 ```
 
-Official source files used as primary reference (v1.17.3):
+Official source files used as primary reference (v1.17.7):
 
 ```text
-README.md (blob: 103925f5a9084d428ba09f758dee4c8415fd3857)
-docs/API.md (blob: 203291a12354439190c5f258353db842e1a165a9)
+README.md (blob: b8e8642a6f132ec7bb9088d4c730411b84a46e4f)
+docs/API.md (blob: 8f7a6259c6ccdda973b0a1d3104e5b39e3928fb3)
 ```
 
 Source files read for earlier snapshots (v1.15.16, commit 7ccbbaaf):
@@ -3252,3 +3259,72 @@ per-school spell damage.
 `SoftTargetFriend` to 2 or 3. With it on, a spell cast with no target goes to
 the soft unit. That is a gameplay choice: an addon may read the tokens but must
 not turn the CVars on by itself.
+
+## v1.17.4 to v1.17.7 API and behavior contracts
+
+[SOURCE-VERIFIED] From the pinned
+[v1.17.7 API reference](https://github.com/brues-code/ClassicAPI/blob/3e83827ae9647b1f58219bedda4e653e2df0be64/docs/API.md)
+and the `v1.17.3...v1.17.7` commit messages. Grep `.private/upstream/classicapi/docs/API.md`
+for full payloads. [UNVERIFIED - TEST FIRST] Nothing here has been checked in
+game on OctoWoW yet.
+
+### Profiling (1.17.4)
+
+Per-addon memory and CPU, as in later clients:
+
+- `UpdateAddOnMemoryUsage()` then `GetAddOnMemoryUsage(index or "name")`: Lua
+  KB per addon, counted at the last update. Each update recounts all memory;
+  never call it every frame. Objects from an XML template belong to the addon
+  that defines the template. Blizzard addons, unknown names and unloaded addons
+  give `0`; an index outside `1..GetNumAddOns()` raises an error.
+- CPU needs the `scriptProfile` CVar at `1`, read when the UI loads
+  (`/console scriptProfile 1` then `/reload`). It slows every Lua call; turn it
+  on only to measure. With it off the CPU functions return `0`.
+- `UpdateAddOnCPUUsage()` then `GetAddOnCPUUsage(index or "name")` (ms).
+  `GetFunctionCPUUsage(func [, includeSubroutines])` and
+  `GetFrameCPUUsage(frame [, includeChildren])` return ms and call count.
+  `GetEventCPUUsage([event])` returns ms and event count for all events; the
+  `event` argument has no effect, and the count rises even with profiling off.
+  `GetScriptCPUUsage()` counts nested scripts twice. `ResetCPUUsage()` zeroes
+  times and counts, not memory.
+- Developer aids: `_classicapi_LuaHeapAudit()` and `_classicapi_GcTagOf(value)`
+  (owning addon name, `nil` for game code, a hex string for `/run` code).
+- 1.17.7 also adds the `TOTAL_MEM_*_ABBR` and `ADDON_MEM_*_ABBR` strings.
+
+Use: `!ErrorLog`'s per-addon CPU and memory report can read these instead of
+estimating. It must not turn `scriptProfile` on by itself; the player does.
+
+### Soft interact highlight (1.17.4)
+
+The `softinteract` object glows like the mouseover object while it can be used
+right now. No API; README now lists soft interact, enemy and friend as one
+"Soft targeting" row. The rules in the 1.17.3 section still hold.
+
+### Player name cache (1.17.5)
+
+- `C_PlayerCache.SetScanEnabled` and `C_PlayerCache.IsScanEnabled` are
+  **removed**, with the visible-object sweep. Turning the cache on with
+  `C_PlayerCache.SetEnabled(true)` now copies every player the engine already
+  knows from this session. The setting moved to its own options subcategory.
+- `C_PlayerCache.GetPlayerInfoByName` adds a step after the friends list: the
+  engine's session name cache (chat senders, group members, players seen).
+  It works with the persistent cache off. Every step now ignores case.
+
+### Binding modifiers (1.17.6)
+
+Modifier keys of the bound key are hidden only while a `SPELL`, `ITEM`,
+`MACRO` or `CLICK` binding runs. A binding that runs Lua sees them again:
+a handler on `SHIFT-E` gets `1` from `IsShiftKeyDown()`. This reverts the
+1.17.0 rule that hid them for every binding.
+
+### Small changes (1.17.7)
+
+- `FlashClientIcon([briefly])`: flashes the taskbar button; does nothing while
+  WoW has focus. No argument: until focused. Truthy: three flashes. Returns
+  nothing. This replaces `UnitXP("notify", "taskbarIcon")` for addons that
+  guard `11707`.
+- `SpellHasRange` / `C_Spell.SpellHasRange` use the engine's own min/max range,
+  so range bonuses count. Self-cast spells return false.
+- Spell links that Turtle's chat link handler would drop (such as
+  `spell:<id>:0` from `GetSpellLink`) now reach `SetItemRef`. There is one
+  `SetItemRef` override left to chain.
