@@ -35,7 +35,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | Addon | Location | Tests | Portable | Run |
 | --- | --- | ---: | --- | --- |
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 5 | Yes | [ActionBarProfiles](#actionbarprofiles) |
-| AutoBG | `regressions/AutoBG` | 125 | Yes | [AutoBG](#autobg) |
+| AutoBG | `regressions/AutoBG` | 140 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
@@ -222,6 +222,14 @@ a race only from race-only spells, by name (10793 and 10795 are mounts), and the
 Vanish aura counts as stealth while 8342, 23133 and 23134 do not; Vanish, an Invisibility Potion and the
 Gnomish Cloaking Device each show their own label and SpellInfo icon. Three of its four
 fail on AutoBG `9b69782`.
+The 2026-10-25 audit (`.private/audit-AutoBG-2026-10-25.md`) adds
+`test_audit_2026_10_25.py` (the Spy list survives subzone and area changes; it
+fails on `1ccba8d`), `test_flag_alert.py` (the flag warning has its own card
+beside the stealth warning, Ctrl+click announces, the icon is the learned
+Opening spell, preview and auto-hide) and, in `test_match_flow.py`, the chat
+report for an invite that ends before a scheduled enter. `addon_loader.py`
+also loads `AutoBG_AlertCard.lua` before each file. The stubs set ClassicAPI
+`11707`.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/AutoBG" --run-tests --test-start regressions/AutoBG --output .private/autobg-current.json

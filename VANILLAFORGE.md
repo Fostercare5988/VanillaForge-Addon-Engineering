@@ -72,7 +72,7 @@ the addon's existing convention. Details: CLASSICAPI_MASTER_REFERENCE.md §4.
 - **Learn the server's numbers instead of assuming them.** A duration or rule the
   server decides (capture times, respawns, invite windows, cooldowns) is either
   verified against the server profile, or measured from events in play and
-  saved, like AutoBG's invite window. A value that is still a guess looks like
+  saved, like AutoBG's flag spots. A value that is still a guess looks like
   one to the player (AutoBG's `~`), and it stops looking like a guess as soon
   as evidence arrives.
 - **Fix the kind, not just the case.** After finding a problem, search the addon
