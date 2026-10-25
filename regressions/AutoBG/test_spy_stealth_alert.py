@@ -116,6 +116,14 @@ class SpyStealthAlertTests(unittest.TestCase):
         self.assertEqual(lua.eval('picks[1]'), "Sneaky|%s|LeftButton" % ROGUE)
         self.assertEqual(lua.eval('picks[2]'), "Sneaky|%s|RightButton" % ROGUE)
 
+    def test_ctrl_click_on_opening_alert_announces_opening(self):
+        lua = runtime()
+        lua.execute('announced = {}; function AutoBG_SendAnnouncement(msg) table.insert(announced, msg) end')
+        lua.execute('function IsControlKeyDown() return true end')
+        lua.execute('AutoBG_Spy:ShowAlert("Opening", "Sneaky", "ROGUE", "%s", "Blacksmith")' % ROGUE)
+        lua.execute('local w = AutoBG_SpyAlertWindow; w.scripts.OnClick(w, "LeftButton")')
+        self.assertEqual(lua.eval('announced[1]'), "Sneaky is opening Blacksmith")
+
     def test_unstealthed_rogue_raises_no_stealth_alert(self):
         lua = runtime()
         show_plate(lua)

@@ -89,10 +89,10 @@ class AutoAcceptTests(unittest.TestCase):
         lua.execute(CORE)
         lua.execute('AutoBG_Settings = { AutoAccept = true, AutoAcceptDelay = 119 }')
         fire(lua, "ADDON_LOADED", "AutoBG")
-        self.assertEqual(lua.eval('AutoBG_Settings.AutoAcceptDelay'), 75)
+        self.assertEqual(lua.eval('AutoBG_Settings.AutoAcceptDelay'), 79)
         lua.execute('statuses[1] = { "confirm", "Arathi Basin" }')
         fire(lua, "UPDATE_BATTLEFIELD_STATUS")
-        lua.execute('m = 0; for _, s in ipairs(messages) do if string.find(s, "Entering in |cFFFFFF0075s", 1, true) then m = m + 1 end end')
+        lua.execute('m = 0; for _, s in ipairs(messages) do if string.find(s, "Entering in |cFFFFFF0079s", 1, true) then m = m + 1 end end')
         self.assertEqual(lua.eval('m'), 1)
 
     def test_auto_accept_off_never_accepts(self):

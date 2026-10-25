@@ -18,6 +18,7 @@ setmetatable(Widget, { __index = function(_, name)
     if string.find(name, "^%u") then return function() end end
 end })
 function Widget:SetText(text) self.text = text end
+function Widget:SetBackdrop(t) self.backdrop = t end
 function Widget:SetScript(kind, fn) self.scripts = self.scripts or {}; self.scripts[kind] = fn end
 function Widget:IsShown() return self.shown end
 function Widget:Show() self.shown = true end
@@ -55,6 +56,11 @@ def runtime(health, maximum):
 
 
 class CarrierHealthTests(unittest.TestCase):
+    def test_carrier_frames_have_tooltips_backdrop_border(self):
+        lua = runtime(3690, 4500)
+        self.assertEqual(lua.eval('AutoBG_AllianceFC.backdrop.edgeFile'), "Interface\\Tooltips\\UI-Tooltip-Border")
+        self.assertEqual(lua.eval('AutoBG_HordeFC.backdrop.edgeFile'), "Interface\\Tooltips\\UI-Tooltip-Border")
+
     def test_real_health_is_shown_when_available(self):
         lua = runtime(3690, 4500)
         self.assertEqual(lua.eval('AutoBG_AllianceFC.hpText.text'), "3690 / 4500")

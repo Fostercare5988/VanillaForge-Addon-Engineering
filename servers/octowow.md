@@ -34,8 +34,7 @@ Do not trust for this server:
 ## Facts learned while building addons
 
 - 2026-10-21, measured in play: a battleground invite runs out after about
-  80 seconds (one ran out at 79 s). AutoBG enters 5 seconds early and saves a
-  shorter window (`AutoBG_Settings.InviteWindow`) if an invite still runs out.
+  80 seconds (one ran out at 79 s). AutoBG auto-enter tops out at 79 seconds.
 - 2026-10-21, confirmed in play on Y'Shaarj: an Arathi Basin base takes 60 seconds
   to capture, an Alterac Valley tower or graveyard 5 minutes, and a Warsong Gulch
   flag returns 23 seconds after a capture. Every PvP trinket has a 3-minute cooldown.
