@@ -1,4 +1,5 @@
-"""Flag watch: a visible enemy standing still at a flag their team does not hold.
+"""Flag watch: an enemy who comes into sight at a flag their team does not hold
+and stands there, that is out of stealth onto the flag.
 
 An opening started from stealth sends no cast to the client (2026-10-22: a druid
 out of Prowl opened the Blacksmith with no cast bar), so the watch uses
@@ -137,10 +138,34 @@ class FlagWatchTests(unittest.TestCase):
         lua.execute('function UnitIsDeadOrGhost() return nil end')
         ticks(lua, 6)  # alive again, client still shows the death spot
         self.assertEqual(len(lua.eval('alerts')), 0)
-        # The first real move clears it; standing at the flag after that warns.
+        # Stealthing again and coming out at the flag warns as usual.
+        lua.execute('pos["%s"] = nil' % BALLOON)
+        ticks(lua, 2)
         lua.execute('pos["%s"] = { 53, 50 }' % BALLOON)
         ticks(lua, 3)
         self.assertEqual(list(lua.eval('alerts').values()), ["Opening Blacksmith Balloon"])
+
+    def test_enemy_walking_up_in_sight_does_not_warn(self):
+        """2026-10-25: standing still near a flag is just as often fighting or
+        waiting. A visible opener shows on their enemy frame's cast bar."""
+        lua = runtime()
+        learn_blacksmith(lua)
+        for step in range(4):
+            lua.execute('pos["%s"] = { 60 - %d, 49 }' % (BALLOON, step * 2))
+            ticks(lua, 1)
+        ticks(lua, 6)  # now standing at the flag
+        self.assertEqual(len(lua.eval('alerts')), 0)
+
+    def test_enemy_out_of_stealth_who_runs_on_does_not_warn(self):
+        lua = runtime()
+        learn_blacksmith(lua)
+        lua.execute('pos["%s"] = { 52, 49 }' % BALLOON)
+        ticks(lua, 1)
+        lua.execute('pos["%s"] = { 54, 49 }' % BALLOON)
+        ticks(lua, 1)
+        lua.execute('pos["%s"] = { 55, 49 }' % BALLOON)
+        ticks(lua, 4)
+        self.assertEqual(len(lua.eval('alerts')), 0)
 
     def test_switch_off_stops_warnings(self):
         lua = runtime()
