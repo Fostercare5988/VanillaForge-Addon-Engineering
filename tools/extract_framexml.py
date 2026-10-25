@@ -13,6 +13,7 @@ sys.dont_write_bytecode = True
 import argparse
 import bz2
 import json
+import re
 import struct
 import zlib
 from pathlib import Path
@@ -280,18 +281,76 @@ def extract(client: Path, names: list[str], output: Path) -> dict:
     return record
 
 
+def all_framexml(client: Path) -> list[str]:
+    """Every file FrameXML.toc loads, following XML Script and Include files."""
+    archives = []
+    for archive_name in MPQ_ORDER:
+        path = client_file(client / "Data", archive_name)
+        if path.is_file():
+            try:
+                archives.append(MPQArchive(path))
+            except Exception:  # A damaged archive must not hide the others.
+                pass
+
+    def read_latest(name):
+        blob = None
+        for archive in archives:
+            try:
+                blob = archive.read_file(name) or blob
+            except Exception:
+                pass
+        return blob
+
+    # FrameXML, then each load-on-demand Blizzard addon the client has a folder for.
+    tocs = ["Interface\\FrameXML\\FrameXML.toc"]
+    addons = client / "Interface" / "AddOns"
+    if addons.is_dir():
+        tocs += ["Interface\\AddOns\\%s\\%s.toc" % (d.name, d.name)
+                 for d in sorted(addons.iterdir()) if d.is_dir() and d.name.startswith("Blizzard_")]
+    try:
+        names, seen, queue = [], set(), []
+        for toc in tocs:
+            blob = read_latest(toc)
+            if blob is None:
+                continue
+            names.append(toc)
+            folder = toc.rsplit("\\", 1)[0]
+            queue += [folder + "\\" + line.strip() for line in blob.decode("latin-1").splitlines()
+                      if line.strip() and not line.startswith("#")]
+        while queue:
+            name = queue.pop(0)
+            if name.lower() in seen:
+                continue
+            seen.add(name.lower())
+            names.append(name)
+            if name.lower().endswith(".xml"):
+                data = read_latest(name)
+                if data is None:
+                    continue
+                folder = name.rsplit("\\", 1)[0]
+                for match in re.finditer(r'<(?:Script|Include)\s+file="([^"]+)"', data.decode("latin-1")):
+                    queue.append(folder + "\\" + match.group(1).replace("/", "\\"))
+        return names
+    finally:
+        for archive in archives:
+            archive.close()
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--client", type=Path, required=True, help="Client root containing Data/*.MPQ")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT, help="Destination; default .private/framexml")
     parser.add_argument("--file", action="append", default=[], metavar="NAME",
                         help="Extra archive path, e.g. Interface\\FrameXML\\BuffFrame.lua (repeatable)")
+    parser.add_argument("--all", action="store_true",
+                        help="Every file FrameXML.toc loads; find_holes.py reads them for Blizzard's globals")
     args = parser.parse_args(argv)
     try:
         if not (args.client / "Data").is_dir():
             raise ValueError(f"No Data directory under {args.client}")
         output = checked_output(args.output, args.client)
-        names = list(dict.fromkeys(REQUIRED + [name.replace("/", "\\") for name in args.file]))
+        names = list(dict.fromkeys(REQUIRED + [name.replace("/", "\\") for name in args.file]
+                                   + (all_framexml(args.client) if args.all else [])))
         record = extract(args.client, names, output)
     except (OSError, ValueError) as error:
         print(f"FrameXML extraction failed: {error}", file=sys.stderr)

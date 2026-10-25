@@ -1,0 +1,75 @@
+{
+  "about": "Old ways a DLL now does better. find_holes.py reports a match as a lead, not a verdict: read the code first. Add an entry whenever an audit finds a new one; cite where the better way is documented.",
+  "entries": [
+    {
+      "id": "player-class-scanners",
+      "pattern": "\\b(GetFriendInfo|GetGuildRosterInfo|GetWhoInfo|GetBattlefieldScore)\\s*\\(",
+      "finding": "Scans friends, guild, /who or the battleground score, often to remember players' classes.",
+      "better": "C_PlayerCache.GetPlayerInfoByName(name) and GetPlayerInfoByGUID(guid): group, nearby, friends, this session and ClassicAPI's saved cache.",
+      "source": "ClassicAPI docs/API.md#namecache (1.17.5+)"
+    },
+    {
+      "id": "dismount-on-error",
+      "pattern": "\\b(Dismount|CancelShapeshiftForm|SitOrStand)\\s*\\(",
+      "finding": "Dismounts, leaves a form or stands up in reply to an error message.",
+      "better": "ClassicAPI cast settings autoDismount, autoUnshift and autoStand (AddOn Options > ClassicAPI).",
+      "source": "ClassicAPI docs/API.md#cast-settings-autostand-autodismount-autounshift"
+    },
+    {
+      "id": "hand-made-unit-click",
+      "pattern": "\\bTargetUnit\\s*\\(|FriendsDropDown|\\bSetMouseoverUnit\\s*\\(",
+      "finding": "A unit button that targets, opens the unit menu or sets the mouseover by hand.",
+      "better": "Unit button attributes: SetAttribute(\"unit\", u), type1 \"target\" (casts a cursor spell, drops a cursor item), type2 \"menu\"; hover becomes the mouseover.",
+      "source": "ClassicAPI docs/API.md (unit attribute, type1/type2 verbs)"
+    },
+    {
+      "id": "error-handler-silenced",
+      "pattern": "\\bseterrorhandler\\s*\\(",
+      "finding": "Replaces the Lua error handler, which hides errors from !ErrorLog.",
+      "better": "Let errors through; !ErrorLog collects them (/err).",
+      "source": "VANILLAFORGE.md section 3"
+    },
+    {
+      "id": "game-menu-button",
+      "pattern": "GameMenuButtonKeybindings\\s*:\\s*ClearAllPoints|GameMenuFrame\\s*:\\s*SetHeight",
+      "finding": "Squeezes an own button into the game menu.",
+      "better": "InterfaceOptions_AddCategory(panel): Game Menu > AddOn Options.",
+      "source": "ClassicAPI docs/API.md#interfaceoptionsframe-and-addon-option-panels (1.17.2+)"
+    },
+    {
+      "id": "lua-drawn-statusbar",
+      "pattern": "\\.SetMinMaxValues\\s*=|\\.SetStatusBarColor\\s*=\\s*Bar",
+      "finding": "A Frame dressed up as a StatusBar, redrawn in Lua on every value change.",
+      "better": "CreateFrame(\"StatusBar\"); ClassicAPI adds SetReverseFill, SetFillStyle and SetRotatesTexture.",
+      "source": "ClassicAPI docs/API.md#statusbarsetreversefillisreversefill--statusbargetreversefill"
+    },
+    {
+      "id": "shagutweaks-alias",
+      "pattern": "\\bShaguTweaks\\b",
+      "finding": "Reads or poses as ShaguTweaks, an addon not in this setup.",
+      "better": "Ask the DLL for the data (for sell prices: C_Item.GetItemSellPriceByID).",
+      "source": "ClassicAPI docs/API.md (C_Item.GetItemSellPriceByID)"
+    },
+    {
+      "id": "combat-text-parsing",
+      "pattern": "CHAT_MSG_SPELL_|CHAT_MSG_COMBAT_",
+      "finding": "Parses combat chat text.",
+      "better": "COMBAT_LOG_EVENT_UNFILTERED with CombatLogGetCurrentEventInfo; NamPower spell events with IDs.",
+      "source": "ClassicAPI docs/API.md (combat log events); NamPower EVENTS.md"
+    },
+    {
+      "id": "tooltip-scanning",
+      "pattern": "SetOwner\\s*\\([^)]*ANCHOR_NONE",
+      "finding": "Reads information by filling a hidden tooltip and scanning its text.",
+      "better": "The structured C_ API for that data (C_Item, C_Spell, C_UnitAuras).",
+      "source": "CLASSICAPI_MASTER_REFERENCE.md"
+    },
+    {
+      "id": "aura-by-index",
+      "pattern": "\\bUnitBuff\\s*\\(|\\bUnitDebuff\\s*\\(",
+      "finding": "Walks auras by index; each index call re-walks the aura list.",
+      "better": "C_UnitAuras.GetAuraSlots(unit, filter, nil, nil, slots) then UnitAuraBySlot: one walk.",
+      "source": "ClassicAPI docs/API.md#c_unitaurasgetauraslotsunit--filter--maxslots--continuationtoken"
+    }
+  ]
+}

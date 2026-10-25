@@ -73,6 +73,25 @@ class ExtractFrameXMLTests(unittest.TestCase):
         self.assertEqual(record["archive_errors"][0]["archive"], "patch.MPQ")
         self.assertIn(UNIT, record["files"])
 
+    def test_all_follows_toc_xml_includes_and_blizzard_addons(self):
+        (self.client / "Interface" / "AddOns" / "Blizzard_RaidUI").mkdir(parents=True)
+        files = {
+            "Interface\\FrameXML\\FrameXML.toc": b"## Interface: 11200\nGlobalStrings.lua\nUIParent.xml\n",
+            "Interface\\FrameXML\\GlobalStrings.lua": b"X = 1",
+            "Interface\\FrameXML\\UIParent.xml": b'<Ui><Script file="UIParent.lua"/><Include file="Sub\\Child.xml"/></Ui>',
+            "Interface\\FrameXML\\UIParent.lua": b"y = 2",
+            "Interface\\FrameXML\\Sub\\Child.xml": b"<Ui/>",
+            "Interface\\AddOns\\Blizzard_RaidUI\\Blizzard_RaidUI.toc": b"Blizzard_RaidUI.lua\n",
+            "Interface\\AddOns\\Blizzard_RaidUI\\Blizzard_RaidUI.lua": b"z = 3",
+        }
+        files.update({name: b"x" for name in EXTRACT.REQUIRED})
+        with self.archives({"interface.MPQ": files}):
+            code, out, _ = self.run_main("--all")
+        self.assertEqual(code, 0)
+        for rel in ("FrameXML/GlobalStrings.lua", "FrameXML/UIParent.lua", "FrameXML/Sub/Child.xml",
+                    "AddOns/Blizzard_RaidUI/Blizzard_RaidUI.lua"):
+            self.assertTrue((self.output / "Interface" / Path(rel)).is_file(), rel)
+
     def test_output_cannot_enter_repository_outside_private_or_the_client(self):
         for destination in (EXTRACT.ROOT / "regressions" / "framexml", self.client / "extracted"):
             with self.subTest(destination=destination):
