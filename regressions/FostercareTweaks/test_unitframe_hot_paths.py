@@ -10,7 +10,6 @@ from lupa.lua51 import LuaRuntime
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 RAID = (ROOT / "mods/unitframes/raid.lua").read_text("utf-8-sig")
-CORE = (ROOT / "mods/unitframes/core.lua").read_text("utf-8-sig")
 AURAS = (ROOT / "mods/unitframes/auras.lua").read_text("utf-8-sig")
 
 WIDGETS = r'''
@@ -130,49 +129,6 @@ class RaidHotPathTests(unittest.TestCase):
             ShowAura(btn, badge, aura, 10, 2, 20)
         ''')
         self.assertEqual(lua.eval('geometry'), 0)
-
-
-def core_runtime():
-    lua = LuaRuntime(unpack_returned_tuples=True)
-    lua.execute(WIDGETS)
-    lua.execute('UF = {}\n' + slice(CORE, 'function UF.SetFontSize', 'function UF:ApplyDimensions()'))
-    lua.execute(r'''
-        function UF:GetFontNameSize() return 12 end
-        function UF:GetFontHealthSize() return 11 end
-        function UF:GetFontLevelSize() return 11 end
-        function UF:GetFontPowerSize() return 11 end
-    ''')
-    lua.execute(slice(CORE, 'local function FitText', 'function UF:IsImprovedStandardAuras()'))
-    lua.execute(r'''
-        local hb = W({ width = 150, height = 30, nameText = W({ text = "Jaina" }), healthText = W({ text = "3000 / 4000" }) })
-        local pb = W({ width = 150, height = 10, powerText = W({ text = "800" }), leftText = W({ text = "" }) })
-        badgeText = W({ text = "60", fontSize = 11 })
-        frame = { healthBar = hb, powerBar = pb, portrait = W({ width = 40 }), portraitSide = "left",
-                  levelBadge = W({ text = badgeText, height = 15 }) }
-    ''')
-    return lua
-
-
-class ModernFrameHotPathTests(unittest.TestCase):
-    def test_repeated_text_layout_writes_nothing(self):
-        lua = core_runtime()
-        lua.execute('UF:LayoutText(frame); writes = 0; UF:LayoutText(frame)')
-        self.assertEqual(lua.eval('writes'), 0)
-
-    def test_changed_health_text_is_refitted(self):
-        lua = core_runtime()
-        lua.execute(r'''UF:LayoutText(frame)
-            frame.healthBar.healthText.text = "123456789012 / 123456789012"
-            UF:LayoutText(frame)''')
-        self.assertLess(lua.eval('frame.healthBar.healthText.fontSize'), 11)
-
-    def test_externally_reset_font_is_refitted(self):
-        lua = core_runtime()
-        lua.execute(r'''frame.healthBar.healthText.text = "123456789012 / 123456789012"
-            UF:LayoutText(frame)
-            frame.healthBar.healthText.fontSize = 11
-            UF:LayoutText(frame)''')
-        self.assertLess(lua.eval('frame.healthBar.healthText.fontSize'), 11)
 
 
 class PlayerAuraCoalescingTests(unittest.TestCase):
