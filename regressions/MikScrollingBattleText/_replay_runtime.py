@@ -35,6 +35,7 @@ function GetTime() return now end
 function GetLocale() return "enUS" end
 function GetNampowerVersion() return 4,6,2 end
 function SpellInfo(id) return "Spell"..id,"Rank1","Interface\\Icons\\Spell"..id end
+function GetSpellInfo(id) return "Spell"..id,"Rank1","Interface\\Icons\\Spell"..id end
 function GetSpellRecField(id,field) if field=="name" then return "Spell"..id end; return 1 end
 function GetShapeshiftFormInfo() return "", "", 1 end
 function GetAddOnMetadata(a,k) return "1.0.0" end

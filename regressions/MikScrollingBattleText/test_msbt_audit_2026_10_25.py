@@ -111,5 +111,37 @@ class Reputation(unittest.TestCase):  # P3-4
                                (g.MikCEH.NOTIFICATIONTYPE_REP_GAIN, 100, "Faction72")])
 
 
+class RetiredSettings(unittest.TestCase):  # P3-6, P3-7
+    def test_retired_settings_are_cleared_and_vigor_choice_kept(self):
+        lua = m.runtime(saved='''
+        MikSBT_Save = {UserDisabled=false, CurrentProfile="Default", Profiles={Default={
+          ShowOverheals=true, ShowVigorGains=false, CreationVersion=6.52,
+          EventSettings={MSBT_EVENTTYPE_NOTIFICATION_ITEM_BUFF={Show=true}},
+          Suppressions={MSBT_SUPPRESSION_ROGUE_VIGOR={Enabled=false, SearchPattern="Vigor"}}}}}
+        ''')
+        p = lua.globals().MikSBT_Save.Profiles.Default
+        self.assertIsNone(p.ShowOverheals)
+        self.assertIsNone(p.ShowVigorGains)
+        self.assertIsNone(p.CreationVersion)
+        self.assertIsNone(p.EventSettings.MSBT_EVENTTYPE_NOTIFICATION_ITEM_BUFF)
+        self.assertTrue(p.Suppressions.MSBT_SUPPRESSION_ROGUE_VIGOR.Enabled)
+        self.assertIsNotNone(p.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE)
+
+
+class PowerLoss(unittest.TestCase):  # Power Losses now has a source
+    def test_mana_drained_from_you_is_a_power_loss(self):
+        lua = m.runtime()
+        lua.execute('''
+        sent={}
+        Fire("COMBAT_LOG_EVENT_UNFILTERED", 1, "SPELL_PERIODIC_DRAIN", nil, "0xENEMY", "Twin", 0x548, 0,
+             "0xPLAYER", "Hero", 0x511, 0, 3034, "Viper Sting", 8, 120, 0, 0)
+        Fire("COMBAT_LOG_EVENT_UNFILTERED", 1, "SPELL_PERIODIC_DRAIN", nil, "0xENEMY", "Twin", 0x548, 0,
+             "0xOTHER", "Ally", 0x514, 0, 3034, "Viper Sting", 8, 120, 0, 0)
+        ''')
+        g = lua.globals()
+        got = [(e.NotificationType, e.Amount, e.EffectName) for e in g.sent.values()]
+        self.assertEqual(got, [(g.MikCEH.NOTIFICATIONTYPE_POWER_LOSS, "120 Mana", "Viper Sting")])
+
+
 if __name__ == "__main__":
     unittest.main()
