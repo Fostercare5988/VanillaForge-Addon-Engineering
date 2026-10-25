@@ -168,3 +168,89 @@ class SoloMarks(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RetiredSettings(unittest.TestCase):
+    """Auto Dismount moved to ClassicAPI's cast settings, Hide Errors and the
+    saved player list are gone, and nothing poses as ShaguTweaks."""
+    def load(self, saved):
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute('''
+            CLASSIC_API_VERSION, SUPERWOW_VERSION = 11705, "2.2"
+            cvars = {}
+            function SetCVar(k, v) cvars[k] = v end
+            function CreateFrame() return { RegisterEvent = function() end, SetScript = function() end } end
+            SlashCmdList = {}
+            FostercareTweaks_Config = %s
+            FostercareTweaks_Cache = { players = { Parting = { class = "ROGUE" } } }
+        ''' % saved)
+        lua.execute(source("Core.lua"))
+        return lua
+
+    def test_auto_dismount_hands_over_once(self):
+        lua = self.load('{ ["Auto Dismount"] = 1, ["Hide Errors"] = 0 }')
+        self.assertEqual(lua.eval('cvars.autoDismount'), "1")
+        self.assertEqual(lua.eval('cvars.autoUnshift'), "1")
+        self.assertEqual(lua.eval('cvars.autoStand'), "1")
+        self.assertIsNone(lua.eval('FostercareTweaks_Config["Auto Dismount"]'))
+        self.assertIsNone(lua.eval('FostercareTweaks_Config["Hide Errors"]'))
+
+    def test_dismount_off_leaves_cvars_alone(self):
+        lua = self.load('{ ["Auto Dismount"] = 0 }')
+        self.assertIsNone(lua.eval('cvars.autoDismount'))
+
+    def test_saved_players_and_alias_gone(self):
+        lua = self.load('{}')
+        self.assertIsNone(lua.eval('FostercareTweaks_Cache.players'))
+        self.assertIsNone(lua.eval('ShaguTweaks'))
+        self.assertIsNone(lua.eval('SLASH_FOSTERCARETWEAKS4'))
+
+
+class ModernFramesRetired(unittest.TestCase):
+    """The Modern player, target and ToT frames were removed; their settings
+    are cleared once and the old "Show Aura" switches carry over."""
+    def test_settings_cleared_and_carried_over(self):
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(BASE)
+        lua.execute('''
+            FT.HookScript, FT.SetEventHandler = function() end, function() end
+            function CreateFrame() return { RegisterEvent = function() end } end
+            FostercareTweaks_Config = { overwrites = { uf_scale = 1.2, uf_buff_size = 24 },
+                ["Modern Player Frame"] = 0, ["Use Standard Target Frame"] = 1,
+                ["Show Aura Cooldown Spiral"] = 0, ["Unit Frame Class Portraits"] = 0,
+                unitframe_positions = { player = {}, modern_target_buffs = {}, standard_target_buffs = {} } }
+        ''')
+        lua.execute(source("mods/unitframes/core.lua"))
+        lua.execute('FT.MigrateFrameSettings()')
+        cfg = 'FostercareTweaks_Config'
+        self.assertIsNone(lua.eval(cfg + '["Modern Player Frame"]'))
+        self.assertIsNone(lua.eval(cfg + '["Use Standard Target Frame"]'))
+        self.assertIsNone(lua.eval(cfg + '["Unit Frame Class Portraits"]'))
+        self.assertIsNone(lua.eval(cfg + '.overwrites.uf_scale'))
+        self.assertEqual(lua.eval(cfg + '.overwrites.uf_buff_size'), 24)
+        self.assertEqual(lua.eval(cfg + '["Show Buff Cooldown Spiral"]'), 0)
+        self.assertEqual(lua.eval(cfg + '["Show Debuff Cooldown Spiral"]'), 0)
+        self.assertIsNone(lua.eval(cfg + '["Show Aura Cooldown Spiral"]'))
+        self.assertIsNone(lua.eval(cfg + '.unitframe_positions.player'))
+        self.assertIsNone(lua.eval(cfg + '.unitframe_positions.modern_target_buffs'))
+        self.assertIsNotNone(lua.eval(cfg + '.unitframe_positions.standard_target_buffs'))
+
+    def test_bar_color_writes_only_on_change(self):
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(BASE)
+        lua.execute('''
+            FT.HookScript, FT.SetEventHandler = function() end, function() end
+            native = 0
+            local Bar = {}
+            function Bar:SetStatusBarColor() native = native + 1 end
+            function Bar:CreateTexture() return { SetAllPoints = function() end, SetTexture = function() end,
+                SetVertexColor = function(s, r) s.r = r end } end
+            setmetatable(Bar, { __index = function() return function() end end })
+            function CreateFrame(kind) if kind == "StatusBar" then return setmetatable({}, { __index = Bar }) end
+                return { RegisterEvent = function() end } end
+        ''')
+        lua.execute(source("mods/unitframes/core.lua"))
+        lua.execute('''bar = FT.UnitFrames:CreateBar("b")
+            bar:SetStatusBarColor(1, 0.5, 0); bar:SetStatusBarColor(1, 0.5, 0)''')
+        self.assertEqual(lua.eval('native'), 1)
+        self.assertEqual(lua.eval('bar.bg.r'), 0.2)
