@@ -252,6 +252,20 @@ class TrayDiscovery(unittest.TestCase):
         ''')
         self.assertEqual(lua.eval("#AutoLazy.Tray.GetEntries()"), 2)
 
+    def test_p2_self_dragging_launchers_join_the_tray(self):
+        """AtlasLoot and ActionBarProfiles: not movable, own art, dragged by an OnDragStart script."""
+        lua = tray()
+        lua.execute('''
+            local art = { GetTexture = function() return "Interface\AddOns\AtlasLoot\Images\AtlasLootMinimap" end }
+            local b = CreateFrame("Button", "AtlasLootMinimapButton", Minimap)
+            b.w, b.h = 33, 33
+            b:SetScript("OnClick", function() end)
+            b:SetScript("OnDragStart", function() end)
+            b.GetNormalTexture = function() return art end
+            fire("PLAYER_ENTERING_WORLD"); settle()
+        ''')
+        self.assertEqual(lua.eval("#AutoLazy.Tray.GetEntries()"), 1)
+
     def test_p2_map_pins_stay_on_the_minimap(self):
         """A quest or node pin is a clickable minimap button too, but neither movable nor bordered."""
         lua = tray()
