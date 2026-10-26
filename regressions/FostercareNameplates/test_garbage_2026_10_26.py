@@ -73,5 +73,30 @@ class Garbage(unittest.TestCase):
         self.assertLess(kb, 4, "%.1f KB for a second of health events" % kb)
 
 
+class EventWork(unittest.TestCase):
+    """ClassicAPI fires a unit event once per token naming the unit, and SuperWoW's
+    UNIT_CASTEVENT fires on every melee swing. Fails on 1.4.2."""
+
+    def setUp(self):
+        self.lua = fnp_env.load('{ overwrites = { nameplate_health_target = 0 } }')
+        self.lua.execute('''
+            plate = nativePlate("0xF1", "nameplate1"); runFrames(plate, 1)
+            local forUnit = C_NamePlate.GetNamePlateForUnit
+            C_NamePlate.GetNamePlateForUnit = function(u) if u == "target" then return plate end return forUnit(u) end
+        ''')
+
+    def test_swing_keeps_the_cast_query(self):
+        self.lua.execute('fire("UNIT_CASTEVENT", "0xF1")')
+        self.assertIsNotNone(self.lua.eval('plate.fnpCastbar.nextQuery'))
+        self.lua.execute('fire("UNIT_SPELLCAST_START", "nameplate1")')
+        self.assertIsNone(self.lua.eval('plate.fnpCastbar.nextQuery'))
+
+    def test_other_tokens_of_the_unit_are_skipped(self):
+        self.lua.execute('FostercareNameplates.Nameplates.pending = {}; fire("UNIT_HEALTH", "target")')
+        self.assertIsNone(self.lua.eval('next(FostercareNameplates.Nameplates.pending)'))
+        self.lua.execute('fire("UNIT_HEALTH", "nameplate1")')
+        self.assertIsNotNone(self.lua.eval('next(FostercareNameplates.Nameplates.pending)'))
+
+
 if __name__ == "__main__":
     unittest.main()
