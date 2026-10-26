@@ -38,6 +38,9 @@ Do not trust for this server:
 - 2026-10-21, confirmed in play on Y'Shaarj: an Arathi Basin base takes 60 seconds
   to capture, an Alterac Valley tower or graveyard 5 minutes, and a Warsong Gulch
   flag returns 23 seconds after a capture. Every PvP trinket has a 3-minute cooldown.
+- 2026-10-26, confirmed by the player: an Alterac Valley mine timer of 5 minutes
+  from "The <faction> has taken the <mine>! Its supplies will now be used for
+  reinforcements!" (as BigWigs counts it) is right on OctoWoW.
 - 2026-10-21, from the database: the PvP trinket spells are 52317 (Insignia, all
   crowd control) and 5579, 23273, 23274, 23276, 23277 (the Immune ... effects).
   10793, 10795 and 10796 are mounts; 8342 is Defibrillate; 23133 and 23134 are

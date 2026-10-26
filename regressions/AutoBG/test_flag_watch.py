@@ -46,6 +46,7 @@ AutoBG_Targets = {
     EnemyCount = function() return 1 end,
     GetEnemy = function() return "Balloon", "0x0000000000000007", "DRUID" end,
     GetGUID = function(name) if name == "Balloon" then return "0x0000000000000007" end end,
+    EnemyByGUID = function(guid) if guid == "0x0000000000000007" then return "Balloon", "DRUID" end end,
     SetOpening = function(name, node) opening[name] = node end,
 }
 learned = {}
