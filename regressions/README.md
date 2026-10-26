@@ -38,6 +38,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | AutoBG | `regressions/AutoBG` | 148 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 7 | Yes | [AutoLazy](#autolazy) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
+| !ErrorLog | `regressions/ErrorLog` | 2 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 31 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 33 | Yes | [FostercareNameplates](#fostercarenameplates) |
@@ -286,6 +287,19 @@ engine timing.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareNameplates" --run-tests --test-start regressions/FostercareNameplates --output .private/fnp-current.json
+```
+
+## !ErrorLog
+
+Two regressions (`test_garbage_2026_10_26.py`, 1.1.0) from a Dire Maul `/lag`
+report where a 12 MB garbage collection made GearRack look 95 ms slow: the report
+ranks addons by the new Lua memory their handlers make, names the addon a
+collection started inside, and marks a slow handler call that held one. Both fail
+on 1.0.0. They run `Profiler.lua` alone with a stub `ErrorLog`, widget mocks and a
+memory counter the test sets; real collector timing stays an in-game check.
+
+```text
+python -B tools/audit_addon.py "<AddOns>/!ErrorLog" --run-tests --test-start regressions/ErrorLog --output "%TEMP%udit-ErrorLog.json"
 ```
 
 ## ActionBarProfiles

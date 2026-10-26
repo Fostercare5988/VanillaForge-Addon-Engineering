@@ -120,8 +120,9 @@ measuring tool:
 - `/lag on` starts the stutter profiler (it reloads the UI), `/lag` shows the
   report, `/lag clear` starts fresh, `/lag off` stops it.
 - The report gives, for every frame over 100 ms, how much of it was addon code
-  and which addon and line; garbage collections and whether they hit a stutter;
-  Lua memory; and each addon's CPU per second.
+  and which addon and line; garbage collections, whether they hit a stutter and
+  inside which addon they started; Lua memory; and each addon's CPU and new Lua
+  memory per second (the addons that make the most memory bring collections on).
 - The data is saved in `WTF\Account\<account>\SavedVariables\!ErrorLog.lua` on
   `/reload` or logout, so it can be read directly.
 
