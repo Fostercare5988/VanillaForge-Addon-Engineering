@@ -17,6 +17,7 @@ WATCH = (ROOT / "AutoBG_FlagWatch.lua").read_text("utf-8-sig")
 BALLOON = "0x0000000000000007"
 
 SETUP = r'''
+function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 local Frame = {}
 function Frame:RegisterEvent() end
 function Frame:UnregisterEvent() end

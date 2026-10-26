@@ -64,10 +64,10 @@ class TimerBarTests(unittest.TestCase):
         self.assertEqual(lua.eval('AutoBG_WSGFlagFrame.titleFs.text'), "Warsong Gulch")
         self.assertIsNone(lua.eval('AutoBG_StartTimerFrame.titleFs'))
 
-    def test_wsg_flags_use_faction_fill_and_flag_icons(self):
+    def test_wsg_flags_use_faction_fill_and_banner_icons(self):
         lua = runtime()
         self.assertEqual(lua.eval('AutoBG_WSGFlagFrame.rows[1].labelFs.text'), "Alliance Flag")
-        self.assertEqual(lua.eval('AutoBG_WSGFlagFrame.rows[1].icon.texture'), "Interface\\WorldStateFrame\\AllianceFlag")
+        self.assertEqual(lua.eval('AutoBG_WSGFlagFrame.rows[1].icon.texture'), "Interface\\Icons\\INV_BannerPVP_02")
         alliance = list(lua.eval('AutoBG_WSGFlagFrame.rows[1].bar.color').values())
         horde = list(lua.eval('AutoBG_WSGFlagFrame.rows[2].bar.color').values())
         self.assertGreater(alliance[2], alliance[0])
@@ -76,7 +76,7 @@ class TimerBarTests(unittest.TestCase):
     def test_start_timer_uses_neutral_icon(self):
         lua = runtime()
         self.assertEqual(lua.eval('AutoBG_StartTimerFrame.rows[1].icon.texture'), "Interface\\Icons\\INV_Misc_PocketWatch_01")
-        self.assertEqual(lua.eval('AutoBG_StartTimerFrame.rows[1].timeFs.text'), "0:45")
+        self.assertEqual(lua.eval('AutoBG_StartTimerFrame.rows[1].timeFs.text'), "45")
 
     def test_open_world_arathi_highlands_is_not_arathi_basin(self):
         lua = LuaRuntime(unpack_returned_tuples=True)
