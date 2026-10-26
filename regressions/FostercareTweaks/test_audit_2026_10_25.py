@@ -171,8 +171,8 @@ if __name__ == "__main__":
 
 
 class RetiredSettings(unittest.TestCase):
-    """Auto Dismount moved to ClassicAPI's cast settings, Hide Errors and the
-    saved player list are gone, and nothing poses as ShaguTweaks."""
+    """Hide Errors, the saved player list and four unused options are gone,
+    and nothing poses as ShaguTweaks."""
     def load(self, saved):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute('''
@@ -187,13 +187,22 @@ class RetiredSettings(unittest.TestCase):
         lua.execute(source("Core.lua"))
         return lua
 
-    def test_auto_dismount_hands_over_once(self):
+    def test_auto_dismount_is_kept_again(self):
+        # 2026-10-26: Auto Dismount is back for the actions ClassicAPI's cast
+        # settings miss, so its saved switch stays and the CVars stay the
+        # player's own.
         lua = self.load('{ ["Auto Dismount"] = 1, ["Hide Errors"] = 0 }')
-        self.assertEqual(lua.eval('cvars.autoDismount'), "1")
-        self.assertEqual(lua.eval('cvars.autoUnshift'), "1")
-        self.assertEqual(lua.eval('cvars.autoStand'), "1")
-        self.assertIsNone(lua.eval('FostercareTweaks_Config["Auto Dismount"]'))
+        self.assertEqual(lua.eval('FostercareTweaks_Config["Auto Dismount"]'), 1)
+        self.assertIsNone(lua.eval('next(cvars)'))
         self.assertIsNone(lua.eval('FostercareTweaks_Config["Hide Errors"]'))
+
+    def test_unused_options_cleared(self):
+        lua = self.load('{ ["Hide Default Cast Bar"] = 0, ["Only Show My Debuffs on Target"] = 0,'
+                        ' ["Show Bags"] = 0, ["Show Micro Menu"] = 0,'
+                        ' overwrites = { ["panelbag.scale"] = 1, ["panelmicro.scale"] = 1 } }')
+        for key in ("Hide Default Cast Bar", "Only Show My Debuffs on Target", "Show Bags", "Show Micro Menu"):
+            self.assertIsNone(lua.eval('FostercareTweaks_Config["%s"]' % key), key)
+        self.assertIsNone(lua.eval('next(FostercareTweaks_Config.overwrites)'))
 
     def test_dismount_off_leaves_cvars_alone(self):
         lua = self.load('{ ["Auto Dismount"] = 0 }')
