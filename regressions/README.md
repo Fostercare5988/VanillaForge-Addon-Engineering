@@ -40,11 +40,12 @@ that folder's `verified-repositories.json` and `validation.json`.
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 31 | Yes | [FostercareAuras](#fostercareauras) |
-| FostercareNameplates | `regressions/FostercareNameplates` | 27 | Yes | [FostercareNameplates](#fostercarenameplates) |
-| FostercareTweaks | `regressions/FostercareTweaks` | 22 | Yes | [FostercareTweaks](#fostercaretweaks) |
-| GearRack | `regressions/GearRack` | 11 | Yes | [GearRack](#gearrack) |
+| FostercareNameplates | `regressions/FostercareNameplates` | 30 | Yes | [FostercareNameplates](#fostercarenameplates) |
+| FostercareTweaks | `regressions/FostercareTweaks` | 34 | Yes | [FostercareTweaks](#fostercaretweaks) |
+| GearRack | `regressions/GearRack` | 27 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 30 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
-| OctoMail | `regressions/OctoMail` | 16 | Yes | [OctoMail](#octomail) |
+| OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
+| TWThreat | `regressions/TWThreat` | 6 | Yes | [TWThreat](#twthreat) |
 | AutoLazy (older) | private `external-tests/AutoLazy` | 130 | No | private command below |
 | aux-addon | private `external-tests/aux-addon` | 5 | No | private command below |
 | BetterCharacterStats | private `external-tests/BetterCharacterStats` | 9 | No | private command below |
@@ -437,4 +438,15 @@ the templates directly; the old migration code is gone.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/GearRack" --run-tests --test-start regressions/GearRack --output .private/gearrack-current.json
+```
+
+### TWThreat
+
+`test_audit_2026_10_26.py`: tank-mode bars are ClassicAPI unit buttons (the
+creature's GUID as the unit, left click targets it; test rows have no unit),
+the hand-made targeting and its wrong-unit name fallbacks are gone, and the print
+helpers are local. Four fail on `333c45b`. Clicking a bar stays an in-game check.
+
+```text
+python -B tools/audit_addon.py "<AddOns>/TWThreat" --run-tests --test-start regressions/TWThreat --output .private/twthreat-current.json
 ```
