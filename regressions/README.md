@@ -43,7 +43,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | FostercareAuras | `regressions/FostercareAuras` | 31 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 42 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 34 | Yes | [FostercareTweaks](#fostercaretweaks) |
-| GearRack | `regressions/GearRack` | 27 | Yes | [GearRack](#gearrack) |
+| GearRack | `regressions/GearRack` | 50 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 30 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
 | TWThreat | `regressions/TWThreat` | 6 | Yes | [TWThreat](#twthreat) |
@@ -484,6 +484,16 @@ every set's restore data, the Brainwashing Device's other options stay silent wh
 Activate still fires `GEARRACK_GBD`, a two-hander save keeps the draft's off hand,
 and the version is 1.0.0. They fail on `03888af`. The dodged-trigger file now checks
 the templates directly; the old migration code is gone.
+
+`test_audit_2026_10_26.py` (23 tests): enchant icon paths keep their backslashes and the
+question-mark fallback is not cached; the trinket order list shows the item tooltip; one
+callback per timer and one ticker per repeating timer (a 60 s idle run makes one handle);
+the bar-controls check stops on an unlocked bar; an inventory event with no new item
+skips the views; trinket spirals redraw only on change; retired settings and the saved
+combat queue are cleared; enchant time comes from ClassicAPI alone; hooks leak no
+globals; an enabled notify event leaves "Notify when ready" off. The fixes are commits
+`e51cb39` to `2b07347`; the cut-out tests fail or cannot find their code on `b8778c9`,
+and the bank-bag and alert-on tests are controls.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/GearRack" --run-tests --test-start regressions/GearRack --output .private/gearrack-current.json

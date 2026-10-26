@@ -81,13 +81,13 @@ class BrainwashingGossipTests(unittest.TestCase):
         lua.execute('''
             GearRackDB = { settings = { EnableEvents = "ON" } }
             GossipFrameNpcNameText = { GetText = function() return "Goblin Brainwashing Device" end }
-            function GearRack_OriginalGossipTitleButton_OnClick() table.insert(calls, "native") end
+            function original_gossip_click() table.insert(calls, "native") end
             function GearRackUI_RegisterFrame_OnEvent(ev, a1) table.insert(calls, ev .. ":" .. tostring(a1 or arg1)) end
             function UnitName() return "Me" end
-        ''' + between(EQUIPMENT, 'function GearRack_GossipTitleButton_OnClick()', '--[[ Inv Movement ]]'))
+        ''' + between(EQUIPMENT, 'function gossip_click(...)', '--[[ Inv Movement ]]'))
         lua.globals().optionText = text
         lua.execute('this = { type = "Gossip", GetText = function() return optionText end }'
-                    ' GearRack_GossipTitleButton_OnClick()')
+                    ' gossip_click()')
         return list(lua.eval('messages').values()), list(lua.eval('calls').values())
 
     def test_buy_tab_option_prints_nothing(self):
