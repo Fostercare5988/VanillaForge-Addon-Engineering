@@ -127,6 +127,23 @@ class AuditorRuleTests(unittest.TestCase):
             path.write_text(source, encoding="utf-8")
             return self.auditor.audit_file(str(path))
 
+    def test_single_backslash_texture_path_is_a_dropped_escape(self):
+        # GearRack 2026-10-26: "Interface\Icons\X" reached the client as "InterfaceIconsX".
+        _, warnings, _ = self.audit(r'''
+return "Interface\Icons\INV_Misc_QuestionMark"
+''')
+        self.assertTrue(any("Rule A5" in w and "\\I" in w for w in warnings), warnings)
+
+    def test_correct_escapes_patterns_and_long_strings_are_not_dropped_escapes(self):
+        _, warnings, _ = self.audit(r'''
+local a = "Interface\\Icons\\INV_Misc_QuestionMark"
+local b = "line\nnext\t\"quoted\" \\ \65"
+local c = string.find(s, "begins to cast Flame Breath\.")
+local d = [[Interface\Icons\Raw]]
+-- a comment with "Interface\Icons\Comment"
+''')
+        self.assertFalse(any("Rule A5" in w for w in warnings), warnings)
+
     def test_modern_classicapi_event_signature_is_not_an_error(self):
         errors, warnings, infos = self.audit('''
 local frame = CreateFrame("Frame")

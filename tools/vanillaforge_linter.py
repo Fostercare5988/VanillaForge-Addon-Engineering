@@ -300,6 +300,10 @@ class HeuristicStructuralScanner:
 # English only: locale lookups, locale libraries and per-locale files or TOC fields.
 LOCALE_CODE_PATTERN = re.compile(r'\bGetLocale\s*\(|\bAceLocale\b|:NewLocale\s*\(|\bLibBabble\b')
 LOCALE_TAGS = r'(?:enUS|enGB|deDE|frFR|esES|esMX|ruRU|zhCN|zhTW|koKR|ptBR|itIT)'
+# Rule A5: short string literals, long strings to skip, and escapes Lua 5.0 drops.
+SHORT_STRING_PATTERN = re.compile(r'"(?:[^"\\\n]|\\.)*"|\'(?:[^\'\\\n]|\\.)*\'')
+LONG_STRING_PATTERN = re.compile(r'\[(=*)\[.*?\]\1\]')
+DROPPED_ESCAPE_PATTERN = re.compile(r'(?<!\\)(?:\\\\)*\\([c-eg-mo-qsuw-zA-Z])')
 LOCALE_FILE_PATTERN = re.compile(r'(?:^|[\\/])(?:Locales?|Localization)[\\/]|(?:^|[\\/._-])' + LOCALE_TAGS + r'\.(?:lua|xml)$', re.IGNORECASE)
 LOCALE_TOC_FIELD = re.compile(r'^(?:title|notes)-' + LOCALE_TAGS + r'$', re.IGNORECASE)
 
@@ -411,6 +415,17 @@ class VanillaForgeAuditor:
             if not self._is_suppressed(raw_line, "A4"):
                 if re.search(r'\bmath\.mod\s*\(', code_line):
                     warnings.append(f"[Rule A4 - Legacy math.mod] Line {idx}: 'math.mod(a, b)' detected. Use modern '%' modulo operator.")
+
+            # 8b. Rule A5: Dropped escape. Lua 5.0 drops the backslash of an unknown
+            # escape, so "Interface\Icons\X" names "InterfaceIconsX" and the texture
+            # is missing. Only letters are flagged: "\." in patterns is harmless.
+            if filepath.endswith('.lua') and '\\' in no_comment_line and not self._is_suppressed(raw_line, "A5"):
+                plain = LONG_STRING_PATTERN.sub('', no_comment_line)
+                for literal in SHORT_STRING_PATTERN.finditer(plain):
+                    dropped = DROPPED_ESCAPE_PATTERN.search(literal.group(0))
+                    if dropped:
+                        warnings.append(f"[Rule A5 - Dropped Escape] Line {idx}: '{dropped.group(0)}' in {literal.group(0)[:60]} loses its backslash in Lua 5.0. Write '\\\\' for a path separator.")
+                        break
 
             # 9. Rule B0: Obsolete 2006 Libraries
             if not self._is_suppressed(raw_line, "B0"):

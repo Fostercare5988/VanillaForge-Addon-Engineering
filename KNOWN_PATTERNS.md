@@ -1116,6 +1116,19 @@ release (2026-10-26).
 or the DLL docs. Otherwise gate it with `C_EventUtils.IsEventValid(name)` and keep a
 documented signal or a slow poll; the stock target-of-target frame polls in OnUpdate.
 
+### KP-60 --- Single Backslashes in Texture Paths
+
+**Problem:** Lua 5.0 drops the backslash of an unknown escape, without an error:
+`"Interface\Icons\X"` becomes `"InterfaceIconsX"` and the texture is missing.
+GearRack's poison and fallback enchant icons were blank this way (2026-10-26). The
+usual source is a patch written through a shell heredoc, which collapses `\\`.
+Lupa's Lua 5.1 drops the backslash the same way, so a test must compare the
+produced path.
+
+**Preferred direction:** Write `\\` in every Lua string path. Linter rule A5 flags a
+backslash before a letter that is not an escape. Write patches that contain
+backslashes as files, never through a heredoc.
+
 ------------------------------------------------------------------------
 
 ## 11. Pattern Governance
