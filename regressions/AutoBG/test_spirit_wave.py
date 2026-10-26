@@ -66,7 +66,7 @@ def fire(lua, event, arg=None):
 
 def respawn_text(lua, at):
     lua.execute('now = %s; for _, fn in ipairs(tickers) do fn() end' % at)
-    return lua.eval('AutoBG_RespawnFrame.timeText.text')
+    return lua.eval('AutoBG_RespawnFrame.rows[1].timeFs.text')
 
 
 class SpiritWaveTests(unittest.TestCase):
@@ -80,7 +80,7 @@ class SpiritWaveTests(unittest.TestCase):
         fire(lua, "PLAYER_UNGHOST")
         text = respawn_text(lua, 1013)
         self.assertNotIn("~", text)
-        self.assertIn("0:20", text)
+        self.assertEqual(text, "20")
 
     def test_teammate_ghost_revival_syncs_the_wave(self):
         lua = runtime()
@@ -90,7 +90,7 @@ class SpiritWaveTests(unittest.TestCase):
         fire(lua, "UNIT_HEALTH", "raid2")
         text = respawn_text(lua, 1017)
         self.assertNotIn("~", text)
-        self.assertIn("0:20", text)
+        self.assertEqual(text, "20")
 
     def test_health_of_someone_who_was_never_a_ghost_does_not_sync(self):
         lua = runtime()

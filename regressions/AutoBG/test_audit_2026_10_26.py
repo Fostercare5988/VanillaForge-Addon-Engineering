@@ -30,6 +30,10 @@ TIMERS = (ROOT / "AutoBG_Timers.lua").read_text("utf-8-sig")
 SPY = (ROOT / "AutoBG_Spy.lua").read_text("utf-8-sig")
 
 AV_ZONE = r'''
+now = 1000
+function GetTime() return now end
+tickIntervals = {}
+C_Timer.NewTicker = function(interval) table.insert(tickIntervals, interval); return { Cancel = function() end } end
 AutoBG_Settings.TestAllTimers = false
 function GetRealZoneText() return "Alterac Valley" end
 function IsInInstance() return 1, "pvp" end
@@ -75,13 +79,81 @@ class AlteracMineTests(unittest.TestCase):
         yell(lua, "The Horde has taken the Irondeep Mine! Its supplies will now be used for reinforcements!")
         self.assertEqual(av_labels(lua), ["Irondeep Mine"])
         self.assertEqual(lua.eval('rawget(AutoBG_AVNodeFrame.rows[1].timeFs, "text")'), "5:00")
-        self.assertEqual(lua.eval('AutoBG_AVNodeFrame.rows[1].icon.texture'), "Interface\\WorldStateFrame\\HordeFlag")
+        self.assertEqual(lua.eval('AutoBG_AVNodeFrame.rows[1].icon.texture'), "Interface\\Icons\\INV_BannerPVP_01")
 
     def test_mine_lines_do_not_teach_flag_spots(self):
         lua = av_timers()
         lua.execute('heard = {}; AutoBG_FlagWatch = { OnNodeMessage = function(_, node) table.insert(heard, node) end }')
         yell(lua, "The Horde has taken the Irondeep Mine! Its supplies will now be used for reinforcements!")
         self.assertEqual(len(lua.eval('heard')), 0)
+
+
+def frame_update(lua, frame, at):
+    """One drawn frame at time `at`: the group's OnUpdate, with `this` set like the client."""
+    lua.execute('now = %s; this = %s; %s.scripts.OnUpdate()' % (at, frame, frame))
+
+
+def row(lua, frame, i, field):
+    return lua.eval('rawget(%s.rows[%d], "%s")' % (frame, i, field))
+
+
+class TimerLookTests(unittest.TestCase):
+    """The 2026-10-26 look: BigWigs-style clock, banners, rows that drain themselves."""
+
+    def test_clock_reads_like_bigwigs(self):
+        lua = av_timers()
+        yell(lua, "The Stonehearth Graveyard is under attack! If left unchecked, the Horde will capture it!")
+        self.assertEqual(lua.eval('AutoBG_AVNodeFrame.rows[1].timeFs.text'), "5:00")
+        frame_update(lua, "AutoBG_AVNodeFrame", 1000 + 300 - 111.4)
+        self.assertEqual(lua.eval('AutoBG_AVNodeFrame.rows[1].timeFs.text'), "1:51")
+        frame_update(lua, "AutoBG_AVNodeFrame", 1000 + 300 - 21.5)
+        self.assertEqual(lua.eval('AutoBG_AVNodeFrame.rows[1].timeFs.text'), "21")
+        self.assertEqual(row(lua, "AutoBG_AVNodeFrame", 1, "announceText"), "Stonehearth Graveyard (Horde): 21")
+        self.assertTrue(row(lua, "AutoBG_AVNodeFrame", 1, "sparkShown"))
+
+    def test_last_ten_seconds_turn_gold(self):
+        lua = av_timers()
+        yell(lua, "The Stonehearth Graveyard is under attack! If left unchecked, the Horde will capture it!")
+        self.assertFalse(row(lua, "AutoBG_AVNodeFrame", 1, "displayUrgent"))
+        frame_update(lua, "AutoBG_AVNodeFrame", 1000 + 300 - 9.5)
+        self.assertTrue(row(lua, "AutoBG_AVNodeFrame", 1, "displayUrgent"))
+
+    def test_a_row_that_runs_out_leaves_at_once(self):
+        lua = av_timers()
+        yell(lua, "The Stonehearth Graveyard is under attack! If left unchecked, the Horde will capture it!")
+        frame_update(lua, "AutoBG_AVNodeFrame", 1301)
+        self.assertEqual(av_labels(lua), [])
+        self.assertFalse(lua.eval('AutoBG_AVNodeFrame.shown'))
+
+    def test_logic_ticks_once_a_second(self):
+        lua = av_timers()
+        yell(lua, "The Stonehearth Graveyard is under attack! If left unchecked, the Horde will capture it!")
+        self.assertEqual(list(lua.eval('tickIntervals').values()), [1])
+
+    def test_respawn_bar_counts_down_and_starts_the_next_wave(self):
+        lua = av_timers()
+        lua.execute('AutoBG_Settings.RessTimer = true; AutoBG_Timers_UpdateVisibility()')
+        self.assertEqual(lua.eval('AutoBG_RespawnFrame.rows[1].labelFs.text'), "Respawn")
+        self.assertEqual(lua.eval('AutoBG_RespawnFrame.rows[1].icon.texture'), "Interface\\Icons\\Spell_Holy_Resurrection")
+        frame_update(lua, "AutoBG_RespawnFrame", 1012.5)
+        self.assertEqual(lua.eval('AutoBG_RespawnFrame.rows[1].timeFs.text'), "~18")
+        frame_update(lua, "AutoBG_RespawnFrame", 1030.2)  # the wave passes
+        frame_update(lua, "AutoBG_RespawnFrame", 1030.5)
+        self.assertEqual(lua.eval('AutoBG_RespawnFrame.rows[1].timeFs.text'), "~30")
+
+    def test_queue_row_shows_wait_and_fills_toward_the_estimate(self):
+        lua = av_timers()
+        lua.execute(r'''
+            AutoBG_Settings.QueueTimers = true
+            function GetBattlefieldStatus(i) if i == 1 then return "queued", "Warsong Gulch" end return "none" end
+            function GetBattlefieldTimeWaited() return 272000 end
+            function GetBattlefieldEstimatedWaitTime() return 360000 end
+            local f = AutoBG_TimersEventFrame; f.scripts.OnEvent(f, "UPDATE_BATTLEFIELD_STATUS")''')
+        self.assertEqual(lua.eval('AutoBG_QueueFrame.rows[1].labelFs.text'), "Warsong Gulch")
+        self.assertEqual(lua.eval('AutoBG_QueueFrame.rows[1].timeFs.text'), "4:32")
+        self.assertEqual(row(lua, "AutoBG_QueueFrame", 1, "estText"), "Estimated: 6:00")
+        self.assertEqual(row(lua, "AutoBG_QueueFrame", 1, "announceText"), "WSG queue: 4:32")
+        self.assertEqual(row(lua, "AutoBG_QueueFrame", 1, "fillDuration"), 360)
 
 
 class FlagWatchCastTests(unittest.TestCase):
