@@ -40,7 +40,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 31 | Yes | [FostercareAuras](#fostercareauras) |
-| FostercareNameplates | `regressions/FostercareNameplates` | 30 | Yes | [FostercareNameplates](#fostercarenameplates) |
+| FostercareNameplates | `regressions/FostercareNameplates` | 33 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 34 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 27 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 30 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
@@ -273,6 +273,10 @@ Fourteen regressions cover the 2026-10-20 private audit
 - `SettingsWindow` (1.3.0, ForgeUI): every module option key has a control, all four
   tabs open, switches and choices save the same keys as before, and reset restores
   options while keeping feature switches.
+- `PlateAlpha` (1.4.2, ClassicAPI 1.17.8): a plate reports its alpha as a byte and the
+  player's nameplate alpha CVars replace writes of 1 and 0.5, so a faded plate (0.3) or a
+  changed CVar is written once, not every frame; an engine fade is still overridden.
+  Two fail on 1.4.1.
 
 Eleven fail on the code before their batch for the stated reason; the other three guard
 behavior that must stay unchanged. `fnp_env.py` runs the TOC files under Lua 5.1 with
