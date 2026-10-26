@@ -338,6 +338,12 @@ inside high-frequency combat/ticker/render paths.
 Move reusable state outside the hot path when measurement/structure
 justifies it.
 
+A vararg function is a hidden table: Lua 5.0 builds one for every call of a
+`function(...)`, whether the body reads `arg` or `...` (ClassicAPI
+docs/LuaCAPI.md, `adjust_varargs`). Event and script wrappers, which run for
+every event, take fixed parameters (FostercareTweaks `FT.SetEventHandler`,
+2026-10-26: two tables per event).
+
 Consumers in one synchronous refresh can share an authoritative snapshot.
 Choose the cache lifetime explicitly. Do not extend a refresh-local remaining-time
 snapshot across ticks without a verified clock/invalidation contract. Inventory

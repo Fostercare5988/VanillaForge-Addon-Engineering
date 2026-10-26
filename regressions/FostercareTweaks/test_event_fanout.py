@@ -1,4 +1,7 @@
-"""Broad events do no per-event work when they cannot affect the view (P3-5, P3-6).
+"""Broad events do no per-event work when they cannot affect the view (P3-6).
+
+The castbar fan-out test (P3-5) moved to test_audit_2026_10_26.py: the bar
+now hears only the "target" token.
 
 The complete module files run with generic widget mocks; native widget
 behavior and real event payloads remain in-game checks.
@@ -39,30 +42,6 @@ function hooksecurefunc() end
 '''
 
 
-class CastbarFanoutTests(unittest.TestCase):
-    def test_other_units_cast_events_do_not_query_target(self):
-        lua = LuaRuntime(unpack_returned_tuples=True)
-        lua.execute(BASE + r'''
-            TargetFrame = CreateFrame("Frame", "TargetFrame")
-            guidQueries = 0
-            function UnitGUID(unit) guidQueries = guidQueries + 1; return "0xTARGET" end
-            function UnitExists() return true end
-            function UnitIsDeadOrGhost() return false end
-            function UnitIsUnit() return false end
-            C_Spell = { UnitCastingInfo = function() end, UnitChannelInfo = function() end }
-        ''')
-        lua.execute(CASTBAR)
-        lua.execute(r'''
-            local module = FostercareTweaks.mods["Enemy Castbars"]
-            module:enable()
-            local handler = handlers[module.frame]
-            handler(nil, "PLAYER_TARGET_CHANGED")
-            guidQueries = 0
-            for i = 1, 100 do handler(nil, "UNIT_CASTEVENT", "0xOTHER" .. i, nil, "MAINHAND", 0, 0) end
-        ''')
-        self.assertEqual(lua.eval('guidQueries'), 0)
-
-
 class CastbarInterruptibleTests(unittest.TestCase):
     """ClassicAPI 1.17: a target cast that becomes uninterruptible mid-cast turns silver."""
 
@@ -74,6 +53,7 @@ class CastbarInterruptibleTests(unittest.TestCase):
             function CreateFrame(kind, name)
                 local f = create(kind, name)
                 f.RegisterEvent = function(_, ev) registered[ev] = true end
+                f.RegisterUnitEvent = function(_, ev) registered[ev] = true end
                 f.UnregisterAllEvents = function() registered = {} end
                 return f
             end

@@ -42,7 +42,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 31 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 42 | Yes | [FostercareNameplates](#fostercarenameplates) |
-| FostercareTweaks | `regressions/FostercareTweaks` | 34 | Yes | [FostercareTweaks](#fostercaretweaks) |
+| FostercareTweaks | `regressions/FostercareTweaks` | 47 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 50 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 30 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
@@ -127,7 +127,8 @@ repairs in FostercareTweaks 1.3.1.
   the deployed FrameXML OnLoad code.
 - P3-1 to P3-4: operation counts for raid and modern-frame text, badge geometry and
   player aura rescans.
-- P3-5 and P3-6: castbar and reagent fan-out.
+- P3-5 and P3-6: castbar and reagent fan-out. The castbar test moved to
+  `test_audit_2026_10_26.py` in 1.6.0.
 
 Fourteen fail on the 1.3.0 source for the intended reason. The other four are
 controls that pass on both. A nineteenth test checks the hard-coded native event
@@ -141,6 +142,21 @@ FostercareTweaks 1.4.0 (ClassicAPI 1.17.3) adds `CastbarInterruptibleTests` in
 `test_event_fanout.py`: the target castbar listens for
 `UNIT_SPELLCAST_NOT_INTERRUPTIBLE` / `_INTERRUPTIBLE` and turns silver when a cast
 becomes uninterruptible mid-cast. It fails on 1.3.1, which never registered them.
+
+FostercareTweaks 1.6.0 adds `test_audit_2026_10_26.py` (13 tests):
+- Auto Dismount: it covers melee attack, flight masters, NPCs and items in a form.
+  Spell errors stay with ClassicAPI, and Stealth is never cancelled.
+- Unit events: the raid frames, target auras, energy ticks and target castbar
+  ignore nameplate, mark and other copies of their unit events. A mock engine
+  honours `RegisterUnitEvent` filters.
+- The event wrapper calls no vararg function. This test runs under `lupa.lua54`
+  for `debug.getinfo(...).isvararg`.
+- Chat Timestamps skip the combat log, and each spell's reagent list is read
+  once.
+
+Ten fail on 1.5.0 (`28a6eea`). Three are controls. `test_audit_2026_10_25.py`
+now expects the Auto Dismount switch to be kept, and the four retired options
+to be cleared.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareTweaks" --run-tests --test-start regressions/FostercareTweaks --output .private/fct-current.json

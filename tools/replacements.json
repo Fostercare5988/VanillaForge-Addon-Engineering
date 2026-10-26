@@ -10,10 +10,17 @@
     },
     {
       "id": "dismount-on-error",
-      "pattern": "\\b(Dismount|CancelShapeshiftForm|SitOrStand)\\s*\\(",
-      "finding": "Dismounts, leaves a form or stands up in reply to an error message.",
-      "better": "ClassicAPI cast settings autoDismount, autoUnshift and autoStand (AddOn Options > ClassicAPI).",
+      "pattern": "\\bSPELL_FAILED_NOT_(MOUNTED|SHAPESHIFT|STANDING)\\b",
+      "finding": "Dismounts, leaves a form or stands up when a spell fails for it.",
+      "better": "ClassicAPI cast settings autoDismount, autoUnshift and autoStand (AddOn Options > ClassicAPI). They act before spell casts only: melee attack, flight masters, NPCs and items in a form still need the error (ERR_ATTACK_MOUNTED and the like; FostercareTweaks Auto Dismount).",
       "source": "ClassicAPI docs/API.md#cast-settings-autostand-autodismount-autounshift"
+    },
+    {
+      "id": "unfiltered-unit-events",
+      "pattern": "RegisterEvent\\(\\s*\"UNIT_(HEALTH|MAXHEALTH|MANA|MAXMANA|RAGE|MAXRAGE|ENERGY|MAXENERGY|AURA|DISPLAYPOWER|INVENTORY_CHANGED|SPELLCAST_[A-Z_]+)\"",
+      "finding": "Registers a unit event for every token. ClassicAPI fires unit events once per token, including every nameplateN, markN and focus, so a frame for a few units runs for every nameplate in a battleground.",
+      "better": "frame:RegisterUnitEvent(event, units...): the engine drops other units before Lua runs.",
+      "source": "ClassicAPI docs/API.md#frameregisteruniteventevent-units"
     },
     {
       "id": "hand-made-unit-click",
