@@ -108,10 +108,17 @@ class UnitFilters(unittest.TestCase):
         for key, unit in (("nameplate_fade_critters", "{ type = 8 }"),
                           ("nameplate_fade_totems", "{ type = 11 }"),
                           ("nameplate_fade_pets", "{ type = 1, pet = true }"),
-                          ("nameplate_fade_trivial", "{ type = 7, trivial = 1 }")):
+                          ("nameplate_fade_trivial", "{ type = 7, level = 47 }")):
             lua = load(prelude='units["0xF1"] = %s' % unit)
             lua.execute(FADE + 'fade("%s")' % key)
             self.assertEqual(self.alpha(lua), 0.3, key)
+
+    def test_grey_follows_the_stock_rule(self):
+        """Grey: more levels below you (60) than the green range (12). No UnitIsTrivial."""
+        for level, faded in ((47, 0.3), (48, 1), (-1, 1)):
+            lua = load(prelude='units["0xF1"] = { type = 7, level = %d }' % level)
+            lua.execute(FADE + 'fade("nameplate_fade_trivial")')
+            self.assertEqual(self.alpha(lua), faded, level)
 
     def test_other_kinds_stay_opaque(self):
         lua = load(prelude='units["0xF1"] = { type = 7 }')

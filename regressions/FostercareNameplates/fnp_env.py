@@ -87,7 +87,8 @@ function UnitClass() end
 function UnitCanAttack() return 1 end
 function UnitHealth() return 50 end
 function UnitHealthMax() return 100 end
-function UnitLevel() return 60 end
+function UnitLevel(u) return units and units[u] and units[u].level or 60 end
+function GetQuestGreenRange() return 12 end
 function GetDifficultyColor() return { r = 1, g = 0.82, b = 0 } end
 function UnitIsUnit() end
 function GetComboPoints() return 0 end
@@ -95,11 +96,11 @@ function GetComboPoints() return 0 end
 units = {}
 function UnitCreatureTypeID(u) return units[u] and units[u].type end
 function UnitIsOtherPlayersPet(u) return units[u] and units[u].pet or false end
-function UnitIsTrivial(u) return units[u] and units[u].trivial end
 function UnitReaction(u) return units[u] and units[u].reaction or 2 end
 function UnitAffectingCombat(u) return units[u] and units[u].combat end
 C_NamePlate = { GetNamePlateGUIDs = function() return {} end, GetNamePlateForUnit = function() end,
     GetNamePlateForGUID = function() end }
+C_EventUtils = { IsEventValid = function() return true end }
 C_Timer = { After = function() count("After") end,
     NewTicker = function() return { Cancel = function() end } end }
 C_Spell = { UnitCastingInfo = function() count("UnitCastingInfo") end,
