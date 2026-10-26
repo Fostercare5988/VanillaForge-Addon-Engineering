@@ -36,7 +36,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | --- | --- | ---: | --- | --- |
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 5 | Yes | [ActionBarProfiles](#actionbarprofiles) |
 | AutoBG | `regressions/AutoBG` | 148 | Yes | [AutoBG](#autobg) |
-| AutoLazy | `regressions/AutoLazy` | 17 | Yes | [AutoLazy](#autolazy) |
+| AutoLazy | `regressions/AutoLazy` | 18 | Yes | [AutoLazy](#autolazy) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
 | !ErrorLog | `regressions/ErrorLog` | 2 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
@@ -335,7 +335,7 @@ there because 1.1.0 did not read `GetInstanceInfo`. Two controls pass on both.
 The test loads only `AutoLazy.lua` under Lua 5.1 with minimal mocks; OctoWoW zone and
 instance names remain an in-game check.
 
-Ten more cover the 2026-10-26 audit (`.private/audit-AutoLazy-2026-10-26.md`), fixed in
+Eleven more cover the 2026-10-26 audit (`.private/audit-AutoLazy-2026-10-26.md`), fixed in
 AutoLazy 1.3.0. They test the following:
 
 - Shift repeats the quest just turned in at that NPC: by quest ID in the gossip active
@@ -344,8 +344,10 @@ AutoLazy 1.3.0. They test the following:
 - The tray tests frames in Drain batches: Lua-created Buttons too.
 - Frames that are not Buttons are tested once across the login walks.
 - A `Blizzard_*` load-on-demand addon after login does no `_G` walk.
+- Map pins (clickable minimap buttons that are neither movable nor bordered) stay out of
+  the tray.
 
-Seven fail on 1.2.0 (`bdb5db8`) for those reasons. Three controls pass on both:
+Seven fail on 1.2.0 (`bdb5db8`) for those reasons, and the pin test fails on `bb4c419`. Three controls pass on both:
 
 - Another NPC does not repeat.
 - Running out of items stops repeating.

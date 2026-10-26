@@ -24,8 +24,6 @@ C_Timer = { After = function() end, NewTimer = function() return { Cancel = func
 function GetInstanceInfo() return "Kalimdor", "none" end
 function GetRealZoneText() return "" end
 function GetLootRollItemID() end
-function AutoLazy_UpdateActionButton() end
-function AutoLazy_ApplySystemIconToggles() end
 shift = false
 function IsLeftShiftKeyDown() return shift end
 function IsRightShiftKeyDown() return nil end
@@ -104,10 +102,8 @@ function CreateFrame(kind, name, parent)
 end
 UIParent, Minimap = CreateFrame("Frame", "UIParent"), CreateFrame("Frame", "Minimap")
 GameTooltip = CreateFrame("Frame", "GameTooltip")
-AutoLazy = { Style = { Surface = noop } }
+AutoLazy = { Style = { Surface = noop }, Print = noop, UpdateGUI = noop }
 AutoLazyDB = { Tweaks = { CollapseAddons = true, KeepOnMinimap = {} } }
-function AutoLazy_Print() end
-function AutoLazy_UpdateGUI() end
 -- Ordinary named frames another addon made before AutoLazy loaded (not Buttons).
 for i = 1, 200 do CreateFrame("Frame", "OtherAddonFrame" .. i).counted = true end
 '''
@@ -122,6 +118,7 @@ def core():
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(CORE_MOCKS)
     lua.execute(CORE)
+    lua.execute("AutoLazy.UpdateActionButton = function() end; AutoLazy.ApplySystemIconToggles = function() end")
     lua.execute('fire("ADDON_LOADED", "AutoLazy")')
     return lua
 
@@ -239,6 +236,7 @@ class TrayDiscovery(unittest.TestCase):
         lua = tray()
         lua.execute('''
             local art = { GetTexture = function() return "Interface\Icons\X" end }
+            local border = { GetTexture = function() return "Interface\Minimap\MiniMap-TrackingBorder" end }
             local function Launcher(name)
                 local b = CreateFrame("Button", name, Minimap)
                 b.w, b.h = 32, 32
@@ -246,11 +244,28 @@ class TrayDiscovery(unittest.TestCase):
                 b.GetNormalTexture = function() return art end
                 return b
             end
-            Launcher("EarlyAddonMinimapButton")
+            -- One the player can drag, one with the standard border.
+            Launcher("EarlyAddonMinimapButton").IsMovable = function() return true end
             fire("PLAYER_ENTERING_WORLD"); settle()
-            Launcher(nil); settle()
+            Launcher(nil).GetRegions = function() return border end
+            settle()
         ''')
         self.assertEqual(lua.eval("#AutoLazy.Tray.GetEntries()"), 2)
+
+    def test_p2_map_pins_stay_on_the_minimap(self):
+        """A quest or node pin is a clickable minimap button too, but neither movable nor bordered."""
+        lua = tray()
+        lua.execute('''
+            local art = { GetTexture = function() return "Interface\Icons\Quest" end }
+            for i = 1, 3 do
+                local pin = CreateFrame("Button", "SomeMapPin" .. i, Minimap)
+                pin.w, pin.h = 16, 16
+                pin:SetScript("OnClick", function() end)
+                pin.GetNormalTexture = function() return art end
+            end
+            fire("PLAYER_ENTERING_WORLD"); settle()
+        ''')
+        self.assertEqual(lua.eval("#AutoLazy.Tray.GetEntries()"), 0)
 
 
 if __name__ == "__main__":
