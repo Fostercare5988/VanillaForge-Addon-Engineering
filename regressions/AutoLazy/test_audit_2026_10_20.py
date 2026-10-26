@@ -28,8 +28,6 @@ function GetMinimapZoneText() return zone.minimap end
 rollItem, rolls = nil, {}
 function GetLootRollItemID() return rollItem end
 function RollOnLoot(id, kind) table.insert(rolls, kind) end
-function AutoLazy_UpdateActionButton() end
-function AutoLazy_ApplySystemIconToggles() end
 shift = { stock = nil, left = nil }
 function IsShiftKeyDown() return shift.stock end
 function IsLeftShiftKeyDown() return shift.left end
@@ -63,6 +61,7 @@ def load():
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(BASE)
     lua.execute(SOURCE)
+    lua.execute("AutoLazy.UpdateActionButton = function() end; AutoLazy.ApplySystemIconToggles = function() end")
     lua.execute('fire("ADDON_LOADED", "AutoLazy")')
     return lua
 
