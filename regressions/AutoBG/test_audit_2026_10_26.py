@@ -180,6 +180,27 @@ class FlagSpotLearningTests(unittest.TestCase):
         self.assertEqual(left, ["Icewing Bunker"])
 
 
+class RetiredSettingsTests(unittest.TestCase):
+    def test_load_clears_preview_and_unread_settings(self):
+        import test_core_fixes as core
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(core.BASE + r'''
+            spyOptions = { StableRowsMigration = 1 }
+            AutoBG_Spy = { EnsureOptions = function() return spyOptions end }
+            AutoBG_Settings = { TestAllTimers = true, AutoQueue_TG = false }''')
+        lua.execute(core.CORE)
+        lua.execute('AutoBGFrame.scripts.OnEvent(AutoBGFrame, "ADDON_LOADED", "AutoBG")')
+        self.assertIsNone(lua.eval('AutoBG_Settings.TestAllTimers'))
+        self.assertIsNone(lua.eval('AutoBG_Settings.AutoQueue_TG'))
+        self.assertIsNone(lua.eval('spyOptions.StableRowsMigration'))
+
+    def test_no_battlegroundtargets_globals(self):
+        import re
+        for name in ("AutoBG_Targets.lua", "AutoBG_Spy.lua", "AutoBG_Options.lua", "AutoBG_FC.lua"):
+            source = (ROOT / name).read_text("utf-8-sig")
+            self.assertIsNone(re.search(r'BattlegroundTargets\w*\s*=|"BattlegroundTargets', source), name)
+
+
 class EnemyByGUIDTests(unittest.TestCase):
     def test_caster_guid_names_a_never_targeted_enemy_with_class(self):
         import test_targets_guid_events as tg
