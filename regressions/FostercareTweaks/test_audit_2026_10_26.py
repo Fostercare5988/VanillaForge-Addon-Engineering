@@ -351,6 +351,103 @@ class ReagentListsAskedOnce(unittest.TestCase):
         ''')
         self.assertEqual(lua.eval('asked'), 1)
 
+RAID_ROSTER = r'''
+    UF = { Auras = { CreateAuraButton = function() return Widget() end, ResetAuraButton = NOOP,
+        UpdateAuraTiming = NOOP, StyleBorder = NOOP },
+        ClassColors = { ROGUE = { r = 1, g = 1, b = 0 } }, PowerColors = { [0] = { r = 0, g = 0, b = 1 } } }
+    FT.UnitFrames = UF
+    function UF:CreateBar() return Widget() end
+    function UF.SetFontSize() end
+    function UF:IsRaidShowHoT() return true end
+    function UF:IsRaidShowDebuffs() return true end
+    function UF:IsRaidShowAggro() return false end
+    function UF:GetRaidHealthFormat() return "deficit" end
+    function UF.GetUnitHealthValues() return 100, 100 end
+    FT.RegisterFrameMover = NOOP
+    function FT.ClampNumber(v, d, lo, hi) return math.max(lo, math.min(hi, tonumber(v) or d)) end
+    function FT.NormalizeClass(c) return c end
+    function FT.Abbreviate(n) return n end
+    timers = {}
+    C_Timer.After = function(_, fn) timers[#timers + 1] = fn end
+    function runTimers() local t = timers; timers = {}; for _, fn in ipairs(t) do fn() end end
+    members, ranks = 40, {}
+    function GetNumRaidMembers() return members end
+    function GetNumPartyMembers() return 0 end
+    function GetRaidRosterInfo(i)
+        return "Member" .. i, ranks[i] or 0, math.floor((i - 1) / 5) + 1, 60, "Rogue", "ROGUE", "AV", 1
+    end
+    rebuilds = 0
+    function UnitClass() rebuilds = rebuilds + 1; return "Rogue", "ROGUE" end
+    UNKNOWNOBJECT = "Unknown"
+    function UnitName() return "x" end
+    function UnitIsConnected() return true end
+    function UnitIsGhost() return false end
+    function UnitManaMax() return 100 end
+    function UnitPowerType() return 3 end
+    function UnitInRange() return true end
+    function UnitCanAttack() return false end
+    function GetRaidTargetIndex() end
+    C_UnitAuras = { GetAuraSlots = function() return nil, 0 end }
+    FT.GetRaidMarkSettings = function() return 14, "portrait" end
+'''
+
+
+class RaidRosterRebuildsOnlyChanges(unittest.TestCase):
+    """AV: roster events arrive in bursts and rarely change who sits where."""
+
+    def setUp(self):
+        self.lua = runtime()
+        self.lua.execute(RAID_ROSTER)
+        self.lua.execute(source("mods/unitframes/raid.lua"))
+        self.lua.execute('UF:EnableRaidFrames(true); UF:UpdateGroupRoster(true); rebuilds = 0')
+
+    def fire_roster(self, times):
+        self.lua.execute('for i = 1, %d do fire(FCTweaksRaidFrame, "RAID_ROSTER_UPDATE") end; runTimers()' % times)
+
+    def test_a_burst_is_one_pass_and_an_unchanged_roster_rebuilds_nothing(self):
+        self.fire_roster(10)
+        self.assertEqual(self.lua.eval('rebuilds'), 0)
+
+    def test_a_changed_member_is_rebuilt(self):
+        self.lua.execute('ranks[7] = 1')
+        self.fire_roster(3)
+        self.assertEqual(self.lua.eval('rebuilds'), 1)
+
+    def test_group_sizes_are_read_without_a_new_table(self):
+        self.assertTrue(self.lua.eval('UF:GetGroupDimensions() == UF:GetGroupDimensions()'))
+
+
+class AuraCountdownBuildsOnlyChangedLabels(unittest.TestCase):
+    """Countdowns tick 10 times a second; the shown number changes less often."""
+
+    def test_labels_are_built_when_the_tenth_changes(self):
+        lua = runtime()
+        lua.execute(r'''
+            UF = {}
+            function UF:IsDebuffText() return true end
+            function UF:IsBuffText() return true end
+            CooldownFrame_SetTimer = NOOP
+            now = 1000
+            function GetTime() return now end
+            formats = 0
+            local format = string.format
+            string.format = function(...) formats = formats + 1; return format(...) end
+        ''')
+        auras = source("mods/unitframes/auras.lua").replace("\r\n", "\n")
+        part = auras[auras.index("local function FormatAuraTime"):auras.index("local function EnsureAuraTicker")]
+        lua.execute(part.replace("local timedButtons = {}", "timedButtons = {}") + "\nTick = UpdateAuraTimes")
+        lua.execute(r'''
+            local visible = function() return true end
+            for i = 1, 20 do
+                local b = Widget({ durationText = Widget(), cooldown = Widget(), expirationTime = now + 4 + i / 25,
+                    IsVisible = visible })
+                timedButtons[b] = true
+            end
+            for i = 1, 100 do now = now + 0.01; Tick() end
+        ''')
+        # One second under 5 s: about ten labels per icon, not one per tick.
+        self.assertLessEqual(lua.eval('formats'), 20 * 11)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -166,9 +166,6 @@ class SoloMarks(unittest.TestCase):
         self.assertEqual(len(self.lua.eval('sent')), 0)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 
 class RetiredSettings(unittest.TestCase):
     """Hide Errors, the saved player list and four unused options are gone,
@@ -196,13 +193,29 @@ class RetiredSettings(unittest.TestCase):
         self.assertIsNone(lua.eval('next(cvars)'))
         self.assertIsNone(lua.eval('FostercareTweaks_Config["Hide Errors"]'))
 
-    def test_unused_options_cleared(self):
-        lua = self.load('{ ["Hide Default Cast Bar"] = 0, ["Only Show My Debuffs on Target"] = 0,'
-                        ' ["Show Bags"] = 0, ["Show Micro Menu"] = 0,'
-                        ' overwrites = { ["panelbag.scale"] = 1, ["panelmicro.scale"] = 1 } }')
-        for key in ("Hide Default Cast Bar", "Only Show My Debuffs on Target", "Show Bags", "Show Micro Menu"):
+    RETIRED = ("Hide Default Cast Bar", "Only Show My Debuffs on Target", "Show Bags", "Show Micro Menu",
+               "Improved Standard Auras", "Debuff Timer", "Show Buff Cooldown Spiral", "Show Buff Duration Text",
+               "Show Debuff Cooldown Spiral", "Show Debuff Duration Text", "Color Debuffs by Dispel Type",
+               "Uninterruptible Castbars")
+
+    def test_retired_options_cleared(self):
+        saved = ", ".join('["%s"] = 0' % key for key in self.RETIRED)
+        lua = self.load('{ %s, overwrites = { ["panelbag.scale"] = 1, ["panelmicro.scale"] = 1 } }' % saved)
+        for key in self.RETIRED:
             self.assertIsNone(lua.eval('FostercareTweaks_Config["%s"]' % key), key)
         self.assertIsNone(lua.eval('next(FostercareTweaks_Config.overwrites)'))
+
+    def test_permanent_module_runs_and_keeps_no_switch(self):
+        # Cooldown Numbers and Ctrl+Shift moving are `always` modules: an old
+        # "off" does not stop them, and their saved key goes.
+        lua = self.load('{ ["Cooldown Numbers"] = 0 }')
+        lua.execute('''
+            ran = false
+            FostercareTweaks:register({ title = "Cooldown Numbers", always = true, enable = function() ran = true end })
+            FostercareTweaks:Initialize()
+        ''')
+        self.assertTrue(lua.eval('ran'))
+        self.assertIsNone(lua.eval('FostercareTweaks_Config["Cooldown Numbers"]'))
 
     def test_dismount_off_leaves_cvars_alone(self):
         lua = self.load('{ ["Auto Dismount"] = 0 }')
@@ -217,7 +230,7 @@ class RetiredSettings(unittest.TestCase):
 
 class ModernFramesRetired(unittest.TestCase):
     """The Modern player, target and ToT frames were removed; their settings
-    are cleared once and the old "Show Aura" switches carry over."""
+    are cleared once."""
     def test_settings_cleared_and_carried_over(self):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(BASE)
@@ -237,8 +250,8 @@ class ModernFramesRetired(unittest.TestCase):
         self.assertIsNone(lua.eval(cfg + '["Unit Frame Class Portraits"]'))
         self.assertIsNone(lua.eval(cfg + '.overwrites.uf_scale'))
         self.assertEqual(lua.eval(cfg + '.overwrites.uf_buff_size'), 24)
-        self.assertEqual(lua.eval(cfg + '["Show Buff Cooldown Spiral"]'), 0)
-        self.assertEqual(lua.eval(cfg + '["Show Debuff Cooldown Spiral"]'), 0)
+        # Sweeps and countdowns are permanent since 2026-10-26: nothing carries over.
+        self.assertIsNone(lua.eval(cfg + '["Show Buff Cooldown Spiral"]'))
         self.assertIsNone(lua.eval(cfg + '["Show Aura Cooldown Spiral"]'))
         self.assertIsNone(lua.eval(cfg + '.unitframe_positions.player'))
         self.assertIsNone(lua.eval(cfg + '.unitframe_positions.modern_target_buffs'))
@@ -282,35 +295,5 @@ class BadgeClicks(unittest.TestCase):
         self.assertNotIn("FriendsDropDown", RAID)
 
 
-class DebuffTimerSlots(unittest.TestCase):
-    """2026-10-26: one GetAuraSlots walk instead of a by-index call per debuff."""
-    def test_one_walk_for_all_debuffs(self):
-        lua = LuaRuntime(unpack_returned_tuples=True)
-        lua.execute(BASE)
-        lua.execute('''
-            FT.TimeConvert = function(s) return tostring(s) end
-            FT.UnitFrames = { IsImprovedStandardAuras = function() return false end }
-            MAX_TARGET_DEBUFFS = 16
-            walks, reads = 0, 0
-            C_UnitAuras = {
-                GetAuraSlots = function(_, _, _, _, t) walks = walks + 1; t[1], t[2] = 11, 12; return nil, 2 end,
-                UnitAuraBySlot = function(_, slot) reads = reads + 1
-                    return "Sunder", "icon", 3, "none", 30, 120, "player", nil, nil, 7386 end,
-            }
-            function UnitGUID() return "0xT" end
-            function GetTime() return 100 end
-            function CooldownFrame_SetTimer() end
-            C_Timer = { NewTicker = function() return { Cancel = function() end } end }
-            local Meta = { __index = function(t, k)
-                if k == "IsShown" or k == "IsVisible" then return function() return true end end
-                if k == "GetParent" then return function(s) return s.parent end end
-                if k == "GetFrameLevel" or k == "GetAlpha" then return function() return 1 end end
-                if k == "CreateFontString" then return function(s) return setmetatable({}, getmetatable(s)) end end
-                if string.find(k, "^%u") then return function() end end end }
-            function CreateFrame(_, _, parent) return setmetatable({ parent = parent }, Meta) end
-            for i = 1, 2 do _G["TargetFrameDebuff" .. i] = setmetatable({}, Meta) end
-        ''')
-        lua.execute(source("mods/target-debufftimer.lua"))
-        lua.execute('FT.module:enable(); hooks.TargetDebuffButton_Update()')
-        self.assertEqual(lua.eval("walks"), 1)
-        self.assertEqual(lua.eval("reads"), 2)
+if __name__ == "__main__":
+    unittest.main()
