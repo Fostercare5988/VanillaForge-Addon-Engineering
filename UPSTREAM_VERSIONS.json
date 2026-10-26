@@ -2,20 +2,22 @@
   "classicapi": {
     "minimum_version": "1.17.7",
     "minimum_version_scope": "all maintained VanillaForge addons share the explicit ClassicAPI 1.17.7+ support floor (11707), raised from 1.16.0 on 2026-10-26",
-    "reference_version": "1.17.7",
+    "reference_version": "1.17.8",
     "repository": "brues-code/ClassicAPI",
-    "reference_commit": "3e83827ae9647b1f58219bedda4e653e2df0be64",
+    "reference_commit": "0d19deaee0fe19cf6735a7789870d45b787fbfee",
+    "reference_commit_scope": "master one commit after the v1.17.8 tag (abd5367533ac): adds ItemHasRange / C_Item.ItemHasRange, which the released v1.17.8 DLL does not have",
     "file_shas": {
-      "docs/API.md": "8f7a6259c6ccdda973b0a1d3104e5b39e3928fb3",
-      "README.md": "b8e8642a6f132ec7bb9088d4c730411b84a46e4f"
+      "docs/API.md": "7f9ba2c4ed096989a60853e67488674d23639df7",
+      "README.md": "f87c229ae31bdfe864d7df8520a3f223dac3b672"
     },
     "release_provenance": {
-      "tag": "v1.17.7",
-      "tag_object": "e3aeb6adfc0de468b05c437b1519010b59257f9a",
-      "published_at": "2026-10-25T08:14:21Z",
-      "dll_asset_id": 674476660,
-      "dll_size_bytes": 1797120,
-      "dll_sha256": "294ad7c52659b8ecbe169e70e2c09b63b9791eb4dc352ef3a828f93f7af7d785"
+      "tag": "v1.17.8",
+      "tag_object": "a78dbe8d0f0c99bf932484d1a2427fd0f898d29b",
+      "commit": "abd5367533acf19291a7a5aa64472d5e56cf9619",
+      "published_at": "2026-10-26T01:02:14Z",
+      "dll_asset_id": 676587676,
+      "dll_size_bytes": 1798144,
+      "dll_sha256": "3da84c6c3ffbafc0fda1e5ca8bae78e2fc7fa4cbd0fb6d3c098fb5373f1a4381"
     }
   },
   "superwow": {

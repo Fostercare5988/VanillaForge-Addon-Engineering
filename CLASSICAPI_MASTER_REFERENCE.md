@@ -6,7 +6,7 @@
 >
 > Source basis: `brues-code/ClassicAPI`, default branch `master`, official `README.md`, official `docs/API.md`, and selected implementation/source references.
 >
-> Snapshot used by VanillaForge: **ClassicAPI v1.17.7** (reference). Support floor: **v1.17.7+** for all maintained addons (raised from v1.16.0 on 2026-10-26). The 1.17 additions and behavior changes are in [v1.17.0 to v1.17.3](#v1170-to-v1173-api-and-behavior-contracts) and [v1.17.4 to v1.17.7](#v1174-to-v1177-api-and-behavior-contracts).
+> Snapshot used by VanillaForge: **ClassicAPI v1.17.8** (reference). Support floor: **v1.17.7+** for all maintained addons (raised from v1.16.0 on 2026-10-26). The 1.17 additions and behavior changes are in [v1.17.0 to v1.17.3](#v1170-to-v1173-api-and-behavior-contracts) and [v1.17.4 to v1.17.8](#v1174-to-v1178-api-and-behavior-contracts).
 >
 > IMPORTANT: ClassicAPI is actively developed. This document is a local snapshot, not a claim that future versions cannot add or change functionality. If installed ClassicAPI is newer and a task depends on newly added behavior not present here, inspect the installed/current source and update this reference deliberately.
 
@@ -68,6 +68,7 @@ v1.17.4 -> 11704
 v1.17.5 -> 11705
 v1.17.6 -> 11706
 v1.17.7 -> 11707
+v1.17.8 -> 11708
 ```
 
 The VanillaForge support baseline is:
@@ -96,9 +97,10 @@ actually consumes. Future upstream releases do not automatically raise the
 support floor. An addon that adopts an API or fix from 1.17 (combat log, native
 Cooldown drawing, animations, Interface Options, interruptible cast events)
 raises its own guard and TOC note to `11703` / v1.17.3+. An addon that adopts
-an API or fix from 1.17.4 to 1.17.7 (profiling, `FlashClientIcon`, the name
-cache lookup, the binding modifier fix) raises it to that release; see
-[v1.17.4 to v1.17.7](#v1174-to-v1177-api-and-behavior-contracts).
+an API or fix from 1.17.4 to 1.17.8 (profiling, `FlashClientIcon`, the name
+cache lookup, the binding modifier fix, the nameplate alpha CVars) raises it
+to that release; see
+[v1.17.4 to v1.17.8](#v1174-to-v1178-api-and-behavior-contracts).
 
 ClassicAPI is one required component of VanillaForge's full enhanced environment;
 its version global does not establish that SuperWoW, NamPower and UnitXP SP3 are
@@ -497,6 +499,9 @@ NAME_PLATE_UNIT_REMOVED
 Nameplate unit tokens participate in UnitX calls and unit events.
 
 This is the preferred architecture over WorldFrame child scraping when the addon needs authoritative nameplate identity.
+
+Plate alpha follows vanilla rules, not the 1.17 inherited-alpha model; see
+[Nameplate alpha (1.17.8)](#nameplate-alpha-1178).
 
 **Delivery Resilience (v1.15.13+):** [SOURCE-VERIFIED]
 The dispatcher records a frame as announced only after it issues
@@ -2877,16 +2882,17 @@ This document was built from the official repository:
 
 ```text
 brues-code/ClassicAPI
-release: v1.17.7
-commit:  3e83827ae9647b1f58219bedda4e653e2df0be64
+release: v1.17.8 (tag commit abd5367533acf19291a7a5aa64472d5e56cf9619)
+commit:  0d19deaee0fe19cf6735a7789870d45b787fbfee (one commit after the tag)
 branch:  master
 ```
 
-Official source files used as primary reference (v1.17.7):
+Official source files used as primary reference (v1.17.8):
 
 ```text
-README.md (blob: b8e8642a6f132ec7bb9088d4c730411b84a46e4f)
-docs/API.md (blob: 8f7a6259c6ccdda973b0a1d3104e5b39e3928fb3)
+README.md (blob: f87c229ae31bdfe864d7df8520a3f223dac3b672)
+docs/API.md (blob: 7f9ba2c4ed096989a60853e67488674d23639df7)
+src/frame/Alpha.cpp (at abd5367, the nameplate alpha rules)
 ```
 
 Source files read for earlier snapshots (v1.15.16, commit 7ccbbaaf):
@@ -3260,11 +3266,12 @@ per-school spell damage.
 the soft unit. That is a gameplay choice: an addon may read the tokens but must
 not turn the CVars on by itself.
 
-## v1.17.4 to v1.17.7 API and behavior contracts
+## v1.17.4 to v1.17.8 API and behavior contracts
 
 [SOURCE-VERIFIED] From the pinned
-[v1.17.7 API reference](https://github.com/brues-code/ClassicAPI/blob/3e83827ae9647b1f58219bedda4e653e2df0be64/docs/API.md)
-and the `v1.17.3...v1.17.7` commit messages. Grep `.private/upstream/classicapi/docs/API.md`
+[v1.17.8 API reference](https://github.com/brues-code/ClassicAPI/blob/0d19deaee0fe19cf6735a7789870d45b787fbfee/docs/API.md),
+the `v1.17.3...v1.17.8` commit messages and, for nameplate alpha,
+[`src/frame/Alpha.cpp`](https://github.com/brues-code/ClassicAPI/blob/abd5367533acf19291a7a5aa64472d5e56cf9619/src/frame/Alpha.cpp). Grep `.private/upstream/classicapi/docs/API.md`
 for full payloads. [UNVERIFIED - TEST FIRST] Nothing here has been checked in
 game on OctoWoW yet.
 
@@ -3328,3 +3335,35 @@ a handler on `SHIFT-E` gets `1` from `IsShiftKeyDown()`. This reverts the
 - Spell links that Turtle's chat link handler would drop (such as
   `spell:<id>:0` from `GetSpellLink`) now reach `SetItemRef`. There is one
   `SetItemRef` override left to chain.
+
+### Nameplate alpha (1.17.8)
+
+Default nameplates, and every frame parented under one at any depth, are
+exempt from the 1.17 rule that frame alpha multiplies into children
+(`frame:GetEffectiveAlpha`). Inside a plate the vanilla rules hold again:
+
+- `plate:SetAlpha(a)` copies `a` down to the plate's child frames, except a
+  child that has called `SetAlpha` itself (any value, `1` included): that
+  child keeps its own alpha, absolute, and no later engine fade overwrites it.
+  Regions (textures, font strings) still draw at the plate's alpha.
+- `GetAlpha()` on a plate or anything under it returns the drawn byte
+  (`n/255`), as vanilla does, not the remembered own alpha.
+- A plate's own fade writes resolve through two new CVars:
+  `nameplateNotSelectedAlpha` (default `0.5`) replaces the engine's dimmed
+  write (non-target plates), `nameplateSelectedAlpha` (default `1`) its full
+  write (the target). At the defaults nothing changes. The substitution is by byte: an addon's `plate:SetAlpha(1)`
+  (255) also becomes `nameplateSelectedAlpha`, and `SetAlpha(0.5)` (127)
+  becomes `nameplateNotSelectedAlpha`. Writes to the plate's children are
+  never substituted.
+
+The CVars are the player's: an addon may read them but should not change them
+for the player. [UNVERIFIED - TEST FIRST] Whether the engine writes the plate
+fade every frame or only when the target changes is not documented.
+
+### After 1.17.8 (master only): `ItemHasRange`
+
+`ItemHasRange(item)` (`1`/`nil`) and `C_Item.ItemHasRange(item)`
+(`true`/`false`) say whether an item's on-use spell has a range. They were
+added one commit after the v1.17.8 tag and are **not in the v1.17.8 DLL**.
+Do not use them until a release ships them and this note moves under that
+release. `C_Item.IsItemInRange` already returns `nil` for a rangeless item.
