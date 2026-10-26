@@ -1092,6 +1092,30 @@ known system objects before native queries. Avoid unsafe engine enumeration to
 make a universal-discovery claim. Measure scan/API-call counts separately from
 actual client timing.
 
+### KP-58 --- Vararg Handlers Build a Table per Call
+
+**Problem:** In the client's Lua 5.0, every call of a function with `...` in its
+parameter list builds an `arg` table (ClassicAPI docs, `GetAuraSlots` fill form).
+A generic `function(...)` wrapper on OnUpdate, OnEvent or a hooked script does this
+on every frame or event. FostercareNameplates' plate OnUpdate wrapper made about
+320 KB/s with 40 plates (2026-10-26). Lupa runs Lua 5.1, which does not show it.
+
+**Preferred direction:** Give hot handlers and helpers fixed parameters
+(`function(a1, a2, ..., a10)`) and forward them explicitly. To measure in lupa, inject
+`local __arg = { n = select("#", ...), ... }` into each vararg function in memory
+(`regressions/FostercareNameplates/test_garbage_2026_10_26.py`).
+
+### KP-59 --- Events This Client Does Not Have
+
+**Problem:** Modern event names (`UNIT_TARGET`, `UI_SCALE_CHANGED`) can be registered
+without an error and then never fire, so code waiting for them keeps a stale state.
+FostercareNameplates' "Targeting you" label waited for `UNIT_TARGET` from its first
+release (2026-10-26).
+
+**Preferred direction:** Before relying on an event, find it in the extracted FrameXML
+or the DLL docs. Otherwise gate it with `C_EventUtils.IsEventValid(name)` and keep a
+documented signal or a slow poll; the stock target-of-target frame polls in OnUpdate.
+
 ------------------------------------------------------------------------
 
 ## 11. Pattern Governance

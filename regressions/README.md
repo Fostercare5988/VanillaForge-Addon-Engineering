@@ -41,7 +41,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | !ErrorLog | `regressions/ErrorLog` | 2 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 31 | Yes | [FostercareAuras](#fostercareauras) |
-| FostercareNameplates | `regressions/FostercareNameplates` | 33 | Yes | [FostercareNameplates](#fostercarenameplates) |
+| FostercareNameplates | `regressions/FostercareNameplates` | 42 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 34 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 27 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 30 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
@@ -278,6 +278,14 @@ Fourteen regressions cover the 2026-10-20 private audit
   player's nameplate alpha CVars replace writes of 1 and 0.5, so a faded plate (0.3) or a
   changed CVar is written once, not every frame; an engine fade is still overridden.
   Two fail on 1.4.1.
+- 2026-10-26 audit (1.4.3): `TargetingYou`: the "Targeting you" label follows the
+  enemy's target within a second (1.12 has no `UNIT_TARGET`) and asks nothing while
+  off. `Garbage`: with Lua 5.0's vararg `arg` tables emulated, plate frames build no
+  tables, and health bursts build none either. `EventWork`: melee swings keep the
+  cast query, and only the `nameplateN` token of a unit event is handled.
+  `CooldownTick`: unchanged enemy-cooldown ticks read no settings and lay out nothing.
+  `UnitFilters` grey-level fading follows the stock `GetDifficultyColor` rule.
+  Eight fail on 1.4.2.
 
 Eleven fail on the code before their batch for the stated reason; the other three guard
 behavior that must stay unchanged. `fnp_env.py` runs the TOC files under Lua 5.1 with
