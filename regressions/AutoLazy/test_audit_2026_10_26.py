@@ -92,15 +92,20 @@ local methods = {
     GetFrameLevel = function() return 1 end, IsMouseEnabled = function() return true end,
     GetEffectiveScale = function() return 1 end, IsMouseOver = function() return false end,
     CreateTexture = function() return setmetatable({}, { __index = function() return noop end }) end,
+    GetChildren = function(f) return unpack(rawget(f, "children")) end,
 }
 local mt = { __index = function(_, k) return methods[k] or noop end }
 function CreateFrame(kind, name, parent)
     local f = setmetatable({ [0] = newproxy(), kind = kind, name = name, parent = parent,
-        w = 10, h = 10, shown = true, scripts = {} }, mt)
+        w = 10, h = 10, shown = true, scripts = {}, children = {} }, mt)
     if name then _G[name] = f end
+    if parent then table.insert(rawget(parent, "children"), f) end
     return f
 end
-UIParent, Minimap = CreateFrame("Frame", "UIParent"), CreateFrame("Frame", "Minimap")
+UIParent = CreateFrame("Frame", "UIParent")
+MinimapCluster = CreateFrame("Frame", "MinimapCluster", UIParent)
+Minimap = CreateFrame("Frame", "Minimap", MinimapCluster)
+MinimapBackdrop = CreateFrame("Frame", "MinimapBackdrop", MinimapCluster)
 GameTooltip = CreateFrame("Frame", "GameTooltip")
 AutoLazy = { Style = { Surface = noop }, Print = noop, UpdateGUI = noop }
 AutoLazyDB = { Tweaks = { CollapseAddons = true, KeepOnMinimap = {} } }
@@ -123,9 +128,10 @@ def core():
     return lua
 
 
-def tray():
+def tray(before=""):
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(TRAY_MOCKS)
+    lua.execute(before)
     lua.execute(TRAY)
     lua.execute(TRAY_START)
     return lua
@@ -264,6 +270,18 @@ class TrayDiscovery(unittest.TestCase):
             b.GetNormalTexture = function() return art end
             fire("PLAYER_ENTERING_WORLD"); settle()
         ''')
+        self.assertEqual(lua.eval("#AutoLazy.Tray.GetEntries()"), 1)
+
+    def test_p2_unnamed_launchers_from_earlier_addons_join_the_tray(self):
+        """An unnamed launcher made before AutoLazy loads is no global and passed no CreateFrame hook."""
+        lua = tray('''
+            local b = CreateFrame("Button", nil, Minimap)
+            b.w, b.h = 32, 32
+            b:SetScript("OnClick", function() end)
+            b:SetScript("OnDragStart", function() end)
+            b.GetNormalTexture = function() return { GetTexture = function() return "Interface\Icons\X" end } end
+        ''')
+        lua.execute('fire("PLAYER_ENTERING_WORLD"); settle()')
         self.assertEqual(lua.eval("#AutoLazy.Tray.GetEntries()"), 1)
 
     def test_p2_map_pins_stay_on_the_minimap(self):
