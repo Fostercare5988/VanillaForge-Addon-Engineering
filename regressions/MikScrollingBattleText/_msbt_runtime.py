@@ -142,7 +142,7 @@ local lower=string.lower
 string.lower=function(s) count("string.lower"); return lower(s) end
 strlower=string.lower
 
-units={player={guid="0xPLAYER",name="Hero",health=1000,max=1000,mana=100,maxmana=100,class="PRIEST"},
+units={player={guid="0xPLAYER",name="Hero",health=1000,max=1000,mana=100,maxmana=100,class="PRIEST",xp=0,maxxp=1000},
  pet={guid="0xPET",name="Wolf",health=500,max=500,class="WARRIOR"},
  target={guid="0xENEMY",name="Twin",health=1000,max=1000,class="MAGE",player=true}}
 function Resolve(u) if units[u] then return units[u] end; for _,v in pairs(units) do if v.guid==u then return v end end end
@@ -157,6 +157,8 @@ function UnitHealth(u) local v=Resolve(u); return v and v.health or 0 end
 function UnitHealthMax(u) local v=Resolve(u); return v and v.max or 0 end
 function UnitMana(u) local v=Resolve(u); return v and v.mana or 0 end
 function UnitManaMax(u) local v=Resolve(u); return v and v.maxmana or 0 end
+function UnitXP(u) local v=Resolve(u); return v and v.xp or 0 end
+function UnitXPMax(u) local v=Resolve(u); return v and v.maxxp or 0 end
 function UnitPowerType() return 0 end
 function GetComboPoints() return 0 end
 function GetTime() return now end

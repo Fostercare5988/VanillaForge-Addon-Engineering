@@ -40,9 +40,11 @@ class FindHoles(unittest.TestCase):
             "Dead.lua": "-- Remove the line below to activate.\nif true then return end\nlocal x = 1\n",
             "Unloaded.lua": "local y = 2\n",
             "img/used.tga": "", "img/unused.tga": "",
+            "img/Nodes/Farm_Horde.tga": "", "img/Nodes/Mill_Horde.tga": "",
         })
         (self.root / "Owner" / "Owner.lua").write_text(
-            (self.root / "Owner" / "Owner.lua").read_text() + "local t = 'Interface\\\\AddOns\\\\Owner\\\\img\\\\used'\n")
+            (self.root / "Owner" / "Owner.lua").read_text() + "local t = 'Interface\\\\AddOns\\\\Owner\\\\img\\\\used'\n"
+            + "local kinds = { 'Farm' }\nlocal p = 'Interface\\\\AddOns\\\\Owner\\\\img\\\\Nodes\\\\' .. kinds[1] .. '_' .. 'Horde'\n")
         write(self.root / "Reader", {
             "Reader.toc": "## Title: Reader\nReader.lua\n",
             "Reader.lua": "local price = Alias and Alias.Price\nlocal timers = { Owner = {} }\n",
@@ -66,6 +68,15 @@ class FindHoles(unittest.TestCase):
         self.assertIn("Banzai", names)
         self.assertNotIn("OwnerFrame", names)  # created by name with CreateFrame
 
+    def test_numbered_names_the_game_builds_are_not_ghosts(self):
+        # WorldStateFrame.lua: name = "AlwaysUpFrame"..alwaysUpShown; CreateFrame("Frame", name, ...)
+        game = HOLES.global_defs('local name = "AlwaysUpFrame"..alwaysUpShown\nlocal f = CreateFrame("Frame", name)\n')
+        write(self.root / "Owner", {"Owner.lua": "if AlwaysUpFrame1 and AlwaysUpFrame1:IsShown() then end\nif Banzai then end\n"})
+        owner = HOLES.Addon(self.root / "Owner")
+        names = [g["name"] for g in HOLES.ghosts(owner, [owner], game, set(), set())]
+        self.assertNotIn("AlwaysUpFrame1", names)
+        self.assertIn("Banzai", names)
+
     def test_leaked_globals_not_table_fields(self):
         names = [l["name"] for l in HOLES.leaks(self.owner, set())]
         self.assertEqual(names, ["leak"])
@@ -75,6 +86,9 @@ class FindHoles(unittest.TestCase):
         self.assertIn("Unloaded.lua", found)
         self.assertIn("img/unused.tga", found)
         self.assertNotIn("img/used.tga", found)
+        # Built from parts: the folder and each part of the name are in the code.
+        self.assertNotIn("img/Nodes/Farm_Horde.tga", found)
+        self.assertIn("img/Nodes/Mill_Horde.tga", found)
         self.assertIn("returns before", found["Dead.lua"])
 
     def test_stale_note(self):

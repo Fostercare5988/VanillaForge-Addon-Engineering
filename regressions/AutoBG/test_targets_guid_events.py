@@ -33,6 +33,19 @@ function Widget:Hide() self.shown = false end
 function Widget:GetFrameLevel() return 1 end
 function Widget:CreateTexture() return setmetatable({}, { __index = Widget }) end
 function Widget:CreateFontString() return setmetatable({}, { __index = Widget }) end
+-- ClassicAPI unit buttons: attributes, and a click that resolves its verb like
+-- the engine ([mod-]typeN, then typeN); target and focus are recorded, any
+-- other click runs the frame's own OnClick.
+picked = {}
+function Widget:SetAttribute(k, v) self.attrs = self.attrs or {}; self.attrs[k] = v end
+function Widget:GetAttribute(k) return self.attrs and self.attrs[k] end
+function Widget:Click(button)
+    local n = button == "RightButton" and "2" or "1"
+    local mod = (IsControlKeyDown and IsControlKeyDown() and "ctrl-") or (IsShiftKeyDown and IsShiftKeyDown() and "shift-") or ""
+    local verb = self:GetAttribute(mod .. "type" .. n) or self:GetAttribute("type" .. n)
+    if verb == "target" or verb == "focus" then table.insert(picked, verb .. " " .. tostring(self:GetAttribute("unit")))
+    elseif self.scripts and self.scripts.OnClick then self.scripts.OnClick(self, button) end
+end
 function CreateFrame(_, name) local f = setmetatable({ name = name }, { __index = Widget }); if name then _G[name] = f end; return f end
 UIParent = CreateFrame("Frame", "UIParent")
 local handle = { Cancel = function() end }
@@ -61,6 +74,8 @@ guidNames = {}
 spellInfoCalls = 0
 function SpellInfo(id) spellInfoCalls = spellInfoCalls + 1; return "Arcane Intellect" end
 function UnitName(u) if u == "player" then return "Tester" end if u == "target" then return target end return guidNames[u] end
+function UnitTokenFromName(name) for g, n in pairs(guidNames) do if n == name then return g end end end
+function UnitIsUnit(a, b) return a == b end
 function UnitGUID(u)
     if u == "target" and target then return "0x0000000000000042" end
     if u == "0x0000000000000042" then return u end
