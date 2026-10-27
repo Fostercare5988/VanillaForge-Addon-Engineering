@@ -6,8 +6,8 @@ Each test fails on AutoBG e24539b and states the behaviour the fix must give:
   base) on the Alterac Valley timers.
 - An enemy seen starting an Opening cast at a flag warns, so Alterac Valley
   (where the 40-player enemy frames, and their cast bars, can be off) warns at all.
-- A node message that only reports a holder ("was taken") right after your own
-  Opening must not save your spot as that node's flag.
+- (2026-10-27) The flag watch is Arathi Basin only: Alterac Valley messages
+  never reach it, and saved Alterac Valley spots are dropped on load.
 - The stealth warning card shows real icon paths: Lua drops the backslash in
   "Interface\\Icons" written with single backslashes.
 
@@ -81,10 +81,11 @@ class AlteracMineTests(unittest.TestCase):
         self.assertEqual(lua.eval('rawget(AutoBG_AVNodeFrame.rows[1].timeFs, "text")'), "5:00")
         self.assertEqual(lua.eval('AutoBG_AVNodeFrame.rows[1].icon.texture'), "Interface\\AddOns\\AutoBG\\Textures\\Nodes\\Mine_Horde")
 
-    def test_mine_lines_do_not_teach_flag_spots(self):
+    def test_alterac_valley_lines_never_reach_the_flag_watch(self):
         lua = av_timers()
         lua.execute('heard = {}; AutoBG_FlagWatch = { OnNodeMessage = function(_, node) table.insert(heard, node) end }')
         yell(lua, "The Horde has taken the Irondeep Mine! Its supplies will now be used for reinforcements!")
+        yell(lua, "The Stormpike Aid Station is under attack! If left unchecked, the Horde will capture it!")
         self.assertEqual(len(lua.eval('heard')), 0)
 
 
@@ -201,55 +202,33 @@ class FlagWatchCastTests(unittest.TestCase):
         self.assertEqual(len(lua.eval('alerts')), 0)
 
 
-class FlagSpotLearningTests(unittest.TestCase):
-    PLAYER = "0x0000000000000001"
+class FlagWatchArathiOnlyTests(unittest.TestCase):
+    """2026-10-27: "Opening Stormpike Aid Station" in Alterac Valley was noise;
+    the flag watch belongs to Arathi Basin alone."""
 
-    def own_opening(self, lua):
-        lua.execute('pos.player = { 674, -148 }')
-        lua.execute('AutoBG_FlagWatch.onEvent(AutoBG_FlagWatch, "UNIT_CASTEVENT", "%s", nil, "CAST", 24391, 0)'
-                    % self.PLAYER)
-
-    def test_holder_message_after_your_opening_does_not_move_a_flag(self):
-        """Saved AV spots on 2026-10-26: Snowfall and Iceblood Graveyard both sat
-        on Dun Baldar North Bunker, where the player had opened a flag."""
-        lua = test_flag_watch.runtime()
-        self.own_opening(lua)
-        lua.execute('AutoBG_FlagWatch:OnNodeMessage("Snowfall Graveyard", '
-                    '"The Snowfall Graveyard was taken by the Horde!", "Horde")')
-        self.assertIsNone(lua.eval('AutoBG_Settings.FlagSpots and AutoBG_Settings.FlagSpots[529] '
-                                   'and AutoBG_Settings.FlagSpots[529]["Snowfall Graveyard"]'))
-
-    def test_assault_after_your_opening_still_learns_the_flag(self):
-        lua = test_flag_watch.runtime()
-        self.own_opening(lua)
-        lua.execute('AutoBG_FlagWatch:OnNodeMessage("Dun Baldar North Bunker", '
-                    '"The Dun Baldar North Bunker is under attack! If left unchecked, the Horde will destroy it!", "Horde")')
-        self.assertEqual(lua.eval('AutoBG_Settings.FlagSpots[529]["Dun Baldar North Bunker"].y'), 674)
-
-    def test_two_openings_in_one_window_teach_nothing(self):
-        lua = test_flag_watch.runtime()
-        self.own_opening(lua)
-        lua.execute('pos["%s"] = { 300, 300 }' % test_flag_watch.BALLOON)
-        lua.execute('AutoBG_FlagWatch.onEvent(AutoBG_FlagWatch, "UNIT_CASTEVENT", "%s", nil, "CAST", 24391, 0)'
-                    % test_flag_watch.BALLOON)
-        lua.execute('AutoBG_FlagWatch:OnNodeMessage("Icewing Bunker", '
-                    '"The Icewing Bunker is under attack! If left unchecked, the Horde will destroy it!", "Horde")')
-        self.assertIsNone(lua.eval('AutoBG_Settings.FlagSpots and AutoBG_Settings.FlagSpots[529] '
-                                   'and AutoBG_Settings.FlagSpots[529]["Icewing Bunker"]'))
-
-    def test_spots_saved_on_top_of_each_other_are_dropped(self):
-        """The saved AV spots of 2026-10-26: three flags at one place."""
+    def test_no_warning_in_alterac_valley(self):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(test_flag_watch.SETUP)
-        lua.execute(r'''AutoBG_Settings.FlagSpots = { [529] = {
-            ["Snowfall Graveyard"] = { y = -147.70, x = 673.79, n = 1 },
-            ["Dun Baldar North Bunker"] = { y = -147.61, x = 673.87, n = 6 },
-            ["Iceblood Graveyard"] = { y = -147.53, x = 673.88, n = 1 },
-            ["Icewing Bunker"] = { y = -355.71, x = 202.61, n = 9 } } }''')
+        lua.execute('function GetRealZoneText() return "Alterac Valley" end')
         lua.execute(test_flag_watch.WATCH)
         lua.execute('AutoBG_FlagWatch.onEvent(AutoBG_FlagWatch, "PLAYER_ENTERING_WORLD")')
-        left = sorted(lua.eval('AutoBG_Settings.FlagSpots[529]').keys())
-        self.assertEqual(left, ["Icewing Bunker"])
+        self.assertIsNone(lua.eval('tick'))
+        lua.execute('AutoBG_FlagWatch:OnNodeMessage("Stormpike Aid Station", '
+                    '"Tester claims the Stormpike Aid Station!", "Alliance")')
+        self.assertIsNone(lua.eval('AutoBG_Settings.FlagSpots'))
+
+    def test_saved_alterac_valley_spots_are_dropped_and_arathi_kept(self):
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(test_flag_watch.SETUP)
+        lua.execute(r'''AutoBG_Settings.FlagSpots = {
+            [529] = { ["Stables"] = { y = 1200.5, x = 1167.0, n = 10 },
+                      ["Farm"] = { y = 873.4, x = 805.2, n = 10 } },
+            [30] = { ["Stormpike Aid Station"] = { y = -29.2, x = 639.7, n = 10 },
+                     ["Icewing Bunker"] = { y = -356.3, x = 202.5, n = 6 } } }''')
+        lua.execute(test_flag_watch.WATCH)
+        lua.execute('AutoBG_FlagWatch.onEvent(AutoBG_FlagWatch, "PLAYER_ENTERING_WORLD")')
+        self.assertEqual(sorted(lua.eval('AutoBG_Settings.FlagSpots[529]').keys()), ["Farm", "Stables"])
+        self.assertIsNone(lua.eval('AutoBG_Settings.FlagSpots[30]'))
 
 
 class RetiredSettingsTests(unittest.TestCase):
