@@ -41,9 +41,9 @@ that folder's `verified-repositories.json` and `validation.json`.
 | !ErrorLog | `regressions/ErrorLog` | 2 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 31 | Yes | [FostercareAuras](#fostercareauras) |
-| FostercareNameplates | `regressions/FostercareNameplates` | 50 | Yes | [FostercareNameplates](#fostercarenameplates) |
+| FostercareNameplates | `regressions/FostercareNameplates` | 51 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 66 | Yes | [FostercareTweaks](#fostercaretweaks) |
-| GearRack | `regressions/GearRack` | 51 | Yes | [GearRack](#gearrack) |
+| GearRack | `regressions/GearRack` | 54 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 30 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
 | TWThreat | `regressions/TWThreat` | 6 | Yes | [TWThreat](#twthreat) |
@@ -328,6 +328,8 @@ FostercareNameplates 1.4.4 (ClassicAPI 1.17.10) adds `test_aura_delta_2026_10_27
 new or lost aura changes the own debuff count, the first crowd control or the first
 two buffs; another player's debuff leaves the row alone. Cooldown icons hide the
 native countdown numbers. All eight fail on `5a8cd9f`; `fnp_env.py` mocks `11710`.
+`test_options_entry_2026_10_27.py` (1 test): the AddOn Options entry opens the
+settings window; `fnp_env.py` records `InterfaceOptions_AddCategory` panels.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareNameplates" --run-tests --test-start regressions/FostercareNameplates --output .private/fnp-current.json
@@ -533,6 +535,8 @@ and the bank-bag and alert-on tests are controls.
 
 `test_unit_events_2026_10_27.py` (1 test): `UNIT_INVENTORY_CHANGED` is registered
 with `RegisterUnitEvent` for the player only. It fails on `2b07347`.
+`test_options_entry_2026_10_27.py` (3 tests): AddOn Options lists GearRack with
+Gear Sets and Trinkets under it, and each opens its window. They fail on `e138cf7`.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/GearRack" --run-tests --test-start regressions/GearRack --output .private/gearrack-current.json
