@@ -14,7 +14,7 @@ TIMERS = (ROOT / "AutoBG_Timers.lua").read_text("utf-8-sig")
 
 BASE = r'''
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
-CLASSIC_API_VERSION, SUPERWOW_VERSION = 11707, "2.2"
+CLASSIC_API_VERSION, SUPERWOW_VERSION = 11710, "2.2"
 local Widget = {}
 setmetatable(Widget, { __index = function(_, name)
     if string.find(name, "^%u") then return function() end end

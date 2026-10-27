@@ -13,7 +13,7 @@ CORE = (ROOT / "AutoBG.lua").read_text("utf-8-sig")
 
 BASE = r'''
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
-CLASSIC_API_VERSION, SUPERWOW_VERSION = 11707, "2.2"
+CLASSIC_API_VERSION, SUPERWOW_VERSION = 11710, "2.2"
 flashes = 0; function FlashClientIcon() flashes = flashes + 1 end
 function IsInRaid() return nil end; function IsInGroup() return nil end
 local Widget = {}
@@ -86,10 +86,20 @@ class PlayerStateTests(unittest.TestCase):
         lua = runtime()
         lua.execute('lookups = { index = 0, name = 0, id = 0 }')
         # The client raises both events for one change to the player's auras.
-        fire(lua, "UNIT_AURA", "player")
+        fire(lua, "UNIT_AURA_DELTA", "player")
         fire(lua, "PLAYER_AURAS_CHANGED")
         self.assertEqual(lua.eval('lookups.index'), 0)
         self.assertLessEqual(lua.eval('lookups.name + lookups.id'), 1)
+
+    def test_aura_refresh_alone_does_not_look_for_deserter(self):
+        lua = runtime()
+        lua.execute('lookups = { index = 0, name = 0, id = 0 }')
+        lua.execute('AutoBGFrame.scripts.OnEvent(AutoBGFrame, "UNIT_AURA_DELTA", "player", '
+                    '{ updatedAuraInstanceIDs = { 7 } })')
+        self.assertEqual(lua.eval('lookups.name + lookups.id'), 0)
+        lua.execute('AutoBGFrame.scripts.OnEvent(AutoBGFrame, "UNIT_AURA_DELTA", "player", '
+                    '{ addedAuraInstanceIDs = { 8 } })')
+        self.assertEqual(lua.eval('lookups.name + lookups.id'), 1)
 
     def test_deserter_is_still_found_with_its_remaining_time(self):
         lua = runtime()

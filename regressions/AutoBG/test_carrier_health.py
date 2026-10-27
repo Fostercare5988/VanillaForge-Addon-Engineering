@@ -12,7 +12,7 @@ ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 FC = (ROOT / "AutoBG_FC.lua").read_text("utf-8-sig")
 
 BASE = r'''
-CLASSIC_API_VERSION, SUPERWOW_VERSION = 11707, "2.2"
+CLASSIC_API_VERSION, SUPERWOW_VERSION = 11710, "2.2"
 local Widget = {}
 setmetatable(Widget, { __index = function(_, name)
     if string.find(name, "^%u") then return function() end end
