@@ -42,7 +42,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 31 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 42 | Yes | [FostercareNameplates](#fostercarenameplates) |
-| FostercareTweaks | `regressions/FostercareTweaks` | 47 | Yes | [FostercareTweaks](#fostercaretweaks) |
+| FostercareTweaks | `regressions/FostercareTweaks` | 58 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 50 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 30 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
@@ -157,6 +157,12 @@ FostercareTweaks 1.6.0 adds `test_audit_2026_10_26.py` (13 tests):
 Ten fail on 1.5.0 (`28a6eea`). Three are controls. `test_audit_2026_10_25.py`
 now expects the Auto Dismount switch to be kept, and the four retired options
 to be cleared.
+
+ClassicAPI 1.17.9 gives native `Cooldown` frames countdown numbers.
+`test_cooldown_numbers_2026_10_27.py` (7 tests): Cooldown Numbers stands aside
+on a native frame while `countdownForCooldowns` is 1, keeps the stock Models and
+GearRack's buttons as before, and aura buttons hide the native numbers. Three
+fail on `c143613`; four are controls. The suite's ClassicAPI mock is `11709`.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareTweaks" --run-tests --test-start regressions/FostercareTweaks --output .private/fct-current.json
