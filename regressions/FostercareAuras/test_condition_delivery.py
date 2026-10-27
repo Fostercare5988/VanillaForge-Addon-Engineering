@@ -53,11 +53,6 @@ def runtime():
             auraPasses = auraPasses + 1
             if onAura then onAura() end
         end
-        function FostercareConditions:EvaluateCustom()
-            customPasses = customPasses + 1
-            if onCustom then onCustom() end
-            return true
-        end
         _acc,_textAccum,_timeEvalAccum,_distAccum,_teFastAccum=0,0,0,0,0
         _teFastActive=false
     ''')
@@ -72,7 +67,6 @@ def runtime():
         local _hasAnyCustomLogic=false
     ''' + slots + '\n' + helpers + '\n' + request + '\n' + tick + '\n' + events + r'''
         function snapshot() return _GetPlayerItemSnapshot().bags end
-        function enableCustom() _hasAnyCustomLogic=true end
         function resetFlags()
             dirty_ability,dirty_aura,dirty_target,dirty_power,dirty_ability_time=false,false,false,false,false
         end
@@ -120,14 +114,6 @@ class ConditionDeliveryTests(unittest.TestCase):
             onAura=function() onAura=nil; FostercareConditions_RequestEvaluate() end
             FostercareConditions_OnUpdate(.1); FostercareConditions_OnUpdate(.1)
             assert(auraPasses==2,'aura evaluation erased reentrant invalidation')
-        ''')
-
-    def test_custom_callback_can_invalidate_an_otherwise_idle_pass(self):
-        runtime().execute('''
-            enableCustom()
-            onCustom=function() onCustom=nil; FostercareConditions_RequestEvaluate() end
-            FostercareConditions_OnUpdate(.1); FostercareConditions_OnUpdate(.1)
-            assert(abilityPasses==1 and auraPasses==1,'custom evaluation erased new work')
         ''')
 
     def test_sliding_keeps_ability_updates_and_stops_when_slide_finishes(self):

@@ -54,11 +54,11 @@ def spellbook_runtime():
 
 
 class LookupTests(unittest.TestCase):
-    def test_pet_stacks_come_from_the_pet_aura_cache(self):
+    def test_pet_stacks_are_not_tracked_any_more(self):
+        # 2026-10-27: pet aura tracking is retired; the pet is never scanned.
         lua = stacks_runtime()
-        self.assertEqual(lua.eval('stacks("pet", "Frenzy", false, 0, false)'), 3)
-        self.assertIsNone(lua.eval('stacks("pet", "Bestial Wrath", false, 0, false)'))
-        self.assertEqual(lua.eval('auraScans'), 0, 'pet auras were rescanned')
+        self.assertIsNone(lua.eval('stacks("pet", "Frenzy", false, 0, false)'))
+        self.assertEqual(lua.eval('auraScans'), 0, 'pet auras were scanned')
 
     def test_spell_missing_from_the_book_does_not_walk_the_spellbook(self):
         lua = spellbook_runtime()

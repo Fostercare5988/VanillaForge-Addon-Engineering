@@ -3,8 +3,7 @@
 - Opening the editor no longer turns the positioning grid on; Show Grid does.
 - Target auras are read in one ClassicAPI walk (GetAuraSlots + UnitAuraBySlot)
   instead of UnitBuff/UnitDebuff by index, which walked the list per index.
-- The aura logic editor's OK and Cancel refresh the panel, icons and state:
-  they called the editor's locals by global name, which were always nil.
+- The aura logic editor (whose OK/Cancel never refreshed) is retired.
 - The update loop keeps its accumulators local, not as bare globals.
 - The 246 unused MikPowerAuras textures (most of 25 MB) are gone.
 
@@ -20,8 +19,7 @@ from lupa.lua51 import LuaRuntime
 
 ADDON = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 CONDITIONS = (ADDON / "Modules/FostercareConditions.lua").read_text("utf-8-sig")
-EDIT = (ADDON / "Modules/FostercareEdit.lua").read_text("utf-8-sig")
-LOGIC = (ADDON / "Modules/FostercareLogic.lua").read_text("utf-8-sig")
+EDIT = (ADDON.parent / "FostercareAuras_Edit" / "FostercareEdit.lua").read_text("utf-8-sig")
 
 SCAN_MOCKS = r'''
 auras = {
@@ -93,11 +91,11 @@ class EditorGridTests(unittest.TestCase):
         self.assertNotIn("Show Grid by default", EDIT)
 
 
-class LogicRefreshTests(unittest.TestCase):
-    def test_logic_editor_refreshes_through_public_functions(self):
-        self.assertNotRegex(LOGIC, r"\b(SafeRefresh|SafeEvaluate|AuraCond_RefreshFromDB)\s*\(")
-        self.assertIn("FostercareAuras_RefreshIcons()", LOGIC)
-        self.assertIn("FostercareConditions_RequestEvaluate()", LOGIC)
+class LogicRetiredTests(unittest.TestCase):
+    def test_logic_editor_is_retired(self):
+        # Its OK/Cancel never refreshed (fixed 052ceb5); retired 2026-10-27, unused.
+        self.assertFalse((ADDON / "Modules" / "FostercareLogic.lua").exists())
+        self.assertNotIn("FostercareLogic", EDIT + CONDITIONS)
 
 
 class LeanTests(unittest.TestCase):

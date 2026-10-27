@@ -50,6 +50,16 @@ trigger type (chat text, used by no character) is retired with its editor,
 event list and `/msbt search`; XP comes from `PLAYER_XP_UPDATE` (quests and
 exploring too, level-ups counted). All six fail on `f433e27`.
 
+## FostercareAuras 1.2.0-local audit (2026-10-27)
+
+`test_audit_2026_10_27.py` (grid default, one-walk target scan, local loop
+counters, unused textures), `test_audit_2026_10_27b.py` (no per-unit GUID
+health/power events, no Turtle spell data) and `test_ui_2026_10_27.py` (ForgeUI
+window, retired modules, forced refresh honoured, idle handlers, the editor as
+the load-on-demand addon FostercareAuras_Edit, read from the sibling folder).
+`test_saved_settings.py` checks retired saved data is cleared; the Groups and
+custom-code tests were removed with their features. 46 tests.
+
 ## Suite index
 
 Every addon regression suite VanillaForge knows about. "Portable" suites read the
