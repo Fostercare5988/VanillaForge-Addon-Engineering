@@ -41,9 +41,9 @@ that folder's `verified-repositories.json` and `validation.json`.
 | !ErrorLog | `regressions/ErrorLog` | 2 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 31 | Yes | [FostercareAuras](#fostercareauras) |
-| FostercareNameplates | `regressions/FostercareNameplates` | 42 | Yes | [FostercareNameplates](#fostercarenameplates) |
-| FostercareTweaks | `regressions/FostercareTweaks` | 58 | Yes | [FostercareTweaks](#fostercaretweaks) |
-| GearRack | `regressions/GearRack` | 50 | Yes | [GearRack](#gearrack) |
+| FostercareNameplates | `regressions/FostercareNameplates` | 50 | Yes | [FostercareNameplates](#fostercarenameplates) |
+| FostercareTweaks | `regressions/FostercareTweaks` | 66 | Yes | [FostercareTweaks](#fostercaretweaks) |
+| GearRack | `regressions/GearRack` | 51 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 30 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
 | TWThreat | `regressions/TWThreat` | 6 | Yes | [TWThreat](#twthreat) |
@@ -162,7 +162,15 @@ ClassicAPI 1.17.9 gives native `Cooldown` frames countdown numbers.
 `test_cooldown_numbers_2026_10_27.py` (7 tests): Cooldown Numbers stands aside
 on a native frame while `countdownForCooldowns` is 1, keeps the stock Models and
 GearRack's buttons as before, and aura buttons hide the native numbers. Three
-fail on `c143613`; four are controls. The suite's ClassicAPI mock is `11709`.
+fail on `c143613`; four are controls.
+
+FostercareTweaks 1.6.1 (ClassicAPI 1.17.10) adds `test_aura_delta_2026_10_27.py`
+(9 tests): the player and target rows and the raid buttons follow
+`UNIT_AURA_DELTA`. A refresh or stack change rewrites only its own button or
+badge; a new or lost aura, a full update or a change with no button reads the
+row again; other tokens are ignored. All nine fail on `248c570`. The player
+aura coalescing test is gone (the engine sends one delta per frame), the
+target-token test fires the delta, and the ClassicAPI mock is `11710`.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareTweaks" --run-tests --test-start regressions/FostercareTweaks --output .private/fct-current.json
@@ -314,6 +322,12 @@ behavior that must stay unchanged. `fnp_env.py` runs the TOC files under Lua 5.1
 permissive widget mocks and models the SavedVariables load order from the TOC's
 `LoadSavedVariablesFirst` line. They do not prove native plate rendering, input or
 engine timing.
+
+FostercareNameplates 1.4.4 (ClassicAPI 1.17.10) adds `test_aura_delta_2026_10_27.py`
+(8 tests): a delta rebuilds the aura row only when a refreshed spell is on it or a
+new or lost aura changes the own debuff count, the first crowd control or the first
+two buffs; another player's debuff leaves the row alone. Cooldown icons hide the
+native countdown numbers. All eight fail on `5a8cd9f`; `fnp_env.py` mocks `11710`.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareNameplates" --run-tests --test-start regressions/FostercareNameplates --output .private/fnp-current.json
@@ -516,6 +530,9 @@ combat queue are cleared; enchant time comes from ClassicAPI alone; hooks leak n
 globals; an enabled notify event leaves "Notify when ready" off. The fixes are commits
 `e51cb39` to `2b07347`; the cut-out tests fail or cannot find their code on `b8778c9`,
 and the bank-bag and alert-on tests are controls.
+
+`test_unit_events_2026_10_27.py` (1 test): `UNIT_INVENTORY_CHANGED` is registered
+with `RegisterUnitEvent` for the player only. It fails on `2b07347`.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/GearRack" --run-tests --test-start regressions/GearRack --output .private/gearrack-current.json

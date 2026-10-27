@@ -173,7 +173,7 @@ class RetiredSettings(unittest.TestCase):
     def load(self, saved):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute('''
-            CLASSIC_API_VERSION, SUPERWOW_VERSION = 11709, "2.2"
+            CLASSIC_API_VERSION, SUPERWOW_VERSION = 11710, "2.2"
             cvars = {}
             function SetCVar(k, v) cvars[k] = v end
             function CreateFrame() return { RegisterEvent = function() end, SetScript = function() end } end
