@@ -9,7 +9,7 @@
 > **Canonical enhanced-client baseline**
 >
 > - World of Warcraft 1.12.1, Build 5875, `Interface: 11200`
-> - ClassicAPI v1.17.7+
+> - ClassicAPI v1.17.11+ (the latest release; see UPSTREAM_VERSIONS.json)
 > - SuperWoW v2.2+
 > - NamPower v4.6.2+
 > - UnitXP SP3 v89+

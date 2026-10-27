@@ -98,6 +98,20 @@
       "finding": "Compares OffhandHasWeapon() with a value. The engine returns 1 or nil (ClassicAPI 1.17.10+); older ClassicAPI returned true or false, so the comparison is right on one of them only.",
       "better": "Test its truth; IsDualWielding() (1.17.10+) when the question is whether the player dual wields.",
       "source": "CLASSICAPI_MASTER_REFERENCE.md#small-changes-11710"
+    },
+    {
+      "id": "lowered-sort-compare",
+      "pattern": "return\\s+string\\.lower\\([^)]*\\)\\s*<\\s*string\\.lower\\(|local\\s+l?a\\s*=\\s*string\\.lower\\(\\s*a\\b",
+      "finding": "Sorts by lowering both strings, which builds two new strings on every comparison.",
+      "better": "strcmputf8i(a, b) < 0 (1.17.11+): case-insensitive, makes no strings.",
+      "source": "CLASSICAPI_MASTER_REFERENCE.md#string-helpers-11711"
+    },
+    {
+      "id": "strsplit-into-table",
+      "pattern": "\\{\\s*strsplit\\(",
+      "finding": "Packs strsplit's returns into a table; the returns go through the Lua stack first.",
+      "better": "strsplittable(sep, str [, pieces]) (1.17.11+) returns the array directly, with no stack limit.",
+      "source": "CLASSICAPI_MASTER_REFERENCE.md#string-helpers-11711"
     }
   ]
 }

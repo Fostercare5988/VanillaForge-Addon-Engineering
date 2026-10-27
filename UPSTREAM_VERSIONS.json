@@ -1,23 +1,23 @@
 {
   "classicapi": {
-    "minimum_version": "1.17.7",
-    "minimum_version_scope": "all maintained VanillaForge addons share the explicit ClassicAPI 1.17.7+ support floor (11707), raised from 1.16.0 on 2026-10-26",
-    "reference_version": "1.17.10",
+    "minimum_version": "1.17.11",
+    "minimum_version_scope": "all maintained VanillaForge addons follow the latest ClassicAPI release (player's rule, 2026-10-27): floor 1.17.11 (11711), raised from 1.17.7; addon guards are raised in each addon's next pass",
+    "reference_version": "1.17.11",
     "repository": "brues-code/ClassicAPI",
-    "reference_commit": "9daf3960c48d42f01b5f8cc38d98b157dfcac934",
-    "reference_commit_scope": "the v1.17.10 tag commit; master is two unreleased commits ahead (string helpers, a PlaySoundFile doc fix)",
+    "reference_commit": "317539dbd8aa9e9cd7a23441c0e355bb85c7e2ab",
+    "reference_commit_scope": "the v1.17.11 tag commit (string helpers, equipment-set bank locations, reverse cooldown flash)",
     "file_shas": {
-      "docs/API.md": "11883b0cf7839e8c1c1953a6d5d70c676092dd8f",
-      "README.md": "5010406213665566025bc4d59445636cb1ac2afc"
+      "docs/API.md": "fb0bfad60bb898eca5e862df8f85b104f2dbcd84",
+      "README.md": "0e9caaa69eab05385d058b8404768b9bb33c33a8"
     },
     "release_provenance": {
-      "tag": "v1.17.10",
-      "tag_object": "23c5a53581494f35438eeda61492622a6b92982b",
-      "commit": "9daf3960c48d42f01b5f8cc38d98b157dfcac934",
-      "published_at": "2026-10-27T02:59:25Z",
-      "dll_asset_id": 680257294,
-      "dll_size_bytes": 1826816,
-      "dll_sha256": "1295b59fc09b5563f72bfebb483c344fbde327055a4a61cc87611ce035a42fb9"
+      "tag": "v1.17.11",
+      "tag_object": "01713f97835f9635425c1170f77c33781dd5d39e",
+      "commit": "317539dbd8aa9e9cd7a23441c0e355bb85c7e2ab",
+      "published_at": "2026-10-27T06:23:48Z",
+      "dll_asset_id": 680672328,
+      "dll_size_bytes": 1830912,
+      "dll_sha256": "7fcf19aa85163ba6b45469c6fd6d30fe108a5889e394ab403e62a25329b989d8"
     }
   },
   "superwow": {

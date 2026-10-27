@@ -6,7 +6,7 @@
 >
 > Source basis: `brues-code/ClassicAPI`, default branch `master`, official `README.md`, official `docs/API.md`, and selected implementation/source references.
 >
-> Snapshot used by VanillaForge: **ClassicAPI v1.17.10** (reference). Support floor: **v1.17.7+** for all maintained addons (raised from v1.16.0 on 2026-10-26). The 1.17 additions and behavior changes are in [v1.17.0 to v1.17.3](#v1170-to-v1173-api-and-behavior-contracts), [v1.17.4 to v1.17.8](#v1174-to-v1178-api-and-behavior-contracts) and [v1.17.9 to v1.17.10](#v1179-to-v11710-api-and-behavior-contracts).
+> Snapshot used by VanillaForge: **ClassicAPI v1.17.11** (reference). Support floor: **v1.17.11+**, the latest release, for all maintained addons (raised from v1.17.7 on 2026-10-27). The 1.17 additions and behavior changes are in [v1.17.0 to v1.17.3](#v1170-to-v1173-api-and-behavior-contracts), [v1.17.4 to v1.17.8](#v1174-to-v1178-api-and-behavior-contracts), [v1.17.9 to v1.17.10](#v1179-to-v11710-api-and-behavior-contracts) and [v1.17.11](#v11711-api-and-behavior-contracts).
 >
 > IMPORTANT: ClassicAPI is actively developed. This document is a local snapshot, not a claim that future versions cannot add or change functionality. If installed ClassicAPI is newer and a task depends on newly added behavior not present here, inspect the installed/current source and update this reference deliberately.
 
@@ -71,12 +71,13 @@ v1.17.7 -> 11707
 v1.17.8 -> 11708
 v1.17.9 -> 11709
 v1.17.10 -> 11710
+v1.17.11 -> 11711
 ```
 
 The VanillaForge support baseline is:
 
 ```text
-ClassicAPI v1.17.7+
+ClassicAPI v1.17.11+
 ```
 
 Do not assume a future version's new API exists solely because a similarly named Retail API exists.
@@ -90,13 +91,15 @@ That sentinel does not prove a published release or all capabilities of any
 later stable version. Record artifact/source identity separately, and verify
 the consumed API and its behavior on the loaded target.
 
-Every maintained VanillaForge addon has the explicit maintainer support floor
-`MIN_CLASSIC_API=11707` / ClassicAPI v1.17.7+. Keep TOC metadata, synthetic-addon
-dependencies, runtime guards and installation documentation consistent. This
-policy is separate from each API's introduction version; for other components,
-declare the minimum required by the capabilities and semantic fixes the addon
-actually consumes. Future upstream releases do not automatically raise the
-support floor. An addon that adopts an API or fix from 1.17 (combat log, native
+Every maintained VanillaForge addon follows the latest ClassicAPI release:
+the support floor is `MIN_CLASSIC_API=11711` / ClassicAPI v1.17.11+ (the
+player's rule since 2026-10-27: always the latest release). A new release
+raises the floor in UPSTREAM_VERSIONS.json and here; each addon raises its
+guard, TOC metadata, synthetic-addon dependencies and installation
+documentation together in its next pass, and adopts what the release offers.
+For other components, declare the minimum required by the capabilities and
+semantic fixes the addon actually consumes. Before 2026-10-27 the floor was
+fixed and an addon that adopts an API or fix from 1.17 (combat log, native
 Cooldown drawing, animations, Interface Options, interruptible cast events)
 raises its own guard and TOC note to `11703` / v1.17.3+. An addon that adopts
 an API or fix from 1.17.4 to 1.17.8 (profiling, `FlashClientIcon`, the name
@@ -2902,17 +2905,17 @@ This document was built from the official repository:
 
 ```text
 brues-code/ClassicAPI
-release: v1.17.10 (tag commit 9daf3960c48d42f01b5f8cc38d98b157dfcac934)
-commit:  9daf3960c48d42f01b5f8cc38d98b157dfcac934
+release: v1.17.11 (tag commit 317539dbd8aa9e9cd7a23441c0e355bb85c7e2ab)
+commit:  317539dbd8aa9e9cd7a23441c0e355bb85c7e2ab
 branch:  master
 ```
 
-Official source files used as primary reference (v1.17.10):
+Official source files used as primary reference (v1.17.11):
 
 ```text
-README.md (blob: 5010406213665566025bc4d59445636cb1ac2afc)
-docs/API.md (blob: 11883b0cf7839e8c1c1953a6d5d70c676092dd8f)
-commit messages v1.17.8...v1.17.10 (behaviour API.md leaves out)
+README.md (blob: 0e9caaa69eab05385d058b8404768b9bb33c33a8)
+docs/API.md (blob: fb0bfad60bb898eca5e862df8f85b104f2dbcd84)
+commit messages v1.17.8...v1.17.11 (behaviour API.md leaves out)
 src/frame/Alpha.cpp (at abd5367, the nameplate alpha rules)
 ```
 
@@ -3559,8 +3562,42 @@ These correct the 1.17.0 limits in [Combat log](#combat-log):
   number. Before, the fifth custom event shared slot 6 with
   `ADDON_LIST_UPDATE` and could fire with it.
 
-### After 1.17.10 (master only)
+## v1.17.11 API and behavior contracts
 
-`strlenutf8`, `strcmputf8i`, `strsplittable` and `strconcat` were added after
-the v1.17.10 tag and are **not in the v1.17.10 DLL**. Do not use them until a
-release ships them and this note moves under that release.
+Source: the pinned
+[v1.17.11 API reference](https://github.com/brues-code/ClassicAPI/blob/317539dbd8aa9e9cd7a23441c0e355bb85c7e2ab/docs/API.md)
+and the `v1.17.10...v1.17.11` commit messages (four commits, released
+2026-10-27). Guard: `11711`.
+
+### String helpers (1.17.11)
+
+Four Blizzard string globals the base library lacked:
+
+- `strlenutf8(s)`: characters, not bytes (`strlen` counts bytes).
+- `strcmputf8i(a, b)`: case-insensitive compare; only the sign of the number
+  means anything (negative: `a` first, `0`: equal). The fold covers ASCII,
+  Latin-1 `à`..`þ`, `œ` and Cyrillic. It makes no strings, so a sort
+  comparator `function(a, b) return strcmputf8i(a, b) < 0 end` replaces
+  `string.lower(a) < string.lower(b)`, which builds two strings on every
+  comparison.
+- `strsplittable(sep, str [, pieces])`: `strsplit` returned as one array; no
+  stack limit. Replaces `{ strsplit(sep, str) }` and gmatch loops that only
+  fill a table.
+- `strconcat(...)` / `string.concat(...)`: joins its arguments like `..`;
+  numbers convert, anything else is an error, no arguments gives `""`.
+
+### Fixes (1.17.11)
+
+- `C_EquipmentSet.GetItemLocations`: an item in the main bank is
+  `BANK | inventorySlot` (`BankButtonIDToInvSlotID`: bank slot N is
+  inventory slot 39 + N; slot 3 is `0x40002A`). Before, it was
+  `BANK | bankSlot` (`0x400003`), so the shared helpers read the paperdoll
+  instead of the bank. The main bank has 24 slots.
+- Cooldown `SetReverse(true)`: the sweep starts empty and becomes full. At the
+  end it stays full while the flash plays, then the frame hides. Before, the
+  icon showed bright for the frames between the client-side end and the aura's
+  removal.
+- `PlaySoundFile`: the docs no longer name a file count. The client caps how
+  many files play at once (SuperWoW's `UncapSounds` lifts the cap; 16 played
+  at once in a probe); at the cap the call returns `false`. A file holds its
+  place until it ends, also while fading.
