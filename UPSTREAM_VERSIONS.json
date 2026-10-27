@@ -2,22 +2,22 @@
   "classicapi": {
     "minimum_version": "1.17.7",
     "minimum_version_scope": "all maintained VanillaForge addons share the explicit ClassicAPI 1.17.7+ support floor (11707), raised from 1.16.0 on 2026-10-26",
-    "reference_version": "1.17.8",
+    "reference_version": "1.17.10",
     "repository": "brues-code/ClassicAPI",
-    "reference_commit": "0d19deaee0fe19cf6735a7789870d45b787fbfee",
-    "reference_commit_scope": "master one commit after the v1.17.8 tag (abd5367533ac): adds ItemHasRange / C_Item.ItemHasRange, which the released v1.17.8 DLL does not have",
+    "reference_commit": "9daf3960c48d42f01b5f8cc38d98b157dfcac934",
+    "reference_commit_scope": "the v1.17.10 tag commit; master is two unreleased commits ahead (string helpers, a PlaySoundFile doc fix)",
     "file_shas": {
-      "docs/API.md": "7f9ba2c4ed096989a60853e67488674d23639df7",
-      "README.md": "f87c229ae31bdfe864d7df8520a3f223dac3b672"
+      "docs/API.md": "11883b0cf7839e8c1c1953a6d5d70c676092dd8f",
+      "README.md": "5010406213665566025bc4d59445636cb1ac2afc"
     },
     "release_provenance": {
-      "tag": "v1.17.8",
-      "tag_object": "a78dbe8d0f0c99bf932484d1a2427fd0f898d29b",
-      "commit": "abd5367533acf19291a7a5aa64472d5e56cf9619",
-      "published_at": "2026-10-26T01:02:14Z",
-      "dll_asset_id": 676587676,
-      "dll_size_bytes": 1798144,
-      "dll_sha256": "3da84c6c3ffbafc0fda1e5ca8bae78e2fc7fa4cbd0fb6d3c098fb5373f1a4381"
+      "tag": "v1.17.10",
+      "tag_object": "23c5a53581494f35438eeda61492622a6b92982b",
+      "commit": "9daf3960c48d42f01b5f8cc38d98b157dfcac934",
+      "published_at": "2026-10-27T02:59:25Z",
+      "dll_asset_id": 680257294,
+      "dll_size_bytes": 1826816,
+      "dll_sha256": "1295b59fc09b5563f72bfebb483c344fbde327055a4a61cc87611ce035a42fb9"
     }
   },
   "superwow": {
