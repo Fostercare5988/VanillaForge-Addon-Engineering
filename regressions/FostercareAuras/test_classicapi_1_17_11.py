@@ -17,7 +17,7 @@ ROOT = tcd.ADDON
 class UnitEventScopeTests(unittest.TestCase):
     def test_unit_events_only_for_the_units_read(self):
         lua = tcd.runtime()
-        expect = {"UNIT_AURA": ["player", "target"], "UNIT_HEALTH": ["player", "target"],
+        expect = {"UNIT_AURA": ["player", "target"], "UNIT_HEALTH": ["target"],
                   "UNIT_MANA": ["player"], "UNIT_ENERGY": ["player"], "UNIT_RAGE": ["player"]}
         for ev, units in expect.items():
             reg = lua.eval('eventFrame.events.%s' % ev)
@@ -34,10 +34,10 @@ class SortTests(unittest.TestCase):
         self.assertEqual(found, [])
 
     def test_sorts_use_strcmputf8i(self):
+        # The editor's four sorted lists left with the extra-condition
+        # managers (2026-10-27 rogue pass); the item list sort remains.
         main = (ROOT / "FostercareAuras.lua").read_text("utf-8-sig")
-        edit = (ROOT.parent / "FostercareAuras_Edit" / "FostercareEdit.lua").read_text("utf-8-sig")
         self.assertIn("strcmputf8i(", main)
-        self.assertEqual(edit.count("strcmputf8i(a or \"\", b or \"\") < 0"), 4)
 
 
 if __name__ == "__main__":

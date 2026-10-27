@@ -28,7 +28,7 @@ def stacks_runtime():
         }
     ''')
     body = SOURCE[SOURCE.index('_GetAuraStacksOnUnit = function('):
-                  SOURCE.index('-- Fast check: does unit have ANY of the named buffs?')]
+                  SOURCE.index('-- === Health / Combo Points / Formatting helpers ===')]
     lua.execute('local _GetAuraStacksOnUnit\n' + body +
                 '\nfunction stacks(...) return _GetAuraStacksOnUnit(...) end')
     return lua

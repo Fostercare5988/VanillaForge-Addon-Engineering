@@ -100,7 +100,7 @@ class LogicRetiredTests(unittest.TestCase):
 
 class LeanTests(unittest.TestCase):
     def test_update_loop_accumulators_are_local(self):
-        for name in ("_acc", "_textAccum", "_distAccum", "_timeEvalAccum", "_teFastAccum", "_teFastActive"):
+        for name in ("_acc", "_textAccum", "_timeEvalAccum", "_teFastAccum", "_teFastActive"):
             self.assertRegex(CONDITIONS, r"\nlocal %s = " % name, name)
 
     def test_unused_mikpowerauras_textures_are_gone(self):

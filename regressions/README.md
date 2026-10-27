@@ -58,7 +58,16 @@ health/power events, no Turtle spell data) and `test_ui_2026_10_27.py` (ForgeUI
 window, retired modules, forced refresh honoured, idle handlers, the editor as
 the load-on-demand addon FostercareAuras_Edit, read from the sibling folder).
 `test_saved_settings.py` checks retired saved data is cleared; the Groups and
-custom-code tests were removed with their features. 46 tests.
+custom-code tests were removed with their features.
+
+The 1.3.0-local rogue pass (same day) adds `test_rogue_2026_10_27.py` (poison
+icon from the weapon's temp enchant, Weapon tab, AddOn Options entry, tracker
+icons by name lookup) and `test_editor_smoke.py`: `fa_harness.py` loads both
+addons through login under a permissive widget mock, then the test opens the
+editor on every tracker type and clicks every visible control, so a removed
+widget that is still used fails here instead of in game. The other classes'
+procs and forms, talent checks, bag snapshots and trinket on-use tests left
+with their features. 48 tests.
 
 ## Suite index
 

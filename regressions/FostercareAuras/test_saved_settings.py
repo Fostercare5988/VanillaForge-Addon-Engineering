@@ -45,8 +45,41 @@ class SavedSettingsTests(unittest.TestCase):
         self.assertEqual(lua.eval('FostercareAurasDB.spells.rup.type'), 'Debuff')
         self.assertIsNone(lua.eval('FostercareAurasDB.spells.rup.group'))
         self.assertIsNone(lua.eval('FostercareAurasDB.spells.rup.conditions.aura.trackpet'))
-        self.assertIsNone(lua.eval('FostercareAurasDB.spells.rup.conditions.aura.auraConditions[1].logicOp'))
+        self.assertIsNone(lua.eval('FostercareAurasDB.spells.rup.conditions.aura.auraConditions'))
 
+    def test_other_classes_forms_and_weapon_filter_are_cleared(self):
+        # 2026-10-27 rogue pass: only Stealth / No Stealth remain.
+        lua = load('{ spells = {'
+                   '  a = { type = "Ability", conditions = { ability = { form = "1. Battle", weaponFilter = "Two-Hand" } } },'
+                   '  b = { type = "Buff", conditions = { aura = { form = "1. Stealth" } } } } }')
+        self.assertEqual(lua.eval('FostercareAurasDB.spells.a.conditions.ability.form'), 'All')
+        self.assertIsNone(lua.eval('FostercareAurasDB.spells.a.conditions.ability.weaponFilter'))
+        self.assertEqual(lua.eval('FostercareAurasDB.spells.b.conditions.aura.form'), '1. Stealth')
+
+    def test_rare_rules_and_runtime_flags_are_cleared(self):
+        # 2026-10-27 rogue pass: sounds, group state, HP, distance, unit type,
+        # extra condition lists; and the sound gate that leaked into saves.
+        lua = load('{ spells = { r = { type = "Debuff", _daSoundGate = false, conditions = { aura = {'
+                   '  mode = "found", onlyMine = true, grouping = "raid", inRaid = true, hpMode = "my", hpVal = 30,'
+                   '  targetDistance = "Behind", targetUnitType = "Boss", soundOnGain = "x.ogg", soundOnGainEnabled = true,'
+                   '  auraConditions = { {} }, vfxConditions = { {} } } } } } }')
+        for field in ("grouping", "inRaid", "hpMode", "hpVal", "targetDistance", "targetUnitType",
+                      "soundOnGain", "soundOnGainEnabled", "auraConditions", "vfxConditions"):
+            self.assertIsNone(lua.eval('FostercareAurasDB.spells.r.conditions.aura.%s' % field), field)
+        self.assertIsNone(lua.eval('FostercareAurasDB.spells.r._daSoundGate'))
+        self.assertEqual(lua.eval('FostercareAurasDB.spells.r.conditions.aura.mode'), 'found')
+        self.assertTrue(lua.eval('FostercareAurasDB.spells.r.conditions.aura.onlyMine'))
+
+
+    def test_icon_cache_keeps_only_tracker_names(self):
+        # 2026-10-27: the cache held every spell, mount and companion in the book.
+        lua = load('{ cache = { Rupture = "r", ["Black War Kodo"] = "k", Cooking = "c", ["Slice and Dice"] = "s" },'
+                   ' spells = { a = { type = "Debuff", displayName = "Rupture" },'
+                   '            b = { type = "Buff", displayName = "Slice and Dice" } } }')
+        self.assertEqual(lua.eval('FostercareAurasDB.cache.Rupture'), 'r')
+        self.assertEqual(lua.eval('FostercareAurasDB.cache["Slice and Dice"]'), 's')
+        self.assertIsNone(lua.eval('FostercareAurasDB.cache["Black War Kodo"]'))
+        self.assertIsNone(lua.eval('FostercareAurasDB.cache.Cooking'))
 
 if __name__ == '__main__':
     unittest.main()
