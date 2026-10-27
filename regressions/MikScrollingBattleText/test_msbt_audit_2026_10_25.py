@@ -201,7 +201,8 @@ class EventTriggers(unittest.TestCase):  # P3-3
         self.assertIsNone(t.MSBT_TRIGGER_OVERPOWER.TriggerSettings.SearchPatterns)
         self.assertEqual(t.MSBT_TRIGGER_CLEARCAST.TriggerSettings.TriggerType, ceh.TRIGGERTYPE_AURA_GAIN)
         self.assertEqual(t.MSBT_TRIGGER_CLEARCAST.TriggerSettings.AuraName, "Clearcasting")
-        self.assertEqual(t.MSBT_TRIGGER_RIPOSTE.TriggerSettings.TriggerType, 6)  # customised: kept
+        # 2026-10-27: the Search Pattern type is retired; a customised default goes back to its default.
+        self.assertEqual(t.MSBT_TRIGGER_RIPOSTE.TriggerSettings.TriggerType, ceh.TRIGGERTYPE_YOU_PARRY)
 
 
 class TriggerEditor(unittest.TestCase):  # P3-3, ForgeUI trigger editor
@@ -210,7 +211,7 @@ class TriggerEditor(unittest.TestCase):  # P3-3, ForgeUI trigger editor
         lua.execute('''
         MikSBTOpt.EditTrigger("MSBT_TRIGGER_WINDFURY")
         assert(MSBT_TriggerAura:IsShown() and MSBT_TriggerAura:GetText() == "Windfury Totem")
-        assert(not MSBT_TriggerThreshold:IsShown() and not MSBT_TriggerPattern1:IsShown())
+        assert(not MSBT_TriggerThreshold:IsShown() and MSBT_TriggerPattern1 == nil)
         MSBT_TriggerAura:SetText("Windfury Weapon")
         MSBT_TriggerSave:Click()
         local t = MikSBT.CurrentProfile.Triggers.MSBT_TRIGGER_WINDFURY.TriggerSettings

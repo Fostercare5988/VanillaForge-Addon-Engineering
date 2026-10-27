@@ -3,8 +3,8 @@
   "entries": [
     {
       "id": "player-class-scanners",
-      "pattern": "\\b(GetFriendInfo|GetGuildRosterInfo|GetWhoInfo|GetBattlefieldScore)\\s*\\(",
-      "finding": "Scans friends, guild, /who or the battleground score, often to remember players' classes.",
+      "pattern": "\\b(GetFriendInfo|GetGuildRosterInfo|GetWhoInfo)\\s*\\(",
+      "finding": "Scans friends, guild or /who, often to remember players' classes. (The battleground scoreboard stays the source for enemies never seen, so it is not reported.)",
       "better": "C_PlayerCache.GetPlayerInfoByName(name) and GetPlayerInfoByGUID(guid): group, nearby, friends, this session and ClassicAPI's saved cache.",
       "source": "ClassicAPI docs/API.md#namecache (1.17.5+)"
     },
@@ -59,8 +59,8 @@
     },
     {
       "id": "combat-text-parsing",
-      "pattern": "CHAT_MSG_SPELL_|CHAT_MSG_COMBAT_",
-      "finding": "Parses combat chat text.",
+      "pattern": "CHAT_MSG_SPELL_|CHAT_MSG_COMBAT_(?!HONOR_GAIN)",
+      "finding": "Parses combat chat text. (Honor gains have no structured event and are not reported.)",
       "better": "COMBAT_LOG_EVENT_UNFILTERED with CombatLogGetCurrentEventInfo; NamPower spell events with IDs.",
       "source": "ClassicAPI docs/API.md (combat log events); NamPower EVENTS.md"
     },

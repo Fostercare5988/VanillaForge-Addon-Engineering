@@ -90,14 +90,13 @@ class CastBarTests(unittest.TestCase):
         self.assertEqual(lua.eval('AutoBG_TargetCast1.barWidth'), 47)
 
     def test_clicking_the_cast_bar_targets_the_caster(self):
+        # 2026-10-27: the cast bar is a unit button too; left targets, right focuses.
         lua = setup()
         self.start_heal(lua)
         lua.execute('guidNames["%s"] = "Grom"' % GROM)
-        lua.execute('targeted = {}; function TargetUnit(u) table.insert(targeted, u) end; function FocusUnit(u) focused = u end')
-        lua.execute('local c = AutoBG_TargetCast1; c.scripts.OnClick(c, "LeftButton")')
-        self.assertEqual(lua.eval('targeted[1]'), GROM)
-        lua.execute('local c = AutoBG_TargetCast1; c.scripts.OnClick(c, "RightButton")')
-        self.assertEqual(lua.eval('focused'), GROM)
+        tick(lua)
+        lua.execute('AutoBG_TargetCast1:Click("LeftButton"); AutoBG_TargetCast1:Click("RightButton")')
+        self.assertEqual(list(lua.eval('picked').values()), ["target " + GROM, "focus " + GROM])
 
     def test_ctrl_click_on_opening_enemy_announces_node(self):
         lua = setup()

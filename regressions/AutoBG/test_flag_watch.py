@@ -33,6 +33,8 @@ function UnitFactionGroup() return "Alliance" end
 function UnitGUID(u) if u == "player" then return "0x0000000000000001" end end
 function UnitName(u) if u == "player" then return "Tester" end end
 function GetNumRaidMembers() return 0 end
+-- ClassicAPI: the enemies here are not in the group, so names resolve through the roster.
+function UnitTokenFromName() return nil end
 function UnitIsDeadOrGhost() return nil end
 function PlaySound() end
 function SpellInfo() return "Opening" end

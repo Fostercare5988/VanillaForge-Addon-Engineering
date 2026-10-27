@@ -32,6 +32,24 @@ only for the units read, sorts with `strcmputf8i`, the slash command with
 commits before the pass. The FostercareAuras and MikScrollingBattleText mocks
 filter `RegisterUnitEvent` registrations by unit, as the engine does.
 
+## Unit buttons and chat-text cleanup (2026-10-27)
+
+AutoBG `test_unit_buttons_2026_10_27.py` (10): enemy rows, cast bars and
+carrier cards are ClassicAPI unit buttons once the GUID is known (type1
+target, type2 focus, Ctrl/Shift fall through to the addon); unbound clicks go
+through one off-screen selector by exact name; no TargetUnit, FocusUnit,
+TargetByName or SetMouseoverUnit is left. Seven fail on `a5d43e7`.
+`test_name_lookups_2026_10_27.py` (4): carrier class from
+`C_PlayerCache.GetPlayerInfoByName` (scoreboard only for enemies never seen) and
+base-message faction from `UnitTokenFromName`; the old name patterns never
+matched. All four fail on `a5d43e7`. The enemy-frame mock in
+`test_targets_guid_events.py` resolves unit-button clicks like the engine.
+
+MikScrollingBattleText `test_cleanup_2026_10_27.py` (6): the Search Pattern
+trigger type (chat text, used by no character) is retired with its editor,
+event list and `/msbt search`; XP comes from `PLAYER_XP_UPDATE` (quests and
+exploring too, level-ups counted). All six fail on `f433e27`.
+
 ## Suite index
 
 Every addon regression suite VanillaForge knows about. "Portable" suites read the

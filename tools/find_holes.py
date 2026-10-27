@@ -122,7 +122,15 @@ def global_defs(code):
     # Named frames: CreateFrame("Type", "Name", ...) makes a global.
     for m in re.finditer(r"CreateFrame\s*\(\s*[\"']\w+[\"']\s*,\s*[\"']([A-Za-z_]\w*)[\"']", code):
         names.add(m.group(1))
+    # Numbered names built from a prefix ("AlwaysUpFrame" .. n): "Prefix*".
+    for m in re.finditer(r"[\"']([A-Za-z_]\w*)[\"']\s*\.\.", code):
+        names.add(m.group(1) + "*")
     return names - HANDLER_GLOBALS
+
+
+def numbered(name, defined):
+    m = re.match(r"^([A-Za-z_]\w*?)\d+$", name)
+    return bool(m) and m.group(1) + "*" in defined
 
 
 # Children a template gives every frame that inherits it ("$parentTextLeft1").
@@ -258,7 +266,8 @@ def ghosts(addon, everyone, game, docs, wotlk):
         code = strip_lua(text)
         local = local_names(code)
         for name, line in global_uses(code):
-            if CAMEL.match(name) and name not in defined and name not in local and not from_template(name, defined):
+            if (CAMEL.match(name) and name not in defined and name not in local
+                    and not from_template(name, defined) and not numbered(name, defined)):
                 found[name].append("%s:%d" % (rel, line))
     return [{"name": n, "where": w[:3], "uses": len(w),
              "note": "exists only in the WotLK 3.3.5 client" if n in wotlk else ""}
@@ -306,6 +315,21 @@ def leaks(addon, game):
     return [{"name": n, "where": w[:2]} for n, w in sorted(found.items())]
 
 
+def media_referenced(path, rel, code_text):
+    """A media file is used when its name is in the code, or when its folder
+    is and every part of its name is a quoted string there: a path built from
+    parts, such as "Textures\\Nodes\\" .. kind .. "_" .. side."""
+    if re.search(re.escape(path.stem), code_text, re.I):
+        return True
+    if "/" not in rel:
+        return False
+    folder = rel.rsplit("/", 1)[0]
+    if not re.search(r"[\\/]+".join(re.escape(p) for p in folder.split("/")) + r"[\\/]", code_text, re.I):
+        return False
+    parts = [p for p in re.split(r"[_\-. ]", path.stem) if p]
+    return all(re.search(r"[\"']" + re.escape(p) + r"[\"']", code_text, re.I) for p in parts)
+
+
 def unused_files(addon):
     findings = []
     code_text = "\n".join(addon.files.values()) + "\n" + (addon.toc.read_text("utf-8", "replace") if addon.toc else "")
@@ -317,7 +341,7 @@ def unused_files(addon):
         suffix = path.suffix.lower()
         if suffix in (".lua", ".xml") and rel.lower() not in loaded and path.name.lower() != "bindings.xml":
             findings.append({"file": rel, "why": "not loaded by the TOC"})
-        elif suffix in MEDIA and not re.search(re.escape(path.stem), code_text, re.I):
+        elif suffix in MEDIA and not media_referenced(path, rel, code_text):
             findings.append({"file": rel, "why": "nothing refers to it"})
     for rel, text in addon.lua():
         head = strip_lua(text)
