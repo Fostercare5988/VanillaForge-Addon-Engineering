@@ -1,9 +1,10 @@
 """Reactive proc windows come from COMBAT_LOG_EVENT_UNFILTERED (ClassicAPI 1.17).
 
 The real proc block of FostercareConditions.lua runs under Lua 5.1 with mock frames.
-1.0.1 parsed English chat text and registered no combat-log event, so seven tests
-fail on it; test_other_classes_do_not_listen is a control. Real server payloads
-(OctoWoW) remain an in-game check.
+1.0.1 parsed English chat text and registered no combat-log event. Since the
+2026-10-27 rogue pass only the rogue's Riposte and Surprise Attack remain; the
+Warrior, Mage and Hunter windows were removed, so other classes register no
+listener. Real server payloads (OctoWoW) remain an in-game check.
 """
 from pathlib import Path
 import os
@@ -48,18 +49,14 @@ def runtime(cls, tracked):
     for i, name in enumerate(tracked):
         lua.execute('FostercareAurasDB.spells[%d] = { type = "Ability", name = "%s" }' % (i + 1, name))
     block = SOURCE[SOURCE.index('_G.FostercareConditions_ProcWindowDurations ='):
-                   SOURCE.index('-- Helpers consumed by ability-usable override')]
-    helpers = SOURCE[SOURCE.index('local function _Warrior_Overpower_OK()'):
-                     SOURCE.index('-- FostercareAuras Slide Manager')]
+                   SOURCE.index('-- FostercareAuras Slide Manager')]
     lua.execute('''
         local dirty_ability, dirty_ability_time = false, false
         local function _RequestImmediateEval() end
         local function _MarkSliderSeen() end
         local function _Now() return GetTime() end
-    ''' + block + '\n' + helpers + r'''
+    ''' + block + r'''
         function remaining(name) return _ProcWindowRemaining(name) end
-        function overpowerOK() return _Warrior_Overpower_OK() end
-        function revengeOK() return _Warrior_Revenge_OK() end
     ''')
     return lua
 
@@ -82,71 +79,31 @@ def damage(kind, src, dst, resisted="nil", blocked="nil", critical="nil"):
             % (kind, src, dst, resisted, blocked, critical))
 
 
-class WarriorTests(unittest.TestCase):
-    def test_overpower_follows_the_unit_that_dodged_not_its_name(self):
-        lua = runtime("WARRIOR", ["Overpower"])
+class RogueTests(unittest.TestCase):
+    def test_riposte_on_parry_and_surprise_attack_on_dodge(self):
+        lua = runtime("ROGUE", ["Riposte", "Surprise Attack"])
+        lua.execute(swing_missed(MOB, ME, "PARRY"))
+        self.assertAlmostEqual(lua.eval('remaining("Riposte")'), 4.0)
+        self.assertIsNone(lua.eval('remaining("Surprise Attack")'))
         lua.execute(spell_missed(ME, MOB, "DODGE"))
-        lua.execute('targetGUID = "%s"' % MOB)
-        self.assertTrue(lua.eval('overpowerOK()'))
-        self.assertAlmostEqual(lua.eval('remaining("Overpower")'), 4.0)
-        lua.execute('targetGUID = "%s"' % TWIN)  # same name, different mob
-        self.assertFalse(lua.eval('overpowerOK()'))
-
-    def test_white_hit_dodge_opens_overpower(self):
-        lua = runtime("WARRIOR", ["Overpower"])
-        lua.execute(swing_missed(ME, MOB, "DODGE"))
-        lua.execute('targetGUID = "%s"' % MOB)
-        self.assertTrue(lua.eval('overpowerOK()'))
-
-    def test_revenge_on_parry_and_partial_block_from_any_attacker(self):
-        lua = runtime("WARRIOR", ["Revenge"])
-        lua.execute(swing_missed("0xENEMYPLAYER", ME, "PARRY"))
-        self.assertTrue(lua.eval('revengeOK()'))
-        lua.execute('now = 200')
-        self.assertFalse(lua.eval('revengeOK()'))
-        lua.execute(damage("SWING_DAMAGE", MOB, ME, blocked=12))
-        self.assertTrue(lua.eval('revengeOK()'))
+        self.assertIsNotNone(lua.eval('remaining("Surprise Attack")'))
 
     def test_untracked_and_other_units_open_nothing(self):
-        lua = runtime("WARRIOR", [])
-        lua.execute(spell_missed(ME, MOB, "DODGE"))
-        self.assertIsNone(lua.eval('remaining("Overpower")'))
-        lua = runtime("WARRIOR", ["Overpower", "Revenge"])
-        lua.execute(swing_missed(MOB, "0xOTHER", "DODGE"))
-        lua.execute(swing_missed(ME, MOB, "PARRY"))
-        self.assertIsNone(lua.eval('remaining("Overpower")'))
-        self.assertIsNone(lua.eval('remaining("Revenge")'))
+        lua = runtime("ROGUE", [])
+        lua.execute(swing_missed(MOB, ME, "PARRY"))
+        self.assertIsNone(lua.eval('remaining("Riposte")'))
+        lua = runtime("ROGUE", ["Riposte", "Surprise Attack"])
+        lua.execute(swing_missed(MOB, "0xOTHER", "PARRY"))
+        lua.execute(damage("SWING_DAMAGE", MOB, ME, blocked=12))
+        self.assertIsNone(lua.eval('remaining("Riposte")'))
+        self.assertIsNone(lua.eval('remaining("Surprise Attack")'))
 
 
 class OtherClassTests(unittest.TestCase):
-    def test_rogue_riposte_on_parry_and_surprise_attack_on_dodge(self):
-        lua = runtime("ROGUE", ["Riposte", "Surprise Attack"])
-        lua.execute(swing_missed(MOB, ME, "PARRY"))
-        self.assertIsNotNone(lua.eval('remaining("Riposte")'))
-        self.assertIsNone(lua.eval('remaining("Surprise Attack")'))
-        lua.execute(swing_missed(ME, MOB, "DODGE"))
-        self.assertIsNotNone(lua.eval('remaining("Surprise Attack")'))
-
-    def test_mage_arcane_surge_on_full_or_partial_resist_only(self):
-        lua = runtime("MAGE", ["Arcane Surge"])
-        lua.execute(damage("SWING_DAMAGE", ME, MOB, resisted=5))
-        self.assertIsNone(lua.eval('remaining("Arcane Surge")'))
-        lua.execute(damage("SPELL_DAMAGE", ME, MOB, resisted=20))
-        self.assertIsNotNone(lua.eval('remaining("Arcane Surge")'))
-        lua = runtime("MAGE", ["Arcane Surge"])
-        lua.execute(spell_missed(ME, MOB, "RESIST"))
-        self.assertIsNotNone(lua.eval('remaining("Arcane Surge")'))
-
-    def test_hunter_lacerate_on_ranged_crit(self):
-        lua = runtime("HUNTER", ["Lacerate"])
-        lua.execute(damage("RANGE_DAMAGE", ME, MOB))
-        self.assertIsNone(lua.eval('remaining("Lacerate")'))
-        lua.execute(damage("RANGE_DAMAGE", ME, MOB, critical=1))
-        self.assertIsNotNone(lua.eval('remaining("Lacerate")'))
-
     def test_other_classes_do_not_listen(self):
-        lua = runtime("PRIEST", [])
-        self.assertIsNone(lua.eval('frames.FostercareProcCL'))
+        for cls in ("WARRIOR", "MAGE", "HUNTER", "PRIEST"):
+            lua = runtime(cls, ["Overpower", "Arcane Surge", "Lacerate"])
+            self.assertIsNone(lua.eval('frames.FostercareProcCL'), cls)
 
 
 if __name__ == '__main__':

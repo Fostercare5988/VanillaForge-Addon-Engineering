@@ -37,7 +37,7 @@ class WindowTests(unittest.TestCase):
     def test_one_forgeui_window_with_the_four_types(self):
         self.assertIn('UI.Window("FostercareAurasFrame"', MAIN)
         self.assertIn('local TYPES = { "Ability", "Buff", "Debuff", "Item" }', MAIN)
-        self.assertIn('"Item tooltips"', MAIN)
+        self.assertIn('"Weapon tooltips"', MAIN)  # renamed in the rogue pass
         self.assertLess(TOC.index("ForgeUI.lua"), TOC.index("FostercareAuras.lua"))
 
     def test_no_settings_window_pfui_or_long_guide(self):

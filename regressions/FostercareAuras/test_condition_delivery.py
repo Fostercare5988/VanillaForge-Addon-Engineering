@@ -1,4 +1,6 @@
-"""Actual event, snapshot and delivery bodies; no native rendering claim."""
+"""Actual event and delivery bodies; no native rendering claim.
+
+The bag-snapshot tests left with the bag item trackers (2026-10-27 rogue pass)."""
 from pathlib import Path
 import os
 import re
@@ -42,7 +44,6 @@ def runtime():
         FostercareConditions = {_hasAnyItemLogic=true, _daItemSnapshotDirty=false}
         FostercareConditions_SlideMgr = {active={}}
         function FostercareConditions:ProcessPendingAuraScans() end
-        function FostercareConditions_WarriorProcTick() end
         function FostercareConditions_UpdateTimeText() end
         abilityPasses, auraPasses, customPasses = 0, 0, 0
         function FostercareConditions:EvaluateAbilities(logic, time)
@@ -53,11 +54,10 @@ def runtime():
             auraPasses = auraPasses + 1
             if onAura then onAura() end
         end
-        _acc,_textAccum,_timeEvalAccum,_distAccum,_teFastAccum=0,0,0,0,0
+        _acc,_textAccum,_timeEvalAccum,_teFastAccum=0,0,0,0
         _teFastActive=false
     ''')
     slots = '\n'.join(re.findall(r'local INV_SLOT_\w+ = \d+', SOURCE))
-    helpers = SOURCE[SOURCE.index('local _TrinketFirstMemory = {}'):SOURCE.index('local function _ScanPlayerItemInstances(data)')]
     request = SOURCE[SOURCE.index('function FostercareConditions_RequestEvaluate()'):SOURCE.index('function FostercareConditions:EvaluateAbilities(')]
     tick = SOURCE[SOURCE.index('function FostercareConditions_OnUpdate(dt)'):SOURCE.index('-- Drive the update loop')]
     events = SOURCE[SOURCE.index('local eventFrame = CreateFrame("Frame", "FostercareConditionsEventFrame")'):]
@@ -65,8 +65,7 @@ def runtime():
         local dirty_ability,dirty_aura,dirty_target,dirty_power,dirty_ability_time=false,false,false,false,false
         local _hasAnyAbilityTimeLogic,_hasAnyAuraTimeLogic,_hasAnyTargetMods_Ability,_hasAnyTargetMods_Aura=false,false,false,false
         local _hasAnyCustomLogic=false
-    ''' + slots + '\n' + helpers + '\n' + request + '\n' + tick + '\n' + events + r'''
-        function snapshot() return _GetPlayerItemSnapshot().bags end
+    ''' + slots + '\n' + request + '\n' + tick + '\n' + events + r'''
         function resetFlags()
             dirty_ability,dirty_aura,dirty_target,dirty_power,dirty_ability_time=false,false,false,false,false
         end
@@ -75,33 +74,9 @@ def runtime():
 
 
 class ConditionDeliveryTests(unittest.TestCase):
-    def test_bag_change_after_snapshot_within_fifty_milliseconds_is_not_lost(self):
-        runtime().execute('''
-            fire('BAG_UPDATE',0); assert(snapshot()=='first')
-            now=100.02; bagContents='second'; fire('BAG_UPDATE',1)
-            assert(snapshot()=='second','bag notification after a delivered snapshot was discarded')
-            assert(bagReads==2)
-        ''')
-
-    def test_equipment_then_bag_change_keeps_both_snapshots_current(self):
-        runtime().execute('''
-            fire('UNIT_INVENTORY_CHANGED_GUID','0xPLAYER',1); assert(snapshot()=='first')
-            now=100.01; bagContents='second'; fire('BAG_UPDATE',0)
-            assert(snapshot()=='second','equipment notification suppressed a later bag change')
-        ''')
-
-    def test_bag_burst_coalesces_without_clock_reads_or_eager_scans(self):
-        runtime().execute('''
-            for i=1,200 do fire('BAG_UPDATE',i%5) end
-            assert(clockReads==0,'bag invalidation reads a clock despite sharing one pending snapshot')
-            assert(bagReads==0 and equippedReads==0)
-            assert(snapshot()=='first'); assert(bagReads==1 and equippedReads==19)
-            assert(snapshot()=='first'); assert(bagReads==1 and equippedReads==19)
-        ''')
-
     def test_ability_callback_can_request_a_subsequent_pass(self):
         runtime().execute('''
-            fire('UNIT_HEALTH','player')
+            fire('UNIT_HEALTH','target')
             onAbility=function() onAbility=nil; FostercareConditions_RequestEvaluate() end
             FostercareConditions_OnUpdate(.1); FostercareConditions_OnUpdate(.1)
             assert(abilityPasses==2,'ability evaluation erased reentrant invalidation')
@@ -110,7 +85,7 @@ class ConditionDeliveryTests(unittest.TestCase):
 
     def test_aura_callback_can_request_a_subsequent_pass(self):
         runtime().execute('''
-            fire('UNIT_HEALTH','player')
+            fire('UNIT_HEALTH','target')
             onAura=function() onAura=nil; FostercareConditions_RequestEvaluate() end
             FostercareConditions_OnUpdate(.1); FostercareConditions_OnUpdate(.1)
             assert(auraPasses==2,'aura evaluation erased reentrant invalidation')
@@ -119,7 +94,7 @@ class ConditionDeliveryTests(unittest.TestCase):
     def test_sliding_keeps_ability_updates_and_stops_when_slide_finishes(self):
         runtime().execute('''
             FostercareConditions_SlideMgr.active.icon=true
-            fire('UNIT_HEALTH','player'); FostercareConditions_OnUpdate(.03)
+            fire('UNIT_HEALTH','target'); FostercareConditions_OnUpdate(.03)
             FostercareConditions_OnUpdate(.03); assert(abilityPasses==2)
             FostercareConditions_SlideMgr.active.icon=nil
             FostercareConditions_OnUpdate(.1); FostercareConditions_OnUpdate(.1)
