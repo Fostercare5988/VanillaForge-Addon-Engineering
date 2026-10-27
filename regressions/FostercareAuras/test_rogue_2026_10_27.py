@@ -23,30 +23,50 @@ CONDITIONS = (ADDON / "Modules/FostercareConditions.lua").read_text("utf-8-sig")
 
 def enchant_runtime(main_id, off_id):
     lua = LuaRuntime(unpack_returned_tuples=True)
-    lua.execute('''
-        lookups = 0
+    lua.execute("""
+        now, lookups, bagSearches = 100, 0, 0
+        function GetTime() return now end
+        bags = {}
         C_Item = {
             GetWeaponEnchantInfo = function() return true, 1000, 40, %s, true, 1000, 40, %s end,
             GetEnchantInfo = function(id)
                 lookups = lookups + 1
-                if id == 2630 then return { enchantID = id, name = "Deadly Poison V", spellID = 25349 } end
+                if id == 2630 then return { enchantID = id, name = "Dissolvent Poison", spellID = 25349 } end
                 if id == 2629 then return { enchantID = id, name = "Brilliant Mana Oil" } end
             end,
         }
-        function GetSpellInfo(id) if id == 25349 then return "Deadly Poison V", "", "Interface\\\\Icons\\\\Ability_Rogue_DualWeild" end end
-    ''' % (main_id, off_id))
-    start = CONDITIONS.index("local _enchantIcon = {}")
+        function FindPlayerItemSlot(name)
+            bagSearches = bagSearches + 1
+            if bags[name] then return 2, 5 end
+        end
+        C_Container = { GetContainerItemInfo = function(bag, slot)
+            if bag == 2 and slot == 5 then return { iconFileID = "purple-poison" } end
+        end }
+        function GetSpellInfo(id) if id == 25349 then return "Dissolvent Poison", "", "proc-spell-icon" end end
+    """ % (main_id, off_id))
+    start = CONDITIONS.index("local _enchantIcon, _enchantRetryAt = {}, {}")
     end = CONDITIONS.index("local function _EnsureItemTexture")
     lua.execute(CONDITIONS[start:end] + "\nIcon = _TempEnchantIcon\n")
     return lua
 
 
 class PoisonIconTests(unittest.TestCase):
-    def test_poisoned_hand_shows_the_poison_icon_once_looked_up(self):
+    def test_the_poison_items_own_icon_is_used_and_kept(self):
         lua = enchant_runtime(2630, 0)
-        self.assertEqual(lua.eval('Icon("MAINHAND")'), "Interface\\Icons\\Ability_Rogue_DualWeild")
-        self.assertEqual(lua.eval('Icon("MAINHAND")'), "Interface\\Icons\\Ability_Rogue_DualWeild")
-        self.assertEqual(lua.eval("lookups"), 1)
+        lua.execute('bags["Dissolvent Poison"] = true')
+        self.assertEqual(lua.eval('Icon("MAINHAND")'), "purple-poison")
+        lua.execute('now = 500')
+        self.assertEqual(lua.eval('Icon("MAINHAND")'), "purple-poison")
+        self.assertEqual(lua.eval("bagSearches"), 1)
+
+    def test_without_the_item_the_proc_spell_stands_in_then_the_item_is_found(self):
+        lua = enchant_runtime(2630, 0)
+        self.assertEqual(lua.eval('Icon("MAINHAND")'), "proc-spell-icon")
+        lua.execute('now = 105; bags["Dissolvent Poison"] = true')
+        self.assertEqual(lua.eval('Icon("MAINHAND")'), "proc-spell-icon")  # not asked again yet
+        self.assertEqual(lua.eval("bagSearches"), 1)
+        lua.execute('now = 111')
+        self.assertEqual(lua.eval('Icon("MAINHAND")'), "purple-poison")
 
     def test_empty_hand_or_oil_falls_back_to_the_weapon(self):
         lua = enchant_runtime(2629, 0)
@@ -66,9 +86,16 @@ class PresetTests(unittest.TestCase):
         self.assertIn('local HANDS = { "Main hand poison", "Off hand poison" }', MAIN)
         self.assertIn('["Main hand poison"] = "MAINHAND", ["Off hand poison"] = "OFFHAND"', MAIN)
 
+    def test_clicking_a_hand_marks_it_and_other_tabs_hide_the_picker(self):
+        # The click only stored the hand, so "Off hand" never lit up; other
+        # tabs hid the buttons but left their rounded track on screen.
+        self.assertIn("function(index) FA_SelectHand(index) end)", MAIN)
+        self.assertIn("    currentHand = index\n    selectHand(index)", MAIN.replace("\r\n", "\n"))
+        self.assertIn("handTrack:Hide()", MAIN)
+
     def test_weapon_tooltip_reads_the_slot_not_a_bag_search(self):
         self.assertIn('GameTooltip:SetInventoryItem("player", slot)', MAIN)
-        self.assertNotIn("FindPlayerItemSlot", MAIN)
+        self.assertNotIn("FindPlayerItemSlot", MAIN)  # the tooltip; icons search by poison name
 
 
 class SpellIconTests(unittest.TestCase):

@@ -242,6 +242,8 @@ function strcmputf8i(a, b) a, b = string.lower(a), string.lower(b); if a == b th
 C_UnitAuras = { GetAuraSlots = function() return nil end }
 C_Item = { GetWeaponEnchantInfo = function() return nil end, GetEnchantInfo = function() return nil end }
 C_Spell = { GetSpellInfo = function() return nil end }
+C_Container = { GetContainerItemInfo = function() return nil end }
+function FindPlayerItemSlot() return nil end
 C_Timer = {
   After = function(d, f) end,
   NewTimer = function(d, f) return { Cancel = function() end } end,
