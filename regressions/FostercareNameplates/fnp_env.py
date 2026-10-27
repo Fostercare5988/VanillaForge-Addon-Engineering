@@ -18,7 +18,7 @@ FILES = [line.strip() for line in TOC.splitlines()
 SV_FIRST = re.search(r"^## LoadSavedVariablesFirst:\s*1\s*$", TOC, re.M) is not None
 
 BASE = r'''
-CLASSIC_API_VERSION, SUPERWOW_VERSION = 11710, "2.2"
+CLASSIC_API_VERSION, SUPERWOW_VERSION = 11711, "2.2"
 messages = {}
 DEFAULT_CHAT_FRAME = { AddMessage = function(_, m) table.insert(messages, m) end }
 STANDARD_TEXT_FONT = "Fonts\\FRIZQT__.TTF"

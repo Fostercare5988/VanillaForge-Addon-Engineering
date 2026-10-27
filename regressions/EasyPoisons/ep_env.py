@@ -21,7 +21,7 @@ math.mod = math.mod or math.fmod
 table.getn = table.getn or function(t) return #t end
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 getglobal = function(n) return _G[n] end
-CLASSIC_API_VERSION = 11707
+CLASSIC_API_VERSION = 11711
 messages, purchases, widgets, fonts, calls = {}, {}, {}, {}, {}
 local function count(name) calls[name] = (calls[name] or 0) + 1 end
 DEFAULT_CHAT_FRAME = { AddMessage = function(_, m) table.insert(messages, m) end }

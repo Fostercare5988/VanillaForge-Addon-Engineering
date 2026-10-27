@@ -23,11 +23,20 @@ def runtime():
             assert(kind == 'Frame' and name == 'FostercareConditionsEventFrame')
             local frame = {events={}, scripts={}}
             function frame:RegisterEvent(ev) self.events[ev] = true end
+            -- Like the engine: the event reaches the frame only for these units.
+            function frame:RegisterUnitEvent(ev, ...) self.events[ev] = {...} end
             function frame:SetScript(script, fn) self.scripts[script] = fn end
             eventFrame = frame; return frame
         end
         function fire(ev, first, second)
-            assert(eventFrame.events[ev]); this,event,arg1,arg2=eventFrame,ev,first,second
+            local reg = eventFrame.events[ev]
+            assert(reg)
+            if type(reg) == 'table' then
+                local wanted = false
+                for _, u in ipairs(reg) do if u == first then wanted = true end end
+                if not wanted then return end
+            end
+            this,event,arg1,arg2=eventFrame,ev,first,second
             eventFrame.scripts.OnEvent()
         end
         FostercareConditions = {_hasAnyItemLogic=true, _daItemSnapshotDirty=false}

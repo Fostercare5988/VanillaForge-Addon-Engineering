@@ -16,7 +16,7 @@ GROM = "0x0000000000000042"
 
 BASE = r'''
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
-CLASSIC_API_VERSION, SUPERWOW_VERSION = 11710, "2.2"
+CLASSIC_API_VERSION, SUPERWOW_VERSION = 11711, "2.2"
 UNKNOWNOBJECT, UKNOWNBEING = "Unknown", "Unknown Being"
 local Widget = {}
 -- Unknown keys on real frames are nil; only fields the module checks before creating need this.

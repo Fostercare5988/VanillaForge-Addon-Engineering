@@ -15,7 +15,7 @@ CORE = (ROOT / "AutoLazy.lua").read_text("utf-8-sig")
 TRAY = (ROOT / "AutoLazy_MinimapTray.lua").read_text("utf-8-sig")
 
 CORE_MOCKS = r'''
-CLASSIC_API_VERSION = 11707
+CLASSIC_API_VERSION = 11711
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 getglobal = function(n) return _G[n] end
 SlashCmdList = {}

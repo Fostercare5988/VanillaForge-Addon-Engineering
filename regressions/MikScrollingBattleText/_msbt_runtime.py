@@ -34,7 +34,7 @@ def toc_lua_files():
 
 
 BOOT = r'''
-CLASSIC_API_VERSION=11707;  -- ClassicAPI only: no SuperWoW or NamPower globals
+CLASSIC_API_VERSION=11711;  -- ClassicAPI only: no SuperWoW or NamPower globals
 now=1; event=nil; this=nil; cvars={}; calls={}; frames={};
 local function count(name) calls[name]=(calls[name] or 0)+1 end
 
@@ -42,6 +42,9 @@ local function count(name) calls[name]=(calls[name] or 0)+1 end
 local Widget={}
 local function Run(w,script,...) local f=w.scripts[script]; if f then local old=this; this=w; f(w,...); this=old end end
 function Widget:RegisterEvent(e) self.events[e]=true end
+-- Like the engine: the event reaches the frame only for these units.
+function Widget:RegisterUnitEvent(e,...) self.events[e]={...} end
+local function Wants(reg,unit) if reg==true then return true end if not reg then return false end for _,u in ipairs(reg) do if u==unit then return true end end return false end
 function Widget:UnregisterEvent(e) self.events[e]=nil end
 function Widget:UnregisterAllEvents() for k in pairs(self.events) do self.events[k]=nil end end
 function Widget:SetScript(k,f) self.scripts[k]=f end
@@ -115,7 +118,7 @@ function Fire(e,...)
   cleu=a
   for _,f in ipairs(frames) do
     local h=f.scripts.OnEvent
-    if f.events[e] and h then this=f; h(f,e,unpack(a,1,a.n)) end
+    if Wants(f.events[e],a[1]) and h then this=f; h(f,e,unpack(a,1,a.n)) end
   end
 end
 function CombatLogGetCurrentEventInfo() count("CombatLogGetCurrentEventInfo"); return unpack(cleu,1,cleu.n) end

@@ -22,7 +22,7 @@ def lua51(source):
 
 
 BASE = r'''
-CLASSIC_API_VERSION, SUPERWOW_VERSION = 11707, "2.2"
+CLASSIC_API_VERSION, SUPERWOW_VERSION = 11711, "2.2"
 function table.setn() end
 mod = math.mod or math.fmod
 getn = table.getn

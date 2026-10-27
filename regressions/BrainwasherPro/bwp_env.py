@@ -19,7 +19,7 @@ table.getn = table.getn or function(t) return #t end
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 getglobal = function(n) return _G[n] end
 tinsert, tremove = table.insert, table.remove
-CLASSIC_API_VERSION = 11707
+CLASSIC_API_VERSION = 11711
 YES, NO, NUMGOSSIPBUTTONS = "Yes", "No", 32
 messages, widgets, fonts, selected, calls = {}, {}, {}, {}, {}
 DEFAULT_CHAT_FRAME = { AddMessage = function(_, m) table.insert(messages, m) end }
