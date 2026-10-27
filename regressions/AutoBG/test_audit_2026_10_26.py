@@ -79,7 +79,7 @@ class AlteracMineTests(unittest.TestCase):
         yell(lua, "The Horde has taken the Irondeep Mine! Its supplies will now be used for reinforcements!")
         self.assertEqual(av_labels(lua), ["Irondeep Mine"])
         self.assertEqual(lua.eval('rawget(AutoBG_AVNodeFrame.rows[1].timeFs, "text")'), "5:00")
-        self.assertEqual(lua.eval('AutoBG_AVNodeFrame.rows[1].icon.texture'), "Interface\\Icons\\INV_BannerPVP_01")
+        self.assertEqual(lua.eval('AutoBG_AVNodeFrame.rows[1].icon.texture'), "Interface\\AddOns\\AutoBG\\Textures\\Nodes\\Mine_Horde")
 
     def test_mine_lines_do_not_teach_flag_spots(self):
         lua = av_timers()
