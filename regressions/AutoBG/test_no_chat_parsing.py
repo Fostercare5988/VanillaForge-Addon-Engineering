@@ -21,10 +21,12 @@ class NoChatParsingTests(unittest.TestCase):
             self.assertEqual(COMBAT_LOG.findall(source), [], name)
 
     def test_dll_events_stay_registered(self):
+        # The modules register these from event lists while they work
+        # (test_event_scope.py checks when); here they only must stay listed.
         for name in ("AutoBG_Targets.lua", "AutoBG_Spy.lua"):
             source = (ROOT / name).read_text("utf-8-sig")
             for event in ("UNIT_CASTEVENT", "BUFF_ADDED_OTHER", "BUFF_REMOVED_OTHER"):
-                self.assertIn('RegisterEvent("%s")' % event, source, name)
+                self.assertIn('"%s"' % event, source, name)
 
 
 if __name__ == '__main__':
