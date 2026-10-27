@@ -76,6 +76,9 @@ setmetatable(_G, { __index = function(_, k)
 end })
 function CreateFrame(_, name) return widget(name) end
 function SetRaidTargetIconTexture() end
+-- ClassicAPI's AddOn Options list; entries are recorded in order.
+categories = {}
+function InterfaceOptions_AddCategory(panel) table.insert(categories, panel) end
 function GetAddOnMetadata() return "test" end
 now = 100
 function GetTime() return now end
