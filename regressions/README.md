@@ -22,6 +22,16 @@ loaded modules and load-graph changes. Preserve the previous report. Matching
 source supports selective reuse of earlier review; it does not transfer review
 approval or establish matching DLLs, settings, test coverage or native behavior.
 
+## ClassicAPI 1.17.11 pass (2026-10-27)
+
+Every suite mocks `CLASSIC_API_VERSION = 11711`, the suite-wide floor (it
+follows the latest release). `test_classicapi_1_17_11.py` in FostercareAuras (3),
+MikScrollingBattleText (2), OctoMail (1) and FostercareTweaks (1): unit events
+only for the units read, sorts with `strcmputf8i`, the slash command with
+`strsplittable`, OctoMail's unused tooltip frame gone. All seven fail on the
+commits before the pass. The FostercareAuras and MikScrollingBattleText mocks
+filter `RegisterUnitEvent` registrations by unit, as the engine does.
+
 ## Suite index
 
 Every addon regression suite VanillaForge knows about. "Portable" suites read the

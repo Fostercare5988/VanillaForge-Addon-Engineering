@@ -16,7 +16,7 @@ SPY = (ROOT / "AutoBG_Spy.lua").read_text("utf-8-sig")
 
 BASE = r'''
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
-CLASSIC_API_VERSION, SUPERWOW_VERSION = 11710, "2.2"
+CLASSIC_API_VERSION, SUPERWOW_VERSION = 11711, "2.2"
 UNKNOWNOBJECT, UKNOWNBEING = "Unknown", "Unknown Being"
 local Widget = {}
 setmetatable(Widget, { __index = function(_, name)

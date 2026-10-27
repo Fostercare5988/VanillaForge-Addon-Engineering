@@ -23,7 +23,7 @@ getglobal = function(n) return _G[n] end
 messages = {}
 DEFAULT_CHAT_FRAME = { AddMessage = function(_, m) table.insert(messages, m) end }
 UISpecialFrames, SlashCmdList = {}, {}
-CLASSIC_API_VERSION, SUPERWOW_VERSION = 11707, "2.2"
+CLASSIC_API_VERSION, SUPERWOW_VERSION = 11711, "2.2"
 function GetNampowerVersion() return 4, 6, 2 end
 function GetCastInfo() end
 function GetSpellIdCooldown() end
