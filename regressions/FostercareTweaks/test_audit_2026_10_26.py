@@ -268,13 +268,18 @@ class UnitEventsReachOnlyTheirUnits(unittest.TestCase):
             FT.UnitFrames = UF
         ''')
         lua.execute(source("mods/unitframes/auras.lua"))
-        lua.execute('UF.Auras.UpdateBlizzTargetAuras = NOOP')
+        # 1.6.1: UNIT_AURA_DELTA is a ClassicAPI event with no documented
+        # RegisterUnitEvent filter, so the handler drops the other tokens.
+        lua.execute('reads = 0; UF.Auras.UpdateBlizzTargetAuras = function() reads = reads + 1 end')
         frame = lua.eval('FCTweaksAuraEventFrame')
         fire = lua.globals().fire
-        self.assertFalse(fire(frame, "UNIT_AURA", "nameplate1"))
+        full = lua.eval('{ isFullUpdate = true }')
+        fire(frame, "UNIT_AURA_DELTA", "nameplate1", full)
         # The target is also raid5: its own "target" event already rescans it.
-        self.assertFalse(fire(frame, "UNIT_AURA", "raid5"))
-        self.assertTrue(fire(frame, "UNIT_AURA", "target"))
+        fire(frame, "UNIT_AURA_DELTA", "raid5", full)
+        self.assertEqual(lua.eval('reads'), 0)
+        fire(frame, "UNIT_AURA_DELTA", "target", full)
+        self.assertEqual(lua.eval('reads'), 1)
 
     def test_energy_ticks_listen_to_the_player_only(self):
         lua = runtime()

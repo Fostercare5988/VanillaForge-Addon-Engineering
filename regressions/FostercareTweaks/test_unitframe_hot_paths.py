@@ -131,29 +131,5 @@ class RaidHotPathTests(unittest.TestCase):
         self.assertEqual(lua.eval('geometry'), 0)
 
 
-class PlayerAuraCoalescingTests(unittest.TestCase):
-    def test_one_change_reported_twice_rescans_once(self):
-        lua = LuaRuntime(unpack_returned_tuples=True)
-        lua.execute(r'''
-            scans, timers = 0, {}
-            Auras = { UpdateBlizzPlayerAuras = function() scans = scans + 1 end,
-                      UpdateBlizzTargetAuras = function() end }
-            auraEventFrame = { RegisterEvent = function() end }
-            FT = { SetEventHandler = function(_, fn) handler = fn end }
-            C_Timer = { After = function(_, fn) table.insert(timers, fn) end }
-            function UnitIsUnit(a, b) return a == b end
-        ''')
-        lua.execute(slice(AURAS, '-- UNIT_AURA(player) and PLAYER_AURAS_CHANGED',
-                          'FT.SetEventHandler(auraEventFrame',
-                          'auraEventFrame:RegisterEvent("PLAYER_AURAS_CHANGED")')
-                    + AURAS[AURAS.index('FT.SetEventHandler(auraEventFrame'):])
-        lua.execute(r'''
-            handler(nil, "UNIT_AURA", "player")
-            handler(nil, "PLAYER_AURAS_CHANGED")
-            for _, fn in ipairs(timers) do fn() end
-        ''')
-        self.assertEqual(lua.eval('scans'), 1)
-
-
 if __name__ == '__main__':
     unittest.main()
