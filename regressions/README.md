@@ -535,8 +535,8 @@ and the bank-bag and alert-on tests are controls.
 
 `test_unit_events_2026_10_27.py` (1 test): `UNIT_INVENTORY_CHANGED` is registered
 with `RegisterUnitEvent` for the player only. It fails on `2b07347`.
-`test_options_entry_2026_10_27.py` (3 tests): AddOn Options lists GearRack with
-Gear Sets and Trinkets under it, and each opens its window. They fail on `e138cf7`.
+`test_options_entry_2026_10_27.py` (3 tests): AddOn Options lists one GearRack
+page whose Gear sets and Trinkets buttons open their windows. They fail on `e138cf7`.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/GearRack" --run-tests --test-start regressions/GearRack --output .private/gearrack-current.json

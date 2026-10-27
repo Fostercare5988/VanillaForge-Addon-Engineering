@@ -1,12 +1,11 @@
-"""GearRack is listed in ClassicAPI's AddOn Options with Gear Sets and Trinkets
-under its "+", 2026-10-27.
+"""GearRack is listed in ClassicAPI's AddOn Options, 2026-10-27.
 
-ClassicAPI lists a panel whose `parent` names another under that entry,
-collapsed at first (docs/API.md, InterfaceOptions). Gear Sets opens the gear
-set editor (/gr sets) and Trinkets the trinket options page (the minimap
-button's right click). Each button closes the options window and the game
-menu first. Fails on e138cf7, which had no entries. How the list draws and
-expands stays an in-game check.
+ClassicAPI lists panels given to InterfaceOptions_AddCategory (docs/API.md,
+InterfaceOptions). One GearRack page, no sub-entries to expand: its Gear sets
+button opens the set editor (/gr sets), Trinkets the trinket options page (the
+minimap button's right click). Each closes the options window and the game
+menu first. Fails on e138cf7, which had no entry. How the page draws stays an
+in-game check.
 """
 from pathlib import Path
 import os
@@ -17,15 +16,14 @@ ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 SETTINGS = (ROOT / "src/Settings.lua").read_text("utf-8")
 
 
-def entries():
+def entry():
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(r'''
         local W = {}
         W.__index = function(_, k) return rawget(W, k) or function() end end
         function W:CreateFontString() return setmetatable({}, W) end
-        function W:SetText(t) self.text = t end
-        function CreateFrame(_, name) local f = setmetatable({ name_ = name }, W); if name then _G[name] = f end; return f end
-        UI = { Select = function(b) b.selected = true; return b end,
+        function CreateFrame(_, name) local f = setmetatable({}, W); if name then _G[name] = f end; return f end
+        UI = { Select = function(b) return b end,
                Button = function(name, parent, label, x, y, w, onClick)
                    local b = CreateFrame("Button", name); b.label, b.click = label, onClick; return b end }
         categories = {}
@@ -36,35 +34,31 @@ def entries():
         function HideUIPanel(f) if f == GameMenuFrame then hidden.menu = true end end
         GearRackTrinkets_OptFrame = {}
         GearRack = { OpenGearSets = function() opened.sets = true end,
-                     ShowMenuPage = function(frame, tab, restart)
+                     ShowMenuPage = function(frame, tab)
                          if frame == GearRackTrinkets_OptFrame then opened.trinkets = tab end end }
-        function By(name) for _, p in ipairs(categories) do if p.name == name then return p end end end
     ''')
-    start = SETTINGS.index("local function OptionsEntry")
-    body = SETTINGS[start:SETTINGS.index("function GearRack.CreateSettings()")]
-    calls = SETTINGS[SETTINGS.index('    OptionsEntry("GearRackOptionsEntry"'):]
-    calls = calls[:calls.index("\nend")]
-    lua.execute(body + calls)
+    body = SETTINGS[SETTINGS.index("local function OptionsEntry"):SETTINGS.index("function GearRack.CreateSettings()")]
+    lua.execute(body + "OptionsEntry()")
     return lua
 
 
-class OptionsEntries(unittest.TestCase):
-    def test_gearrack_lists_gear_sets_and_trinkets_under_it(self):
-        lua = entries()
+class OptionsEntry(unittest.TestCase):
+    def test_one_entry_with_both_buttons(self):
+        lua = entry()
+        self.assertEqual(lua.eval("#categories"), 1)
         self.assertEqual(lua.eval("categories[1].name"), "GearRack")
         self.assertIsNone(lua.eval("rawget(categories[1], 'parent')"))
-        self.assertEqual(lua.eval("By('Gear Sets').parent"), "GearRack")
-        self.assertEqual(lua.eval("By('Trinkets').parent"), "GearRack")
-        self.assertEqual(lua.eval("#categories"), 3)
+        self.assertEqual(lua.eval("GearRackOptionsSets.label"), "Gear sets")
+        self.assertEqual(lua.eval("GearRackOptionsTrinkets.label"), "Trinkets")
 
     def test_gear_sets_opens_the_set_editor(self):
-        lua = entries()
-        lua.execute("GearRackOptionsSetsOpen.click()")
+        lua = entry()
+        lua.execute("GearRackOptionsSets.click()")
         self.assertTrue(lua.eval("opened.sets and hidden.options and hidden.menu"))
 
     def test_trinkets_opens_the_trinket_options(self):
-        lua = entries()
-        lua.execute("GearRackOptionsTrinketsOpen.click()")
+        lua = entry()
+        lua.execute("GearRackOptionsTrinkets.click()")
         self.assertEqual(lua.eval("opened.trinkets"), 1)
         self.assertTrue(lua.eval("hidden.options and hidden.menu"))
 
