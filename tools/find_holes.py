@@ -309,7 +309,9 @@ def leaks(addon, game):
     for rel, text in addon.lua():
         code = strip_lua(text)
         for name in assigned_names(code):
-            if name[0].islower() and name not in addon.saved and name not in game:
+            # "_acc = 0" leaks as surely as "acc = 0".
+            plain = name.lstrip("_")
+            if plain and plain[0].islower() and name not in addon.saved and name not in game:
                 m = re.search(r"^[ \t]*(?:function\s+)?" + re.escape(name) + r"\b", code, re.M)
                 found[name].append("%s:%d" % (rel, code.count("\n", 0, m.start()) + 1 if m else 0))
     return [{"name": n, "where": w[:2]} for n, w in sorted(found.items())]

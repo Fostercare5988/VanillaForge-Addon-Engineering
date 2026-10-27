@@ -30,6 +30,7 @@ class FindHoles(unittest.TestCase):
                 "if not Alias then\n    Alias = Owner\nend\n"
                 "local cfg = { description = 'x', enabled = true }\n"
                 "leak = 1\n"
+                "_tick = 0\n"
                 "-- UNVERIFIED: test in game. C_Item.GetItemSellPriceByID is not in the VanillaForge references.\n"
                 "if Banzai and Banzai.Check then end\n"
                 "local MIN_CLASSIC_API = 11600\n"
@@ -79,7 +80,7 @@ class FindHoles(unittest.TestCase):
 
     def test_leaked_globals_not_table_fields(self):
         names = [l["name"] for l in HOLES.leaks(self.owner, set())]
-        self.assertEqual(names, ["leak"])
+        self.assertEqual(names, ["_tick", "leak"])
 
     def test_unused_files(self):
         found = {f["file"]: f["why"] for f in HOLES.unused_files(self.owner)}
