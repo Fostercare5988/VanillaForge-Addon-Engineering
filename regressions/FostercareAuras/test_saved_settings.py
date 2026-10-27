@@ -27,12 +27,25 @@ class SavedSettingsTests(unittest.TestCase):
         self.assertIsNone(lua.eval('FostercareAurasDB.settings'))
 
     def test_kept_settings_survive(self):
-        lua = load('{ spells = { a = { type = "Buff" } }, showtooltip = false, pfuiBorder = true,'
-                   ' groupSort = { g = "time" } }')
+        lua = load('{ spells = { a = { type = "Buff" } }, showtooltip = false }')
         self.assertEqual(lua.eval('FostercareAurasDB.spells.a.type'), 'Buff')
         self.assertFalse(lua.eval('FostercareAurasDB.showtooltip'))
-        self.assertTrue(lua.eval('FostercareAurasDB.pfuiBorder'))
-        self.assertEqual(lua.eval('FostercareAurasDB.groupSort.g'), 'time')
+
+    def test_retired_features_are_cleared(self):
+        # 2026-10-27: groups, categories, bars, custom code, logic, pet, pfUI retired.
+        lua = load('{ pfuiBorder = true, groupSort = { g = "time" }, categories = { "c" },'
+                   ' npDurationsCP = { [1] = {} }, spells = {'
+                   '  bar = { type = "Bar" }, code = { type = "Custom" },'
+                   '  rup = { type = "Debuff", group = "g1", isLeader = true, conditions = { aura = {'
+                   '    trackpet = true, auraConditions = { { logicOp = "OR", parenOpen = true } } } } } } }')
+        for field in ("pfuiBorder", "groupSort", "categories", "npDurationsCP"):
+            self.assertIsNone(lua.eval('FostercareAurasDB.%s' % field), field)
+        self.assertIsNone(lua.eval('FostercareAurasDB.spells.bar'))
+        self.assertIsNone(lua.eval('FostercareAurasDB.spells.code'))
+        self.assertEqual(lua.eval('FostercareAurasDB.spells.rup.type'), 'Debuff')
+        self.assertIsNone(lua.eval('FostercareAurasDB.spells.rup.group'))
+        self.assertIsNone(lua.eval('FostercareAurasDB.spells.rup.conditions.aura.trackpet'))
+        self.assertIsNone(lua.eval('FostercareAurasDB.spells.rup.conditions.aura.auraConditions[1].logicOp'))
 
 
 if __name__ == '__main__':

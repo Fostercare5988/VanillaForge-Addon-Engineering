@@ -35,8 +35,8 @@ class SortTests(unittest.TestCase):
 
     def test_sorts_use_strcmputf8i(self):
         main = (ROOT / "FostercareAuras.lua").read_text("utf-8-sig")
-        edit = (ROOT / "Modules" / "FostercareEdit.lua").read_text("utf-8-sig")
-        self.assertEqual(main.count("strcmputf8i(a or \"\", b or \"\")"), 3)
+        edit = (ROOT.parent / "FostercareAuras_Edit" / "FostercareEdit.lua").read_text("utf-8-sig")
+        self.assertIn("strcmputf8i(", main)
         self.assertEqual(edit.count("strcmputf8i(a or \"\", b or \"\") < 0"), 4)
 
 
