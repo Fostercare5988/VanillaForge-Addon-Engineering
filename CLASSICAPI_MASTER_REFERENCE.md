@@ -6,7 +6,7 @@
 >
 > Source basis: `brues-code/ClassicAPI`, default branch `master`, official `README.md`, official `docs/API.md`, and selected implementation/source references.
 >
-> Snapshot used by VanillaForge: **ClassicAPI v1.17.8** (reference). Support floor: **v1.17.7+** for all maintained addons (raised from v1.16.0 on 2026-10-26). The 1.17 additions and behavior changes are in [v1.17.0 to v1.17.3](#v1170-to-v1173-api-and-behavior-contracts) and [v1.17.4 to v1.17.8](#v1174-to-v1178-api-and-behavior-contracts).
+> Snapshot used by VanillaForge: **ClassicAPI v1.17.10** (reference). Support floor: **v1.17.7+** for all maintained addons (raised from v1.16.0 on 2026-10-26). The 1.17 additions and behavior changes are in [v1.17.0 to v1.17.3](#v1170-to-v1173-api-and-behavior-contracts), [v1.17.4 to v1.17.8](#v1174-to-v1178-api-and-behavior-contracts) and [v1.17.9 to v1.17.10](#v1179-to-v11710-api-and-behavior-contracts).
 >
 > IMPORTANT: ClassicAPI is actively developed. This document is a local snapshot, not a claim that future versions cannot add or change functionality. If installed ClassicAPI is newer and a task depends on newly added behavior not present here, inspect the installed/current source and update this reference deliberately.
 
@@ -69,6 +69,8 @@ v1.17.5 -> 11705
 v1.17.6 -> 11706
 v1.17.7 -> 11707
 v1.17.8 -> 11708
+v1.17.9 -> 11709
+v1.17.10 -> 11710
 ```
 
 The VanillaForge support baseline is:
@@ -101,6 +103,11 @@ an API or fix from 1.17.4 to 1.17.8 (profiling, `FlashClientIcon`, the name
 cache lookup, the binding modifier fix, the nameplate alpha CVars) raises it
 to that release; see
 [v1.17.4 to v1.17.8](#v1174-to-v1178-api-and-behavior-contracts).
+An addon that adopts an API or fix from 1.17.9 or 1.17.10 (the later
+clients' Cooldown methods, frame methods as handlers, `down` / `motion`,
+`ItemHasRange`, aura instance IDs and `UNIT_AURA_DELTA`, the new combat log
+events and values, `IsDualWielding`) raises it to `11709` or `11710`; see
+[v1.17.9 to v1.17.10](#v1179-to-v11710-api-and-behavior-contracts).
 
 ClassicAPI is one required component of VanillaForge's full enhanced environment;
 its version global does not establish that SuperWoW, NamPower and UnitXP SP3 are
@@ -213,6 +220,9 @@ toggle is off, native zero-argument dispatch is restored. Inspect the active
 setting and the actual registration/call path before adopting positional
 handlers, and account for the effect on other addons before changing it.
 See the pinned [script-argument contract](https://github.com/brues-code/ClassicAPI/blob/7ccbbaaf68bcde6b29b71806981d0338e0577189/docs/API.md#setmodernscriptargsenable--getmodernscriptargs).
+Since 1.17.9, frame methods work as handlers, clicks get `down`, enter and
+leave get `motion`, and `event` is restored per handler; see
+[Script handler arguments (1.17.9)](#script-handler-arguments-1179).
 
 Do not carry forward old framework rules that categorically prohibit `(self, event, ...)` without first considering ClassicAPI's active script-argument behavior.
 
@@ -566,9 +576,11 @@ Arbitrary texture dimensions/shapes are supported subject to GPU limits.
 
 ## 13. Tooltip Capacity
 
-ClassicAPI raises the standard GameTooltip line ceiling documented by the project from the stock limit to a larger modernized capacity.
-
-This applies to GameTooltipTemplate-derived tooltips.
+[SOURCE-VERIFIED] Since 1.17.9 a `GameTooltipTemplate` tooltip has no line limit
+(1.17.0 to 1.17.8: a fixed 60). It keeps the stock 30 line pairs and, when an
+added line takes the last pair, builds the next `TextLeftN` / `TextRightN`, so
+one spare pair always exists. Do not assume `TextLeftN` exists beyond
+`NumLines() + 1`, and do not create lines yourself.
 
 ---
 
@@ -1569,8 +1581,12 @@ GetTradePlayerItemID
 GetTradeSkillItemID
 GetTradeSkillReagentItemID
 GetTradeTargetItemID
+IsDualWielding
 OffhandHasWeapon
 ```
+
+`OffhandHasWeapon()` returns `1` / `nil` (engine) and `IsDualWielding()` `true` /
+`false` (1.17.10); see [Small changes (1.17.10)](#small-changes-11710).
 
 This namespace should be checked before implementing tooltip-based item metadata extraction.
 
@@ -2181,6 +2197,7 @@ Table/data access:
 
 ```lua
 C_UnitAuras.GetAuraDataByIndex
+C_UnitAuras.GetAuraDataByAuraInstanceID
 C_UnitAuras.GetBuffDataByIndex
 C_UnitAuras.GetDebuffDataByIndex
 C_UnitAuras.GetAuraDataBySlot
@@ -2252,6 +2269,9 @@ Aura indices (`1, 2, ... N`) are compacting array positions, **not stable aura i
 - Never assume an aura index or button frame remains bound to the same spell or aura instance across updates.
 - Cooldown frames, OnUpdate scripts, and duration caches must never be keyed to transient array indices. Key cached active state by `(spellId, source)` or fully reset the button frame upon identity mismatch.
 - Since 1.17.0 the order is sorted, not slot order: see [v1.17 auras](#auras).
+- Since 1.17.10 `AuraData.auraInstanceID` is a stable identity for one
+  application; key caches by it. See
+  [`UNIT_AURA_DELTA`](#aura-instance-ids-and-unit_aura_delta-11710).
 
 ### Aura Presence, Timing and Refresh
 
@@ -2882,16 +2902,17 @@ This document was built from the official repository:
 
 ```text
 brues-code/ClassicAPI
-release: v1.17.8 (tag commit abd5367533acf19291a7a5aa64472d5e56cf9619)
-commit:  0d19deaee0fe19cf6735a7789870d45b787fbfee (one commit after the tag)
+release: v1.17.10 (tag commit 9daf3960c48d42f01b5f8cc38d98b157dfcac934)
+commit:  9daf3960c48d42f01b5f8cc38d98b157dfcac934
 branch:  master
 ```
 
-Official source files used as primary reference (v1.17.8):
+Official source files used as primary reference (v1.17.10):
 
 ```text
-README.md (blob: f87c229ae31bdfe864d7df8520a3f223dac3b672)
-docs/API.md (blob: 7f9ba2c4ed096989a60853e67488674d23639df7)
+README.md (blob: 5010406213665566025bc4d59445636cb1ac2afc)
+docs/API.md (blob: 11883b0cf7839e8c1c1953a6d5d70c676092dd8f)
+commit messages v1.17.8...v1.17.10 (behaviour API.md leaves out)
 src/frame/Alpha.cpp (at abd5367, the nameplate alpha rules)
 ```
 
@@ -3106,13 +3127,16 @@ still fire unchanged.
 - `missType`: `MISS`, `RESIST`, `DODGE`, `PARRY`, `BLOCK`, `EVADE`, `IMMUNE`,
   `DEFLECT`, `ABSORB` or `REFLECT`. `critical`, `glancing`, `crushing` and
   `isOffHand` are `1` or `nil`. `resisted`, `blocked` and `absorbed` are `nil`
-  when 0. `overkill`, `overhealing` and heal `absorbed` are always 0.
-- Not provided: `SPELL_AURA_REFRESH`, `SPELL_SUMMON`, `SPELL_CREATE`,
-  `ENCHANT_APPLIED`, `ENCHANT_REMOVED`, and the `MAINTANK` / `MAINASSIST` flag
-  bits. `SPELL_CAST_FAILED` is for your own casts only. `SPELL_CAST_START`
-  has no target, and a spell with a cast time gets no `SPELL_CAST_SUCCESS`.
-  `DAMAGE_SHIELD`, `SPELL_DISPEL` and `SPELL_DISPEL_FAILED` have `spellId` 0.
-  Dose `amount` is the stack count after the change.
+  when 0. Heal `absorbed` is always 0.
+- Not provided: `ENCHANT_APPLIED`, `ENCHANT_REMOVED`, and the `MAINTANK` /
+  `MAINASSIST` flag bits. `SPELL_CAST_FAILED` is for your own casts only.
+  `SPELL_CAST_START` has no target, and a spell with a cast time gets no
+  `SPELL_CAST_SUCCESS`. Dose `amount` is the stack count after the change.
+- Before 1.17.10: `overkill` and `overhealing` are always 0;
+  `SPELL_AURA_REFRESH`, `SPELL_SUMMON` and `SPELL_CREATE` do not fire;
+  `DAMAGE_SHIELD`, `SPELL_DISPEL` and `SPELL_DISPEL_FAILED` have `spellId` 0;
+  `SPELL_INSTAKILL` has no source. From 1.17.10 see
+  [Combat log additions](#combat-log-additions-11710).
 - Some servers send no `SPELL_INTERRUPT` for an interrupt that also deals
   damage (Pummel, Kick, Earth Shock). [UNVERIFIED - TEST FIRST] on OctoWoW.
 - Flags are `COMBATLOG_OBJECT_*` globals (each group has a `_MASK`).
@@ -3142,6 +3166,8 @@ works. `CooldownFrame_SetTimer(cd, start, duration, enable)` calls
 `SetCooldown`, or hides the frame when a value is not above 0.
 `CooldownFrameTemplate` makes the frame fill its parent and start hidden. A new
 frame that is shown before `SetCooldown` hides itself after one second.
+The later clients' methods arrived in 1.17.9: see
+[Cooldown API (1.17.9)](#cooldown-api-1179).
 
 **Displacement:** `CreateFrame("Model", ..., "CooldownFrameTemplate")` and XML
 `<Model inherits="CooldownFrameTemplate">` are still the old 1.12 Model sweep,
@@ -3360,10 +3386,181 @@ The CVars are the player's: an addon may read them but should not change them
 for the player. [UNVERIFIED - TEST FIRST] Whether the engine writes the plate
 fade every frame or only when the target changes is not documented.
 
-### After 1.17.8 (master only): `ItemHasRange`
+## v1.17.9 to v1.17.10 API and behavior contracts
 
-`ItemHasRange(item)` (`1`/`nil`) and `C_Item.ItemHasRange(item)`
-(`true`/`false`) say whether an item's on-use spell has a range. They were
-added one commit after the v1.17.8 tag and are **not in the v1.17.8 DLL**.
-Do not use them until a release ships them and this note moves under that
-release. `C_Item.IsItemInRange` already returns `nil` for a rangeless item.
+[SOURCE-VERIFIED] From the pinned
+[v1.17.10 API reference](https://github.com/brues-code/ClassicAPI/blob/9daf3960c48d42f01b5f8cc38d98b157dfcac934/docs/API.md)
+and the `v1.17.8...v1.17.10` commit messages, which also describe changes the
+API reference leaves out. Grep `.private/upstream/classicapi/docs/API.md` for
+full method tables and payloads. [UNVERIFIED - TEST FIRST] Nothing here has
+been checked in game on OctoWoW yet.
+
+### Cooldown API (1.17.9)
+
+Native `Cooldown` frames (see [Native Cooldown frame](#native-cooldown-frame-1171))
+get the later clients' methods:
+
+- Timing: `SetCooldown(start, duration [, modRate])`,
+  `SetCooldownDuration(duration [, modRate])`,
+  `SetCooldownFromExpirationTime(expirationTime, duration [, modRate])`,
+  `Clear()` (hides with no flash and no `OnCooldownDone`), `Pause` / `Resume`,
+  `SetPaused` / `IsPaused`. `GetCooldownTimes()` returns milliseconds; once the
+  sweep ends it reports the flash (`start` = end time, `duration` =
+  1000 × `modRate`), and `0, 0` after `Clear()`. `modRate` scales the flash and
+  `GetCooldownDisplayDuration`, not the sweep.
+- Look: `SetDrawSwipe`, `SetDrawBling` (off: hide at the end with no flash),
+  `SetSwipeColor`, `SetEdgeColor`, `SetSwipeTexture` / `SetEdgeTexture` /
+  `SetBlingTexture`, `SetRotation`. XML: `drawSwipe`, `drawBling`, `rotation`
+  (degrees), `<SwipeTexture>`, `<EdgeTexture>`, `<BlingTexture>`.
+- `OnCooldownDone` runs once when the sweep ends, before the flash. It does not
+  run for `Clear()` or a cooldown of duration `0`.
+- Countdown numbers: every `Cooldown` has a countdown font string
+  (`GetCountdownFontString`, FRIZQT 16 outline, centred). It shows only while
+  the player's `countdownForCooldowns` CVar is `1` (default `0`), never during
+  the flash, and only for cooldowns longer than `SetMinimumCountdownDuration`
+  (ms of the full duration, default `2000`). Per frame:
+  `SetHideCountdownNumbers`, `SetCountdownAbbrevThreshold` (default 120 s),
+  `SetCountdownMillisecondsThreshold` (default 0: whole seconds).
+- `CooldownFrame_Set(cd, start, duration, enable [, forceShowDrawEdge, modRate])`,
+  `CooldownFrame_Clear(cd)` and `CooldownFrame_SetDisplayAsPercentage(cd, pct)`
+  join `CooldownFrame_SetTimer`. `Set`, `Clear` and `SetTimer` also take the
+  stock buttons' indicator Models and run the 1.12 timer for them.
+
+Use: on a native frame, `cd:Clear()` replaces `CooldownFrame_SetTimer(cd, 0, 0, 0)`,
+and an aura or item timer that knows its end time calls
+`SetCooldownFromExpirationTime`. An addon that draws its own countdown text over
+cooldowns can let the native numbers do it, but `countdownForCooldowns` is the
+player's setting, like the nameplate alpha CVars: read it, never set it. An
+addon that keeps its own numbers calls `SetHideCountdownNumbers(true)` on its
+frames, so the two never overlap when the player turns the CVar on.
+[UNVERIFIED - TEST FIRST] The stock action buttons are indicator Models, which
+have no countdown font string, so the CVar should add no numbers to them.
+
+### Script handler arguments (1.17.9)
+
+These extend [4.4](#44-modern-script-handler-arguments):
+
+- A C function given to `SetScript`, such as a frame method, gets the
+  positional arguments: `f:SetScript("OnDragStart", f.StartMoving)` works.
+  Before 1.17.9 it raised "Attempt to find 'this' in non-table object".
+- `OnClick`, `PreClick` and `PostClick` run as `(self, button, down)`;
+  `OnEnter` and `OnLeave` as `(self, motion)`. `down` is true on a press and
+  false on a release (for `button:Click(name, down)`, the given value).
+  `motion` is true when the mouse moved, false when the frame moved, showed or
+  hid under a still cursor. **Hazard:** a handler that declared a parameter in
+  that position and expected nil now gets a boolean. A handler that declares no
+  parameters keeps vanilla's globals.
+- `event` is saved before and restored after each `OnEvent` handler, so a
+  handler that assigns the `event` global no longer changes it for the next
+  listener. Off while `SetModernScriptArgs(false)`.
+- More than 19 values reach a handler (`arg20`...). The old `this` / `argN`
+  values are read with `rawget`, so a strict-globals `__index` on `_G` no longer
+  runs for them.
+
+### Small changes (1.17.9)
+
+- `ItemHasRange(item)` (`1` / `nil`, as 3.3.5) and `C_Item.ItemHasRange(item)`
+  (`true` / `false`): whether the item's on-use spell has a minimum or maximum
+  range. An uncached item reads as having none and fires no load.
+  `C_Item.IsItemInRange` already returns `nil` for a rangeless item.
+- Tooltip lines: no limit any more; see [13](#13-tooltip-capacity).
+- Textures: a freed NPOT texture no longer enters the recycle pools (a freed
+  48x48 could be handed to the next 32x32 request), and textures from 1x1 to
+  7x7 load (the minimum was 8 px).
+
+### Aura instance IDs and `UNIT_AURA_DELTA` (1.17.10)
+
+- Every `AuraData` has `auraInstanceID`: one number for one application on one
+  unit. It stays through stacks and refreshes, is new when the aura goes and
+  comes back, and is never reused. It is `nil` for an aura that is not in the
+  unit's aura list (a group member out of range, an aura only the cast cache
+  knows). `C_LossOfControl` CC entries carry it too.
+- `C_UnitAuras.GetAuraDataByAuraInstanceID(unit, id [, buf])` returns the aura
+  with that ID, or `nil`. With `buf` it fills and returns `buf` and makes no
+  table. It clears `sourceUnit` and `sourceGUID` when the aura has none, but
+  leaves other keys of `buf` as they were: use one `buf` per purpose.
+- `UNIT_AURA_DELTA(unitTarget, updateInfo)` is a ClassicAPI event with the
+  modern `UNIT_AURA` payload: `isFullUpdate`, `addedAuraInstanceIDs`,
+  `updatedAuraInstanceIDs`, `removedAuraInstanceIDs` (each `nil` when empty;
+  all three `nil` when `isFullUpdate`). `UNIT_AURA` itself does not change.
+  - It fires once per unit and token per frame, so a burst arrives as one
+    event; a unit that is both `target` and `party1` fires once for each.
+  - Every fire reuses the same four tables: they are valid only during the
+    handler. Copy a list to keep it.
+  - It gives changes, not the start state. Read all the auras when you
+    register, on `isFullUpdate`, and whenever a token starts naming another
+    unit (`PLAYER_TARGET_CHANGED`, a nameplate token, a roster change): a
+    token that only gets a new unit fires nothing.
+  - Timing-only refreshes are reported as updated; a refresh the client cannot
+    see fires nothing. With no listener, no lists are built.
+  - [UNVERIFIED - TEST FIRST] Whether `RegisterUnitEvent` filters it is not
+    documented.
+
+Use: an aura display that rereads every aura of the unit on each `UNIT_AURA`
+can keep an `auraInstanceID` to button map and touch only the changed IDs,
+reading each with the `buf` form. Instance IDs are also the stable key that
+[aura indices](#aura-slot-compaction-and-index-instability) are not.
+
+### Player aura timing and loss of control (1.17.10)
+
+- For `unit == "player"`, `AuraData.duration` is the duration the server
+  applied (`SMSG_UPDATE_AURA_DURATION`), with diminishing returns and the
+  caster's talents. Before, it was the base or cast-cache estimate. Other units
+  are unchanged.
+- `C_LossOfControl` CC entries take `startTime`, `timeRemaining` and
+  `duration` from the same server timer that `GetPlayerBuffTimeLeft` reads.
+  They are `nil` only when the debuff has no timer. Before, they were `nil`
+  unless ClassicAPI saw the applying cast, and had no diminishing returns.
+
+### Combat log additions (1.17.10)
+
+These correct the 1.17.0 limits in [Combat log](#combat-log):
+
+- `SPELL_AURA_REFRESH` (`auraType`): an aura's duration started again while
+  the aura stays. Every refresh of your own auras; on another unit only when
+  the client saw the cast. Nothing at login or on a zone change.
+- `SPELL_SUMMON` (a unit: pet, totem) and `SPELL_CREATE` (a game object, such
+  as a fishing bobber). A spell the game hides from the log (the mage portals)
+  fires no event except `SPELL_CAST_FAILED`.
+- `overkill` is the damage above the target's health (0 when it lives);
+  `overhealing` the heal above its missing health. Both are 0 when the target
+  is out of view or the server sends its health as a percentage, which most
+  servers do outside your group. [UNVERIFIED - TEST FIRST] What OctoWoW sends
+  for units outside the group.
+- `DAMAGE_SHIELD` names its spell (Thorns, Fire Shield, Retribution Aura) when
+  the shield's owner is in view and has exactly one damage-shield aura of that
+  school. Otherwise `spellId` is 0 and `spellName` `nil`, as before.
+- `DAMAGE_SHIELD_MISSED` with `missType` `"IMMUNE"` now fires for immune
+  targets, with the mapping 3.3.5 and 4.3.4 use: the commit's live check was a
+  Fireball on an immune target. Do not read this subevent as "a damage shield
+  missed".
+- `SPELL_DISPEL` and `SPELL_DISPEL_FAILED` name the dispelling spell when its
+  cast was seen (Dispel Magic, Purge). A dispel from an aura (Abolish Poison)
+  keeps `spellId` 0.
+- `SPELL_INSTAKILL` has a source when the cast was seen.
+
+### Small changes (1.17.10)
+
+- `IsDualWielding()` (`true` / `false`): the player can dual wield and has a
+  weapon in the off hand; `false` until the off-hand item is cached.
+- `OffhandHasWeapon()` is the engine's own function again: `1` for a
+  weapon-class off-hand item, else `nil`. ClassicAPI's earlier override
+  returned `true` / `false`, so `OffhandHasWeapon() == 1` was always false
+  under 1.17.9 and earlier. Test its truth, never compare it.
+- `UnitIsFeignDeath(unit)` reads the dynamic flag `UNIT_DYNFLAG_DEAD`, as 3.3.5
+  does. Before, it read a unit flag that vmangos-based servers never set, so it
+  was always false there. [UNVERIFIED - TEST FIRST] On OctoWoW, while
+  feigning: `/run print(UnitIsFeignDeath("player"))`.
+- Edit box history: a sent line goes to the end of the history ring, so
+  browsing and then sending no longer overwrites older lines. A line equal to
+  the newest one is not added again.
+- Equipment sets: a right-click drops a held set, with the drop sound.
+- Custom events no longer take engine event slots that the engine fires by
+  number. Before, the fifth custom event shared slot 6 with
+  `ADDON_LIST_UPDATE` and could fire with it.
+
+### After 1.17.10 (master only)
+
+`strlenutf8`, `strcmputf8i`, `strsplittable` and `strconcat` were added after
+the v1.17.10 tag and are **not in the v1.17.10 DLL**. Do not use them until a
+release ships them and this note moves under that release.

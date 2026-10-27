@@ -747,7 +747,7 @@ On removal or identity reuse, explicitly reset addon-owned state:
 - identity bindings (unit GUID, `auraIndex`, `spellId`, source GUID)
 - duration/expiration timestamps and cached timer bindings
 - text labels (`countText:SetText("")`, `durationText:SetText("")`)
-- cooldown animation (`CooldownFrame_SetTimer(cooldown, 0, 0, 0)` for the native 1.12 cooldown Model; do not assume a later-client `SetCooldown` method)
+- cooldown animation (`CooldownFrame_SetTimer(cooldown, 0, 0, 0)`, or `cooldown:Clear()` on a ClassicAPI `Cooldown` frame from 1.17.9; a 1.12 cooldown Model has no `SetCooldown` or `Clear`)
 - texture asset, vertex color, alpha (`button:SetAlpha(1.0)`), and border overlay (`border:Hide()`)
 
 An unavailable or elapsed timer is not proof that an API-reported aura has gone.

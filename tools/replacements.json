@@ -77,6 +77,27 @@
       "finding": "Walks auras by index; each index call re-walks the aura list.",
       "better": "C_UnitAuras.GetAuraSlots(unit, filter, nil, nil, slots) then UnitAuraBySlot: one walk.",
       "source": "ClassicAPI docs/API.md#c_unitaurasgetauraslotsunit--filter--maxslots--continuationtoken"
+    },
+    {
+      "id": "cooldown-countdown-text",
+      "pattern": "hooksecurefunc\\s*\\(\\s*\"CooldownFrame_SetTimer\"|CooldownFrame_SetTimer\\s*=",
+      "finding": "Draws its own countdown text over cooldown frames.",
+      "better": "Native Cooldown frames (1.17.9+) draw countdown numbers while the player's countdownForCooldowns CVar is 1; SetHideCountdownNumbers, GetCountdownFontString and the thresholds set them per frame. Read the CVar, never set it. Stock action buttons are 1.12 Models and get no numbers.",
+      "source": "CLASSICAPI_MASTER_REFERENCE.md#cooldown-api-1179"
+    },
+    {
+      "id": "aura-full-reread",
+      "pattern": "Register(Unit)?Event\\(\\s*\"UNIT_AURA\"",
+      "finding": "Rereads every aura of the unit on each UNIT_AURA.",
+      "better": "UNIT_AURA_DELTA (1.17.10+) lists the added, updated and removed auraInstanceIDs; read each with C_UnitAuras.GetAuraDataByAuraInstanceID(unit, id, buf). Reread all only on isFullUpdate and when a token names another unit.",
+      "source": "CLASSICAPI_MASTER_REFERENCE.md#aura-instance-ids-and-unit_aura_delta-11710"
+    },
+    {
+      "id": "offhand-weapon-compare",
+      "pattern": "OffhandHasWeapon\\s*\\(\\s*\\)\\s*[=~]=",
+      "finding": "Compares OffhandHasWeapon() with a value. The engine returns 1 or nil (ClassicAPI 1.17.10+); older ClassicAPI returned true or false, so the comparison is right on one of them only.",
+      "better": "Test its truth; IsDualWielding() (1.17.10+) when the question is whether the player dual wields.",
+      "source": "CLASSICAPI_MASTER_REFERENCE.md#small-changes-11710"
     }
   ]
 }
