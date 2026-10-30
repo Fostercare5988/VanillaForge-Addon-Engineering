@@ -126,8 +126,8 @@ class FlagWatchTests(unittest.TestCase):
 
     def test_any_opening_cast_teaches_the_spell_once(self):
         lua = runtime()
-        lua.execute('AutoBG_FlagWatch.onEvent(AutoBG_FlagWatch, "UNIT_CASTEVENT", "%s", nil, "START", 90001, 5000)' % BALLOON)
-        lua.execute('AutoBG_FlagWatch.onEvent(AutoBG_FlagWatch, "UNIT_CASTEVENT", "%s", nil, "CAST", 90001, 0)' % BALLOON)
+        lua.execute('AutoBG_FlagWatch.onEvent(AutoBG_FlagWatch, "SPELL_START_OTHER", 0, 90001, "%s", "0x0", 0, 5000)' % BALLOON)
+        lua.execute('AutoBG_FlagWatch.onEvent(AutoBG_FlagWatch, "SPELL_GO_OTHER", 0, 90001, "%s", "0x0", 0, 1, 0)' % BALLOON)
         self.assertEqual(list(lua.eval('learned').values()), [90001])
 
     def test_revived_enemy_at_stale_death_spot_does_not_warn(self):

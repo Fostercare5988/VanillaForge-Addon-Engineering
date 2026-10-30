@@ -88,7 +88,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | !ErrorLog | `regressions/ErrorLog` | 2 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 31 | Yes | [FostercareAuras](#fostercareauras) |
-| FostercareNameplates | `regressions/FostercareNameplates` | 53 | Yes | [FostercareNameplates](#fostercarenameplates) |
+| FostercareNameplates | `regressions/FostercareNameplates` | 56 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 66 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 54 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 30 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
