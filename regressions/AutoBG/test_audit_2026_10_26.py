@@ -109,7 +109,7 @@ class TimerLookTests(unittest.TestCase):
         self.assertEqual(lua.eval('AutoBG_AVNodeFrame.rows[1].timeFs.text'), "1:51")
         frame_update(lua, "AutoBG_AVNodeFrame", 1000 + 300 - 21.5)
         self.assertEqual(lua.eval('AutoBG_AVNodeFrame.rows[1].timeFs.text'), "21")
-        self.assertEqual(row(lua, "AutoBG_AVNodeFrame", 1, "announceText"), "Stonehearth Graveyard (Horde): 21")
+        self.assertEqual(row(lua, "AutoBG_AVNodeFrame", 1, "announceText"), "Stonehearth Graveyard (Horde) captured in 21")
         self.assertTrue(row(lua, "AutoBG_AVNodeFrame", 1, "sparkShown"))
 
     def test_last_ten_seconds_turn_gold(self):
@@ -138,6 +138,8 @@ class TimerLookTests(unittest.TestCase):
         self.assertEqual(lua.eval('AutoBG_RespawnFrame.rows[1].icon.texture'), "Interface\\Icons\\Spell_Holy_Resurrection")
         frame_update(lua, "AutoBG_RespawnFrame", 1012.5)
         self.assertEqual(lua.eval('AutoBG_RespawnFrame.rows[1].timeFs.text'), "~18")
+        # The chat line reads as a sentence: "Ress in 18", no colon, no "~".
+        self.assertEqual(lua.eval('AutoBG_RespawnFrame.rows[1].announceText'), "Ress in 18")
         frame_update(lua, "AutoBG_RespawnFrame", 1030.2)  # the wave passes
         frame_update(lua, "AutoBG_RespawnFrame", 1030.5)
         self.assertEqual(lua.eval('AutoBG_RespawnFrame.rows[1].timeFs.text'), "~30")
@@ -153,7 +155,7 @@ class TimerLookTests(unittest.TestCase):
         self.assertEqual(lua.eval('AutoBG_QueueFrame.rows[1].labelFs.text'), "Warsong Gulch")
         self.assertEqual(lua.eval('AutoBG_QueueFrame.rows[1].timeFs.text'), "4:32")
         self.assertEqual(row(lua, "AutoBG_QueueFrame", 1, "estText"), "Estimated: 6:00")
-        self.assertEqual(row(lua, "AutoBG_QueueFrame", 1, "announceText"), "WSG queue: 4:32")
+        self.assertEqual(row(lua, "AutoBG_QueueFrame", 1, "announceText"), "In WSG queue for 4:32")
         self.assertEqual(row(lua, "AutoBG_QueueFrame", 1, "fillDuration"), 360)
 
 
