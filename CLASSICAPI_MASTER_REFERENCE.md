@@ -6,7 +6,7 @@
 >
 > Source basis: `brues-code/ClassicAPI`, default branch `master`, official `README.md`, official `docs/API.md`, and selected implementation/source references.
 >
-> Snapshot used by VanillaForge: **ClassicAPI v1.17.11** (reference). Support floor: **v1.17.11+**, the latest release, for all maintained addons (raised from v1.17.7 on 2026-10-27). The 1.17 additions and behavior changes are in [v1.17.0 to v1.17.3](#v1170-to-v1173-api-and-behavior-contracts), [v1.17.4 to v1.17.8](#v1174-to-v1178-api-and-behavior-contracts), [v1.17.9 to v1.17.10](#v1179-to-v11710-api-and-behavior-contracts) and [v1.17.11](#v11711-api-and-behavior-contracts).
+> Snapshot used by VanillaForge: **ClassicAPI v1.18.5** (reference). Support floor: **v1.18.5+**, the latest release, for all maintained addons (raised from v1.17.11 on 2026-10-30; from v1.17.7 on 2026-10-27). The 1.17 additions and behavior changes are in [v1.17.0 to v1.17.3](#v1170-to-v1173-api-and-behavior-contracts), [v1.17.4 to v1.17.8](#v1174-to-v1178-api-and-behavior-contracts), [v1.17.9 to v1.17.10](#v1179-to-v11710-api-and-behavior-contracts), [v1.17.11](#v11711-api-and-behavior-contracts) and [v1.17.12 to v1.18.5](#v11712-to-v1185-api-and-behavior-contracts).
 >
 > IMPORTANT: ClassicAPI is actively developed. This document is a local snapshot, not a claim that future versions cannot add or change functionality. If installed ClassicAPI is newer and a task depends on newly added behavior not present here, inspect the installed/current source and update this reference deliberately.
 
@@ -72,12 +72,16 @@ v1.17.8 -> 11708
 v1.17.9 -> 11709
 v1.17.10 -> 11710
 v1.17.11 -> 11711
+v1.17.12 -> 11712
+v1.17.13 -> 11713
+v1.18.0 -> 11800
+v1.18.5 -> 11805
 ```
 
 The VanillaForge support baseline is:
 
 ```text
-ClassicAPI v1.17.11+
+ClassicAPI v1.18.5+
 ```
 
 Do not assume a future version's new API exists solely because a similarly named Retail API exists.
@@ -92,7 +96,7 @@ later stable version. Record artifact/source identity separately, and verify
 the consumed API and its behavior on the loaded target.
 
 Every maintained VanillaForge addon follows the latest ClassicAPI release:
-the support floor is `MIN_CLASSIC_API=11711` / ClassicAPI v1.17.11+ (the
+the support floor is `MIN_CLASSIC_API=11805` / ClassicAPI v1.18.5+ (the
 player's rule since 2026-10-27: always the latest release). A new release
 raises the floor in UPSTREAM_VERSIONS.json and here; each addon raises its
 guard, TOC metadata, synthetic-addon dependencies and installation
@@ -411,7 +415,9 @@ GetAddOnInfo("!!!ClassicAPI")
 
 and can be referenced by dependency metadata.
 
-A local physical `Interface/AddOns/!!!ClassicAPI/` copy can override the embedded files for development.
+A physical `Interface/AddOns/!!!ClassicAPI/` copy overrides the embedded files only
+when it holds an empty `.classicapi-dev` file or has a newer `## Version:` (1.18.0+).
+The player installs only the DLL; there is no addon folder to copy.
 
 ---
 
@@ -2655,22 +2661,21 @@ Keep GlueXML and in-world addon design separate.
 
 # PART VIII — DEBUGGING / DEVELOPMENT
 
-## 88. DebugTools Companion
+## 88. Debug Tools
 
-The ClassicAPI repository includes an optional DebugTools addon ("UI Debug
-Tools"). It is **not installed** in the VanillaForge client (removed
-2026-10-23), so do not write in-game checks that need it. Use `/run print(...)`
-for values and `!ErrorLog` (`/err`, `/lag`) for errors and timing. When
-installed, it provides:
+From 1.18.0 the DLL embeds the debug tools as `ClassicAPI_DebugTools`, a hidden,
+always-enabled addon that loads the first time one of its commands runs. Nothing
+is installed and nothing loads until then, so in-game checks may use them:
 
 ```text
-/dump
-/etrace
-/framestack
-/fstack
+/dump <expr>      a value, tables and all returns
+/etrace           event trace window
+/fstack           frames under the cursor (1.18.0: highlight, anchors, source file)
+/tinspect <expr>  table inspector
 /luaerrors
-/scripterrors
 ```
+
+`!ErrorLog` (`/err`, `/lag`) stays the tool for errors and frame time.
 
 Useful globals include:
 
@@ -3601,3 +3606,91 @@ Four Blizzard string globals the base library lacked:
   many files play at once (SuperWoW's `UncapSounds` lifts the cap; 16 played
   at once in a probe); at the cap the call returns `false`. A file holds its
   place until it ends, also while fading.
+
+## v1.17.12 to v1.18.5 API and behavior contracts
+
+Source: the pinned
+[v1.18.5 API reference](https://github.com/brues-code/ClassicAPI/blob/c965e4911726f9cedd6354ecd856d92a0b203831/docs/API.md)
+and the `v1.17.11...v1.18.5` commit messages (eight releases, 2026-10-27 to
+2026-10-30). Guard: `11805`. Search the pinned docs for a name before using it;
+this section lists only what changes how VanillaForge addons are written.
+
+### Fixes that retire workarounds
+
+- **Range answers know the target** (1.18.0). `C_Spell.IsSpellInRange` and
+  `C_Item.IsItemInRange` return `nil` for a unit the spell cannot be cast on:
+  a heal on an enemy, a damage spell on a friend, the wrong creature type, a
+  dead unit for anything but a resurrect. A pet spell measures to the pet, a
+  resurrect on a ghost to its corpse. Line of sight is still not checked. A
+  `UnitCanAttack` / `UnitIsFriend` test written only to make a range answer
+  meaningful can go; `nil` means "no answer", so colour only `true`/`false`.
+  Self-range spells (Hearthstone, totems) return `nil`, not `false`.
+- **Spell ranges include talents** (1.17.13). `GetSpellInfo` and
+  `C_Spell.GetSpellInfo` report `minRange`/`maxRange` through the engine:
+  range talents, spell mods, the ranged-weapon scale; `0`/`0` for melee. Code
+  that adds talent yards itself now counts them twice.
+- **`isOnGCD`** (1.17.13). `C_Spell.GetSpellCooldown(spell)` sets
+  `isOnGCD = true` when the reported start and duration are the global
+  cooldown. Replaces `duration <= 1.5` guesses (a rogue's GCD is 1 s).
+- **Player aura durations after login** (1.18.0). Auras already on the
+  character at login reported the time left as their full duration; they now
+  report the base duration (or the remaining time where a caster modifier
+  stretched it). Remove any re-learning of totals after login.
+- **Loot** (1.17.13). An unanswered loot request no longer blocks all looting
+  until relog; every loot sender refuses while mounted.
+- **Loss of control** (1.18.0). A spell that grants immunity to the effect is
+  not reported as locked: a druid's forms while polymorphed.
+- **Region scale** (1.18.0). A texture or font string on a hidden frame has
+  its frame's scale at once; `GetLeft`/`GetRect` on hidden regions are right.
+
+### Retail functions now native (1.18.0 to 1.18.2)
+
+Use these instead of loops, scans or own helpers:
+
+| Job | Function |
+| --- | --- |
+| Active stance-bar index | `GetShapeshiftForm([requireForm])`: 0 when none; replaces a `GetShapeshiftFormInfo` loop. Identify a form with `GetShapeshiftFormID()` |
+| Cancel one of your auras | `CancelUnitBuff("player", index [, filter])`: index in `C_UnitAuras.GetAuraDataByIndex` order, not `UnitBuff` order; only right-click-cancelable auras |
+| Cast a rank by ID | `CastSpellByID(spellID [, unit])`: target unchanged |
+| Run macro text | `RunMacroText(text [, button])`, `GetRunningMacro()`, `GetMacroBody(macro)` |
+| Group | `InviteUnit`, `UninviteUnit`, `PromoteToLeader` |
+| Money words | `GetCoinText(copper [, sep])`: "12 Gold, 34 Silver"; there is no compact `1g 50s` form |
+| Base cooldown | `GetSpellBaseCooldown(spellID)` in ms, talents excluded |
+| Item state | `IsCurrentItem`, `IsEquippedItemType`, `IsDressableItem`, `IsHelpfulItem`, `IsHarmfulItem` |
+| Spell kind | `IsAttackSpell`, `IsAutoRepeatSpell`, `IsConsumableSpell` |
+| Player | `IsLoggingOut`, `IsPlayerInWorld`, `IsChatAFK`, `IsChatDND`, `GetCritChance`, `GetRangedCritChance`, `GetMaxPlayerLevel`, `GetExpansionLevel` |
+| PvP flag | `SetPVP`, `GetPVPDesired`, `GetPVPTimer`, `IsPVPTimerRunning`, event `PVP_TIMER_UPDATE` |
+| Resurrection | `UnitHasIncomingResurrection`, `INCOMING_RESURRECT_CHANGED`; `C_DeathInfo.GetSelfResurrectOptions` / `UseSelfResurrectOption`, `SELF_RES_SPELL_CHANGED` |
+| Bags | `C_Container.SetItemSearch`, `IsContainerFiltered`, `INVENTORY_SEARCH_UPDATE`; `GetContainerItemInfo`'s `isFiltered` is now real |
+| Other | `GetNumGossipOptions`, `GetBuybackItemLink`, `CanCancelAuction`, `AddOrRemoveFriend`, `Expand/CollapseAllFactionHeaders`, `SendSystemMessage`, `ConsoleAddMessage`, `GetTickTime`, `CanBeRaidTarget`, `IsItemAction`, `IsPetAttackAction`, `IsAtStableMaster`, `GetMouseButtonName`, F13 to F24 keys, `SetBagPortraitTexture`, `SetInventoryPortraitTexture` |
+
+Completed-quest functions (`QueryQuestsCompleted`, `GetQuestsCompleted`,
+`C_QuestLog.IsQuestFlaggedCompleted`, `QUEST_QUERY_COMPLETE`) exist only on a
+Turtle-lineage client or server; do not use them without checking the active
+server profile.
+
+### Frames and UI kits (1.18.0 to 1.18.5)
+
+- Mouse: `SetMouseClickEnabled` / `SetMouseMotionEnabled` separately,
+  `SetPropagateMouseClicks` / `SetPropagateMouseMotion`, `IsMouseMotionFocus`.
+  A frame that needs hover but must pass clicks through no longer needs a
+  second overlay frame.
+- Layout: `SetClipsChildren`, `SetUsingParentLevel`, `SetAlphaGradient`,
+  `DesaturateHierarchy`, `fontstring:SetTextToFit`, `region:SetToDefaults`,
+  `GetScaledRect`, `GetPointByName`, `ClearPoint`, `AdjustPointsOffset`;
+  `GetWidth`/`GetHeight`/`GetSize` take `ignoreRect`.
+- XML: `intrinsic` frame types, `<Scripts>` `inherit="prepend"/"append"`,
+  `<Anchor>` `relativeKey` and `x`/`y`, `parentArray`, atlases.
+- Retail kits in `!!!ClassicAPI`: `BackdropTemplate`, ScrollBox with the
+  Classic Era scroll bar, `Blizzard_Menu` (`MenuUtil`, `DropdownButton`),
+  `EventFrame`/`EventButton`/`EventEditBox`, `LayoutFrame`, `SOUNDKIT`
+  constants. A 1.12 frame still has `SetBackdrop` natively; the template
+  matters only to code written for retail. Replacing `UIDropDownMenu` with
+  `Blizzard_Menu` is a rewrite, not a cleanup: do it only when a dropdown is
+  being rebuilt anyway, and check it in game.
+- ScrollingMessageFrame: `GetMessageInfo`, `BackFillMessage`, scroll offset,
+  `SetInsertMode` (including TOP), `AddOnDisplayRefreshedCallback`.
+- `GameTooltip:SetFrameStack(showHidden, showRegions, highlightIndexChanged)`,
+  `region:GetDebugName`, `region:GetSourceLocation`.
+- `securecall`, `securecallfunction`, `secureexecuterange`.
+- Edit boxes: caret, selection and clicks follow tall inline icons (1.18.4).

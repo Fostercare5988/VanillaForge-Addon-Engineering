@@ -112,6 +112,27 @@
       "finding": "Packs strsplit's returns into a table; the returns go through the Lua stack first.",
       "better": "strsplittable(sep, str [, pieces]) (1.17.11+) returns the array directly, with no stack limit.",
       "source": "CLASSICAPI_MASTER_REFERENCE.md#string-helpers-11711"
+    },
+    {
+      "id": "shapeshift-form-loop",
+      "pattern": "for\\s+\\w+\\s*=\\s*1\\s*,\\s*GetNumShapeshiftForms\\(\\)",
+      "finding": "Loops over the stance bar to find the active form.",
+      "better": "GetShapeshiftForm() (1.18.0+) returns the active stance-bar index, 0 for none; GetShapeshiftFormInfo(index) then gives its name.",
+      "source": "CLASSICAPI_MASTER_REFERENCE.md#v11712-to-v1185-api-and-behavior-contracts"
+    },
+    {
+      "id": "gcd-duration-guess",
+      "pattern": "dur(ation)?\\s*>\\s*1\\.5\\b|dur(ation)?\\s*<=\\s*1\\.5\\b|1\\.5\\s*>=\\s*dur",
+      "finding": "Guesses the global cooldown from a 1.5 s duration; a rogue's or cat's GCD is 1 s.",
+      "better": "C_Spell.GetSpellCooldown(spell).isOnGCD (1.17.13+) says whether the reported cooldown is the GCD.",
+      "source": "CLASSICAPI_MASTER_REFERENCE.md#v11712-to-v1185-api-and-behavior-contracts"
+    },
+    {
+      "id": "range-target-precheck",
+      "pattern": "(UnitCanAttack|UnitIsFriend|UnitCanAssist)\\([^)]*\\).*Is(Spell|Item)InRange|Is(Spell|Item)InRange.*(UnitCanAttack|UnitIsFriend|UnitCanAssist)\\(",
+      "finding": "Checks the target's reaction next to a range check.",
+      "better": "C_Spell.IsSpellInRange / C_Item.IsItemInRange (1.18.0+) return nil for a unit the spell cannot be cast on.",
+      "source": "CLASSICAPI_MASTER_REFERENCE.md#v11712-to-v1185-api-and-behavior-contracts"
     }
   ]
 }
