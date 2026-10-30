@@ -34,7 +34,7 @@ class CooldownTick(unittest.TestCase):
         lua = load(None, PRELUDE)
         lua.execute('''
             plate = nativePlate("0xF1", "nameplate1")
-            FNPEnemyCooldownEvents.scripts.OnEvent(FNPEnemyCooldownEvents, "UNIT_CASTEVENT", "0xF1", "0xME", "CAST", 2094, 0)
+            FNPEnemyCooldownEvents.scripts.OnEvent(FNPEnemyCooldownEvents, "SPELL_GO_OTHER", 0, 2094, "0xF1", "0x0", 0, 1, 0)
             local icon = plate.fnpEnemyCooldowns.icons[1]
             lookups, layouts, texts = 0, 0, 0
             local get, layout, set = FostercareNameplates.GetOverride, FostercareNameplates.Nameplates.LayoutExtras, icon.text.SetText

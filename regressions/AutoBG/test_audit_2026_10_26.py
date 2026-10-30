@@ -170,13 +170,15 @@ class FlagWatchCastTests(unittest.TestCase):
             lua.execute('pos["%s"] = { 58 - %d, 49 }' % (test_flag_watch.BALLOON, step * 3))
             test_flag_watch.ticks(lua, 1)
         # ...and starts the Opening cast at the flag.
-        lua.execute('AutoBG_FlagWatch.onEvent(AutoBG_FlagWatch, "UNIT_CASTEVENT", "%s", nil, "START", 24391, 5000)'
-                    % test_flag_watch.BALLOON)
+        self.start(lua)
         self.assertEqual(list(lua.eval('alerts').values()), ["Opening Blacksmith Balloon"])
 
     def start(self, lua, kind="START"):
-        lua.execute('AutoBG_FlagWatch.onEvent(AutoBG_FlagWatch, "UNIT_CASTEVENT", "%s", nil, "%s", 24391, 5000)'
-                    % (test_flag_watch.BALLOON, kind))
+        """NamPower: START and GO give itemId, spellId, caster; FAILED gives caster, spell."""
+        guid = test_flag_watch.BALLOON
+        args = {"START": '0, 24391, "%s", "0x0", 0, 5000' % guid, "GO": '0, 24391, "%s", "0x0", 0, 1, 0' % guid,
+                "FAILED": '"%s", 24391' % guid}[kind]
+        lua.execute('AutoBG_FlagWatch.onEvent(AutoBG_FlagWatch, "SPELL_%s_OTHER", %s)' % (kind, args))
 
     def test_row_mark_lasts_while_the_cast_runs_and_ends_with_it(self):
         lua = test_flag_watch.runtime()
@@ -188,7 +190,7 @@ class FlagWatchCastTests(unittest.TestCase):
         self.start(lua)
         test_flag_watch.ticks(lua, 4)  # visible and still, but the cast holds the mark
         self.assertEqual(lua.eval('opening.Balloon'), "Blacksmith")
-        self.start(lua, "FAIL")
+        self.start(lua, "FAILED")
         self.assertIsNone(lua.eval('opening.Balloon'))
 
     def test_opening_at_an_unlearned_flag_still_warns(self):
@@ -200,7 +202,7 @@ class FlagWatchCastTests(unittest.TestCase):
     def test_friendly_or_unknown_caster_does_not_warn(self):
         lua = test_flag_watch.runtime()
         test_flag_watch.learn_blacksmith(lua)
-        lua.execute('AutoBG_FlagWatch.onEvent(AutoBG_FlagWatch, "UNIT_CASTEVENT", "0x0000000000000009", nil, "START", 24391, 5000)')
+        lua.execute('AutoBG_FlagWatch.onEvent(AutoBG_FlagWatch, "SPELL_START_OTHER", 0, 24391, "0x0000000000000009", "0x0", 0, 5000)')
         self.assertEqual(len(lua.eval('alerts')), 0)
 
 
