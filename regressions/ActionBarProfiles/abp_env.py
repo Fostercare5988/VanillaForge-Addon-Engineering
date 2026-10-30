@@ -36,8 +36,8 @@ function SetCVar(name, value)
 end
 function UnitAffectingCombat() return combat end
 function HasAction(slot) count('HasAction'); return bars[slot] ~= nil end
-function SpellInfo(id)
-    count('SpellInfo'); local spell = spellDB[id]; if spell then return spell.name, spell.rank or '' end
+function GetSpellInfo(id)
+    count('GetSpellInfo'); local spell = spellDB[id]; if spell then return spell.name, spell.rank or '' end
 end
 spellDB = {}
 function GetActionText(slot)
@@ -162,6 +162,16 @@ function newFrame(name)
     return setmetatable({name = name, scripts = {}}, {__index = function(_,key)
         if frameMethods[key] then return frameMethods[key] end
         if string.find(key, '^[A-Z]') then error('unsupported widget method: '..key) end
+    end})
+end
+-- AddOn Options entry: any widget call is accepted; the panels and OnClick scripts are kept.
+categories, InterfaceOptionsFrame, GameMenuFrame = {}, nil, nil
+function InterfaceOptions_AddCategory(panel) table.insert(categories, panel) end
+function CreateFrame(_, name)
+    return setmetatable({name = name, scripts = {}}, {__index = function(self, key)
+        if key == 'SetScript' then return function(w, kind, fn) w.scripts[kind] = fn end end
+        if key == 'CreateFontString' then return function() return CreateFrame() end end
+        return function(w) return w end
     end})
 end
 ActionBarProfiles_IconFrame = newFrame('ActionBarProfiles_IconFrame')

@@ -72,7 +72,7 @@ inCombat = false
 function UnitAffectingCombat() return inCombat end
 guidNames = {}
 spellInfoCalls = 0
-function SpellInfo(id) spellInfoCalls = spellInfoCalls + 1; return "Arcane Intellect" end
+function GetSpellInfo(id) spellInfoCalls = spellInfoCalls + 1; return "Arcane Intellect" end
 function UnitName(u) if u == "player" then return "Tester" end if u == "target" then return target end return guidNames[u] end
 function UnitTokenFromName(name) for g, n in pairs(guidNames) do if n == name then return g end end end
 function UnitIsUnit(a, b) return a == b end

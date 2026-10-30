@@ -31,7 +31,7 @@ local handle = { Cancel = function() end }
 C_Timer = { NewTicker = function() return handle end }
 auraScans = 0
 C_UnitAuras = { GetAuraSlots = function() auraScans = auraScans + 1; return nil, 0 end }
-function SpellInfo(id) if id == 46392 then return "Focused Assault" end return "Other" end
+function GetSpellInfo(id) if id == 46392 then return "Focused Assault" end return "Other" end
 function GetRealZoneText() return "Warsong Gulch" end
 function UnitTokenFromName(name) if name == "Grom" then return "raid3" end end
 function UnitExists(u) return u == "raid3" end

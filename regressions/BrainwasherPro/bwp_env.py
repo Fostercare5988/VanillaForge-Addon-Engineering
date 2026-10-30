@@ -86,6 +86,9 @@ function Widget:GetTexture() return self.texture end
 function Widget:CreateFontString() local f = newWidget("FontString"); table.insert(fonts, f); return f end
 function Widget:CreateTexture() return newWidget("Texture") end
 function Widget:Click() run(self, "OnClick") end
+-- ClassicAPI's AddOn Options list; entries are recorded in order.
+categories = {}
+function InterfaceOptions_AddCategory(panel) table.insert(categories, panel) end
 function CreateFrame(kind, name) return newWidget(kind, name) end
 UIParent = newWidget("Frame", "UIParent")
 

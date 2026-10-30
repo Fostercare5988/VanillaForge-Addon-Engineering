@@ -95,6 +95,9 @@ function NewWidget(name,kind,parent)
   if name then _G[name]=w end
   return w
 end
+-- ClassicAPI's AddOn Options list; entries are recorded in order.
+categories = {}
+function InterfaceOptions_AddCategory(panel) table.insert(categories, panel) end
 function CreateFrame(kind,name,parent) local w=NewWidget(name,kind,parent); w.shown=true; return w end
 UIParent=NewWidget("UIParent"); UIParent.shown=true
 GameTooltip=NewWidget("GameTooltip")
