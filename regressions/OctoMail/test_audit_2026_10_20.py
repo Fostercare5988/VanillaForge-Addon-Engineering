@@ -10,8 +10,10 @@ from octomail_env import ROOT, SCRIPTS, load
 
 class AuditReproductions(unittest.TestCase):
     def test_p2_classicapi_guard(self):
-        """P2-8: without ClassicAPI 1.17.11+ the addon must stop before hooking anything."""
-        for version in ("nil", "11710"):
+        """P2-8: without ClassicAPI the addon must stop before hooking anything.
+        Since 2026-10-30 guards check only that ClassicAPI is loaded; the
+        version lives in VanillaForge's UPSTREAM_VERSIONS.json."""
+        for version in ("nil",):
             lua = load("CLASSIC_API_VERSION = %s" % version)
             self.assertIsNone(lua.eval('rawget(_G, "OctoMailFrame")'), version)
             self.assertTrue(lua.eval('string.find(table.concat(messages, " "), "ClassicAPI") ~= nil'), version)

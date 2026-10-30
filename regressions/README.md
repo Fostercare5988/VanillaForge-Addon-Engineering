@@ -24,8 +24,8 @@ approval or establish matching DLLs, settings, test coverage or native behavior.
 
 ## ClassicAPI 1.17.11 pass (2026-10-27)
 
-Every suite mocks `CLASSIC_API_VERSION = 11711`, the suite-wide floor (it
-follows the latest release). `test_classicapi_1_17_11.py` in FostercareAuras (3),
+Every suite mocks `CLASSIC_API_VERSION = 11711`; since 2026-10-30 the value does not matter, guards only check that it is a number.
+`test_classicapi_1_17_11.py` in FostercareAuras (3),
 MikScrollingBattleText (2), OctoMail (1) and FostercareTweaks (1): unit events
 only for the units read, sorts with `strcmputf8i`, the slash command with
 `strsplittable`, OctoMail's unused tooltip frame gone. All seven fail on the

@@ -47,10 +47,11 @@ class GetFormTests(unittest.TestCase):
             self.assertIsNone(lua.eval('GearRackUI_GetForm()'), index)
             self.assertEqual(lua.eval('infoCalls'), 0)
 
-    def test_guard_is_the_latest_release(self):
+    def test_guard_names_no_version(self):
+        # The version lives only in VanillaForge's UPSTREAM_VERSIONS.json (2026-10-30).
         boot = (ROOT / "src/Bootstrap.lua").read_text("utf-8-sig")
-        self.assertIn("CLASSIC_API_VERSION<11805", boot)
-        self.assertIn("## X-ClassicAPI-Min-Version: 1.18.5", (ROOT / "GearRack.toc").read_text("utf-8-sig"))
+        self.assertIn('type(CLASSIC_API_VERSION)~="number" then', boot)
+        self.assertNotIn("X-ClassicAPI-Min-Version", (ROOT / "GearRack.toc").read_text("utf-8-sig"))
 
 
 if __name__ == "__main__":
