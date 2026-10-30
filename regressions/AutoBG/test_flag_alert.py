@@ -1,7 +1,7 @@
 """Flag alert (AutoBG_FlagAlert.lua): its own card, apart from the stealth warning.
 
 AutoBG_AlertCard.lua, AutoBG_Spy.lua and AutoBG_FlagAlert.lua run with the Spy
-widget mocks. The Opening icon comes from SpellInfo once a cast taught the
+widget mocks. The Opening icon comes from GetSpellInfo once a cast taught the
 spell ID. The card's look, its screen position and the chat line stay in-game
 checks.
 """
@@ -17,7 +17,7 @@ EXTRA = r'''
 announced, picks, sounds = {}, {}, {}
 function AutoBG_SendAnnouncement(msg) table.insert(announced, msg) end
 AutoBG_Targets.SelectEnemy = function(name, guid, button) table.insert(picks, name .. "|" .. button) end
-function SpellInfo(id) if id == 90001 then return "Opening", "", "Interface\\Icons\\Learned" end end
+function GetSpellInfo(id) if id == 90001 then return "Opening", "", "Interface\\Icons\\Learned" end end
 function PlaySound(name) table.insert(sounds, name) end
 function click(card, button) card.scripts.OnClick(card, button or "LeftButton") end
 '''

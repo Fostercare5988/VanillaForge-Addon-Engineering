@@ -77,6 +77,9 @@ setmetatable(_G, { __index = function(_, k)
     end
 end })
 
+-- ClassicAPI's AddOn Options list; entries are recorded in order.
+categories = {}
+function InterfaceOptions_AddCategory(panel) table.insert(categories, panel) end
 function CreateFrame(_, name) return widget(name) end
 UIParent, WorldFrame, GameTooltip, TradeFrame = widget("UIParent"), widget("WorldFrame"), widget("GameTooltip"), widget("TradeFrame")
 UISpecialFrames, SlashCmdList = {}, {}

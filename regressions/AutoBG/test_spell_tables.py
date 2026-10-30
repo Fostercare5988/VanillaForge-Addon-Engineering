@@ -12,7 +12,7 @@ import test_targets_guid_events as targets_base
 SPELLS = r'''
 spellNames = { [20594] = "Stoneform", [9035] = "Hex of Weakness", [10793] = "Striped Nightsaber",
                [10795] = "Ivory Raptor", [11327] = "Vanish", [8342] = "Defibrillate" }
-function SpellInfo(id) return spellNames[id] end
+function GetSpellInfo(id) return spellNames[id] end
 function UnitRace() return nil end
 '''
 
@@ -59,7 +59,7 @@ class StealthAndTrinketTableTests(unittest.TestCase):
         self.assertTrue(self.stealth(11327))
 
     def show(self, spell, name, icon):
-        self.lua.execute('function SpellInfo() return "%s", "", "%s" end' % (name, icon))
+        self.lua.execute('function GetSpellInfo() return "%s", "", "%s" end' % (name, icon))
         targets_base.fire(self.lua, "UNIT_CASTEVENT", targets_base.GROM, "", "CAST", spell, 0)
         return (targets_base.row_text(self.lua), self.lua.eval('AutoBG_TargetButton1.stealthTexture'))
 

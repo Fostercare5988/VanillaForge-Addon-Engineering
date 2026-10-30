@@ -37,7 +37,7 @@ function GetNumRaidMembers() return 0 end
 function UnitTokenFromName() return nil end
 function UnitIsDeadOrGhost() return nil end
 function PlaySound() end
-function SpellInfo() return "Opening" end
+function GetSpellInfo() return "Opening" end
 pos = { player = { 0, 0 } }
 function UnitPosition(u)
     local p = pos[u]
