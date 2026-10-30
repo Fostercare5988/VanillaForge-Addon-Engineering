@@ -88,7 +88,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | !ErrorLog | `regressions/ErrorLog` | 2 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 31 | Yes | [FostercareAuras](#fostercareauras) |
-| FostercareNameplates | `regressions/FostercareNameplates` | 51 | Yes | [FostercareNameplates](#fostercarenameplates) |
+| FostercareNameplates | `regressions/FostercareNameplates` | 53 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 66 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 54 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 30 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
@@ -377,6 +377,9 @@ two buffs; another player's debuff leaves the row alone. Cooldown icons hide the
 native countdown numbers. All eight fail on `5a8cd9f`; `fnp_env.py` mocks `11710`.
 `test_options_entry_2026_10_27.py` (1 test): the AddOn Options entry opens the
 settings window; `fnp_env.py` records `InterfaceOptions_AddCategory` panels.
+
+`test_class_query_2026_10_30.py` (2 tests): class colors ask `UnitIsPlayer` once per plate unit; a
+non-player was asked every 0.5 s. One fails on 1.4.4.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareNameplates" --run-tests --test-start regressions/FostercareNameplates --output .private/fnp-current.json
