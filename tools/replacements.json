@@ -140,13 +140,6 @@
       "finding": "Works out melee or ranged crit by hand (spellbook tooltips, agility formulas).",
       "better": "GetCritChance() / GetRangedCritChance() (1.18.0+) return the engine's value with gear, buffs, talents and forms.",
       "source": "CLASSICAPI_MASTER_REFERENCE.md#v11712-to-v1185-api-and-behavior-contracts"
-    },
-    {
-      "id": "cancel-auction-unchecked",
-      "pattern": "CancelAuction\\s*\\(",
-      "finding": "Cancels an owner auction without asking whether the row can be cancelled.",
-      "better": "CanCancelAuction(index) (1.18.0+) answers first; a sold or empty row returns nil.",
-      "source": "CLASSICAPI_MASTER_REFERENCE.md#v11712-to-v1185-api-and-behavior-contracts"
     }
   ]
 }
