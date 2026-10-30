@@ -1,23 +1,23 @@
 {
   "classicapi": {
-    "minimum_version": "1.17.11",
-    "minimum_version_scope": "all maintained VanillaForge addons follow the latest ClassicAPI release (player's rule, 2026-10-27): floor 1.17.11 (11711), raised from 1.17.7; addon guards are raised in each addon's next pass",
-    "reference_version": "1.17.11",
+    "minimum_version": "1.18.5",
+    "minimum_version_scope": "all maintained VanillaForge addons follow the latest ClassicAPI release (player's rule, 2026-10-27): floor 1.18.5 (11805), raised from 1.17.11; addon guards are raised in each addon's next pass",
+    "reference_version": "1.18.5",
     "repository": "brues-code/ClassicAPI",
-    "reference_commit": "317539dbd8aa9e9cd7a23441c0e355bb85c7e2ab",
-    "reference_commit_scope": "the v1.17.11 tag commit (string helpers, equipment-set bank locations, reverse cooldown flash)",
+    "reference_commit": "c965e4911726f9cedd6354ecd856d92a0b203831",
+    "reference_commit_scope": "the v1.18.5 tag commit (1.17.12 to 1.18.5: retail globals and UI kits, isOnGCD, range target gate, engine range resolver, loot and login aura fixes, embedded debug tools)",
     "file_shas": {
-      "docs/API.md": "fb0bfad60bb898eca5e862df8f85b104f2dbcd84",
-      "README.md": "0e9caaa69eab05385d058b8404768b9bb33c33a8"
+      "docs/API.md": "1293cd7096b7265a78df7ca3a2bca2d6c4cd63ce",
+      "README.md": "530b70e3e2c5ace3db9fa92d550abb64fb4652d7"
     },
     "release_provenance": {
-      "tag": "v1.17.11",
-      "tag_object": "01713f97835f9635425c1170f77c33781dd5d39e",
-      "commit": "317539dbd8aa9e9cd7a23441c0e355bb85c7e2ab",
-      "published_at": "2026-10-27T06:23:48Z",
-      "dll_asset_id": 680672328,
-      "dll_size_bytes": 1830912,
-      "dll_sha256": "7fcf19aa85163ba6b45469c6fd6d30fe108a5889e394ab403e62a25329b989d8"
+      "tag": "v1.18.5",
+      "tag_object": "2ae41223b7e69b56107143361455ac2d2bbccc7a",
+      "commit": "c965e4911726f9cedd6354ecd856d92a0b203831",
+      "published_at": "2026-10-30T06:50:53Z",
+      "dll_asset_id": 691230101,
+      "dll_size_bytes": 1552384,
+      "dll_sha256": "8f2d899967acb0e6d4f9d0bbb59375f45b3081b0f1e896d20177a63a67439874"
     }
   },
   "superwow": {

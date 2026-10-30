@@ -9,7 +9,7 @@
 > **Canonical enhanced-client baseline**
 >
 > - World of Warcraft 1.12.1, Build 5875, `Interface: 11200`
-> - ClassicAPI v1.17.11+ (the latest release; see UPSTREAM_VERSIONS.json)
+> - ClassicAPI v1.18.5+ (the latest release; see UPSTREAM_VERSIONS.json)
 > - SuperWoW v2.2+
 > - NamPower v4.6.2+
 > - UnitXP SP3 v89+
@@ -836,8 +836,8 @@ prove native pointer safety or input ordering. See the deployed
 
 ## 13. Runtime Diagnostics
 
-The enhanced environment provides useful diagnostics. ClassicAPI's optional DebugTools
-addon (`/dump`, `/etrace`, `/fstack`) is not installed in this client.
+The enhanced environment provides useful diagnostics. ClassicAPI 1.18.0+ embeds its
+debug tools (`/dump`, `/etrace`, `/fstack`, `/tinspect`); they load on first use.
 
 Common tools:
 
