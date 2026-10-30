@@ -155,7 +155,7 @@ local function none() end
 for _, n in ipairs({ "UIDropDownMenu_SetWidth", "UIDropDownMenu_SetText", "UIDropDownMenu_SetSelectedValue",
   "UIDropDownMenu_SetSelectedName", "UIDropDownMenu_SetSelectedID", "UIDropDownMenu_JustifyText",
   "UIDropDownMenu_EnableDropDown", "UIDropDownMenu_DisableDropDown", "UIDropDownMenu_SetButtonWidth",
-  "UIDropDownMenu_Refresh", "CloseDropDownMenus", "ToggleDropDownMenu", "PlaySound", "PlaySoundFile",
+  "UIDropDownMenu_Refresh", "UIDropDownMenu_ClearAll", "CloseDropDownMenus", "ToggleDropDownMenu", "PlaySound", "PlaySoundFile",
   "HideUIPanel", "ShowUIPanel", "CooldownFrame_SetTimer", "InterfaceOptions_AddCategory",
   "RegisterCVar", "SetCVar", "ResetCursor", "SetCursor", "PanelTemplates_SetNumTabs" }) do
   _G[n] = none
