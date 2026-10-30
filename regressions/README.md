@@ -84,6 +84,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 5 | Yes | [ActionBarProfiles](#actionbarprofiles) |
 | AutoBG | `regressions/AutoBG` | 148 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 20 | Yes | [AutoLazy](#autolazy) |
+| Bagnon | `regressions/Bagnon` | 7 | Yes | [Bagnon](#bagnon) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
 | !ErrorLog | `regressions/ErrorLog` | 2 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
@@ -602,3 +603,11 @@ helpers are local. Four fail on `333c45b`. Clicking a bar stays an in-game check
 ```text
 python -B tools/audit_addon.py "<AddOns>/TWThreat" --run-tests --test-start regressions/TWThreat --output .private/twthreat-current.json
 ```
+
+## Bagnon
+
+`bgn_env.py` loads the real Utility, Database, Frame and Item files against widget mocks (the XML frames are
+stubs). `test_audit_2026_10_30.py` (7): the free-space header counts every bag the way the tooltip does
+(it ignored specialty bags), slot border colours come from the bag family (`C_Container`/`C_Item`) with no
+`GetItemInfo` calls, and another character's saved bags give free slots and families from the saved strings.
+Three fail on 1.1.0.
