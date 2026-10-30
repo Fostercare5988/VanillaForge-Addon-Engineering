@@ -6,7 +6,7 @@
 >
 > Source basis: `brues-code/ClassicAPI`, default branch `master`, official `README.md`, official `docs/API.md`, and selected implementation/source references.
 >
-> Snapshot used by VanillaForge: **ClassicAPI v1.18.5** (reference). Support floor: **v1.18.5+**, the latest release, for all maintained addons (raised from v1.17.11 on 2026-10-30; from v1.17.7 on 2026-10-27). The 1.17 additions and behavior changes are in [v1.17.0 to v1.17.3](#v1170-to-v1173-api-and-behavior-contracts), [v1.17.4 to v1.17.8](#v1174-to-v1178-api-and-behavior-contracts), [v1.17.9 to v1.17.10](#v1179-to-v11710-api-and-behavior-contracts), [v1.17.11](#v11711-api-and-behavior-contracts) and [v1.17.12 to v1.18.5](#v11712-to-v1185-api-and-behavior-contracts).
+> Pinned version: `classicapi.reference_version` in [UPSTREAM_VERSIONS.json](UPSTREAM_VERSIONS.json), always the latest release; VanillaForge supports nothing older. Release notes by version: [v1.17.0 to v1.17.3](#v1170-to-v1173-api-and-behavior-contracts), [v1.17.4 to v1.17.8](#v1174-to-v1178-api-and-behavior-contracts), [v1.17.9 to v1.17.10](#v1179-to-v11710-api-and-behavior-contracts), [v1.17.11](#v11711-api-and-behavior-contracts) and [v1.17.12 to v1.18.5](#v11712-to-v1185-api-and-behavior-contracts).
 >
 > IMPORTANT: ClassicAPI is actively developed. This document is a local snapshot, not a claim that future versions cannot add or change functionality. If installed ClassicAPI is newer and a task depends on newly added behavior not present here, inspect the installed/current source and update this reference deliberately.
 
@@ -52,6 +52,13 @@ X*10000 + Y*100 + Z
 Therefore:
 
 ```text
+v1.17.11 -> 11711
+v1.18.5 -> 11805
+```
+
+Older stamps, for reading old code:
+
+```text
 v1.15.8 -> 11508
 v1.15.9 -> 11509
 v1.15.10 -> 11510
@@ -78,11 +85,8 @@ v1.18.0 -> 11800
 v1.18.5 -> 11805
 ```
 
-The VanillaForge support baseline is:
-
-```text
-ClassicAPI v1.18.5+
-```
+The VanillaForge support baseline is the latest release, pinned in
+`UPSTREAM_VERSIONS.json`. No other file names it.
 
 Do not assume a future version's new API exists solely because a similarly named Retail API exists.
 
@@ -95,26 +99,15 @@ That sentinel does not prove a published release or all capabilities of any
 later stable version. Record artifact/source identity separately, and verify
 the consumed API and its behavior on the loaded target.
 
-Every maintained VanillaForge addon follows the latest ClassicAPI release:
-the support floor is `MIN_CLASSIC_API=11805` / ClassicAPI v1.18.5+ (the
-player's rule since 2026-10-27: always the latest release). A new release
-raises the floor in UPSTREAM_VERSIONS.json and here; each addon raises its
-guard, TOC metadata, synthetic-addon dependencies and installation
-documentation together in its next pass, and adopts what the release offers.
-For other components, declare the minimum required by the capabilities and
-semantic fixes the addon actually consumes. Before 2026-10-27 the floor was
-fixed and an addon that adopts an API or fix from 1.17 (combat log, native
-Cooldown drawing, animations, Interface Options, interruptible cast events)
-raises its own guard and TOC note to `11703` / v1.17.3+. An addon that adopts
-an API or fix from 1.17.4 to 1.17.8 (profiling, `FlashClientIcon`, the name
-cache lookup, the binding modifier fix, the nameplate alpha CVars) raises it
-to that release; see
-[v1.17.4 to v1.17.8](#v1174-to-v1178-api-and-behavior-contracts).
-An addon that adopts an API or fix from 1.17.9 or 1.17.10 (the later
-clients' Cooldown methods, frame methods as handlers, `down` / `motion`,
-`ItemHasRange`, aura instance IDs and `UNIT_AURA_DELTA`, the new combat log
-events and values, `IsDualWielding`) raises it to `11709` or `11710`; see
-[v1.17.9 to v1.17.10](#v1179-to-v11710-api-and-behavior-contracts).
+Versions live in one place. Only `UPSTREAM_VERSIONS.json` names a DLL
+version. Addons check that ClassicAPI is loaded
+(`type(CLASSIC_API_VERSION) == "number"`), never a number, and their TOC,
+README and file headers say "ClassicAPI" without one (since 2026-10-30;
+the player always runs the latest release). A comment may say when a
+feature arrived ("UNIT_AURA_DELTA (1.17.10)"): that stays true. A new
+release is taken with `python -B tools/upgrade_dll.py`, which shows what
+changed, pins it, and lists the leads in every addon; the hole finder
+reports any addon that names a version again.
 
 ClassicAPI is one required component of VanillaForge's full enhanced environment;
 its version global does not establish that SuperWoW, NamPower and UnitXP SP3 are

@@ -188,11 +188,15 @@ below, in this order, and write the answers in `.private/audit-<Addon>-<date>.md
 | An addon's regression tests | [regressions/README.md](regressions/README.md) |
 | The settings style | `templates/ForgeUI/` |
 | DLL versions and upstream tracking | [UPSTREAM_VERSIONS.json](UPSTREAM_VERSIONS.json), `python -B tools/check_upstream.py` |
+| Take a new DLL release | `python -B tools/upgrade_dll.py [component] [--pin]`: what changed, the pin, leads in every addon |
 | Earlier audits, workflows and decisions | [archive/](archive/README.md), for history only |
 
 ## 7. Keeping VanillaForge lean
 
 - One fact lives in one place. Improve an existing entry before adding one.
+- DLL versions live only in UPSTREAM_VERSIONS.json, always the latest release.
+  Addons check that a DLL is loaded, never its version, and their TOC, README
+  and headers name no version, so a release changes no addon file by itself.
 - Add a known pattern only when a hazard recurs and is not covered already.
 - Facts about one addon belong in that addon's `CLAUDE.md`, not here.
 - Facts about one server belong in its profile. A new server starts from

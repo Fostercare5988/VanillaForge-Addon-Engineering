@@ -370,19 +370,15 @@ def stale_notes(addon, docs):
 
 
 def version_drift(addon):
-    data = json.loads((ROOT / "UPSTREAM_VERSIONS.json").read_text("utf-8"))
-    floor = data["classicapi"]["minimum_version"]
-    major, minor, patch = (int(x) for x in floor.split("."))
-    number = major * 10000 + minor * 100 + patch
+    # Only UPSTREAM_VERSIONS.json names a ClassicAPI version; guards check that it is loaded.
     findings = []
     toc_version = addon.meta.get("x-classicapi-min-version")
-    if toc_version and toc_version != floor:
-        findings.append({"where": addon.toc.name, "found": toc_version, "floor": floor})
+    if toc_version:
+        findings.append({"where": addon.toc.name, "found": toc_version})
     for rel, text in addon.lua():
-        for m in re.finditer(r"(?:CLASSIC_API_VERSION\s*<\s*|MIN_CLASSIC_API\s*=\s*|local\s+minimum\s*=\s*)(\d{5})\b", text):
-            if int(m.group(1)) != number:
-                findings.append({"where": "%s:%d" % (rel, text.count("\n", 0, m.start()) + 1),
-                                 "found": m.group(1), "floor": str(number)})
+        for m in re.finditer(r"CLASSIC_API_VERSION\s*(?:<|>=?)\s*(\w+)|(?:MIN_CLASSIC_API|local\s+minimum)\s*=\s*(\d{5})\b", text):
+            findings.append({"where": "%s:%d" % (rel, text.count("\n", 0, m.start()) + 1),
+                             "found": m.group(1) or m.group(2)})
     return findings
 
 
@@ -465,7 +461,7 @@ def report(results, out):
             % (f["name"], f["uses"], ", ".join(f["where"]), ("  [" + f["note"] + "]") if f["note"] else ""))
     section("Stale notes (the docs cover them)", results["stale_notes"],
             lambda f: "%s: %s" % (f["where"], ", ".join(f["covered"])))
-    section("Version drift", results["version_drift"], lambda f: "%s: %s, floor %s" % (f["where"], f["found"], f["floor"]))
+    section("Names a ClassicAPI version (only UPSTREAM_VERSIONS.json may)", results["version_drift"], lambda f: "%s: %s" % (f["where"], f["found"]))
 
 
 def main(argv=None):
