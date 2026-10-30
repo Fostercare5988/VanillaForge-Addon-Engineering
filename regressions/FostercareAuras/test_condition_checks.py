@@ -21,7 +21,15 @@ def form_runtime(cls, active):
         forms, buffs = {}, {}
         function UnitClass() return playerClass, playerClass end
         function GetNumShapeshiftForms() return table.getn(forms) end
+        function GetShapeshiftForm()
+            for i = 1, table.getn(forms) do
+                if forms[i].active then return i end
+            end
+            return 0
+        end
+        infoCalls = 0
         function GetShapeshiftFormInfo(i)
+            infoCalls = infoCalls + 1
             local f = forms[i]
             if not f then return nil end
             return "tex", f.name, f.active and 1 or nil
@@ -45,6 +53,12 @@ class FormConditionTests(unittest.TestCase):
         lua.execute('forms[1].active = false')
         self.assertFalse(lua.eval('passes("1. Stealth")'))
         self.assertTrue(lua.eval('passes("0. No Stealth")'))
+
+    def test_reads_the_active_index_not_the_bar(self):
+        # ClassicAPI 1.18.0 GetShapeshiftForm: no lookup without a form.
+        lua = form_runtime("ROGUE", [("Stealth", False)])
+        self.assertFalse(lua.eval('passes("1. Stealth")'))
+        self.assertEqual(lua.eval('infoCalls'), 0)
 
     def test_all_forms_and_retired_labels_never_hide(self):
         lua = form_runtime("ROGUE", [("Stealth", False)])

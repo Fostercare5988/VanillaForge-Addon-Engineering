@@ -167,7 +167,7 @@ function UIDropDownMenu_CreateInfo() return {} end
 function UIDropDownMenu_GetSelectedValue() return nil end
 function UIDropDownMenu_GetText(dd) return dd and dd._ddtext end
 
-CLASSIC_API_VERSION = 11711
+CLASSIC_API_VERSION = 11805
 function GetNampowerVersion() return 4, 6, 2 end
 NOW = 1000
 function GetTime() return NOW end
