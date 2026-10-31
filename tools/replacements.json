@@ -140,6 +140,48 @@
       "finding": "Works out melee or ranged crit by hand (spellbook tooltips, agility formulas).",
       "better": "GetCritChance() / GetRangedCritChance() (1.18.0+) return the engine's value with gear, buffs, talents and forms.",
       "source": "CLASSICAPI_MASTER_REFERENCE.md#v11712-to-v1185-api-and-behavior-contracts"
+    },
+    {
+      "id": "pcall-stock-function",
+      "pattern": "\bpcall\\s*\\(\\s*(UIDropDownMenu_\\w+|CreateFrame|SetItemButton\\w+|PlaySound\\w*)\b",
+      "finding": "Calls a function the client always defines inside pcall; a failure is hidden from !ErrorLog.",
+      "better": "Call it directly. An error then reaches !ErrorLog.",
+      "source": "VANILLAFORGE.md, how we think: delete dead fallbacks"
+    },
+    {
+      "id": "stock-function-guard",
+      "pattern": "\bif\\s+(UIDropDownMenu_\\w+|ToggleDropDownMenu|CloseDropDownMenus|hooksecurefunc)\\s+then\b",
+      "finding": "Tests whether a stock function exists before using it; the client defines it.",
+      "better": "Remove the test. Keep a guard only where the object may be a different widget type (a dropdown frame has no :Enable()).",
+      "source": "VANILLAFORGE.md section 2: no dead weight"
+    },
+    {
+      "id": "bag-type-by-text",
+      "pattern": "GetItemInfo\\s*\\([^)]*\\)[^\n]*\n?[^\n]*(ITEMTYPE|SUBTYPE|\"Quiver\"|\"Soul Bag\"|\"Container\")|\bITEMTYPE_\\w+|\bSUBTYPE_\\w+",
+      "finding": "Decides a bag's kind from English item-type text, one GetItemInfo call per slot.",
+      "better": "C_Container.GetContainerNumFreeSlots(bag) second return (family bitmask, equipped bags), C_Item.GetItemFamily(item) for saved links. Read once per bag.",
+      "source": "ClassicAPI docs/API.md#c_containergetcontainernumfreeslotsbagid and #c_itemgetitemfamilyitem"
+    },
+    {
+      "id": "handler-argument-sniffing",
+      "pattern": "\barg1_param\b|type\\s*\\(\\s*arg1_param\\s*\\)",
+      "finding": "A handler works out whether it got this/event/arg1 or positional arguments.",
+      "better": "function(self, event, arg1, ...) : positional script arguments are the ClassicAPI default; XML bodies pass (this, event, arg1) explicitly.",
+      "source": "CLASSICAPI_MASTER_REFERENCE.md#44-modern-script-handler-arguments"
+    },
+    {
+      "id": "superwow-spellinfo",
+      "pattern": "(?<![\\w.])SpellInfo\\s*\\(",
+      "finding": "SuperWoW's SpellInfo(spellID).",
+      "better": "GetSpellInfo(spellID) (ClassicAPI): name, rank, icon, cost, ..., minRange, maxRange, spellID, for any spell ID.",
+      "source": "ClassicAPI docs/API.md#getspellinfospellid--getspellinfoslot-booktype"
+    },
+    {
+      "id": "unit-castevent-casts-only",
+      "pattern": "[\"']UNIT_CASTEVENT[\"']",
+      "finding": "SuperWoW's UNIT_CASTEVENT also fires on every melee swing nearby. Fine when the addon reads MAINHAND/OFFHAND swings.",
+      "better": "For cast start, finish and failure only: NamPower SPELL_START_OTHER, SPELL_GO_OTHER, SPELL_FAILED_OTHER (registering the event enables it).",
+      "source": ".private/upstream/nampower/EVENTS.md"
     }
   ]
 }

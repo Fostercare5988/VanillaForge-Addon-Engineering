@@ -437,6 +437,42 @@ def replacements(addon):
 
 # Report ----------------------------------------------------------------------
 
+def unreferenced_functions(addon):
+    """Global functions the addon defines and nothing in its Lua, XML or TOC mentions again."""
+    stripped = {rel: strip_lua(text, keep_strings=True) for rel, text in addon.lua()}
+    everything = "\n".join(list(stripped.values()) + [t for r, t in addon.files.items() if not r.lower().endswith(".lua")])
+    findings = []
+    for rel, code in stripped.items():
+        for m in re.finditer(r"^function\s+([A-Za-z_]\w*)\s*\(", code, re.M):
+            name = m.group(1)
+            if name in HANDLER_GLOBALS or name.startswith(("SLASH_", "BINDING_")):
+                continue
+            if len(re.findall(r"\b%s\b" % re.escape(name), everything)) <= 1:
+                findings.append({"name": name, "where": "%s:%d" % (rel, code.count(chr(10), 0, m.start()) + 1)})
+    return findings
+
+
+def duplicate_functions(addon, min_lines=6):
+    """Function bodies that repeat exactly (names and whitespace ignored). Same-indent end closes a body."""
+    seen, findings = {}, []
+    for rel, text in addon.lua():
+        lines = strip_lua(text).split("\n")
+        for i, line in enumerate(lines):
+            m = re.match(r"^(\s*)(?:local\s+)?function\b[^\n]*\)\s*$", line)
+            if not m:
+                continue
+            for j in range(i + 1, len(lines)):
+                if re.match(r"^%send\b" % m.group(1), lines[j]) and not lines[j].startswith(m.group(1) + " "):
+                    body = [x.strip() for x in lines[i + 1:j] if x.strip()]
+                    if len(body) >= min_lines:
+                        seen.setdefault("\n".join(body), []).append("%s:%d" % (rel, i + 1))
+                    break
+    for where in seen.values():
+        if len(where) > 1:
+            findings.append({"where": where})
+    return findings
+
+
 def report(results, out):
     def section(title, items, line):
         out.append("\n## %s (%d)" % (title, len(items)))
@@ -451,6 +487,9 @@ def report(results, out):
                 lambda f: "%s[%r]" % (f["table"], f["key"]))
         section("Saved but no code reads it", s["not_in_code"], lambda f: "%s[%r] on %d character(s)"
                 % (f["table"], f["key"], f["characters"]))
+    section("Global functions nothing refers to", results["unreferenced_functions"],
+            lambda f: "%s at %s" % (f["name"], f["where"]))
+    section("Function bodies that repeat", results["duplicate_functions"], lambda f: ", ".join(f["where"]))
     section("A DLL does it now", results["replacements"], lambda f: "%s (%d at %s)\n  %s\n  Better: %s\n  Source: %s"
             % (f["id"], f["hits"], ", ".join(f["where"]), f["finding"], f["better"], f["source"]))
     section("Connections between addons", results["connections"], lambda f: "%s reads %s's %s at %s%s"
@@ -494,6 +533,8 @@ def main(argv=None):
         "addon": addon.name,
         "unused_files": unused_files(addon),
         "saved_settings": saved_settings(addon, wtf),
+        "unreferenced_functions": unreferenced_functions(addon),
+        "duplicate_functions": duplicate_functions(addon),
         "replacements": replacements(addon),
         "connections": connections(addon, everyone, game),
         "leaks": leaks(addon, game),
