@@ -115,5 +115,33 @@ class FindHoles(unittest.TestCase):
         self.assertEqual([s["key"] for s in result["not_in_code"]], ["Old"])
 
 
+class DeadAndDuplicateFunctions(unittest.TestCase):
+    BODY = "".join("  local v%d = %d
+" % (i, i) for i in range(7))
+
+    def test_unreferenced_and_repeated_functions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "Toy", {
+                "Toy.toc": "## Title: Toy
+Toy.lua
+Toy.xml
+",
+                "Toy.lua": ("function Dead()
+" + self.BODY + "end
+function Alive()
+" + self.BODY + "end
+"
+                            "function FromXml()
+end
+Alive()
+"),
+                "Toy.xml": "<Ui><Button name='B'><Scripts><OnClick>FromXml()</OnClick></Scripts></Button></Ui>",
+            })
+            addon = HOLES.Addon(root / "Toy")
+            self.assertEqual([f["name"] for f in HOLES.unreferenced_functions(addon)], ["Dead"])
+            self.assertEqual(len(HOLES.duplicate_functions(addon)), 1)
+
+
 if __name__ == "__main__":
     unittest.main()
