@@ -74,7 +74,8 @@ def raid_runtime():
         UF.LayoutRaidText = function(...) layouts = layouts + 1; return LayoutRaidText(...) end
         RaidText = LayoutRaidText
     ''')
-    lua.execute(slice(RAID, 'local function UpdateButtonHealth', 'local function UpdateButtonPower')
+    lua.execute(slice(RAID, '-- Range and colour change rarely', 'local function UpdateButtonPower',
+                      'local function UpdateButtonHealth')
                 + '\nHealth = UpdateButtonHealth')
     return lua
 
@@ -100,7 +101,8 @@ class RaidHotPathTests(unittest.TestCase):
     def test_unchanged_raid_badge_keeps_geometry(self):
         lua = raid_runtime()
         lua.execute(r'''
-            UF.Auras = { UpdateAuraTiming = function() end, StyleBorder = function() end }
+            UF.Auras = { UpdateAuraTiming = function() end, StyleBorder = function() end,
+                         SetIcon = function() end, SetCount = function() end }
             function UF:IsDebuffSpin() return true end
             function UF:IsDebuffText() return true end
             function UF:IsBuffSpin() return true end
