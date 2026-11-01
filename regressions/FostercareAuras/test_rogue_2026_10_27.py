@@ -138,3 +138,14 @@ class OptionsEntryTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class WeaponEnchantTimerTests(unittest.TestCase):
+    """2026-11-01: poison time and charges come from C_Item.GetWeaponEnchantInfo
+    on every read; the guesses about coarse or stuck times from NamPower's
+    GetEquippedItem are gone. Which hand's numbers show stays an in-game check."""
+
+    def test_the_timer_reads_the_clients_weapon_enchant_values(self):
+        self.assertIn("C_Item.GetWeaponEnchantInfo()", CONDITIONS)
+        for gone in ("tempEnchantmentTimeLeftMs", "tempEnchantmentCharges", "_msLeft", "memE", "memC"):
+            self.assertNotIn(gone, CONDITIONS)
