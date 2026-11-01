@@ -59,7 +59,7 @@ class ClockLooksLikeZoneText(unittest.TestCase):
         clock = source_text[source_text.index('FT:register({\n    title = "MiniMap Clock"'.replace("\n", "\r\n") if "\r\n" in source_text else 'FT:register({\n    title = "MiniMap Clock"'):source_text.index("MiniMap Square")]
         self.assertNotIn("SetBackdrop", clock)
         self.assertIn("MinimapZoneText:GetFont()", clock)
-        self.assertIn('FT.RegisterFrameMover(clock, "minimap_clock"', clock)
+        self.assertIn('PlaceOnMinimap(clock, "minimap_clock_r"', clock)
 
     def test_the_three_icons_are_registered(self):
         text = source("mods/minimap-tweaks.lua")

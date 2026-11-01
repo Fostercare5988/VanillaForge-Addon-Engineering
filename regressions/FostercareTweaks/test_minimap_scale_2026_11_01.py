@@ -1,74 +1,144 @@
-"""Minimap size scales the whole cluster; moved icons keep their place, 2026-11-01.
+"""Minimap size, view and movable map, 2026-11-01.
 
-The mock models only what the scale code relies on: a frame's effective scale is
-the cluster's, positions are offsets from the UIParent corner in the frame's own
-units. How it feels in game (size steps, tooltip anchors) stays a game check.
+* Size scales the whole cluster; a moved map keeps its top-right corner.
+* View makes the map frame itself larger (a larger window on the map).
+* Ctrl+Shift moves the map; the clock and icons are saved relative to the map so
+  they follow it, and positions saved against the screen are converted once.
+
+The mock models only what the code relies on: a frame's effective scale is the
+cluster's and positions are offsets from a corner in the frame's own units.
+Whether a larger frame shows more world, and how it feels, are game checks.
 """
 import unittest
 
 from test_audit_2026_10_26 import runtime, source
 
 SETUP = r'''
+    function IsLeftShiftKeyDown() return false end
+    function IsRightShiftKeyDown() return false end
+    function IsLeftControlKeyDown() return false end
+    function IsRightControlKeyDown() return false end
     UIParent.GetLeft = function() return 0 end
+    UIParent.GetRight = function() return 1000 end
     UIParent.GetTop = function() return 1000 end
     UIParent.GetEffectiveScale = function() return 1 end
-    MinimapCluster = Widget({ scale = 1 })
+    MinimapCluster = Widget({ scale = 1, right = 990, top = 995 })
     function MinimapCluster:GetScale() return self.scale end
     function MinimapCluster:SetScale(s) self.scale = s end
-    function MovedFrame(name)
-        local f = Widget({ name = name })
-        f.left, f.top = 200, 900                       -- own units
-        function f:GetEffectiveScale() return MinimapCluster.scale end
-        function f:GetLeft() return self.left end
-        function f:GetTop() return self.top end
-        function f:ClearAllPoints() end
-        function f:SetPoint(_, _, _, x, y) self.left, self.top = x, 1000 / self:GetEffectiveScale() + y end   -- UIParent corner: left 0, top 1000 screen units
-        _G[name] = f
-        return f
-    end
-    function Screen(f) return f.left * f:GetEffectiveScale(), f.top * f:GetEffectiveScale() end
+    function MinimapCluster:GetEffectiveScale() return self.scale end
+    function MinimapCluster:GetRight() return self.right end
+    function MinimapCluster:GetTop() return self.top end
+    function MinimapCluster:ClearAllPoints() end
+    -- TOPRIGHT of UIParent, offsets in cluster units
+    function MinimapCluster:SetPoint(_, _, _, x, y) self.right, self.top = (1000 + x * self.scale) / self.scale, (1000 + y * self.scale) / self.scale end
     function FT.GetNumber(key, default, low, high)
         local v = FostercareTweaks_Config.overwrites[key]
         return math.max(low, math.min(high, v or default))
     end
-    FostercareTweaks_Config.unitframe_positions = { minimap_mail = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 200, y = -100 } }
+    Minimap = Widget({ w = 140, h = 140, zoom = 3 })
+    function Minimap:GetWidth() return self.w end
+    function Minimap:SetWidth(v) self.w = v end
+    function Minimap:SetHeight(v) self.h = v end
+    function Minimap:GetZoom() return self.zoom end
+    function Minimap:SetZoom(z) self.zoomSet = z end
+    -- Map-relative frames: left / top are offsets from the Minimap corner, own units.
+    function MapFrame(name)
+        local f = Widget({ name = name, left = 10, top = -5 })
+        function f:GetLeft() return 300 + self.left end      -- Minimap left is 300 screen units
+        function f:GetTop() return 800 + self.top end
+        function f:ClearAllPoints() end
+        function f:SetPoint(_, rel, _, x, y) self.left, self.top, self.rel = x, y, rel end
+        function f:GetEffectiveScale() return 1 end
+        _G[name] = f
+        return f
+    end
+    Minimap.GetLeft = function() return 300 end
+    Minimap.GetTop = function() return 800 end
+    Minimap.GetEffectiveScale = function() return 1 end
+    FostercareTweaks_Config.unitframe_positions = {}
 '''
 
 
-class MinimapScale(unittest.TestCase):
+class MinimapSizeAndView(unittest.TestCase):
     def setUp(self):
         self.lua = runtime()
         self.lua.execute(SETUP)
         self.lua.execute(source("mods/move-unitframes.lua"))
         self.lua.execute(source("mods/minimap-tweaks.lua"))
-        self.lua.execute('mail = MovedFrame("MiniMapMailFrame"); clock = MovedFrame("FCTweaksMinimapClock")')
 
-    def test_login_sets_the_saved_size_and_moves_nothing(self):
-        self.lua.execute('FostercareTweaks_Config.overwrites.minimap_scale = 1.25; FT.mods["MiniMap Size"].enable()')
-        self.assertEqual(self.lua.eval("MinimapCluster.scale"), 1.25)
-        self.assertEqual(self.lua.eval("mail.left"), 200)
-
-    def test_default_size_changes_nothing(self):
+    def enable(self):
         self.lua.execute('FT.mods["MiniMap Size"].enable()')
+
+    def test_login_sets_the_saved_size_and_view(self):
+        self.lua.execute("FostercareTweaks_Config.overwrites.minimap_scale = 1.25; FostercareTweaks_Config.overwrites.minimap_view = 1.5")
+        self.enable()
+        self.assertEqual(self.lua.eval("MinimapCluster.scale"), 1.25)
+        self.assertEqual(self.lua.eval("Minimap.w"), 210)
+        self.assertEqual(self.lua.eval("Minimap.h"), 210)
+        self.assertEqual(self.lua.eval("Minimap.zoomSet"), 3)
+
+    def test_defaults_change_nothing(self):
+        self.enable()
         self.assertEqual(self.lua.eval("MinimapCluster.scale"), 1)
+        self.assertEqual(self.lua.eval("Minimap.w"), 140)
+        self.assertIsNone(self.lua.eval("Minimap.zoomSet"))
 
-    def test_size_is_limited_to_the_slider_range(self):
-        self.lua.execute('FostercareTweaks_Config.overwrites.minimap_scale = 9; FT.mods["MiniMap Size"].enable()')
+    def test_values_are_limited_to_the_slider_ranges(self):
+        self.lua.execute("FostercareTweaks_Config.overwrites.minimap_scale = 9; FostercareTweaks_Config.overwrites.minimap_view = 9")
+        self.enable()
         self.assertEqual(self.lua.eval("MinimapCluster.scale"), 1.6)
+        self.assertEqual(self.lua.eval("Minimap.w"), 280)
 
-    def test_a_moved_icon_stays_where_it_is_on_screen(self):
-        self.lua.execute("local before = { Screen(mail) }; FT.ApplyMinimapScale(1.5, true); after = { Screen(mail) }; first = before")
-        before = tuple(self.lua.eval("first").values())
-        after = tuple(self.lua.eval("after").values())
-        self.assertAlmostEqual(before[0], after[0], places=6)
-        self.assertAlmostEqual(before[1], after[1], places=6)
-        self.assertEqual(self.lua.eval("MinimapCluster.scale"), 1.5)
-        saved = self.lua.eval("FostercareTweaks_Config.unitframe_positions.minimap_mail")
-        self.assertAlmostEqual(saved.x * 1.5, 200, places=6)
+    def test_the_map_is_registered_as_a_mover_anchored_by_its_right_edge(self):
+        self.enable()
+        self.assertEqual(self.lua.eval("MinimapCluster.fctPositionPoint"), "TOPRIGHT")
+        self.assertIsNotNone(self.lua.eval("MinimapCluster.fctMover"))
 
-    def test_an_icon_never_moved_is_not_given_a_saved_position(self):
+    def test_a_moved_map_keeps_its_top_right_corner_when_resized(self):
+        self.lua.execute('FostercareTweaks_Config.unitframe_positions.minimap = { point = "TOPRIGHT", relPoint = "TOPRIGHT", x = -10, y = -5 }')
+        self.lua.execute("FT.RestoreFramePosition(MinimapCluster, 'minimap'); before = { MinimapCluster:GetRight(), MinimapCluster:GetTop() }")
+        self.lua.execute("FT.ApplyMinimapScale(1.5, true)")
+        self.assertAlmostEqual(self.lua.eval("MinimapCluster:GetRight() * MinimapCluster.scale"), 990, places=6)
+        self.assertAlmostEqual(self.lua.eval("MinimapCluster:GetTop() * MinimapCluster.scale"), 995, places=6)
+
+    def test_an_unmoved_map_gets_no_saved_position(self):
         self.lua.execute("FT.ApplyMinimapScale(0.8, true)")
-        self.assertIsNone(self.lua.eval("FostercareTweaks_Config.unitframe_positions.minimap_clock"))
+        self.assertIsNone(self.lua.eval("FostercareTweaks_Config.unitframe_positions.minimap"))
+
+
+class IconsFollowTheMap(unittest.TestCase):
+    def setUp(self):
+        self.lua = runtime()
+        self.lua.execute(SETUP)
+        self.lua.execute(source("mods/move-unitframes.lua"))
+        self.lua.execute(source("mods/minimap-tweaks.lua"))
+        self.lua.execute('mail = MapFrame("MiniMapMailFrame")')
+
+    def test_a_position_saved_against_the_screen_is_converted_once(self):
+        self.lua.execute('''
+            local p = FostercareTweaks_Config.unitframe_positions
+            p.minimap_mail = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 310, y = -200 }
+            FT.PlaceOnMinimap(mail, "minimap_mail_r", "minimap_mail", "Mail")
+        ''')
+        saved = self.lua.eval("FostercareTweaks_Config.unitframe_positions")
+        self.assertIsNotNone(saved.minimap_mail_r)
+        self.assertIsNone(saved.minimap_mail)
+        self.assertEqual(self.lua.eval("mail.rel == Minimap"), True)
+        self.assertIsNotNone(self.lua.eval("mail.fctMover"))
+
+    def test_a_new_position_is_used_as_saved_and_the_old_one_is_ignored(self):
+        self.lua.execute('''
+            local p = FostercareTweaks_Config.unitframe_positions
+            p.minimap_mail_r = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 7, y = -9 }
+            FT.PlaceOnMinimap(mail, "minimap_mail_r", "minimap_mail", "Mail")
+        ''')
+        self.assertEqual(self.lua.eval("mail.left"), 7)
+        self.assertEqual(self.lua.eval("mail.top"), -9)
+
+    def test_clock_and_icons_are_placed_on_the_map(self):
+        text = source("mods/minimap-tweaks.lua")
+        self.assertIn('PlaceOnMinimap(clock, "minimap_clock_r", "minimap_clock"', text)
+        self.assertIn('PlaceOnMinimap(frame, entry[2] .. "_r", entry[2], entry[3])', text)
 
 
 if __name__ == "__main__":
