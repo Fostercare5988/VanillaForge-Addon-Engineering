@@ -61,6 +61,10 @@ class ClockLooksLikeZoneText(unittest.TestCase):
         self.assertIn("MinimapZoneText:GetFont()", clock)
         self.assertIn('PlaceOnMinimap(clock, "minimap_clock_r"', clock)
 
+    def test_the_zone_name_is_movable_and_follows_the_map(self):
+        text = source("mods/minimap-tweaks.lua")
+        self.assertIn('PlaceOnMinimap(MinimapZoneTextButton, "minimap_zone", nil, "Zone")', text)
+
     def test_the_three_icons_are_registered(self):
         text = source("mods/minimap-tweaks.lua")
         for name in ("MiniMapMailFrame", "MiniMapBattlefieldFrame", "MiniMapTrackingFrame"):
