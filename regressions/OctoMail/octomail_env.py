@@ -127,6 +127,15 @@ MAX_COD_AMOUNT, COPPER_PER_GOLD = 10000, 10000
 SEND_MONEY_CONFIRMATION, ACCEPT, CANCEL = "Send money to %s?", "Accept", "Cancel"
 StaticPopupDialogs, popups = {}, {}
 tickers = {}
+-- ClassicAPI: coin icons in the real client; plain letters here.
+function GetCoinTextureString(copper)
+    local g, s, c = math.floor(copper / 10000), math.floor(copper % 10000 / 100), copper % 100
+    local t = {}
+    if g > 0 then t[#t + 1] = g .. "g" end
+    if s > 0 then t[#t + 1] = s .. "s" end
+    if c > 0 or #t == 0 then t[#t + 1] = c .. "c" end
+    return table.concat(t, " ")
+end
 C_Timer = { NewTicker = function(seconds, fn)
     local h = { seconds = seconds, fn = fn }
     function h:Cancel() self.cancelled = true end
