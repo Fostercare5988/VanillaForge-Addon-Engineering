@@ -287,12 +287,12 @@ class InventoryEventTests(unittest.TestCase):
             CD = { [13] = { 900, 180, 1 }, [14] = { 0, 0, 1 } }
             function GearRack.GetInventoryCooldown(s) return CD[s][1], CD[s][2], CD[s][3] end
             function CooldownFrame_SetTimer(f) table.insert(calls, f.name) end
-            GearRackTrinkets_Trinket0Cooldown, GearRackTrinkets_Trinket1Cooldown = { name = "top" }, { name = "bottom" }
+            GearRackTrinkets_Trinket0CD, GearRackTrinkets_Trinket1CD = { name = "top" }, { name = "bottom" }
             GearRackTrinkets = {}
         ''' + between(TRINKETS, "-- Every global cooldown asks again", "function GearRackTrinkets.UpdateMenuCooldowns()") + r'''
-            for i = 1, 5 do GearRackTrinkets.UpdateWornCooldowns(1) end
+            for i = 1, 5 do GearRackTrinkets.UpdateWornCooldowns() end
             CD[14] = { 950, 120, 1 }
-            GearRackTrinkets.UpdateWornCooldowns(1)
+            GearRackTrinkets.UpdateWornCooldowns()
         ''')
         self.assertEqual(list(lua.eval("calls").values()), ["top", "bottom", "bottom"])
 
@@ -423,7 +423,7 @@ class NotifyEventTests(unittest.TestCase):
         ''' + between(EQUIPMENT, "-- enables a specific eventname", "-- disables a sepcific eventname")
           + between(EQUIPMENT, "function GearRackUI_EnableAllEvents()", "-- Suspend event watching")
           + between(CORE, "-- Ready notices feed the alert", "function GearRack.GetInventoryCooldown(")
-          + between(EQUIPMENT, "-- Ready alert for a used item", "-- Refresh only visible cooldown numbers") + r'''
+          + between(EQUIPMENT, "-- Ready alert for a used item", "-- Notify list: a used item") + r'''
             GearRackUI_EnableAllEvents()
             GearRack.ItemReady("Insignia of the Horde", false)
         ''')
