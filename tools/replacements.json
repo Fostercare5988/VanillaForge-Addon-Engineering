@@ -143,28 +143,28 @@
     },
     {
       "id": "pcall-stock-function",
-      "pattern": "\bpcall\\s*\\(\\s*(UIDropDownMenu_\\w+|CreateFrame|SetItemButton\\w+|PlaySound\\w*)\b",
+      "pattern": "\\bpcall\\s*\\(\\s*(UIDropDownMenu_\\w+|CreateFrame|SetItemButton\\w+|PlaySound\\w*)\\b",
       "finding": "Calls a function the client always defines inside pcall; a failure is hidden from !ErrorLog.",
       "better": "Call it directly. An error then reaches !ErrorLog.",
       "source": "VANILLAFORGE.md, how we think: delete dead fallbacks"
     },
     {
       "id": "stock-function-guard",
-      "pattern": "\bif\\s+(UIDropDownMenu_\\w+|ToggleDropDownMenu|CloseDropDownMenus|hooksecurefunc)\\s+then\b",
+      "pattern": "\\bif\\s+(UIDropDownMenu_\\w+|ToggleDropDownMenu|CloseDropDownMenus|hooksecurefunc)\\s+then\\b",
       "finding": "Tests whether a stock function exists before using it; the client defines it.",
       "better": "Remove the test. Keep a guard only where the object may be a different widget type (a dropdown frame has no :Enable()).",
       "source": "VANILLAFORGE.md section 2: no dead weight"
     },
     {
       "id": "bag-type-by-text",
-      "pattern": "GetItemInfo\\s*\\([^)]*\\)[^\n]*\n?[^\n]*(ITEMTYPE|SUBTYPE|\"Quiver\"|\"Soul Bag\"|\"Container\")|\bITEMTYPE_\\w+|\bSUBTYPE_\\w+",
+      "pattern": "GetItemInfo\\s*\\([^)]*\\)[^\n]*\n?[^\n]*(ITEMTYPE|SUBTYPE|\"Quiver\"|\"Soul Bag\"|\"Container\")|\\bITEMTYPE_\\w+|\\bSUBTYPE_\\w+",
       "finding": "Decides a bag's kind from English item-type text, one GetItemInfo call per slot.",
       "better": "C_Container.GetContainerNumFreeSlots(bag) second return (family bitmask, equipped bags), C_Item.GetItemFamily(item) for saved links. Read once per bag.",
       "source": "ClassicAPI docs/API.md#c_containergetcontainernumfreeslotsbagid and #c_itemgetitemfamilyitem"
     },
     {
       "id": "handler-argument-sniffing",
-      "pattern": "\barg1_param\b|type\\s*\\(\\s*arg1_param\\s*\\)",
+      "pattern": "\\barg1_param\\b|type\\s*\\(\\s*arg1_param\\s*\\)",
       "finding": "A handler works out whether it got this/event/arg1 or positional arguments.",
       "better": "function(self, event, arg1, ...) : positional script arguments are the ClassicAPI default; XML bodies pass (this, event, arg1) explicitly.",
       "source": "CLASSICAPI_MASTER_REFERENCE.md#44-modern-script-handler-arguments"
@@ -182,6 +182,34 @@
       "finding": "SuperWoW's UNIT_CASTEVENT also fires on every melee swing nearby. Fine when the addon reads MAINHAND/OFFHAND swings.",
       "better": "For cast start, finish and failure only: NamPower SPELL_START_OTHER, SPELL_GO_OTHER, SPELL_FAILED_OTHER (registering the event enables it).",
       "source": ".private/upstream/nampower/EVENTS.md"
+    },
+    {
+      "id": "range-poll-ticker",
+      "pattern": "\\bUnitInRange\\s*\\(",
+      "finding": "Asks UnitInRange for group members, usually from a repeating timer, whether or not anyone moved.",
+      "better": "UNIT_IN_RANGE_UPDATE (unitTarget, isInRange): fires only when the value changes, and the client checks only while a frame is registered. RegisterUnitEvent limits the units checked; RegisterEvent covers pet, party, raid and their pets. The first check does not fire, so read UnitInRange once when a unit starts to show. Group members out of view: UNIT_DISTANCE_CHECK_UPDATE (isInDistance) and UNIT_CONNECTION (isConnected).",
+      "source": "ClassicAPI docs/API.md#unit_in_range_update-event (1.18.x)"
+    },
+    {
+      "id": "power-events-legacy",
+      "pattern": "\"UNIT_(MANA|RAGE|ENERGY|FOCUS|MAXMANA|MAXRAGE|MAXENERGY|MAXFOCUS)\"",
+      "finding": "Registers one stock event per power type (UNIT_MANA, UNIT_RAGE, UNIT_ENERGY and their MAX twins) and branches on the event name.",
+      "better": "UNIT_POWER_UPDATE / UNIT_POWER_FREQUENT and UNIT_MAXPOWER, all with (unitTarget, powerType \"MANA\"|\"RAGE\"|\"FOCUS\"|\"ENERGY\"|\"HAPPINESS\"). One registration, and for a visible unit they fire for every power, not only the primary. Mostly tidiness, not a speed-up: check the stock events do not fire as well before counting a saving. Pair with RegisterUnitEvent.",
+      "source": "ClassicAPI docs/API.md#unit_power_update--unit_power_frequent--unit_maxpower-events (1.18.x)"
+    },
+    {
+      "id": "hand-made-number-format",
+      "pattern": "%\\.1f[kKmM]\\b|function\\s+[A-Za-z_.:]*(Abbrev|ShortValue|FormatNumber|FormatHP)\\w*",
+      "finding": "Shortens or groups large numbers by hand (1.2k, 12.3m, 1,234,567).",
+      "better": "AbbreviateNumbers(n) (\"1.2K\"), AbbreviateLargeNumbers(n), BreakUpLargeNumbers(n [, natural]); both take an options table with breakpointData for other suffixes. Output is fixed (\"K\", \"M\"): keep the hand-made one if the look must stay (lowercase k).",
+      "source": "ClassicAPI docs/API.md#abbreviatenumbersnumber--options (1.18.x)"
+    },
+    {
+      "id": "hand-made-money-format",
+      "pattern": "function\\s+[A-Za-z_.:]*(FormatMoney|FormatGold|GetCoinText|MoneyString)\\w*",
+      "finding": "Builds a gold/silver/copper string by hand.",
+      "better": "GetMoneyString(copper [, separateThousands, useCoinIcons, checkGoldThreshold]); GetMoneyString(51234, nil, true) draws coin icons.",
+      "source": "ClassicAPI docs/API.md (Constants.MoneyFormattingConstants, GetMoneyString) (1.18.x)"
     }
   ]
 }
