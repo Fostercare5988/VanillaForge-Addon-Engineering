@@ -124,12 +124,28 @@ class DeadAndDuplicateFunctions(unittest.TestCase):
             write(root / "Toy", {
                 "Toy.toc": "## Title: Toy\nToy.lua\nToy.xml\n",
                 "Toy.lua": ("function Dead()\n" + self.BODY + "end\nfunction Alive()\n" + self.BODY + "end\n"
-                            "function FromXml()\nend\nAlive()\n"),
+                            "function FromXml()\nend\nfunction FromBinding()\nend\nAlive()\n"),
                 "Toy.xml": "<Ui><Button name='B'><Scripts><OnClick>FromXml()</OnClick></Scripts></Button></Ui>",
+                # Loaded by the client without a TOC line.
+                "Bindings.xml": "<Bindings><Binding name='TOY'>FromBinding()</Binding></Bindings>",
             })
             addon = HOLES.Addon(root / "Toy")
             self.assertEqual([f["name"] for f in HOLES.unreferenced_functions(addon)], ["Dead"])
             self.assertEqual(len(HOLES.duplicate_functions(addon)), 1)
+
+
+class ReplacementUnless(unittest.TestCase):
+    def test_a_file_already_on_the_event_is_no_lead(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "Toy", {
+                "Toy.toc": "## Title: Toy\nPoll.lua\nEvent.lua\n",
+                "Poll.lua": "C_Timer.NewTicker(0.25, function() return UnitInRange('party1') end)\n",
+                "Event.lua": "local f = CreateFrame('Frame')\nf:RegisterEvent(\"UNIT_IN_RANGE_UPDATE\")\nlocal r = UnitInRange('party1')\n",
+            })
+            leads = {x["id"]: x for x in HOLES.replacements(HOLES.Addon(root / "Toy"))}
+            self.assertEqual(leads["range-poll-ticker"]["where"], ["Poll.lua:1"])
+
 
 if __name__ == "__main__":
     unittest.main()

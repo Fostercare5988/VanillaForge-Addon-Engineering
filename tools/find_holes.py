@@ -425,9 +425,13 @@ def replacements(addon):
     findings = []
     for entry in entries:
         pattern = re.compile(entry["pattern"])
+        # "unless": a file that already does it the better way is not a lead.
+        unless = re.compile(entry["unless"]) if entry.get("unless") else None
         hits = []
         for rel, text in addon.lua():
             code = strip_lua(text, keep_strings=True)
+            if unless and unless.search(code):
+                continue
             hits += ["%s:%d" % (rel, code.count("\n", 0, m.start()) + 1) for m in pattern.finditer(code)]
         if hits:
             findings.append({"id": entry["id"], "where": hits[:3], "hits": len(hits),
@@ -440,7 +444,11 @@ def replacements(addon):
 def unreferenced_functions(addon):
     """Global functions the addon defines and nothing in its Lua, XML or TOC mentions again."""
     stripped = {rel: strip_lua(text, keep_strings=True) for rel, text in addon.lua()}
-    everything = "\n".join(list(stripped.values()) + [t for r, t in addon.files.items() if not r.lower().endswith(".lua")])
+    # The client loads Bindings.xml itself (no TOC line); its bodies call our globals.
+    bindings = addon.folder / "Bindings.xml"
+    extra = [bindings.read_text("utf-8", "replace")] if bindings.is_file() else []
+    everything = "\n".join(list(stripped.values()) + extra +
+                           [t for r, t in addon.files.items() if not r.lower().endswith(".lua")])
     findings = []
     for rel, code in stripped.items():
         for m in re.finditer(r"^function\s+([A-Za-z_]\w*)\s*\(", code, re.M):

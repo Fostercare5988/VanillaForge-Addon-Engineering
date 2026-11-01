@@ -30,6 +30,11 @@ Do not trust for this server:
   surfaces exist, not their function names or signatures. **Unverified** beyond that.
 - Battleground rules, spells, items and talents may differ from vanilla 1.12.
   Check every number against the database or in game.
+- Source-verified 2026-11-01 (client FrameXML, patch-4.mpq, via
+  `tools/extract_framexml.py`): the world map has a windowed mode. The map's
+  minimize and maximize buttons call `WorldMapFrame_Minimize`/`_Maximize`
+  (detail scale 0.7, draggable, Escape closes), and the choice is saved per
+  account as `WORLDMAP_WINDOWED` (`RegisterForSave`).
 
 ## Facts learned while building addons
 
