@@ -5,10 +5,11 @@ while the player's countdownForCooldowns CVar is 1 (docs/API.md,
 CreateFrame("Cooldown")). The stock buttons' cooldowns are 1.12 indicator
 Models and get none, so Cooldown Numbers stays for them. On a native frame
 whose numbers show, ours stand aside; frames that keep their own timer text
-(aura buttons) hide the native numbers. GearRack always draws its own.
+(aura buttons) hide the native numbers. GearRack's buttons are native
+Cooldown frames since 2026-11-01, so it needs no special case.
 
 Three fail on c143613: native frames get double numbers and the aura buttons
-leave native numbers on. The Model and GearRack tests are controls. The CVar's
+leave native numbers on. The Model test is a control. The CVar's
 real value, the native font and the stock buttons' Models stay in-game checks.
 """
 from pathlib import Path
@@ -58,7 +59,6 @@ function FT.SetEventHandler() end
 FT.HookAddonOrVariable = NOOP -- c143613 still waited for GearRack
 function FT.TimeConvert(r) return tostring(math.ceil(r)) end
 function FT.hooksecurefunc(name, fn) if name == "CooldownFrame_SetTimer" then SetTimer = fn end end
-GearRack = { HasCooldownNumbers = function(name) return name == "GearRackTrinkets_Trinket0Cooldown" end }
 
 function Cooldown(kind, name)
     return Widget({ kind = kind, name = name, parent = Widget() })
@@ -111,9 +111,6 @@ class CooldownNumbers(unittest.TestCase):
             SetTimer(cd, 95, 30, 1)
             return Number(cd)
         '''), "25")
-
-    def test_gearrack_keeps_its_own(self):
-        self.assertFalse(self.number("Model", "GearRackTrinkets_Trinket0Cooldown"))
 
 
 class AuraButtonsHideNativeNumbers(unittest.TestCase):
