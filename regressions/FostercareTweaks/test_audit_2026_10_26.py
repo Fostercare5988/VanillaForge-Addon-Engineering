@@ -254,7 +254,7 @@ class UnitEventsReachOnlyTheirUnits(unittest.TestCase):
         lua.execute('UF:EnableRaidFrames(true)')
         raid = lua.eval('FCTweaksRaidFrame')
         fire = lua.globals().fire
-        for ev in ("UNIT_HEALTH", "UNIT_MANA", "UNIT_AURA", "UNIT_MAXHEALTH"):
+        for ev in ("UNIT_HEALTH", "UNIT_POWER_UPDATE", "UNIT_AURA", "UNIT_MAXHEALTH"):
             self.assertFalse(fire(raid, ev, "nameplate3"), ev)
             self.assertFalse(fire(raid, ev, "mark8"), ev)
         # Control: raid members still arrive.
@@ -288,10 +288,10 @@ class UnitEventsReachOnlyTheirUnits(unittest.TestCase):
         lua.execute('FT.mods["Show Energy Ticks"]:enable()')
         frame = lua.eval('FCTweaksEnergyTick')
         fire = lua.globals().fire
-        for ev in ("UNIT_MANA", "UNIT_ENERGY", "UNIT_DISPLAYPOWER"):
+        for ev in ("UNIT_POWER_UPDATE", "UNIT_DISPLAYPOWER"):
             self.assertFalse(fire(frame, ev, "raid7"), ev)
             self.assertFalse(fire(frame, ev, "nameplate2"), ev)
-        self.assertTrue(fire(frame, "UNIT_ENERGY", "player"))
+        self.assertTrue(fire(frame, "UNIT_POWER_UPDATE", "player"))
 
     def test_target_castbar_skips_other_casters_and_swings(self):
         lua = runtime()

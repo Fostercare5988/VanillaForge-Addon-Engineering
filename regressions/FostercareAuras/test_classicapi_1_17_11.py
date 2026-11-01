@@ -18,7 +18,7 @@ class UnitEventScopeTests(unittest.TestCase):
     def test_unit_events_only_for_the_units_read(self):
         lua = tcd.runtime()
         expect = {"UNIT_AURA": ["player", "target"], "UNIT_HEALTH": ["target"],
-                  "UNIT_MANA": ["player"], "UNIT_ENERGY": ["player"], "UNIT_RAGE": ["player"]}
+                  "UNIT_POWER_UPDATE": ["player"]}
         for ev, units in expect.items():
             reg = lua.eval('eventFrame.events.%s' % ev)
             self.assertEqual(list(reg.values()), units, ev)
