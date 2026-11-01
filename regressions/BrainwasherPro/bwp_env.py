@@ -107,6 +107,15 @@ function count(kind) local n = 0; for _, w in ipairs(widgets) do if w.kind == ki
 
 -- Timers -----------------------------------------------------------------
 now, timers = 0, {}
+-- ClassicAPI: coin icons in the real client; plain letters here.
+function GetCoinTextureString(copper)
+    local g, s, c = math.floor(copper / 10000), math.floor(copper % 10000 / 100), copper % 100
+    local t = {}
+    if g > 0 then t[#t + 1] = g .. "g" end
+    if s > 0 then t[#t + 1] = s .. "s" end
+    if c > 0 or #t == 0 then t[#t + 1] = c .. "c" end
+    return table.concat(t, " ")
+end
 C_Timer = { After = function(s, f) table.insert(timers, { at = now + s, fn = f }) end }
 function advance(dt)
     now = now + (dt or 0)
