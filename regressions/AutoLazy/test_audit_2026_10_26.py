@@ -84,6 +84,8 @@ local methods = {
     -- Every launcher test asks the object type once, before and after the fix.
     IsObjectType = function(f, k) if f.counted then tests = tests + 1 end return f.kind == k end,
     GetObjectType = function(f) return f.kind end,
+    GetScale = function(f) return rawget(f, "scale") or 1 end,
+    SetScale = function(f, v) f.scale = v end,
     GetNumPoints = function() return 0 end,
     GetWidth = function(f) return f.w end, GetHeight = function(f) return f.h end,
     GetScript = function(f, k) return f.scripts[k] end,

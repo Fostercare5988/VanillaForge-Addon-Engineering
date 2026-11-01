@@ -1,6 +1,7 @@
 """Minimap size, view and movable map, 2026-11-01.
 
-* Size resizes the map frame (no scale): the clock, icons and tray buttons on it keep their own size.
+* Size scales the map (a resized frame breaks the engine's arrows and hover tooltips); the clock and
+  icons keep their own size, and AutoLazy's tray sizes the buttons it docks.
 * (A "view" slider that enlarged the frame only enlarged the picture; retired.)
 * Ctrl+Shift moves the map; the clock and icons are saved relative to the map so
   they follow it, and positions saved against the screen are converted once.
@@ -65,33 +66,46 @@ class MinimapSize(unittest.TestCase):
         self.lua.execute(SETUP)
         self.lua.execute(source("mods/move-unitframes.lua"))
         self.lua.execute(source("mods/minimap-tweaks.lua"))
+        self.lua.execute("""
+            function Minimap:GetScale() return self.scale or 1 end
+            function Minimap:SetScale(v) self.scale = v end
+            for _, n in ipairs({ "FCTweaksMinimapClock", "MiniMapMailFrame", "MiniMapBattlefieldFrame", "MiniMapTrackingFrame" }) do
+                local f = MapFrame(n)
+                function f:SetScale(v) self.scale = v end
+            end
+        """)
 
     def enable(self):
         self.lua.execute('FT.mods["MiniMap Size"].enable()')
 
-    def test_the_map_frame_is_resized_and_nothing_is_scaled(self):
+    def test_the_map_is_scaled_and_the_frame_is_not_resized(self):
         self.lua.execute("FostercareTweaks_Config.overwrites.minimap_scale = 1.25")
         self.enable()
-        self.assertEqual(self.lua.eval("Minimap.w"), 175)
-        self.assertEqual(self.lua.eval("Minimap.h"), 175)
-        self.assertEqual(self.lua.eval("Minimap.zoomSet"), 3)       # redrawn at the new size
-        self.assertIsNone(self.lua.eval("Minimap.scale"))          # no SetScale: children keep their size
-        self.assertNotIn("SetScale", source("mods/minimap-tweaks.lua"))
+        self.assertEqual(self.lua.eval("Minimap.scale"), 1.25)
+        self.assertEqual(self.lua.eval("Minimap.w"), 140)      # a resized frame breaks the engine's arrows and tooltips
+        self.assertNotIn("SetWidth", source("mods/minimap-tweaks.lua").split("module.enable")[0].split("FT.ApplyMinimapScale")[1])
+
+    def test_the_clock_and_icons_keep_their_size(self):
+        self.lua.execute("FostercareTweaks_Config.overwrites.minimap_scale = 1.25")
+        self.enable()
+        for name in ("FCTweaksMinimapClock", "MiniMapMailFrame", "MiniMapBattlefieldFrame", "MiniMapTrackingFrame"):
+            self.assertAlmostEqual(self.lua.eval("%s.scale * Minimap.scale" % name), 1.0, places=9, msg=name)
 
     def test_the_slider_changes_the_size_live(self):
         self.enable()
         self.lua.execute("FT.ApplyMinimapScale(0.8)")
-        self.assertEqual(self.lua.eval("Minimap.w"), 112)
+        self.assertEqual(self.lua.eval("Minimap.scale"), 0.8)
+        self.assertAlmostEqual(self.lua.eval("MiniMapMailFrame.scale"), 1.25, places=9)
 
-    def test_default_changes_nothing(self):
+    def test_default_keeps_everything_at_one(self):
         self.enable()
-        self.assertEqual(self.lua.eval("Minimap.w"), 140)
-        self.assertIsNone(self.lua.eval("Minimap.zoomSet"))
+        self.assertEqual(self.lua.eval("Minimap.scale"), 1)
+        self.assertEqual(self.lua.eval("MiniMapMailFrame.scale"), 1)
 
     def test_size_is_limited_to_the_slider_range(self):
         self.lua.execute("FostercareTweaks_Config.overwrites.minimap_scale = 9")
         self.enable()
-        self.assertEqual(self.lua.eval("Minimap.w"), 224)
+        self.assertEqual(self.lua.eval("Minimap.scale"), 1.6)
 
     def test_the_retired_view_setting_is_cleared(self):
         self.lua.execute("FostercareTweaks_Config.overwrites.minimap_view = 1.5")
@@ -100,19 +114,19 @@ class MinimapSize(unittest.TestCase):
         self.assertNotIn("ApplyMinimapView", source("mods/minimap-tweaks.lua"))
 
     def test_the_map_not_the_cluster_must_stay_on_screen(self):
-        # Cluster 808..1000 x 808..1000; the map reaches past its right and top.
-        self.lua.execute('''
+        # Cluster 808..1000 x 808..1000 (cluster units); the map reaches past its right and top.
+        self.lua.execute("""
             function MinimapCluster:GetLeft() return 808 end
             function MinimapCluster:GetBottom() return 808 end
             function MinimapCluster:SetClampRectInsets(l, r, t, b) self.insets = { l, r, t, b } end
-            function Minimap:GetEffectiveScale() return 1 end
-            function Minimap:GetLeft() return 850 end
-            function Minimap:GetRight() return 1030 end
-            function Minimap:GetTop() return 1010 end
-            function Minimap:GetBottom() return 830 end
+            function Minimap:GetEffectiveScale() return self.scale or 1 end
+            function Minimap:GetLeft() return 850 / (self.scale or 1) end
+            function Minimap:GetRight() return 1030 / (self.scale or 1) end
+            function Minimap:GetTop() return 1010 / (self.scale or 1) end
+            function Minimap:GetBottom() return 830 / (self.scale or 1) end
             MinimapCluster.GetRight = function() return 1000 end
             MinimapCluster.GetTop = function() return 1000 end
-        ''')
+        """)
         self.lua.execute("FT.ApplyMinimapScale(1.6)")
         insets = [self.lua.eval("MinimapCluster.insets[%d]" % i) for i in (1, 2, 3, 4)]
         for got, want in zip(insets, (42, 30, 10, 22)):
