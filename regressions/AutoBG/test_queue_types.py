@@ -22,12 +22,26 @@ BASE = r'''
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 CLASSIC_API_VERSION, SUPERWOW_VERSION = 11711, "2.2"
 flashes = 0; function FlashClientIcon() flashes = flashes + 1 end
-function IsInRaid() return nil end; function IsInGroup() return nil end
+function CloseDropDownMenus() end; function IsInRaid() return nil end; function IsInGroup() return nil end
 local Widget = {}
 setmetatable(Widget, { __index = function(_, name)
     if string.find(name, "^%u") then return function() end end
 end })
-function Widget:SetScript(kind, fn) self.scripts = self.scripts or {}; self.scripts[kind] = fn end
+function Widget:SetScript(kind, fn)
+    self.scripts = self.scripts or {}
+    local raw = fn
+    -- The client also sets the legacy globals before a script runs.
+    if kind == "OnEvent" and fn then
+        fn = function(s, ev, ...)
+            event = ev
+            if select("#", ...) > 0 then arg1, arg2, arg3, arg4, arg5, arg6, arg7 = ... end
+            return raw(s, ev, ...)
+        end
+    elseif kind == "OnUpdate" and fn then
+        fn = function(s, dt) arg1 = dt or arg1 or 0; return raw(s, dt) end
+    end
+    self.scripts[kind] = fn
+end
 function Widget:GetScript(kind) return self.scripts and self.scripts[kind] end
 function CreateFrame(_, name) local f = setmetatable({ name = name }, { __index = Widget }); if name then _G[name] = f end; return f end
 UIParent = CreateFrame("Frame", "UIParent")
