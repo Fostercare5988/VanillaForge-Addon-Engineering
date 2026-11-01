@@ -92,7 +92,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | FostercareNameplates | `regressions/FostercareNameplates` | 61 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 75 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 64 | Yes | [GearRack](#gearrack) |
-| MikScrollingBattleText | `regressions/MikScrollingBattleText` | 30 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
+| MikScrollingBattleText | `regressions/MikScrollingBattleText` | 42 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
 | TWThreat | `regressions/TWThreat` | 6 | Yes | [TWThreat](#twthreat) |
 | AutoLazy (older) | private `external-tests/AutoLazy` | 130 | No | private command below |
@@ -162,6 +162,7 @@ repairs F1-F6; `test_msbt_audit_2026_10_25.py` (20) covers the 2026-10-25 audit,
 combat-log source and the ForgeUI settings window. Both run on `_msbt_runtime.py`: every
 TOC file in a lupa model with ClassicAPI-only globals, a stateful widget model and `CL(...)`
 for combat log events. No client MPQs are needed; the BigWigs test uses the adjacent checkout.
+`test_big_combat_icon_2026_11_01.py` (4): the Icon switch on Enter/Leave Combat adds a texture at twice the font size, off by default.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/MikScrollingBattleText" --run-tests --test-start regressions/MikScrollingBattleText
