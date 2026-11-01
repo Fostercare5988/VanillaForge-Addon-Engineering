@@ -84,7 +84,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 5 | Yes | [ActionBarProfiles](#actionbarprofiles) |
 | AutoBG | `regressions/AutoBG` | 148 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 20 | Yes | [AutoLazy](#autolazy) |
-| Bagnon | `regressions/Bagnon` | 7 | Yes | [Bagnon](#bagnon) |
+| Bagnon | `regressions/Bagnon` | 15 | Yes | [Bagnon](#bagnon) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
 | !ErrorLog | `regressions/ErrorLog` | 2 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
@@ -611,3 +611,6 @@ stubs). `test_audit_2026_10_30.py` (7): the free-space header counts every bag t
 (it ignored specialty bags), slot border colours come from the bag family (`C_Container`/`C_Item`) with no
 `GetItemInfo` calls, and another character's saved bags give free slots and families from the saved strings.
 Three fail on 1.1.0.
+`test_native_countdown_2026_11_01.py` (8): the enchant badge on a bagged weapon is counted down by a native
+Cooldown frame (no ticker, one `SetCooldown` per application, `OnCooldownDone` hides it, `3c` replaces the
+time at 5 charges or fewer), and a native `-1` slot rarity comes from `C_Item.GetItemQualityByID`.
