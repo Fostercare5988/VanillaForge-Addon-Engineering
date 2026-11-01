@@ -1,7 +1,7 @@
 """Minimap size, view and movable map, 2026-11-01.
 
-* Size scales the whole cluster; a moved map keeps its top-right corner.
-* View makes the map frame itself larger (a larger window on the map).
+* Size scales the map only; the clock and icons keep their own size.
+* (A "view" slider that enlarged the frame only enlarged the picture; retired.)
 * Ctrl+Shift moves the map; the clock and icons are saved relative to the map so
   they follow it, and positions saved against the screen are converted once.
 
@@ -59,51 +59,58 @@ SETUP = r'''
 '''
 
 
-class MinimapSizeAndView(unittest.TestCase):
+class MinimapSize(unittest.TestCase):
     def setUp(self):
         self.lua = runtime()
         self.lua.execute(SETUP)
         self.lua.execute(source("mods/move-unitframes.lua"))
         self.lua.execute(source("mods/minimap-tweaks.lua"))
+        self.lua.execute('''
+            function Minimap:GetScale() return self.scale or 1 end
+            function Minimap:SetScale(v) self.scale = v end
+            for _, n in ipairs({ "FCTweaksMinimapClock", "MiniMapMailFrame", "MiniMapBattlefieldFrame", "MiniMapTrackingFrame" }) do
+                local f = MapFrame(n)
+                function f:SetScale(v) self.scale = v end
+            end
+        ''')
 
     def enable(self):
         self.lua.execute('FT.mods["MiniMap Size"].enable()')
 
-    def test_login_sets_the_saved_size_and_view(self):
-        self.lua.execute("FostercareTweaks_Config.overwrites.minimap_scale = 1.25; FostercareTweaks_Config.overwrites.minimap_view = 1.5")
+    def test_the_map_scales_and_the_icons_keep_their_size(self):
+        self.lua.execute("FostercareTweaks_Config.overwrites.minimap_scale = 1.25")
         self.enable()
-        self.assertEqual(self.lua.eval("MinimapCluster.scale"), 1.25)
-        self.assertEqual(self.lua.eval("Minimap.w"), 210)
-        self.assertEqual(self.lua.eval("Minimap.h"), 210)
-        self.assertEqual(self.lua.eval("Minimap.zoomSet"), 3)
-
-    def test_defaults_change_nothing(self):
-        self.enable()
+        self.assertEqual(self.lua.eval("Minimap.scale"), 1.25)
         self.assertEqual(self.lua.eval("MinimapCluster.scale"), 1)
-        self.assertEqual(self.lua.eval("Minimap.w"), 140)
-        self.assertIsNone(self.lua.eval("Minimap.zoomSet"))
+        for name in ("FCTweaksMinimapClock", "MiniMapMailFrame", "MiniMapBattlefieldFrame", "MiniMapTrackingFrame"):
+            self.assertAlmostEqual(self.lua.eval("%s.scale * Minimap.scale" % name), 1.0, places=9, msg=name)
 
-    def test_values_are_limited_to_the_slider_ranges(self):
-        self.lua.execute("FostercareTweaks_Config.overwrites.minimap_scale = 9; FostercareTweaks_Config.overwrites.minimap_view = 9")
+    def test_the_slider_changes_the_size_live(self):
         self.enable()
-        self.assertEqual(self.lua.eval("MinimapCluster.scale"), 1.6)
-        self.assertEqual(self.lua.eval("Minimap.w"), 280)
+        self.lua.execute("FT.ApplyMinimapScale(0.8)")
+        self.assertEqual(self.lua.eval("Minimap.scale"), 0.8)
+        self.assertAlmostEqual(self.lua.eval("MiniMapMailFrame.scale"), 1.25, places=9)
 
-    def test_the_map_is_registered_as_a_mover_anchored_by_its_right_edge(self):
+    def test_default_keeps_everything_at_one(self):
+        self.enable()
+        self.assertEqual(self.lua.eval("Minimap.scale"), 1)
+        self.assertEqual(self.lua.eval("MiniMapMailFrame.scale"), 1)
+
+    def test_size_is_limited_to_the_slider_range(self):
+        self.lua.execute("FostercareTweaks_Config.overwrites.minimap_scale = 9")
+        self.enable()
+        self.assertEqual(self.lua.eval("Minimap.scale"), 1.6)
+
+    def test_the_retired_view_setting_is_cleared(self):
+        self.lua.execute("FostercareTweaks_Config.overwrites.minimap_view = 1.5")
+        self.enable()
+        self.assertIsNone(self.lua.eval("FostercareTweaks_Config.overwrites.minimap_view"))
+        self.assertNotIn("ApplyMinimapView", source("mods/minimap-tweaks.lua"))
+
+    def test_the_map_handle_covers_the_map_and_moves_by_its_right_edge(self):
         self.enable()
         self.assertEqual(self.lua.eval("MinimapCluster.fctPositionPoint"), "TOPRIGHT")
         self.assertIsNotNone(self.lua.eval("MinimapCluster.fctMover"))
-
-    def test_a_moved_map_keeps_its_top_right_corner_when_resized(self):
-        self.lua.execute('FostercareTweaks_Config.unitframe_positions.minimap = { point = "TOPRIGHT", relPoint = "TOPRIGHT", x = -10, y = -5 }')
-        self.lua.execute("FT.RestoreFramePosition(MinimapCluster, 'minimap'); before = { MinimapCluster:GetRight(), MinimapCluster:GetTop() }")
-        self.lua.execute("FT.ApplyMinimapScale(1.5, true)")
-        self.assertAlmostEqual(self.lua.eval("MinimapCluster:GetRight() * MinimapCluster.scale"), 990, places=6)
-        self.assertAlmostEqual(self.lua.eval("MinimapCluster:GetTop() * MinimapCluster.scale"), 995, places=6)
-
-    def test_an_unmoved_map_gets_no_saved_position(self):
-        self.lua.execute("FT.ApplyMinimapScale(0.8, true)")
-        self.assertIsNone(self.lua.eval("FostercareTweaks_Config.unitframe_positions.minimap"))
 
 
 class IconsFollowTheMap(unittest.TestCase):
