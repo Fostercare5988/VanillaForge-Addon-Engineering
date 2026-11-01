@@ -107,6 +107,25 @@ class MinimapSize(unittest.TestCase):
         self.assertIsNone(self.lua.eval("FostercareTweaks_Config.overwrites.minimap_view"))
         self.assertNotIn("ApplyMinimapView", source("mods/minimap-tweaks.lua"))
 
+    def test_the_map_not_the_cluster_must_stay_on_screen(self):
+        # Cluster 808..1000 x 808..1000; the map (cluster units) reaches past its right and top.
+        self.lua.execute('''
+            function MinimapCluster:GetLeft() return 808 end
+            function MinimapCluster:GetBottom() return 808 end
+            function MinimapCluster:SetClampRectInsets(l, r, t, b) self.insets = { l, r, t, b } end
+            function Minimap:GetEffectiveScale() return self.scale or 1 end
+            function Minimap:GetLeft() return 850 / (self.scale or 1) end
+            function Minimap:GetRight() return 1030 / (self.scale or 1) end
+            function Minimap:GetTop() return 1010 / (self.scale or 1) end
+            function Minimap:GetBottom() return 830 / (self.scale or 1) end
+            MinimapCluster.GetRight = function() return 1000 end
+            MinimapCluster.GetTop = function() return 1000 end
+        ''')
+        self.lua.execute("FT.ApplyMinimapScale(1.6)")
+        insets = [self.lua.eval("MinimapCluster.insets[%d]" % i) for i in (1, 2, 3, 4)]
+        for got, want in zip(insets, (42, 30, 10, 22)):
+            self.assertAlmostEqual(got, want, places=6)
+
     def test_the_map_handle_covers_the_map_and_moves_by_its_right_edge(self):
         self.enable()
         self.assertEqual(self.lua.eval("MinimapCluster.fctPositionPoint"), "TOPRIGHT")
