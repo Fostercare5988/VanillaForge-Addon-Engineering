@@ -174,7 +174,7 @@ below, in this order, and write the answers in `.private/audit-<Addon>-<date>.md
 4. Report what changed, the test results and what to check in game. Tests are
    not in-game proof; say which behaviour still needs a game check.
 5. Git: run `git status` before editing. Commit each coherent step after its
-   checks pass. Push only when the user says so. Never force-push.
+   checks pass. Push every commit after its checks pass (user's standing order, 2026-11-01). Never force-push.
 
 ## 6. Where things are
 
@@ -195,7 +195,8 @@ below, in this order, and write the answers in `.private/audit-<Addon>-<date>.md
 
 - One fact lives in one place. Improve an existing entry before adding one.
 - DLL versions live only in UPSTREAM_VERSIONS.json, always the latest release.
-  Addons check that a DLL is loaded, never its version, and their TOC, README
+  Addons check that a DLL is loaded in code (a guard file), never its version,
+  and their TOC (no `## Dependencies: !!!ClassicAPI`: the tooltip shows it), README
   and headers name no version, so a release changes no addon file by itself.
 - Add a known pattern only when a hazard recurs and is not covered already.
 - Facts about one addon belong in that addon's `CLAUDE.md`, not here.
