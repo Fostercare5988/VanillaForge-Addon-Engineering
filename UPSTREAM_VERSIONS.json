@@ -1,23 +1,21 @@
 {
   "classicapi": {
-    "minimum_version": "1.18.5",
-    "minimum_version_scope": "all maintained VanillaForge addons follow the latest ClassicAPI release (player's rule, 2026-10-27): floor 1.18.5 (11805), raised from 1.17.11; addon guards are raised in each addon's next pass",
-    "reference_version": "1.18.5",
+    "minimum_version": "1.18.14",
+    "reference_version": "1.18.14",
     "repository": "brues-code/ClassicAPI",
-    "reference_commit": "c965e4911726f9cedd6354ecd856d92a0b203831",
-    "reference_commit_scope": "the v1.18.5 tag commit (1.17.12 to 1.18.5: retail globals and UI kits, isOnGCD, range target gate, engine range resolver, loot and login aura fixes, embedded debug tools)",
+    "reference_commit": "9b0aa46ff0e8112fa7bfa200326e8053cfd0714e",
     "file_shas": {
-      "docs/API.md": "1293cd7096b7265a78df7ca3a2bca2d6c4cd63ce",
-      "README.md": "530b70e3e2c5ace3db9fa92d550abb64fb4652d7"
+      "docs/API.md": "9f4cd8e3f04b0846f677ecdc97f36f933f1ea18a",
+      "README.md": "a50ad2a733a0570d23830583079cd33cbbd9e95f"
     },
     "release_provenance": {
-      "tag": "v1.18.5",
-      "tag_object": "2ae41223b7e69b56107143361455ac2d2bbccc7a",
-      "commit": "c965e4911726f9cedd6354ecd856d92a0b203831",
-      "published_at": "2026-10-30T06:50:53Z",
-      "dll_asset_id": 691230101,
-      "dll_size_bytes": 1552384,
-      "dll_sha256": "8f2d899967acb0e6d4f9d0bbb59375f45b3081b0f1e896d20177a63a67439874"
+      "tag": "v1.18.14",
+      "tag_object": "e4752bceac0b969f9e70445959f44d16d6fd5365",
+      "commit": "9b0aa46ff0e8112fa7bfa200326e8053cfd0714e",
+      "published_at": "2026-11-01T07:09:48Z",
+      "dll_asset_id": 697612355,
+      "dll_size_bytes": 1592320,
+      "dll_sha256": "7b78051700c1a921ecf0a439cdf3f004274f80efd06e46358517c9607338f463"
     }
   },
   "superwow": {
