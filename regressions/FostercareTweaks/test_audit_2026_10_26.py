@@ -267,6 +267,7 @@ class UnitEventsReachOnlyTheirUnits(unittest.TestCase):
             UF = {}
             FT.UnitFrames = UF
         ''')
+        lua.execute(AuraCountdownIsNative.FORMATTER)
         lua.execute(source("mods/unitframes/auras.lua"))
         # 1.6.1: UNIT_AURA_DELTA is a ClassicAPI event with no documented
         # RegisterUnitEvent filter, so the handler drops the other tokens.
@@ -422,36 +423,72 @@ class RaidRosterRebuildsOnlyChanges(unittest.TestCase):
         self.assertTrue(self.lua.eval('UF:GetGroupDimensions() == UF:GetGroupDimensions()'))
 
 
-class AuraCountdownBuildsOnlyChangedLabels(unittest.TestCase):
-    """Countdowns tick 10 times a second; the shown number changes less often."""
+class AuraCountdownIsNative(unittest.TestCase):
+    """The aura time is the client's: a Cooldown formatter, no ticker, no per-icon text.
 
-    def test_labels_are_built_when_the_tenth_changes(self):
-        lua = runtime()
-        lua.execute(r'''
-            UF = {}
-            function UF:IsDebuffText() return true end
-            function UF:IsBuffText() return true end
-            CooldownFrame_SetTimer = NOOP
-            now = 1000
-            function GetTime() return now end
-            formats = 0
-            local format = string.format
-            string.format = function(...) formats = formats + 1; return format(...) end
-        ''')
-        auras = source("mods/unitframes/auras.lua").replace("\r\n", "\n")
-        part = auras[auras.index("local function FormatAuraTime"):auras.index("local function EnsureAuraTicker")]
-        lua.execute(part.replace("local timedButtons = {}", "timedButtons = {}") + "\nTick = UpdateAuraTimes")
-        lua.execute(r'''
-            local visible = function() return true end
-            for i = 1, 20 do
-                local b = Widget({ durationText = Widget(), cooldown = Widget(), expirationTime = now + 4 + i / 25,
-                    IsVisible = visible })
-                timedButtons[b] = true
+    The formatter mock follows the documented rules (the breakpoint is chosen
+    before rounding); it proves our breakpoints and colours, not the engine.
+    """
+
+    FORMATTER = r'''
+        Enum = { NumericRuleFormatRounding = { Nearest = 0, Up = 1, Down = 2 } }
+        local function round(v, step, mode)
+            if not step or step <= 0 then return v end
+            local q = v / step
+            if mode == 1 then q = math.ceil(q - 1e-9) elseif mode == 2 then q = math.floor(q) else q = math.floor(q + 0.5) end
+            return q * step
+        end
+        C_StringUtil = { CreateNumericRuleFormatter = function()
+            local f = { points = {} }
+            function f:SetBreakpoints(list) self.points = list end
+            function f:FormatNumber(n)
+                local best
+                for _, p in ipairs(self.points) do
+                    if n >= p.threshold and (not best or p.threshold > best.threshold) then best = p end
+                end
+                local v = round(n, best.step, best.rounding)
+                if best.components then
+                    local c = best.components[1]
+                    return string.format(best.format, round(v / c.div, c.step, c.rounding))
+                end
+                return string.format(best.format, v)
             end
-            for i = 1, 100 do now = now + 0.01; Tick() end
+            return f
+        end }
+    '''
+
+    def formatter(self):
+        lua = runtime()
+        lua.execute(self.FORMATTER)
+        auras = source("mods/unitframes/auras.lua").replace("\r\n", "\n")
+        lua.execute(auras[auras.index("local AURA_TIME"):auras.index("local function ResetAuraButton")].replace("local AURA_TIME", "AURA_TIME"))
+        return lua
+
+    def test_labels_keep_the_old_colours_and_units(self):
+        lua = self.formatter()
+        for seconds, text in ((3.24, "|cffff4444" + "3.3|r"), (7.2, "|cffffff33" + "8|r"), (30.1, "|cffffffff" + "31|r"),
+                              (125, "|cffffffff" + "3m|r"), (7300, "|cffffffff" + "3h|r"), (90000, "|cffffffff" + "2d|r")):
+            self.assertEqual(lua.eval("AURA_TIME:FormatNumber(%s)" % seconds), text, seconds)
+
+    def test_no_ticker_and_no_per_icon_text(self):
+        auras = source("mods/unitframes/auras.lua")
+        for gone in ("NewTicker", "durationText", "timedButtons", "UpdateAuraTimes"):
+            self.assertNotIn(gone, auras)
+
+    def test_timing_starts_the_sweep_once(self):
+        lua = runtime()
+        auras = source("mods/unitframes/auras.lua").replace("\r\n", "\n")
+        lua.execute("function UnitGUID() return '0x1' end")
+        lua.execute(auras[auras.index("local function UpdateAuraTiming"):auras.index("Auras.UpdateAuraTiming =")]
+                    + "\nTiming = UpdateAuraTiming")
+        lua.execute(r'''
+            starts = 0
+            btn = Widget({ cooldown = Widget({ SetCooldown = function() starts = starts + 1 end, Clear = NOOP }) })
+            Timing(btn, "0x1", 5, nil, 20, 1020, 1000)
+            Timing(btn, "0x1", 5, nil, 20, 1020, 1005)
         ''')
-        # One second under 5 s: about ten labels per icon, not one per tick.
-        self.assertLessEqual(lua.eval('formats'), 20 * 11)
+        self.assertEqual(lua.eval("starts"), 1)
+        self.assertEqual(lua.eval("btn.expirationTime"), 1020)
 
 
 if __name__ == "__main__":
