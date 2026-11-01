@@ -38,6 +38,7 @@ local function widget(name)
     return w
 end
 function Widget:GetName() return self.name end
+function Widget:GetCountdownFontString() self.numbers = self.numbers or widget(); return self.numbers end
 function Widget:Show() self.shown = true end
 function Widget:Hide() self.shown = false end
 function Widget:IsShown() return self.shown end
