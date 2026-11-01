@@ -103,11 +103,68 @@ class WorldMapWindowRetired(unittest.TestCase):
 
     def test_the_client_owns_the_map_window(self):
         code = source("mods/worldmap-window.lua")
-        for gone in ("WorldMap Window", "ToggleWorldMap", "UIPanelWindows", "SetScale(0.85)"):
+        for gone in ('"WorldMap Window"', "ToggleWorldMap", "UIPanelWindows", "SetScale(0.85)"):
             self.assertNotIn(gone, code)
         self.assertIn('title = "WorldMap Coordinates"', code)  # control: the rest stays
         self.assertIn('title = "WorldMap Class Colors"', code)
-        self.assertNotIn("WorldMap Window", source("Settings.lua"))
+        self.assertNotIn('"WorldMap Window"', source("Settings.lua"))
+
+
+class WorldMapWindowSize(unittest.TestCase):
+    """The client's windowed map draws at a fixed 0.7; its size is a setting."""
+
+    def setUp(self):
+        lua = self.lua = runtime()
+        lua.execute(r'''
+            hooks, scripts, ctrl = {}, {}, false
+            FT.hooksecurefunc = function(name, fn) hooks[name] = fn end
+            FT.HookScript = function(frame, script, fn) scripts[script] = fn end
+            FT.HookAddonOrVariable = NOOP
+            saved = {}
+            function FT.GetNumber(key, default, lo, hi)
+                local v = saved[key] or default
+                return math.max(lo, math.min(hi, v))
+            end
+            function FT.SetOverride(key, value) saved[key] = value end
+            function IsControlKeyDown() return ctrl end
+            WORLDMAP_WINDOWED = 1
+            WorldMapFrame = Widget({ scale = 1 })
+            function WorldMapFrame:GetScale() return self.scale end
+            function WorldMapFrame:SetScale(s) self.scale = s end
+            function WorldMapFrame:GetCenter() return 500 / self.scale, 400 / self.scale end
+            function WorldMapFrame:SetPoint(_, _, _, x, y) self.x, self.y = x, y end
+            C_Map = { GetMapAreaIDs = function() return {} end, GetMapChildrenInfo = function() return {} end,
+                      GetFallbackWorldMapID = NOOP }
+        ''')
+        code = source("mods/worldmap-window.lua")
+        lua.execute(code)
+        lua.execute('FT.mods["WorldMap Window Size"].enable()')
+
+    def wheel(self, delta):
+        self.lua.execute('scripts.OnMouseWheel(WorldMapFrame, %d)' % delta)
+
+    def test_ctrl_wheel_sizes_the_window_and_saves_it(self):
+        self.lua.execute("ctrl = true")
+        self.wheel(1); self.wheel(1)
+        self.assertAlmostEqual(self.lua.eval("WorldMapFrame.scale"), 1.1)
+        self.assertAlmostEqual(self.lua.eval("saved.worldmap_scale"), 1.1)
+        # The centre stays put: 500 px on screen at any scale.
+        self.assertAlmostEqual(self.lua.eval("WorldMapFrame.x * WorldMapFrame.scale"), 500)
+
+    def test_the_wheel_without_ctrl_or_full_screen_does_nothing(self):
+        self.wheel(1)
+        self.lua.execute("ctrl = true; WORLDMAP_WINDOWED = 0")
+        self.wheel(1)
+        self.assertEqual(self.lua.eval("WorldMapFrame.scale"), 1)
+
+    def test_size_follows_minimize_and_maximize(self):
+        self.lua.execute("saved.worldmap_scale = 1.4; hooks.WorldMapFrame_Minimize()")
+        self.assertAlmostEqual(self.lua.eval("WorldMapFrame.scale"), 1.4)
+        self.lua.execute("WORLDMAP_WINDOWED = 0; hooks.WorldMapFrame_Maximize()")
+        self.assertEqual(self.lua.eval("WorldMapFrame.scale"), 1)  # full screen is never scaled
+
+    def test_size_has_a_slider(self):
+        self.assertRegex(source("Settings.lua"), r'Slider\(general, "worldmap_scale", 1, 0\.6, 2,')
 
 
 class SettingsWording(unittest.TestCase):
