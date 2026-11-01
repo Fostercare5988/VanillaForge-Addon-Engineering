@@ -124,7 +124,9 @@ class MinimapSize(unittest.TestCase):
         self.assertIsNotNone(self.lua.eval("MinimapCluster.fctMover"))
 
 
-class IconsFollowTheMap(unittest.TestCase):
+class PiecesAreIndependent(unittest.TestCase):
+    """Zone name, clock and icons are saved against the screen, not the map's corner."""
+
     def setUp(self):
         self.lua = runtime()
         self.lua.execute(SETUP)
@@ -132,31 +134,54 @@ class IconsFollowTheMap(unittest.TestCase):
         self.lua.execute(source("mods/minimap-tweaks.lua"))
         self.lua.execute('mail = MapFrame("MiniMapMailFrame")')
 
-    def test_a_position_saved_against_the_screen_is_converted_once(self):
-        self.lua.execute('''
+    def test_a_map_relative_position_is_converted_once_and_kept_where_it_stands(self):
+        self.lua.execute("""
             local p = FostercareTweaks_Config.unitframe_positions
-            p.minimap_mail = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 310, y = -200 }
-            FT.PlaceOnMinimap(mail, "minimap_mail_r", "minimap_mail", "Mail")
-        ''')
+            p.minimap_mail_r = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 10, y = -5 }
+            FT.PlaceIcon(mail, "minimap_mail_s", "Mail", "minimap_mail", "minimap_mail_r")
+        """)
         saved = self.lua.eval("FostercareTweaks_Config.unitframe_positions")
-        self.assertIsNotNone(saved.minimap_mail_r)
-        self.assertIsNone(saved.minimap_mail)
-        self.assertEqual(self.lua.eval("mail.rel == Minimap"), True)
+        self.assertIsNotNone(saved.minimap_mail_s)
+        self.assertIsNone(saved.minimap_mail_r)
+        self.assertTrue(self.lua.eval("mail.rel == UIParent"))
         self.assertIsNotNone(self.lua.eval("mail.fctMover"))
 
-    def test_a_new_position_is_used_as_saved_and_the_old_one_is_ignored(self):
-        self.lua.execute('''
+    def test_an_older_screen_position_is_adopted(self):
+        self.lua.execute("""
             local p = FostercareTweaks_Config.unitframe_positions
-            p.minimap_mail_r = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 7, y = -9 }
-            FT.PlaceOnMinimap(mail, "minimap_mail_r", "minimap_mail", "Mail")
-        ''')
-        self.assertEqual(self.lua.eval("mail.left"), 7)
-        self.assertEqual(self.lua.eval("mail.top"), -9)
+            p.minimap_mail = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 310, y = -200 }
+            FT.PlaceIcon(mail, "minimap_mail_s", "Mail", "minimap_mail", "minimap_mail_r")
+        """)
+        saved = self.lua.eval("FostercareTweaks_Config.unitframe_positions")
+        self.assertEqual(saved.minimap_mail_s.x, 310)
+        self.assertIsNone(saved.minimap_mail)
 
-    def test_clock_and_icons_are_placed_on_the_map(self):
+    def test_the_new_position_wins(self):
+        self.lua.execute("""
+            local p = FostercareTweaks_Config.unitframe_positions
+            p.minimap_mail_s = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 7, y = -9 }
+            p.minimap_mail_r = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 1, y = -1 }
+            FT.PlaceIcon(mail, "minimap_mail_s", "Mail", "minimap_mail", "minimap_mail_r")
+        """)
+        self.assertEqual(self.lua.eval("mail.left"), 7)
+        self.assertTrue(self.lua.eval("mail.rel == UIParent"))
+
+    def test_resizing_the_map_does_not_touch_a_placed_piece(self):
+        self.lua.execute("""
+            FostercareTweaks_Config.unitframe_positions.minimap_mail_s = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 7, y = -9 }
+            FT.PlaceIcon(mail, "minimap_mail_s", "Mail", nil, nil)
+            before = { mail.left, mail.top }
+            FT.ApplyMinimapScale(1.6)
+        """)
+        self.assertEqual(self.lua.eval("mail.left"), 7)
+        self.assertEqual(self.lua.eval("mail.top"), self.lua.eval("before[2]"))
+
+    def test_every_piece_is_placed_against_the_screen(self):
         text = source("mods/minimap-tweaks.lua")
-        self.assertIn('PlaceOnMinimap(clock, "minimap_clock_r", "minimap_clock"', text)
-        self.assertIn('PlaceOnMinimap(frame, entry[2] .. "_r", entry[2], entry[3])', text)
+        self.assertIn('FT.PlaceIcon(clock, "minimap_clock_s", "Clock"', text)
+        self.assertIn('FT.PlaceIcon(frame, entry[2] .. "_s", entry[3]', text)
+        self.assertIn('FT.PlaceIcon(MinimapZoneTextButton, "minimap_zone_s", "Zone"', text)
+        self.assertNotIn("PlaceOnMinimap", text)
 
 
 if __name__ == "__main__":
