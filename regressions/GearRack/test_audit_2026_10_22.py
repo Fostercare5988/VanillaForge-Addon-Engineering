@@ -78,6 +78,7 @@ class SetRetry(unittest.TestCase):
         # try the missing hand again before its deadline, not wait it out.
         e = env(CORE)
         e.run("""
+            function GetNetStats() return 0, 0, 40 end
             function GetTime() return now end
             now = 100
             function CursorHasItem() return false end

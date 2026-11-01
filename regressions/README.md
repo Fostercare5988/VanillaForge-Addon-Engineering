@@ -91,7 +91,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | FostercareAuras | `regressions/FostercareAuras` | 60 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 61 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 119 | Yes | [FostercareTweaks](#fostercaretweaks) |
-| GearRack | `regressions/GearRack` | 64 | Yes | [GearRack](#gearrack) |
+| GearRack | `regressions/GearRack` | 67 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 42 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
 | TWThreat | `regressions/TWThreat` | 6 | Yes | [TWThreat](#twthreat) |
@@ -573,6 +573,11 @@ varargs. How the windows look stays an in-game check. `SetRetry`: a saved set
 re-issues a weapon the client refused (the off hand in combat); fails before it.
 `NoWaitForWeapons`: weapon swaps skip the cast and global-cooldown wait, armor
 keeps it (casts do not stop weapon swaps, measured in play).
+
+`test_slow_connection_retry_2026_11_01.py`: a swap is re-issued after 0.3 s on a normal
+connection but waits twice the latency (up to 3 s) on a slow one, so a repeat does not
+swap the items back before the server answers. Fails on the old fixed 0.3 s; whether
+a VPN still reverts a swap stays an in-game check.
 
 `test_dodged_trigger_2026_10_23.py` (1.1.0, ClassicAPI 1.17.3): the new
 `GEARRACK_DODGED` trigger fires with the dodger's GUID for your own dodged swing,
