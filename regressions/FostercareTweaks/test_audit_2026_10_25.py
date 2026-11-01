@@ -108,7 +108,7 @@ class RaidNames(unittest.TestCase):
                 healthBar = sb(), nameText = { GetText = function(s) return s.t end, SetText = function(s, t) s.t = t end },
                 healthText = { GetText = function() end, SetText = function() end } }
         ''' % (unit_name, roster))
-        lua.execute(between(RAID, "local function UpdateButtonHealth", "local function UpdateButtonPower")
+        lua.execute(between(RAID, "-- Range and colour change rarely", "local function UpdateButtonPower")
                     + "\nUpdateButtonHealth(btn)")
         return lua.eval('btn.nameText.t')
 
