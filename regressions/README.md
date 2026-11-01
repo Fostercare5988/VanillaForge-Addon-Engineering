@@ -82,7 +82,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | Addon | Location | Tests | Portable | Run |
 | --- | --- | ---: | --- | --- |
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 5 | Yes | [ActionBarProfiles](#actionbarprofiles) |
-| AutoBG | `regressions/AutoBG` | 148 | Yes | [AutoBG](#autobg) |
+| AutoBG | `regressions/AutoBG` | 199 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 20 | Yes | [AutoLazy](#autolazy) |
 | Bagnon | `regressions/Bagnon` | 15 | Yes | [Bagnon](#bagnon) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
