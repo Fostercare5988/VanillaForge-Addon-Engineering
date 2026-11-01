@@ -72,6 +72,17 @@ class RaidRangeFollowsEvents(unittest.TestCase):
         self.assertFalse(self.lua.eval('(function() for _, b in pairs(frames) do if b.unit == "raid4" then return b.aggroSquare:IsShown() end end end)()'))
         self.assertTrue(self.lua.eval('(function() for _, b in pairs(frames) do if b.unit == "raid9" then return b.aggroSquare:IsShown() end end end)()'))
 
+    def test_power_bar_follows_the_power_events_only(self):
+        self.lua.execute(r'''
+            reads = 0
+            function UnitMana(u) reads = reads + 1; return 50 end
+        ''')
+        for ev in ("UNIT_POWER_UPDATE", "UNIT_MAXPOWER"):
+            self.lua.execute('reads = 0; fire(FCTweaksRaidFrame, "%s", "raid7", "MANA")' % ev)
+            self.assertEqual(self.lua.eval('reads'), 1, ev)
+        for ev in ("UNIT_MANA", "UNIT_ENERGY", "UNIT_RAGE", "UNIT_MAXMANA"):
+            self.assertFalse(self.lua.eval('fire(FCTweaksRaidFrame, "%s", "raid7")' % ev), ev)
+
 
 if __name__ == "__main__":
     unittest.main()
