@@ -2,8 +2,8 @@
 
 The Notices tab has an "Icon" button on those two rows (MikSBT.BIG_ICONS). When
 it is on, the message carries the event's icon at twice the font size; when it
-is off, nothing changes. The icon files are UNVERIFIED in this client: check
-that both show a picture and not a green square.
+is off, nothing changes. Leaving combat shows the gold check mark of the stock checkboxes
+(whole texture), entering shows crossed swords (UNVERIFIED: check it shows a picture).
 """
 import unittest
 
@@ -15,18 +15,20 @@ DRAW = '''
     NewWidget = function(name, kind, parent)
         local w = make(name, kind, parent)
         w.SetTexture = function(self, t) self.tex = t end
+        w.SetTexCoord = function(self, a) self.coordLeft = a end
         w.SetTextHeight = function(self, h) self.textHeight = h; lastTextHeight = h end
         return w
     end
     for _, w in ipairs(frames) do
         w.SetTexture = function(self, t) self.tex = t end
+        w.SetTexCoord = function(self, a) self.coordLeft = a end
         w.SetTextHeight = function(self, h) self.textHeight = h; lastTextHeight = h end
     end
     MikSBT.CombatEventsHandler = RealCombatEventsHandler
     function BigTextures()
         local out = {}
         for _, w in ipairs(frames) do
-            if w.kind == "Texture" and w.tex and string.find(w.tex, "Icons") then out[#out + 1] = w end
+            if w.kind == "Texture" and w.tex and (string.find(w.tex, "Icons") or string.find(w.tex, "CheckBox")) then out[#out + 1] = w end
         end
         return out
     end
@@ -56,6 +58,7 @@ class BigCombatIcon(unittest.TestCase):
         icons = lua.eval("BigTextures()")
         self.assertEqual(len(icons), 1)
         self.assertIn("Ability_DualWield", icons[1].tex)
+        self.assertEqual(icons[1].coordLeft, 0.125)
         self.assertEqual(icons[1].width, 2 * lua.eval("FontHeight()"))
         self.assertEqual(icons[1].height, icons[1].width)
 
@@ -64,7 +67,8 @@ class BigCombatIcon(unittest.TestCase):
         lua.execute('Fire("PLAYER_REGEN_DISABLED"); Fire("PLAYER_REGEN_ENABLED")')
         icons = lua.eval("BigTextures()")
         self.assertEqual(len(icons), 1)
-        self.assertIn("Spell_Nature_Sleep", icons[1].tex)
+        self.assertIn("UI-CheckBox-Check", icons[1].tex)
+        self.assertEqual(icons[1].coordLeft, 0)  # the whole check mark, not the cropped spell-icon window
 
     def test_only_those_two_events_offer_the_icon(self):
         lua = m.runtime()
