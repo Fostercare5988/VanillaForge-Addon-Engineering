@@ -113,11 +113,14 @@ class CooldownNumbers(unittest.TestCase):
         '''), "25")
 
 
-class AuraButtonsHideNativeNumbers(unittest.TestCase):
-    def test_aura_cooldowns_hide_native_numbers(self):
+class AuraButtonsUseNativeNumbers(unittest.TestCase):
+    """Aura buttons show the client's countdown through one formatter, not their own text."""
+
+    def test_aura_cooldowns_use_the_native_countdown(self):
         auras = source("mods/unitframes/auras.lua")
         body = auras[auras.index("local function CreateAuraButton"):auras.index("function Auras:ResetContainer")]
-        self.assertRegex(body, re.compile(r"btn\.cooldown:SetHideCountdownNumbers\(true\)"))
+        self.assertRegex(body, re.compile(r"btn\.cooldown:SetCountdownFormatter\(AURA_TIME\)"))
+        self.assertNotRegex(body, re.compile(r"SetHideCountdownNumbers\(true\)"))
 
 
 if __name__ == "__main__":

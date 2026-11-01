@@ -112,12 +112,12 @@ class RaidHotPathTests(unittest.TestCase):
         lua.execute(slice(RAID, 'local function ShowRaidAura', '-- Mark/leader changes')
                     + '\nShowAura = ShowRaidAura')
         lua.execute(r'''
-            badge = W({ border = W(), countText = W(), durationText = W(), cooldown = W(), icon = W() })
+            number = W(); badge = W({ border = W(), countText = W(), cooldown = W({ GetCountdownFontString = function() return number end }), icon = W() })
             aura = { index = 1, icon = "i", stacks = 1, id = 139 }
             ShowAura(btn, badge, aura, 10, 2, 20)
             geometry = 0
             local base = getmetatable(badge).__index
-            for _, w in ipairs({ badge, badge.border, badge.countText, badge.durationText, badge.cooldown }) do
+            for _, w in ipairs({ badge, badge.border, badge.countText, number, badge.cooldown }) do
                 setmetatable(w, { __index = function(_, k)
                     if k == "SetPoint" or k == "ClearAllPoints" or k == "SetWidth" or k == "SetHeight"
                         or k == "SetScale" or k == "SetFont" then
