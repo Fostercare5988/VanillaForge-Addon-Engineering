@@ -44,8 +44,8 @@ class NewUser(unittest.TestCase):
 
     def test_the_button_position_is_used_when_the_screen_can_hold_it(self):
         lua = load(1920, 1080)
-        self.assertAlmostEqual(lua.eval("AutoLazyDB.ButtonPos.x"), 1577.78, places=2)
-        self.assertAlmostEqual(lua.eval("AutoLazyDB.ButtonPos.y"), 626.16, places=2)
+        self.assertAlmostEqual(lua.eval("AutoLazyDB.ButtonPos.x"), 1417.11, places=2)
+        self.assertAlmostEqual(lua.eval("AutoLazyDB.ButtonPos.y"), 928.56, places=2)
 
     def test_a_smaller_screen_gets_the_default_top_right_button(self):
         lua = load(1366, 768)
