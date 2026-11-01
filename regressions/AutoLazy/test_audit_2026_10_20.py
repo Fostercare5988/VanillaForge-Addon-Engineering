@@ -15,6 +15,8 @@ SOURCE = (ROOT / "AutoLazy.lua").read_text("utf-8-sig")
 BASE = r'''
 CLASSIC_API_VERSION = 11711
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
+function GetScreenWidth() return 1920 end
+function GetScreenHeight() return 1080 end
 getglobal = function(n) return _G[n] end
 SlashCmdList = {}
 DEFAULT_CHAT_FRAME = { AddMessage = function() end }
@@ -74,8 +76,8 @@ def roll_in(lua, real, sub, item):
 
 class AuditReproductions(unittest.TestCase):
     def test_control_listed_item_rolls_in_its_dungeon(self):
-        """Control: a Stone Scarab in Ruins of Ahn'Qiraj follows its default Need rule."""
-        self.assertEqual(roll_in(load(), "Ruins of Ahn'Qiraj", "", 20858), 1)
+        """Control: a Zul'Gurub Coin in Zul'Gurub follows its default Need rule."""
+        self.assertEqual(roll_in(load(), "Zul'Gurub", "", 19698), 1)
 
     def test_control_instance_name_identifies_the_dungeon(self):
         """Control: the GetInstanceInfo (Map.dbc) name alone identifies the dungeon."""

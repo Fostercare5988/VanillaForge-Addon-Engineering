@@ -17,6 +17,8 @@ TRAY = (ROOT / "AutoLazy_MinimapTray.lua").read_text("utf-8-sig")
 CORE_MOCKS = r'''
 CLASSIC_API_VERSION = 11711
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
+function GetScreenWidth() return 1920 end
+function GetScreenHeight() return 1080 end
 getglobal = function(n) return _G[n] end
 SlashCmdList = {}
 DEFAULT_CHAT_FRAME = { AddMessage = function() end }
