@@ -174,6 +174,7 @@ class RetiredSettings(unittest.TestCase):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute('''
             CLASSIC_API_VERSION, SUPERWOW_VERSION = 11711, "2.2"
+            function geterrorhandler() return function(e) return e end end
             cvars = {}
             function SetCVar(k, v) cvars[k] = v end
             function CreateFrame() return { RegisterEvent = function() end, SetScript = function() end } end

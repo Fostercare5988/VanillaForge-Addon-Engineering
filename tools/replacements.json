@@ -66,7 +66,7 @@
     },
     {
       "id": "tooltip-scanning",
-      "pattern": "TextLeft",
+      "pattern": "TextLeft\\d*\\s*:\\s*Get(Text|TextColor)\\b|TextLeft\"\\s*\\.\\.",
       "finding": "Reads information by filling a hidden tooltip and scanning its text.",
       "better": "The structured C_ API for that data (C_Item, C_Spell, C_UnitAuras).",
       "source": "CLASSICAPI_MASTER_REFERENCE.md"
@@ -188,7 +188,8 @@
       "pattern": "\\bUnitInRange\\s*\\(",
       "finding": "Asks UnitInRange for group members, usually from a repeating timer, whether or not anyone moved.",
       "better": "UNIT_IN_RANGE_UPDATE (unitTarget, isInRange): fires only when the value changes, and the client checks only while a frame is registered. RegisterUnitEvent limits the units checked; RegisterEvent covers pet, party, raid and their pets. The first check does not fire, so read UnitInRange once when a unit starts to show. Group members out of view: UNIT_DISTANCE_CHECK_UPDATE (isInDistance) and UNIT_CONNECTION (isConnected).",
-      "source": "ClassicAPI docs/API.md#unit_in_range_update-event (1.18.x)"
+      "source": "ClassicAPI docs/API.md#unit_in_range_update-event (1.18.x)",
+      "unless": "\"UNIT_IN_RANGE_UPDATE\""
     },
     {
       "id": "power-events-legacy",
@@ -217,6 +218,34 @@
       "finding": "Reads the mount state, often from an aura or timer handler.",
       "better": "PLAYER_MOUNT_DISPLAY_CHANGED (1.18) fires when the player mounts, dismounts or changes mount; read IsMounted() inside it.",
       "source": "ClassicAPI docs/API.md#player_mount_display_changed-event"
+    },
+    {
+      "id": "tooltip-set-method-hooks",
+      "pattern": "hooksecurefunc\\(\\s*\\w*Tooltip\\w*\\s*,\\s*\"Set\\w+\"",
+      "finding": "Hooks a tooltip's Set* methods one by one (SetBagItem, SetLootItem, SetHyperlink, ...) to add lines to item, spell or unit tooltips.",
+      "better": "OnTooltipSetItem / OnTooltipSetSpell / OnTooltipSetUnit / OnTooltipSetGameObject: one script per object type that fires after any Set* call (read this:GetItem()). Keep a Set* hook only for what GetItem cannot give, such as a bag slot's stack count.",
+      "source": "ClassicAPI docs/API.md#ontooltipset-scripts"
+    },
+    {
+      "id": "container-info-without-buffer",
+      "pattern": "C_Container\\.GetContainerItemInfo\\(\\s*[^,()]+,\\s*[^,()]+\\)",
+      "finding": "Reads bag slots with C_Container.GetContainerItemInfo(bag, slot), which builds a new table per call; bag updates read every slot.",
+      "better": "Pass a reused table as the third argument (buf): the function fills it, clears missing fields and returns it; an empty slot returns nil and leaves it alone.",
+      "source": "ClassicAPI docs/API.md#c_containergetcontaineriteminfocontainerindex-slotindex--buf"
+    },
+    {
+      "id": "chat-history-copy",
+      "pattern": "(?i)chat_?history",
+      "finding": "Keeps a chat history by copying every line from an AddMessage wrapper into saved variables, and replays it with AddMessage.",
+      "better": "smf:GetMessageInfo(index) reads a frame's lines (text, colour and extra values) when they are needed, for example at PLAYER_LOGOUT; smf:BackFillMessage(text, r, g, b, ...) restores them behind newer lines. No per-line wrapper.",
+      "source": "ClassicAPI docs/API.md#smfgetmessageinfoindex and #smfbackfillmessagetext-r-g-b-"
+    },
+    {
+      "id": "worldmap-window-by-hand",
+      "pattern": "UIPanelWindows\\[\\s*\"WorldMapFrame\"\\s*\\]",
+      "finding": "Turns the full-screen world map into a window by hand (UIPanelWindows, scale, size, dragging).",
+      "better": "OctoWoW's client has a windowed world map: the map's minimize/maximize buttons, WorldMapFrame_Minimize/_Maximize and the saved WORLDMAP_WINDOWED. Use or extend it instead of a second window mode.",
+      "source": "Client FrameXML WorldMapFrame.lua/.xml (patch-4.mpq; tools/extract_framexml.py); servers/octowow.md"
     }
   ]
 }

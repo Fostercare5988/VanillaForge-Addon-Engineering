@@ -90,7 +90,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 60 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 61 | Yes | [FostercareNameplates](#fostercarenameplates) |
-| FostercareTweaks | `regressions/FostercareTweaks` | 101 | Yes | [FostercareTweaks](#fostercaretweaks) |
+| FostercareTweaks | `regressions/FostercareTweaks` | 119 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 64 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 42 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
@@ -220,6 +220,18 @@ badge; a new or lost aura, a full update or a change with no button reads the
 row again; other tokens are ignored. All nine fail on `248c570`. The player
 aura coalescing test is gone (the engine sends one delta per frame), the
 target-token test fires the delta, and the ClassicAPI mock is `11710`.
+
+The 2026-11-01 audit adds `test_audit_2026_11_01.py` (18 tests): DLLs are
+checked as loaded, not by version (Core.lua, the energy ticks, TOC and README);
+a module that fails to start reaches the error handler and the others start;
+class colours leave target and party changes to the native hooks and never
+repaint health bars; Blizzard Aura Controls is always on; Chat Timestamps keeps
+its look without the hidden style overrides; aura layout and bag borders build
+no tables per update; lines without a CLINK skip the CLINK patterns; the energy
+tick writes its widgets only when the bar or settings change; Equip Compare has
+no tooltip watch; the clock wakes once a minute; Reduced Actionbar leaves the
+bottom bars to custom layouts. Fifteen fail on `ba4d058`; three are controls.
+`test_audit_2026_10_25.py` now stubs `geterrorhandler` for `FT:Initialize`.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareTweaks" --run-tests --test-start regressions/FostercareTweaks --output .private/fct-current.json
