@@ -20,7 +20,21 @@ setmetatable(Widget, { __index = function(_, name)
     if string.find(name, "^%u") then return function() end end
 end })
 function Widget:SetText(text) self.text = text end
-function Widget:SetScript(kind, fn) self.scripts = self.scripts or {}; self.scripts[kind] = fn end
+function Widget:SetScript(kind, fn)
+    self.scripts = self.scripts or {}
+    local raw = fn
+    -- The client also sets the legacy globals before a script runs.
+    if kind == "OnEvent" and fn then
+        fn = function(s, ev, ...)
+            event = ev
+            if select("#", ...) > 0 then arg1, arg2, arg3, arg4, arg5, arg6, arg7 = ... end
+            return raw(s, ev, ...)
+        end
+    elseif kind == "OnUpdate" and fn then
+        fn = function(s, dt) arg1 = dt or arg1 or 0; return raw(s, dt) end
+    end
+    self.scripts[kind] = fn
+end
 function Widget:IsShown() return self.shown end
 function Widget:Show() self.shown = true end
 function Widget:Hide() self.shown = false end

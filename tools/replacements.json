@@ -210,6 +210,13 @@
       "finding": "Builds a gold/silver/copper string by hand.",
       "better": "GetMoneyString(copper [, separateThousands, useCoinIcons, checkGoldThreshold]); GetMoneyString(51234, nil, true) draws coin icons.",
       "source": "ClassicAPI docs/API.md (Constants.MoneyFormattingConstants, GetMoneyString) (1.18.x)"
+    },
+    {
+      "id": "mount-state-poll",
+      "pattern": "IsMounted\\s*\\(",
+      "finding": "Reads the mount state, often from an aura or timer handler.",
+      "better": "PLAYER_MOUNT_DISPLAY_CHANGED (1.18) fires when the player mounts, dismounts or changes mount; read IsMounted() inside it.",
+      "source": "ClassicAPI docs/API.md#player_mount_display_changed-event"
     }
   ]
 }
