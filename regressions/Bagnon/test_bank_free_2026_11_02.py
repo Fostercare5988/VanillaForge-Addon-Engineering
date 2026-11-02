@@ -10,7 +10,7 @@ import unittest
 from bgn_env import load
 
 FRAME = '''
-    bgn_atBank = true
+    Bagnon_SetAtBank(true)
     frame = widget("Banknon"); frame.player = "Tester"
     widget("BanknonFreeSlots"); widget("BanknonTitle"); widget("BanknonSortButton")
     bagSlots[-1] = 24; bagSlots[5] = 16; bagSlots[6] = 16
