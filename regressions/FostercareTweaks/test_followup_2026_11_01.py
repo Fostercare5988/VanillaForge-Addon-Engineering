@@ -173,14 +173,14 @@ class SettingsWording(unittest.TestCase):
     def test_one_move_hint_on_general_and_unit_frames(self):
         code = source("Settings.lua")
         self.assertIn('local MOVE_HINT = "%s"' % self.MOVE, code)
-        self.assertIn("Hint(general, MOVE_HINT", code)
-        self.assertIn("Hint(unit, MOVE_HINT", code)
+        self.assertIn("Hint(general, R, MOVE_HINT", code)
+        self.assertIn("Hint(unit, L, MOVE_HINT", code)
         self.assertNotIn("raid frames and action bars", code)
 
     def test_minimap_size_sits_under_minimap(self):
         code = source("Settings.lua")
-        self.assertRegex(code, r'Slider\(general, "minimap_scale"[^\n]*, LEFT, ')
-        self.assertLess(code.index('UI.Heading(general, "Minimap"'), code.index('"minimap_scale"'))
+        self.assertRegex(code, r'Slider\(general, "minimap_scale"[^\n]*, L, ')
+        self.assertLess(code.index('Heading(general, L, "Minimap")'), code.index('"minimap_scale"'))
 
     def test_labels_and_tooltips(self):
         code = source("Settings.lua")
