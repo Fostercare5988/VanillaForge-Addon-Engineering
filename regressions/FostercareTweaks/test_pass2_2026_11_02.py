@@ -76,6 +76,7 @@ class SoloMarksAreNamPowers(unittest.TestCase):
             TargetPortrait = TargetRaidTargetIcon
             function CreateFrame() return { RegisterEvent = function() end } end
             function FT.SetEventHandler() end
+            FT.UnitFrames = { RefreshRaidMarks = function() end }
         ''')
         lua.execute(source("mods/raid-target-marks.lua"))
         lua.execute("FT.module:enable(); icons = 0")

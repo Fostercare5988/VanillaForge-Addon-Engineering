@@ -107,12 +107,6 @@ class MinimapSize(unittest.TestCase):
         self.enable()
         self.assertEqual(self.lua.eval("Minimap.scale"), 1.6)
 
-    def test_the_retired_view_setting_is_cleared(self):
-        self.lua.execute("FostercareTweaks_Config.overwrites.minimap_view = 1.5")
-        self.enable()
-        self.assertIsNone(self.lua.eval("FostercareTweaks_Config.overwrites.minimap_view"))
-        self.assertNotIn("ApplyMinimapView", source("mods/minimap-tweaks.lua"))
-
     def test_the_map_not_the_cluster_must_stay_on_screen(self):
         # Cluster 808..1000 x 808..1000 (cluster units); the map reaches past its right and top.
         self.lua.execute("""
@@ -148,34 +142,12 @@ class PiecesAreIndependent(unittest.TestCase):
         self.lua.execute(source("mods/minimap-tweaks.lua"))
         self.lua.execute('mail = MapFrame("MiniMapMailFrame")')
 
-    def test_a_map_relative_position_is_converted_once_and_kept_where_it_stands(self):
-        self.lua.execute("""
-            local p = FostercareTweaks_Config.unitframe_positions
-            p.minimap_mail_r = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 10, y = -5 }
-            FT.PlaceIcon(mail, "minimap_mail_s", "Mail", "minimap_mail", "minimap_mail_r")
-        """)
-        saved = self.lua.eval("FostercareTweaks_Config.unitframe_positions")
-        self.assertIsNotNone(saved.minimap_mail_s)
-        self.assertIsNone(saved.minimap_mail_r)
-        self.assertTrue(self.lua.eval("mail.rel == UIParent"))
-        self.assertIsNotNone(self.lua.eval("mail.fctMover"))
-
-    def test_an_older_screen_position_is_adopted(self):
-        self.lua.execute("""
-            local p = FostercareTweaks_Config.unitframe_positions
-            p.minimap_mail = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 310, y = -200 }
-            FT.PlaceIcon(mail, "minimap_mail_s", "Mail", "minimap_mail", "minimap_mail_r")
-        """)
-        saved = self.lua.eval("FostercareTweaks_Config.unitframe_positions")
-        self.assertEqual(saved.minimap_mail_s.x, 310)
-        self.assertIsNone(saved.minimap_mail)
-
     def test_the_new_position_wins(self):
         self.lua.execute("""
             local p = FostercareTweaks_Config.unitframe_positions
             p.minimap_mail_s = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 7, y = -9 }
             p.minimap_mail_r = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 1, y = -1 }
-            FT.PlaceIcon(mail, "minimap_mail_s", "Mail", "minimap_mail", "minimap_mail_r")
+            FT.PlaceIcon(mail, "minimap_mail_s", "Mail")
         """)
         self.assertEqual(self.lua.eval("mail.left"), 7)
         self.assertTrue(self.lua.eval("mail.rel == UIParent"))
@@ -183,7 +155,7 @@ class PiecesAreIndependent(unittest.TestCase):
     def test_resizing_the_map_does_not_touch_a_placed_piece(self):
         self.lua.execute("""
             FostercareTweaks_Config.unitframe_positions.minimap_mail_s = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 7, y = -9 }
-            FT.PlaceIcon(mail, "minimap_mail_s", "Mail", nil, nil)
+            FT.PlaceIcon(mail, "minimap_mail_s", "Mail")
             before = { mail.left, mail.top }
             FT.ApplyMinimapScale(1.6)
         """)
@@ -193,7 +165,8 @@ class PiecesAreIndependent(unittest.TestCase):
     def test_every_piece_is_placed_against_the_screen(self):
         text = source("mods/minimap-tweaks.lua")
         self.assertIn('FT.PlaceIcon(clock, "minimap_clock_s", "Clock"', text)
-        self.assertIn('FT.PlaceIcon(frame, entry[2] .. "_s", entry[3]', text)
+        self.assertIn('FT.PlaceIcon(frame, entry[2], entry[3])', text)
+        self.assertIn('"minimap_mail_s"', text)
         self.assertIn('FT.PlaceIcon(MinimapZoneTextButton, "minimap_zone_s", "Zone"', text)
         self.assertNotIn("PlaceOnMinimap", text)
 

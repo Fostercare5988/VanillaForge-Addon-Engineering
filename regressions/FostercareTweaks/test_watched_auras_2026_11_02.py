@@ -128,16 +128,7 @@ class WatchedAuras(unittest.TestCase):
 
 
 class AfterTheImport(unittest.TestCase):
-    # 1.9.0 copied FostercareAuras setups once, spell IDs as text: matched by
-    # name only. 1.9.1 has no import; it turns them into numbers.
-    def test_text_ids_match_again(self):
-        lua = watched('''FostercareTweaks_Config.watchedImported = true
-            FostercareTweaks_Config.watched = { { name = "Rupture", spellId = "8640", unit = "target", mine = true } }''')
-        self.assertEqual(lua.eval("W.List()[1].spellId"), 8640)
-        self.assertIsNone(lua.eval("FostercareTweaks_Config.watchedImported"))
-        lua.execute('auras.target[1] = { name = "Rupture (Rank 6)", id = 8640, source = "player" }; W.Update("target")')
-        self.assertTrue(icon(lua, "watch_target_Rupture").shown)
-
+    # 1.9.0 copied FostercareAuras setups once; 1.9.1 has no import.
     def test_a_fostercare_auras_setup_is_not_read(self):
         lua = watched('FostercareAurasDB = { spells = { E = { type = "Buff", displayName = "Envenom", order = 1 } } }')
         self.assertEqual(lua.eval("#W.List()"), 0)

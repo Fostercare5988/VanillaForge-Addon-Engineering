@@ -48,7 +48,7 @@ CORE_PRELUDE = r'''
 def core(version="2.2"):
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(CORE_PRELUDE % version)
-    lua.execute(source("Core.lua"))
+    lua.execute(source("Core.lua") + "\nif FostercareTweaks then FostercareTweaks.ActionBars = { Initialize = function() end } end")
     return lua
 
 
@@ -61,7 +61,7 @@ class DllsCheckedAsLoaded(unittest.TestCase):
         # Control: passes on the old code too.
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute((CORE_PRELUDE % "x").replace('SUPERWOW_VERSION = 11811, "x"', 'SUPERWOW_VERSION = 11811, nil'))
-        lua.execute(source("Core.lua"))
+        lua.execute(source("Core.lua") + "\nif FostercareTweaks then FostercareTweaks.ActionBars = { Initialize = function() end } end")
         self.assertIsNone(lua.eval("FostercareTweaks"))
 
     def test_toc_and_readme_name_no_dll_version(self):

@@ -70,7 +70,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | !ErrorLog | `regressions/ErrorLog` | 2 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 61 | Yes | [FostercareNameplates](#fostercarenameplates) |
-| FostercareTweaks | `regressions/FostercareTweaks` | 234 | Yes | [FostercareTweaks](#fostercaretweaks) |
+| FostercareTweaks | `regressions/FostercareTweaks` | 244 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 69 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 47 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
@@ -206,6 +206,15 @@ none sharing a line) and back in the window two columns again. 1.14.0 (`Cooldown
 buff that ends shows its spell's cooldown greyed until ready, not the global cooldown, colour back with the buff.
 1.15.0 takes the layout and AddOn Options code from the VanillaForge kit (`templates/ForgeUI/ForgeLayout.lua`); the
 settings harness loads it and `ActionBarRows` in `test_settings_2026_10_25.py` (5: one row per bar).
+
+The second audit of 2026-11-02 (1.15.1, 1.16.0) adds `test_pass2_2026_11_02.py` (8: the target aura row
+after an error, solo marks left to NamPower's `SetRaidTarget`, watched cooldowns read without a table per
+event and no 1.5 s GCD guess, an Extra Rows item icon not loaded yet) and `test_hot_paths_2026_11_02.py`
+(11: watched-aura keys built once, raid aura candidates kept, debuff rows keep their anchors, movers wait
+for Ctrl+Shift, power text formatted once, chat lines without links run no URL pattern, one timer callback
+per module, no DLL version in comments). All fail on `a798dc8`. Tests of retired migrations are gone
+(Hide Errors and the 10-26 options, Modern frames, 1.10 Hide entries, text spell IDs, old minimap keys);
+Core harnesses stub `FostercareTweaks.ActionBars`.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareTweaks" --run-tests --test-start regressions/FostercareTweaks --output .private/fct-current.json

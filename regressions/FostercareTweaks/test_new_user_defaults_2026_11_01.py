@@ -45,7 +45,7 @@ def load(width, height, saved=None):
     lua.execute(PRELUDE % (width, height, DEFAULTS))
     if saved is not None:
         lua.execute("FostercareTweaks_Config = " + saved)
-    lua.execute(source("Core.lua"))
+    lua.execute(source("Core.lua") + "\nif FostercareTweaks then FostercareTweaks.ActionBars = { Initialize = function() end } end")
     return lua
 
 
