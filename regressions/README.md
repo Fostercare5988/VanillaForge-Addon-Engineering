@@ -70,7 +70,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | !ErrorLog | `regressions/ErrorLog` | 2 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 61 | Yes | [FostercareNameplates](#fostercarenameplates) |
-| FostercareTweaks | `regressions/FostercareTweaks` | 219 | Yes | [FostercareTweaks](#fostercaretweaks) |
+| FostercareTweaks | `regressions/FostercareTweaks` | 222 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 69 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 47 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
@@ -195,7 +195,9 @@ The player's notes the same day add `test_zone_layouts_2026_11_02.py` (9: a layo
 shared extra-row spells, frames go home), `test_watched_auras_2026_11_02.py` (10; 1.9.1
 retires FostercareAuras and its one-time import, 1.9.2 draws the icons in front)
 and `test_hide_and_poisons_2026_11_02.py` (8, 1.10.0: a watched aura leaves that unit's lists, Hide leaves them all,
-Blizzard's buffs close up; each weapon shows its poison from the bags, else the proc spell, read on events) and `ActionBarRows` in `test_settings_2026_10_25.py` (5: one row per bar).
+Blizzard's buffs close up; each weapon shows its poison from the bags, else the proc spell, read on events).
+1.11.0 puts each settings page in AddOn Options (`SettingsWindow` in `test_settings_2026_10_25.py`, +3: five
+categories under FostercareTweaks, a category borrows its page and gives it back, the window closes AddOn Options) and `ActionBarRows` in `test_settings_2026_10_25.py` (5: one row per bar).
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareTweaks" --run-tests --test-start regressions/FostercareTweaks --output .private/fct-current.json

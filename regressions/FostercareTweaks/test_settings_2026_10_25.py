@@ -51,6 +51,10 @@ function GetAddOnMetadata() return "1.5.0" end
 function ReloadUI() reloaded = true end
 categories = {}
 function InterfaceOptions_AddCategory(panel) table.insert(categories, panel) end
+function Widget:SetParent(p) self.parent = p end
+InterfaceOptionsFrame, GameMenuFrame = CreateFrame("Frame", "InterfaceOptionsFrame"), CreateFrame("Frame", "GameMenuFrame")
+InterfaceOptionsFrame.shown, GameMenuFrame.shown = false, false
+function HideUIPanel(f) f:Hide() end
 
 FostercareTweaks_Config = { overwrites = {} }
 local FT = { mods = {} }
@@ -129,6 +133,32 @@ class SettingsWindow(unittest.TestCase):
     def test_listed_in_addon_options(self):
         lua = window()
         self.assertEqual(lua.eval('categories[1].name'), "FostercareTweaks")
+
+    def test_every_page_is_a_category_in_addon_options(self):
+        # 2026-11-02, the player's notes: the menus in ClassicAPI's AddOn Options.
+        lua = window()
+        names = [lua.eval("categories[%d].name" % i) for i in range(2, 7)]
+        self.assertEqual(names, ["General", "Unit Frames", "Auras", "Raid", "Action Bars"])
+        self.assertTrue(all(lua.eval("categories[%d].parent" % i) == "FostercareTweaks" for i in range(2, 7)))
+
+    def test_a_category_borrows_its_page_and_gives_it_back(self):
+        lua = window()
+        lua.execute('FostercareTweaks.OpenSettings("general")')
+        lua.execute('host = categories[4]; host.shown = false; host:Show()')         # Auras
+        self.assertFalse(lua.eval("FostercareTweaksSettingsGUI:IsShown()"))         # one place at a time
+        self.assertTrue(lua.eval("FTOptPage3.parent == host.holder"))
+        self.assertTrue(lua.eval("FTOptPage3:IsShown()"))
+        lua.execute('widgets.FTOpt_WatchName:SetText("Sprint"); widgets.FTOpt_WatchBuff:Click()')
+        self.assertEqual(lua.eval("watched[1].name"), "Sprint")                     # it works there
+        lua.execute("host:Hide()")
+        self.assertTrue(lua.eval("FTOptPage3.parent == FostercareTweaksSettingsGUI"))
+        lua.execute('FostercareTweaks.OpenSettings("auras")')
+        self.assertTrue(lua.eval("FTOptPage3:IsShown()"))                           # back in the window
+
+    def test_the_window_closes_addon_options(self):
+        lua = window()
+        lua.execute('InterfaceOptionsFrame.shown = true; FostercareTweaks.OpenSettings("raid")')
+        self.assertFalse(lua.eval("InterfaceOptionsFrame:IsShown()"))
 
     def test_live_switch_applies_without_reload(self):
         lua = window()
