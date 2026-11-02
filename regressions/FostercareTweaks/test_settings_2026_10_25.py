@@ -154,15 +154,43 @@ class SettingsWindow(unittest.TestCase):
         self.assertFalse(lua.eval("FostercareTweaksSettingsGUI:IsShown()"))         # one place at a time
         self.assertTrue(lua.eval("FTOptPage3.parent == host.holder"))
         self.assertTrue(lua.eval("FTOptPage3:IsShown()"))
-        self.assertLess(lua.eval("FTOptPage3.scale"), 1)                           # shrunk to the category's width
         self.assertEqual(lua.eval("host.holder.width"), 420)                       # the scroll frame's width
+        # One column at full size: the right column's switches move under the left's.
+        self.assertEqual(lua.eval("widgets.FTOpt_ShowStandardBuffs.pt[4]"), 28)
+        self.assertLess(lua.eval("widgets.FTOpt_ShowStandardBuffs.pt[5]"), lua.eval("widgets.FTOpt_uf_debuff_size.pt[5]"))
+        self.assertIsNone(lua.eval("FTOptPage3.scale"))
         lua.execute('widgets.FTOpt_WatchName:SetText("Sprint"); widgets.FTOpt_WatchBuff:Click()')
         self.assertEqual(lua.eval("watched[1].name"), "Sprint")                     # it works there
         lua.execute("host:Hide()")
         self.assertTrue(lua.eval("FTOptPage3.parent == FostercareTweaksSettingsGUI"))
-        self.assertEqual(lua.eval("FTOptPage3.scale"), 1)
         lua.execute('FostercareTweaks.OpenSettings("auras")')
         self.assertTrue(lua.eval("FTOptPage3:IsShown()"))                           # back in the window
+        self.assertEqual(lua.eval("widgets.FTOpt_ShowStandardBuffs.pt[4]"), 264)   # two columns again
+
+    def test_in_addon_options_every_page_is_one_column(self):
+        # 2026-11-02 in play: pages shrunk to fit were unreadable; one column at
+        # full size instead. Nothing on a page starts right of the left margin,
+        # and no two controls share a line.
+        lua = window()
+        lua.execute('FostercareTweaks.OpenSettings("auras"); widgets.FTOpt_WatchName:SetText("Sprint"); widgets.FTOpt_WatchBuff:Click()')
+        for index in range(1, 6):
+            lua.execute("host = categories[%d]; host.shown = false; host:Show()" % (index + 1))
+            spots = lua.eval('''(function()
+                local page, t = FTOptPage%d, {}
+                for name, w in pairs(widgets) do
+                    if w.pt and w.pt[2] == page and w:IsShown() then t[#t + 1] = { name, w.pt[4], w.pt[5] } end
+                end
+                return t end)()''' % index)
+            seen = {}
+            for i in range(1, len(spots) + 1):
+                name, x, y = spots[i][1], spots[i][2], spots[i][3]
+                if name == "FTOpt_WatchDebuff":
+                    continue                       # shares a line with Add your buff, half each
+                self.assertLess(x, 120, "page %d: %s at x=%s" % (index, name, x))
+                if name.startswith("FTOpt_") and not name.startswith("FTOptReload"):
+                    self.assertNotIn(round(y), seen, "page %d: %s shares a line with %s" % (index, name, seen.get(round(y))))
+                    seen[round(y)] = name
+            lua.execute("host:Hide()")
 
     def test_the_window_closes_addon_options(self):
         lua = window()

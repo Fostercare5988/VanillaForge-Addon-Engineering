@@ -70,7 +70,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | !ErrorLog | `regressions/ErrorLog` | 2 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 61 | Yes | [FostercareNameplates](#fostercarenameplates) |
-| FostercareTweaks | `regressions/FostercareTweaks` | 228 | Yes | [FostercareTweaks](#fostercaretweaks) |
+| FostercareTweaks | `regressions/FostercareTweaks` | 229 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 69 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 47 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
@@ -200,7 +200,9 @@ Blizzard's buffs close up; each weapon shows its poison from the bags, else the 
 categories under FostercareTweaks, a category borrows its page, scaled to fit, and gives it back, the window closes AddOn Options).
 1.12.0: each watched aura's card chooses its own icon, Blizzard's top right and the row; the list is two chips a row;
 1.10's Hide entries become buffs without an icon; weapon buttons sit by hand (main left, off right); 1.12.1: no local
-is called above its definition (linter A6; 1.12.0 called AnchorWeapon as a nil global every frame) and `ActionBarRows` in `test_settings_2026_10_25.py` (5: one row per bar).
+is called above its definition (linter A6; 1.12.0 called AnchorWeapon as a nil global every frame). 1.13.0: pages
+are laid out by sections; in AddOn Options every page is one column at full size (no control right of the margin,
+none sharing a line) and back in the window two columns again and `ActionBarRows` in `test_settings_2026_10_25.py` (5: one row per bar).
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareTweaks" --run-tests --test-start regressions/FostercareTweaks --output .private/fct-current.json
