@@ -102,6 +102,11 @@ FT.LAYOUT_NAMES = { world = "World", bg = "Battlegrounds", instance = "Dungeons 
 function FT.ZoneLayout() return "world" end
 function FT.SwitchLayout(name) switched = name end
 function FT.CopyLayoutToAll() copied = true end
+watched = {}
+FT.WatchedAuras = { List = function() return watched end,
+    Add = function(name, unit) table.insert(watched, { name = name, unit = unit, mine = unit == "target" or nil }) end,
+    Remove = function(i) table.remove(watched, i) end,
+    SetMine = function(i, v) watched[i].mine = v and true or nil end }
 '''
 
 
