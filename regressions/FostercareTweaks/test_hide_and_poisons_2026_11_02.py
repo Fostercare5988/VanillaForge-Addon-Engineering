@@ -35,24 +35,39 @@ function GetTime() return now or 0 end
 
 
 class OnePlace(unittest.TestCase):
-    def test_a_watched_aura_leaves_that_units_lists_and_a_hidden_one_all(self):
+    def test_each_aura_chooses_where_it_shows(self):
         lua = watched()
-        lua.execute('W.Add("Evasion", "player"); W.Add("Expose Armor", "target"); W.Add("Honorless Target", "hidden")')
-        hidden = lambda name, unit: lua.eval('FT.IsAuraHidden("%s", "%s")' % (name, unit))
-        self.assertTrue(hidden("Evasion", "player"))
+        lua.execute('W.Add("Evasion", "player"); W.Add("Expose Armor", "target")')
+        hidden = lambda name, unit, place="row": lua.eval('FT.IsAuraHidden("%s", "%s", "%s")' % (name, unit, place))
+        # By default only its own icon: out of Blizzard's buffs and the row.
+        self.assertTrue(hidden("Evasion", "player", "top") and hidden("Evasion", "player"))
         self.assertFalse(hidden("Evasion", "target"))
         self.assertTrue(hidden("Expose Armor", "target"))
         self.assertFalse(hidden("Expose Armor", "player"))
-        self.assertTrue(hidden("Honorless Target", "player") and hidden("Honorless Target", "target"))
-        self.assertIsNone(lua.eval("FCTweaksWatch_watch_hidden_HonorlessTarget"))   # no icon
-        self.assertEqual(lua.eval("lists"), 3)                                      # the lists redrawn
+        lua.execute('W.SetShown(1, "topRight", true); W.SetShown(2, "inRow", true)')
+        self.assertFalse(hidden("Evasion", "player", "top"))
+        self.assertTrue(hidden("Evasion", "player"))
+        self.assertFalse(hidden("Expose Armor", "target"))
+        self.assertEqual(lua.eval("lists"), 4)                                       # the lists redrawn
         lua.execute("W.Remove(1)")
-        self.assertFalse(hidden("Evasion", "player"))
+        self.assertFalse(hidden("Evasion", "player", "top"))
+
+    def test_an_aura_without_its_own_icon(self):
+        lua = watched()
+        lua.execute('W.Add("Sprint", "player"); W.SetShown(1, "icon", false)')
+        lua.execute('auras.player[1] = { name = "Sprint" }; fire(events, "UNIT_AURA_DELTA", "player", {})')
+        self.assertFalse(lua.eval("FCTweaksWatch_watch_player_Sprint.shown"))
+        self.assertTrue(lua.eval('FT.IsAuraHidden("Sprint", "player", "top")'))     # still out of the lists
+
+    def test_1_10_hide_entries_become_buffs_without_an_icon(self):
+        lua = watched('FostercareTweaks_Config.watched = { { name = "Honorless Target", unit = "hidden" } }')
+        self.assertEqual(lua.eval("W.List()[1].unit"), "player")
+        self.assertTrue(lua.eval("W.List()[1].noIcon"))
 
     def test_the_rows_skip_hidden_auras(self):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(WIDGETS + r'''
-            FT = { IsAuraHidden = function(name, unit) return name == "Evasion" and unit == "player" end }
+            FT = { IsAuraHidden = function(name, unit, place) return name == "Evasion" and unit == "player" and place == nil end }
             UF = { IsShowPlayerBuffs = function() return true end, IsShowPlayerDebuffs = function() return true end }
             Auras = { StyleBorder = function() end, LayoutContainer = function() end, ResetContainer = function() end }
             function UnitExists() return true end
@@ -88,7 +103,7 @@ class OnePlace(unittest.TestCase):
             spells = { [2983] = "Sprint", [5277] = "Evasion", [1784] = "Stealth" }
             function GetPlayerBuffID(index) return names[index] end
             function GetSpellInfo(id) return spells[id] end
-            FT = { IsAuraHidden = function(name) return name == "Evasion" end }
+            FT = { IsAuraHidden = function(name, unit, place) return name == "Evasion" and place == "top" end }
             frame = Widget()
             buttons = {}
             for i = 0, 2 do buttons[i + 1] = Widget({ buffIndex = i, shown = true }) end
@@ -119,6 +134,28 @@ POISONS = WIDGETS + r'''
     function GetSpellInfo(id) return "proc", "", "proc-icon-" .. id end
     function Button(slot) return Widget({ id = slot, name = "TempEnchant" .. slot }) end
 '''
+
+
+class WeaponPlaces(unittest.TestCase):
+    def test_main_hand_left_off_hand_right_whichever_is_enchanted(self):
+        # 2026-11-02 in play: the native updater gives TempEnchant1 to the off
+        # hand when it has an enchant, so the main hand's poison jumped sides.
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(WIDGETS + r'''
+            SHOW_BUFF_DURATIONS = "0"
+            frame = Widget()
+            one, two = Widget({ id = 16 }), Widget({ id = 17 })
+            areas = { { frame = frame, buttons = {} }, { frame = frame, buttons = {} }, { frame = frame, buttons = { one, two } } }
+        ''')
+        lua.execute(between(STANDARD, "local function AnchorWeapon", "-- One layout per frame") + "\nAnchorButtons(); Anchor = AnchorWeapon")
+        self.assertEqual(lua.eval("one.point[4]"), -35)                  # main hand, left
+        self.assertEqual(lua.eval("two.point[4]"), 0)                    # off hand, right
+        lua.execute("one.id, two.id = 17, 16; Anchor(one); Anchor(two)")
+        self.assertEqual(lua.eval("one.point[4]"), 0)
+        self.assertEqual(lua.eval("two.point[4]"), -35)
+
+    def test_a_hand_change_moves_its_button_without_a_full_layout(self):
+        self.assertIn("if button.fctAnchorHand ~= button:GetID() then AnchorWeapon(button) end", STANDARD)
 
 
 class PoisonIcons(unittest.TestCase):

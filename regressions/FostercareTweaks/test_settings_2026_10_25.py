@@ -52,6 +52,11 @@ function ReloadUI() reloaded = true end
 categories = {}
 function InterfaceOptions_AddCategory(panel) table.insert(categories, panel) end
 function Widget:SetParent(p) self.parent = p end
+function Widget:SetWidth(w) self.width = w end
+function Widget:GetWidth() return self.width or 420 end
+function Widget:SetScale(s) self.scale = s end
+function Widget:SetPoint(...) self.pt = { ... } end
+function GetSpellInfo(id) return id, "", "icon-" .. tostring(id) end
 InterfaceOptionsFrame, GameMenuFrame = CreateFrame("Frame", "InterfaceOptionsFrame"), CreateFrame("Frame", "GameMenuFrame")
 InterfaceOptionsFrame.shown, GameMenuFrame.shown = false, false
 function HideUIPanel(f) f:Hide() end
@@ -110,7 +115,8 @@ watched = {}
 FT.WatchedAuras = { List = function() return watched end,
     Add = function(name, unit) table.insert(watched, { name = name, unit = unit, mine = unit == "target" or nil }) end,
     Remove = function(i) table.remove(watched, i) end,
-    SetMine = function(i, v) watched[i].mine = v and true or nil end }
+    SetMine = function(i, v) watched[i].mine = v and true or nil end,
+    SetShown = function(i, place, v) if place == "icon" then watched[i].noIcon = not v or nil else watched[i][place] = v and true or nil end end }
 '''
 
 
@@ -148,10 +154,13 @@ class SettingsWindow(unittest.TestCase):
         self.assertFalse(lua.eval("FostercareTweaksSettingsGUI:IsShown()"))         # one place at a time
         self.assertTrue(lua.eval("FTOptPage3.parent == host.holder"))
         self.assertTrue(lua.eval("FTOptPage3:IsShown()"))
+        self.assertLess(lua.eval("FTOptPage3.scale"), 1)                           # shrunk to the category's width
+        self.assertEqual(lua.eval("host.holder.width"), 420)                       # the scroll frame's width
         lua.execute('widgets.FTOpt_WatchName:SetText("Sprint"); widgets.FTOpt_WatchBuff:Click()')
         self.assertEqual(lua.eval("watched[1].name"), "Sprint")                     # it works there
         lua.execute("host:Hide()")
         self.assertTrue(lua.eval("FTOptPage3.parent == FostercareTweaksSettingsGUI"))
+        self.assertEqual(lua.eval("FTOptPage3.scale"), 1)
         lua.execute('FostercareTweaks.OpenSettings("auras")')
         self.assertTrue(lua.eval("FTOptPage3:IsShown()"))                           # back in the window
 
