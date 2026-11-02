@@ -118,7 +118,8 @@ def xml_names():
     def walk(el, parent, inside_template):
         name = el.get("name")
         virtual = inside_template or el.get("virtual") == "true"
-        full = name.replace("$parent", parent or "") if name else None
+        # $parent is the frame named in parent="X" when there is one, as in the client.
+        full = name.replace("$parent", el.get("parent") or parent or "") if name else None
         # An unnamed frame declared with parent="X" (the queue insets) expands $parent from X.
         base = full or el.get("parent") or parent
         if not virtual:
