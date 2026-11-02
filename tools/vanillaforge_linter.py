@@ -331,6 +331,15 @@ class VanillaForgeAuditor:
                 return True
         return False
 
+    @staticmethod
+    def _local_functions(code_lines):
+        found = {}
+        for idx, line in enumerate(code_lines, 1):
+            m = re.match(r'\s*local\s+function\s+([A-Za-z_]\w*)', line)
+            if m and m.group(1) not in found:
+                found[m.group(1)] = idx
+        return found
+
     def audit_file(self, filepath):
         errors = []
         warnings = []
@@ -357,6 +366,21 @@ class VanillaForgeAuditor:
 
         if LOCALE_FILE_PATTERN.search(filepath) and not self._is_suppressed(raw_lines[0] if raw_lines else "", "L1"):
             warnings.append("[Rule L1 - Locale File] This file is a per-locale string table. The client is English only: move the English strings inline and remove the file.")
+
+        # Rule A6: a local function called on a line above its definition, with
+        # no forward declaration, is read as a global there: nil at run time
+        # (FostercareTweaks 1.12.0, AnchorWeapon). Tests that load the two
+        # functions separately cannot see it.
+        if filepath.endswith('.lua'):
+            for name, line_no in self._local_functions(code_lines).items():
+                above = code_lines[:line_no - 1]
+                if any(re.search(r'^\s*local\s+[\w\s,]*\b%s\b\s*(?:$|=|,)' % name, l) for l in above):
+                    continue
+                for idx, line in enumerate(above, 1):
+                    if re.search(r'(?<![\w.:])%s\s*\(' % name, line) and not re.search(r'function\s+%s\b' % name, line) \
+                            and not self._is_suppressed(raw_lines[idx - 1], "A6"):
+                        warnings.append(f"[Rule A6 - Local Used Before Definition] Line {idx}: '{name}' is a local function defined on line {line_no}; here it is still a global. Move the definition up or declare 'local {name}' first.")
+                        break
 
         current_button_name = ""
         for idx, raw_line in enumerate(raw_lines, 1):

@@ -224,6 +224,17 @@ table.insert(args, nil)
         _, warnings, _ = self.audit("local remainder = math.mod(5, 2)\n")
         self.assertTrue(any("Rule A4" in warning for warning in warnings))
 
+    def test_a_local_function_called_above_its_definition_is_reported(self):
+        # FostercareTweaks 1.12.0: AnchorWeapon was called from an earlier function.
+        source = "local function A()\n    B(1)\nend\nlocal function B(x)\nend\n"
+        _, warnings, _ = self.audit(source)
+        self.assertTrue(any("Rule A6" in w and "Line 2" in w for w in warnings))
+        for ok in ("local B\nlocal function A()\n    B(1)\nend\nfunction B(x)\nend\n",
+                   "local function B(x)\nend\nlocal function A()\n    B(1)\nend\n",
+                   "local function A()\n    t.B(1); t:B(2)\nend\nlocal function B(x)\nend\n"):
+            _, warnings, _ = self.audit(ok)
+            self.assertFalse(any("Rule A6" in w for w in warnings), ok)
+
     def test_lua50_forms_with_classicapi_backports_are_reported(self):
         # 2026-11-02, the user: use ClassicAPI wherever it can. Its 5.1
         # backports replace mod, gfind, string.len and unpack(arg).
