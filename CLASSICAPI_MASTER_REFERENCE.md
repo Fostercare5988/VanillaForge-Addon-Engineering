@@ -803,6 +803,25 @@ GetActionInfo
 
 Additional source-confirmed action helpers include modernized action state functions in the implementation, but use the official API browser for exact current exposure.
 
+Range and usable events (1.19.1), which replace per-frame polling of action slots:
+
+- `C_ActionBar.EnableActionRangeCheck(slot, enable)`: a count per slot (1 to
+  120); each `true` adds one, each `false` removes one; `/reload` resets it.
+  After each enable the next check fires the event, so a new button needs no
+  `IsActionInRange` call.
+- `ACTION_RANGE_CHECK_UPDATE`: `slot, isInRange, checksRange`, only when an
+  enabled slot's state changes. Ignore `isInRange` when `checksRange` is false
+  (no target, no range, empty slot). Checked each frame only while a frame is
+  registered.
+- `ACTION_USABLE_CHANGED`: `changes`, a list of `{ slot, usable, noMana }` for
+  the slots that changed; fires right after `ACTIONBAR_UPDATE_USABLE`. A slot
+  whose action changes gets `ACTIONBAR_SLOT_CHANGED` instead: read
+  `IsUsableAction` there.
+
+StatusBar (1.19.1): the standard fill moves the bar texture's rect, so a region
+anchored to `GetStatusBarTexture()` (a spark) follows the fill, also under
+`SetTimerDuration`. `GetAddOnMemoryUsage` (1.19.1) counts the live objects.
+
 ---
 
 ## 16. AddOns — `C_AddOns`
