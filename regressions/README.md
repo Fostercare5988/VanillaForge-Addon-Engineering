@@ -90,7 +90,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 60 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 61 | Yes | [FostercareNameplates](#fostercarenameplates) |
-| FostercareTweaks | `regressions/FostercareTweaks` | 187 | Yes | [FostercareTweaks](#fostercaretweaks) |
+| FostercareTweaks | `regressions/FostercareTweaks` | 210 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 67 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 42 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
@@ -248,6 +248,10 @@ vararg wrappers. Options: nine switches are always on and cleared on load;
 `192e14d` except one control. Harnesses now mock `hooksecurefunc`,
 `AbbreviateNumbers`, `FT.GetUnitHealthValues`, `FT.Countdown` and the stock
 frames the addon no longer checks for.
+
+The player's notes the same day add `test_zone_layouts_2026_11_02.py` (9: a layout per zone, combat waits,
+shared extra-row spells, frames go home), `test_watched_auras_2026_11_02.py` (9, with the FostercareAuras
+import) and `ActionBarRows` in `test_settings_2026_10_25.py` (5: one row per bar).
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareTweaks" --run-tests --test-start regressions/FostercareTweaks --output .private/fct-current.json
