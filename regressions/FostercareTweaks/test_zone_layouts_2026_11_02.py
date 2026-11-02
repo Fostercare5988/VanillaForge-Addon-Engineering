@@ -43,7 +43,7 @@ PRELUDE = r'''
     FT.UnitFrames = { ApplyConfiguration = function() shown = shown + 1 end, ApplyGroupDimensions = NOOP,
         UpdateAllRaidFrames = NOOP, GetBuffSize = NOOP, GetDebuffSize = NOOP }
     function FT.RestoreFramePositions() restored = (restored or 0) + 1 end
-    FT.ApplyMinimapScale = NOOP
+    FT.ApplyMinimapScale, FT.RefreshSettings = NOOP, NOOP
     function FT:RefreshRaidMarks() end
     function Enter(k) kind = k; for f, fn in pairs(handlers) do if f.events.PLAYER_ENTERING_WORLD then fn(f, "PLAYER_ENTERING_WORLD") end end end
     function EndCombat() combat = false; for f, fn in pairs(handlers) do if f.events.PLAYER_REGEN_ENABLED then fn(f, "PLAYER_REGEN_ENABLED") end end end

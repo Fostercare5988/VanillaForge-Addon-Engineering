@@ -285,6 +285,13 @@
       "finding": "Rechecks on a timer whether a plate frame still belongs to its unit.",
       "better": "Since 1.19.0 a unit that moves to another plate fires NAME_PLATE_UNIT_REMOVED (old frame) and then NAME_PLATE_UNIT_ADDED (new frame), REMOVED first. During REMOVED, GetNamePlateForUnit gives the leaving frame.",
       "source": "ClassicAPI commit aef68d5 (1.19.0)"
+    },
+    {
+      "id": "solo-raid-mark-by-hand",
+      "pattern": "\\bSetLocalRaidTargetIndex\\s*\\(",
+      "finding": "Sets a local raid mark by hand when solo, often by replacing SetRaidTargetIcon.",
+      "better": "NamPower's own SetRaidTarget falls back to a local mark when you are not in a group (NP_EnableLocalSetRaidTarget, on by default), for the mark keys, the unit menu and every other caller. Redraw your own frames after it if they need it: hooksecurefunc(\"SetRaidTarget\", ...).",
+      "source": "NamPower README.md (NP_EnableLocalSetRaidTarget, Local Raid Marker Helpers)"
     }
   ]
 }

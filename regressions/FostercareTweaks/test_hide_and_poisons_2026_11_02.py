@@ -59,11 +59,6 @@ class OnePlace(unittest.TestCase):
         self.assertFalse(lua.eval("FCTweaksWatch_watch_player_Sprint.shown"))
         self.assertTrue(lua.eval('FT.IsAuraHidden("Sprint", "player", "top")'))     # still out of the lists
 
-    def test_1_10_hide_entries_become_buffs_without_an_icon(self):
-        lua = watched('FostercareTweaks_Config.watched = { { name = "Honorless Target", unit = "hidden" } }')
-        self.assertEqual(lua.eval("W.List()[1].unit"), "player")
-        self.assertTrue(lua.eval("W.List()[1].noIcon"))
-
     def test_the_rows_skip_hidden_auras(self):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(WIDGETS + r'''
@@ -164,7 +159,7 @@ class CooldownAfterTheBuff(unittest.TestCase):
         lua = self.lua
         self.assertTrue(lua.eval("icon.shown"))
         lua.execute('''auras.player = {}; cd[1784] = { startTime = 100, duration = 10, isOnGCD = false }
-            fire(events, "SPELL_UPDATE_COOLDOWN")''')
+            fire(events, "UNIT_AURA_DELTA", "player", {}); fire(events, "SPELL_UPDATE_COOLDOWN")''')
         self.assertTrue(lua.eval("icon.shown"))
         self.assertTrue(lua.eval("icon.texture.grey"))
         self.assertEqual(lua.eval("icon.cooldown.duration"), 10)
@@ -175,13 +170,13 @@ class CooldownAfterTheBuff(unittest.TestCase):
     def test_the_global_cooldown_does_not_count(self):
         lua = self.lua
         lua.execute('''auras.player = {}; cd[1784] = { startTime = 100, duration = 1.5, isOnGCD = true }
-            fire(events, "SPELL_UPDATE_COOLDOWN")''')
+            fire(events, "UNIT_AURA_DELTA", "player", {}); fire(events, "SPELL_UPDATE_COOLDOWN")''')
         self.assertFalse(lua.eval("icon.shown"))
 
     def test_back_in_stealth_the_colour_and_timer_return(self):
         lua = self.lua
         lua.execute('''auras.player = {}; cd[1784] = { startTime = 100, duration = 10, isOnGCD = false }
-            fire(events, "SPELL_UPDATE_COOLDOWN")
+            fire(events, "UNIT_AURA_DELTA", "player", {}); fire(events, "SPELL_UPDATE_COOLDOWN")
             auras.player[1] = { name = "Stealth", id = 1784 }; fire(events, "UNIT_AURA_DELTA", "player", {})''')
         self.assertFalse(lua.eval("icon.texture.grey"))
         self.assertTrue(lua.eval("icon.cooldown.reverse"))

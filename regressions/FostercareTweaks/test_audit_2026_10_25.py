@@ -138,8 +138,8 @@ class RaidClicks(unittest.TestCase):
 
 
 class RetiredSettings(unittest.TestCase):
-    """Hide Errors, the saved player list and four unused options are gone,
-    and nothing poses as ShaguTweaks."""
+    """Nothing poses as ShaguTweaks. The clearing of retired keys (Hide Errors,
+    the saved player list and others) ended on 2026-11-02: no saved file has them."""
     def load(self, saved):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute('''
@@ -152,29 +152,16 @@ class RetiredSettings(unittest.TestCase):
             FostercareTweaks_Config = %s
             FostercareTweaks_Cache = { players = { Parting = { class = "ROGUE" } } }
         ''' % saved)
-        lua.execute(source("Core.lua"))
+        lua.execute(source("Core.lua") + "\nif FostercareTweaks then FostercareTweaks.ActionBars = { Initialize = function() end } end")
         return lua
 
     def test_auto_dismount_is_kept_again(self):
         # 2026-10-26: Auto Dismount is back for the actions ClassicAPI's cast
         # settings miss, so its saved switch stays and the CVars stay the
         # player's own.
-        lua = self.load('{ ["Auto Dismount"] = 1, ["Hide Errors"] = 0 }')
+        lua = self.load('{ ["Auto Dismount"] = 1 }')
         self.assertEqual(lua.eval('FostercareTweaks_Config["Auto Dismount"]'), 1)
         self.assertIsNone(lua.eval('next(cvars)'))
-        self.assertIsNone(lua.eval('FostercareTweaks_Config["Hide Errors"]'))
-
-    RETIRED = ("Hide Default Cast Bar", "Only Show My Debuffs on Target", "Show Bags", "Show Micro Menu",
-               "Improved Standard Auras", "Debuff Timer", "Show Buff Cooldown Spiral", "Show Buff Duration Text",
-               "Show Debuff Cooldown Spiral", "Show Debuff Duration Text", "Color Debuffs by Dispel Type",
-               "Uninterruptible Castbars")
-
-    def test_retired_options_cleared(self):
-        saved = ", ".join('["%s"] = 0' % key for key in self.RETIRED)
-        lua = self.load('{ %s, overwrites = { ["panelbag.scale"] = 1, ["panelmicro.scale"] = 1 } }' % saved)
-        for key in self.RETIRED:
-            self.assertIsNone(lua.eval('FostercareTweaks_Config["%s"]' % key), key)
-        self.assertIsNone(lua.eval('next(FostercareTweaks_Config.overwrites)'))
 
     def test_permanent_module_runs_and_keeps_no_switch(self):
         # Cooldown Numbers and Ctrl+Shift moving are `always` modules: an old
@@ -194,40 +181,12 @@ class RetiredSettings(unittest.TestCase):
 
     def test_saved_players_and_alias_gone(self):
         lua = self.load('{}')
-        self.assertIsNone(lua.eval('FostercareTweaks_Cache.players'))
         self.assertIsNone(lua.eval('ShaguTweaks'))
         self.assertIsNone(lua.eval('SLASH_FOSTERCARETWEAKS4'))
 
 
 class ModernFramesRetired(unittest.TestCase):
-    """The Modern player, target and ToT frames were removed; their settings
-    are cleared once."""
-    def test_settings_cleared_and_carried_over(self):
-        lua = LuaRuntime(unpack_returned_tuples=True)
-        lua.execute(BASE)
-        lua.execute('''
-            FT.HookScript, FT.SetEventHandler = function() end, function() end
-            function CreateFrame() return { RegisterEvent = function() end } end
-            FostercareTweaks_Config = { overwrites = { uf_scale = 1.2, uf_buff_size = 24 },
-                ["Modern Player Frame"] = 0, ["Use Standard Target Frame"] = 1,
-                ["Show Aura Cooldown Spiral"] = 0, ["Unit Frame Class Portraits"] = 0,
-                unitframe_positions = { player = {}, modern_target_buffs = {}, standard_target_buffs = {} } }
-        ''')
-        lua.execute(source("mods/unitframes/core.lua"))
-        lua.execute('FT.MigrateFrameSettings()')
-        cfg = 'FostercareTweaks_Config'
-        self.assertIsNone(lua.eval(cfg + '["Modern Player Frame"]'))
-        self.assertIsNone(lua.eval(cfg + '["Use Standard Target Frame"]'))
-        self.assertIsNone(lua.eval(cfg + '["Unit Frame Class Portraits"]'))
-        self.assertIsNone(lua.eval(cfg + '.overwrites.uf_scale'))
-        self.assertEqual(lua.eval(cfg + '.overwrites.uf_buff_size'), 24)
-        # Sweeps and countdowns are permanent since 2026-10-26: nothing carries over.
-        self.assertIsNone(lua.eval(cfg + '["Show Buff Cooldown Spiral"]'))
-        self.assertIsNone(lua.eval(cfg + '["Show Aura Cooldown Spiral"]'))
-        self.assertIsNone(lua.eval(cfg + '.unitframe_positions.player'))
-        self.assertIsNone(lua.eval(cfg + '.unitframe_positions.modern_target_buffs'))
-        self.assertIsNotNone(lua.eval(cfg + '.unitframe_positions.standard_target_buffs'))
-
+    """The Modern player, target and ToT frames were removed (2026-10-25)."""
     def test_bar_color_writes_only_on_change(self):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(BASE)

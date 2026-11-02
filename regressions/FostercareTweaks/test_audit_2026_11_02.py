@@ -137,7 +137,7 @@ class NewCharacterKeepsTheMap(unittest.TestCase):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute((CORE_PRELUDE % "2.2").replace("FostercareTweaks_Config = { overwrites = {} }", ""))
         lua.execute(source("Defaults.lua"))
-        lua.execute(source("Core.lua"))
+        lua.execute(source("Core.lua") + "\nif FostercareTweaks then FostercareTweaks.ActionBars = { Initialize = function() end } end")
         lua.execute('''
             minimized, WORLDMAP_WINDOWED = 0, 0
             function WorldMapFrame_Minimize() minimized = minimized + 1 end
@@ -360,7 +360,7 @@ class SwitchesEveryoneLeavesOn(unittest.TestCase):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute((CORE_PRELUDE % "2.2").replace("FostercareTweaks_Config = { overwrites = {} }",
                                                      'FostercareTweaks_Config = { overwrites = {}, ["Vendor Values"] = 0 }'))
-        lua.execute(source("Core.lua"))
+        lua.execute(source("Core.lua") + "\nif FostercareTweaks then FostercareTweaks.ActionBars = { Initialize = function() end } end")
         lua.execute(source("mods/vendor-values.lua").split("module.enable =")[0]
                     + "started = 0; module.enable = function() started = started + 1 end")
         lua.execute("FostercareTweaks:Initialize()")
@@ -382,7 +382,7 @@ class SlashCommands(unittest.TestCase):
             end
             function ReloadUI() reloaded = true end
         ''')
-        lua.execute(source("Core.lua"))
+        lua.execute(source("Core.lua") + "\nif FostercareTweaks then FostercareTweaks.ActionBars = { Initialize = function() end } end")
         lua.execute(r'''
             opened, resized = {}, 0
             FostercareTweaks.OpenSettings = function(page) opened[#opened + 1] = page or "toggle" end

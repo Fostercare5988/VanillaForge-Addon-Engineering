@@ -26,7 +26,7 @@ class SlashSplitTests(unittest.TestCase):
                 return t
             end
         ''')
-        lua.execute(source("Core.lua"))
+        lua.execute(source("Core.lua") + "\nif FostercareTweaks then FostercareTweaks.ActionBars = { Initialize = function() end } end")
         lua.execute('SlashCmdList["FOSTERCARETWEAKS"]("resetuf")')
         self.assertEqual(lua.eval('splits'), 1)
         self.assertTrue(lua.eval('reloaded'))
