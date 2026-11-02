@@ -632,3 +632,20 @@ Three fail on 1.1.0.
 `test_native_countdown_2026_11_01.py` (8): the enchant badge on a bagged weapon is counted down by a native
 Cooldown frame (no ticker, one `SetCooldown` per application, `OnCooldownDone` hides it, `3c` replaces the
 time at 5 charges or fewer), and a native `-1` slot rarity comes from `C_Item.GetItemQualityByID`.
+
+## ClassicAPI 1.19.0 pass (2026-11-02)
+
+Bars fill themselves with `SetTimerDuration`; the mocks give `C_DurationUtil`, `Enum` and a recording `SetTimerDuration`.
+FostercareNameplates `test_castbar_timer_2026_11_02.py` (7): a cast sets its time span once and no
+`SetValue` runs per frame, a channel empties the bar, pushback moves the end without resetting the bar, the bar
+hides at the end time without an event, and a unit that moves plates is removed, then added (the 0.5 s binding
+poll is gone; `test_audit_2026_10_20.py` now expects no `GetNamePlateForGUID` lookups).
+FostercareTweaks `test_target_castbar_timer_2026_11_02.py` (6): no `OnUpdate` during a cast, a one-shot timer
+covers a missed stop event and an old timer never hides a newer cast, and DELAYED, CHANNEL_UPDATE and FAILED
+(which never fire for other units) are no longer registered.
+AutoBG `test_timer_fill_2026_11_02.py` (4): a counting row drains from a time span, frames write no fill, the
+spark appears part way, preview rows hold a value.
+ErrorLog `test_error_stack_2026_11_02.py` (4): the saved stack starts at `GetCallstackHeight() -
+GetErrorCallstackHeight() + 1`, a direct call at the caller, a repeat reads no stack, and ClassicAPI's window
+(the handler found at load) opens only with `/err popup` on. Native drawing, the spark on the bar texture and
+pushback timing stay in-game checks.

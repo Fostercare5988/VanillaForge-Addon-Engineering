@@ -38,11 +38,12 @@ class AuditReproductions(unittest.TestCase):
         lua.execute('plate.fnpUnitGUID = "0xF1"')
         self.assertEqual(lua.eval("FostercareNameplates.GetNameplateUnit(plate)"), "0xF1")
 
-    def test_p3_plate_binding_checked_on_slow_cadence(self):
-        """P3-1: every plate re-validated its GUID binding every frame (60 lookups a second)."""
+    def test_p3_plate_binding_is_not_polled(self):
+        """P3-1: every plate re-validated its GUID binding every frame, then twice a second.
+        ClassicAPI 1.19 fires REMOVED and ADDED when a unit moves to another plate."""
         lua = load()
-        lua.execute('plate = nativePlate("0xF1", "nameplate1"); calls = {}; runFrames(plate, 60)')
-        self.assertLessEqual(lua.eval('calls.GetNamePlateForGUID or 0'), 3)
+        lua.execute('plate = nativePlate("0xF1", "nameplate1"); calls = {}; runFrames(plate, 120)')
+        self.assertEqual(lua.eval('calls.GetNamePlateForGUID or 0'), 0)
 
     def test_p3_no_plate_work_when_nothing_renders(self):
         """P3-1: after the per-frame modules were switched off in settings, the

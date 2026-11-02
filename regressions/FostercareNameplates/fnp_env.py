@@ -26,6 +26,7 @@ UISpecialFrames, RAID_CLASS_COLORS = {}, { MAGE = { r = 0.4, g = 0.8, b = 1 } }
 CLOSE, SlashCmdList = "Close", {}
 
 local Widget = {}
+local count
 local Meta = { __index = function(_, k)
     if Widget[k] then return Widget[k] end
     if string.find(k, "^%u") then return function() end end
@@ -70,7 +71,10 @@ function Widget:SetChecked(v) self.checked = v end
 function Widget:GetValue() return self.value or 0 end
 function Widget:GetAlpha() return self.alpha or 1 end
 function Widget:SetAlpha(v) self.alpha = v end
-function Widget:SetValue(v) self.value = v end
+function Widget:SetValue(v) self.value = v; count("SetValue") end
+function Widget:SetTimerDuration(d, interpolation, direction)
+    self.timer, self.timerDirection = d, direction; count("SetTimerDuration")
+end
 UIParent = widget("UIParent")
 setmetatable(_G, { __index = function(_, k)
     if type(k) == "string" and string.find(k, "^FNP") then return widget(k) end
@@ -84,7 +88,7 @@ function GetAddOnMetadata() return "test" end
 now = 100
 function GetTime() return now end
 calls = {}
-local function count(name) calls[name] = (calls[name] or 0) + 1 end
+function count(name) calls[name] = (calls[name] or 0) + 1 end
 function UnitGUID() return nil end
 function UnitIsPlayer() end
 function UnitClass() end
@@ -107,6 +111,11 @@ C_NamePlate = { GetNamePlateGUIDs = function() return {} end, GetNamePlateForUni
 C_EventUtils = { IsEventValid = function() return true end }
 C_Timer = { After = function() count("After") end,
     NewTicker = function() return { Cancel = function() end } end }
+Enum = { StatusBarInterpolation = { Immediate = 0 },
+    StatusBarTimerDirection = { ElapsedTime = 0, RemainingTime = 1 } }
+C_DurationUtil = { CreateDuration = function()
+    return { SetTimeSpan = function(self, startTime, endTime) self.startTime, self.endTime = startTime, endTime end }
+end }
 C_Spell = { UnitCastingInfo = function() count("UnitCastingInfo") end,
     UnitChannelInfo = function() count("UnitChannelInfo") end }
 C_UnitAuras = { UnitAura = function(_, _, filter) count("UnitAura " .. tostring(filter)) end,
