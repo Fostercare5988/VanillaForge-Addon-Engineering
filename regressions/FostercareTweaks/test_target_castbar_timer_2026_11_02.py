@@ -83,3 +83,50 @@ class TargetCastbarTimer(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TargetCastbarMover(unittest.TestCase):
+    """Ctrl+Shift moves the target cast bar (2026-11-02)."""
+
+    def build(self, saved):
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(BASE + r'''
+            local create = CreateFrame
+            function CreateFrame(kind, name)
+                local f = create(kind, name)
+                f.SetPoint = function(self, ...) points = (points or 0) + 1 end
+                return f
+            end
+            TargetFrame = CreateFrame("Frame", "TargetFrame")
+            local noop = function() end; C_Spell = { UnitCastingInfo = noop, UnitChannelInfo = noop }
+            function UnitExists() return true end
+            function UnitIsDeadOrGhost() return false end
+            function GetTime() return 1 end
+            FostercareTweaks.RestoreFramePosition = function(frame, key, rel) restored = { key, rel }; return %s end
+            FostercareTweaks.RegisterFrameMover = function(frame, key, label, rel, onStop) mover = { frame, key, rel, onStop } end
+        ''' % saved)
+        lua.execute(CASTBAR)
+        lua.execute('FostercareTweaks.mods["Enemy Castbars"]:enable()')
+        return lua
+
+    def test_the_bar_registers_a_mover_that_follows_the_target_frame(self):
+        lua = self.build("false")
+        self.assertEqual(lua.eval("mover[2]"), "target_castbar")
+        self.assertTrue(lua.eval("mover[3] == TargetFrame and restored[2] == TargetFrame"))
+        self.assertIsNotNone(lua.eval("FCTweaksTargetCastbar.fctRestoreShown"))
+
+    def test_a_saved_position_replaces_the_default_anchor(self):
+        lua = self.build("true")
+        self.assertIsNone(lua.eval("points"))
+        lua = self.build("false")
+        self.assertEqual(lua.eval("points"), 1)
+        lua.execute("mover[4]()")
+        lua.execute("points = 0; FostercareTweaks.LayoutTargetCastbar()")
+        self.assertEqual(lua.eval("points"), 0)
+
+    def test_the_bar_stays_up_while_held_and_hides_after(self):
+        lua = self.build("false")
+        lua.execute("local b = FCTweaksTargetCastbar; b:Show(); b.fctForcedShown = true; FostercareTweaks.RefreshTargetCastbar()")
+        self.assertTrue(lua.eval("FCTweaksTargetCastbar:IsShown()"))
+        lua.execute("local b = FCTweaksTargetCastbar; b.fctForcedShown = nil; b.fctRestoreShown(b)")
+        self.assertFalse(lua.eval("FCTweaksTargetCastbar:IsShown()"))

@@ -107,6 +107,8 @@ function FT.IsEnabled(key, default)
 end
 function FT.GetNumber(_, default) return default end
 FT.hooksecurefunc, FT.HookScript, hooksecurefunc = NOOP, NOOP, NOOP
+FT.RestoreFramePosition, FT.RegisterFrameMover = NOOP, NOOP
+TargetofTargetFrame = { IsShown = function() return false end }
 function UnitGUID(u) return "0x" .. u end
 function UnitIsUnit(a, b) return a == b or (a == "raid5" and b == "target") end
 function UnitExists() return true end
