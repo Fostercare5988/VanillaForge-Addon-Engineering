@@ -2,9 +2,10 @@
 
 The Notices tab has an "Icon" button on those two rows (MikSBT.BIG_ICONS). When
 it is on, the message carries the event's icon at twice the font size; when it
-is off, nothing changes. Both show crossed swords; leaving combat greys them and
-tints them red (2026-11-02, the player's choice: the old gold check mark looked
-wrong). "+Combat" is green and "-Combat" red; profiles that kept white change.
+is off, nothing changes. Both show crossed swords, greyed and tinted: red in
+combat, green out of it (2026-11-02, the player's choice: the old gold check mark
+looked wrong; 1.2.2 swapped 1.2.1's green-in/red-out). The text matches; profiles
+that kept white or 1.2.1's colours change.
 """
 import unittest
 
@@ -67,31 +68,43 @@ class BigCombatIcon(unittest.TestCase):
         self.assertEqual(icons[1].width, 2 * lua.eval("FontHeight()"))
         self.assertEqual(icons[1].height, icons[1].width)
 
-    def test_leave_combat_shows_the_swords_in_red(self):
+    def test_leave_combat_shows_the_swords_in_green(self):
         lua = self.runtime(enter=False, leave=True)
         lua.execute('Fire("PLAYER_REGEN_DISABLED"); Fire("PLAYER_REGEN_ENABLED")')
         icons = lua.eval("BigTextures()")
         self.assertEqual(len(icons), 1)
         self.assertIn("Ability_DualWield", icons[1].tex)
         self.assertTrue(icons[1].grey)
-        self.assertEqual(list(icons[1].tint.values()), [1, 0.2, 0.2])
+        self.assertEqual(list(icons[1].tint.values()), [0.2, 1, 0.2])
 
-    def test_enter_combat_keeps_the_icon_colours(self):
+    def test_enter_combat_shows_the_swords_in_red(self):
         lua = self.runtime(enter=True)
         lua.execute('Fire("PLAYER_REGEN_DISABLED")')
         icon = lua.eval("BigTextures()")[1]
-        self.assertFalse(icon.grey)
-        self.assertEqual(list(icon.tint.values()), [1, 1, 1])
+        self.assertTrue(icon.grey)
+        self.assertEqual(list(icon.tint.values()), [1, 0.2, 0.2])
 
-    def test_combat_notices_are_green_and_red(self):
+    def test_combat_notices_are_red_and_green(self):
         lua = m.runtime()
         d = lua.eval("MikSBT.DEFAULT_CONFIG.EventSettings")
         enter = d.MSBT_EVENTTYPE_NOTIFICATION_COMBAT_ENTER.FontSettings.Color
         leave = d.MSBT_EVENTTYPE_NOTIFICATION_COMBAT_LEAVE.FontSettings.Color
-        self.assertEqual((enter.r, enter.g, enter.b), (0.25, 1, 0.25))
-        self.assertEqual((leave.r, leave.g, leave.b), (1, 0.25, 0.25))
+        self.assertEqual((enter.r, enter.g, enter.b), (1, 0.25, 0.25))
+        self.assertEqual((leave.r, leave.g, leave.b), (0.25, 1, 0.25))
 
-    def test_a_profile_that_kept_white_turns_green_and_red(self):
+    def test_a_profile_with_the_1_2_1_colours_swaps(self):
+        lua = m.runtime()
+        lua.execute('''
+            local e = { MSBT_EVENTTYPE_NOTIFICATION_COMBAT_ENTER = { FontSettings = { Color = { r = 0.25, g = 1, b = 0.25 } } },
+                        MSBT_EVENTTYPE_NOTIFICATION_COMBAT_LEAVE = { FontSettings = { Color = { r = 1, g = 0.25, b = 0.25 } } } }
+            MikSBT_Save.Profiles = { Old = { EventSettings = e } }
+            MikSBT.UpdateProfiles()
+            enter, leave = e.MSBT_EVENTTYPE_NOTIFICATION_COMBAT_ENTER.FontSettings.Color, e.MSBT_EVENTTYPE_NOTIFICATION_COMBAT_LEAVE.FontSettings.Color
+        ''')
+        self.assertEqual((lua.eval("enter.r"), lua.eval("enter.g")), (1, 0.25))
+        self.assertEqual((lua.eval("leave.r"), lua.eval("leave.g")), (0.25, 1))
+
+    def test_a_profile_that_kept_white_turns_red_and_green(self):
         lua = m.runtime()
         lua.execute('''
             local e = { MSBT_EVENTTYPE_NOTIFICATION_COMBAT_ENTER = { FontSettings = { Color = { r = 1, g = 1, b = 1 } } },
@@ -100,8 +113,8 @@ class BigCombatIcon(unittest.TestCase):
             MikSBT.UpdateProfiles()
             enter, leave = e.MSBT_EVENTTYPE_NOTIFICATION_COMBAT_ENTER.FontSettings.Color, e.MSBT_EVENTTYPE_NOTIFICATION_COMBAT_LEAVE.FontSettings.Color
         ''')
-        self.assertEqual(lua.eval("enter.g"), 1)
-        self.assertEqual(lua.eval("enter.r"), 0.25)
+        self.assertEqual(lua.eval("enter.r"), 1)
+        self.assertEqual(lua.eval("enter.g"), 0.25)
         self.assertEqual(lua.eval("leave.b"), 1)       # a colour the player chose stays
 
     def test_only_those_two_events_offer_the_icon(self):
