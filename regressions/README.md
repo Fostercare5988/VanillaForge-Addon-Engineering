@@ -71,8 +71,8 @@ that folder's `verified-repositories.json` and `validation.json`.
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 61 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 211 | Yes | [FostercareTweaks](#fostercaretweaks) |
-| GearRack | `regressions/GearRack` | 67 | Yes | [GearRack](#gearrack) |
-| MikScrollingBattleText | `regressions/MikScrollingBattleText` | 46 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
+| GearRack | `regressions/GearRack` | 69 | Yes | [GearRack](#gearrack) |
+| MikScrollingBattleText | `regressions/MikScrollingBattleText` | 47 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
 | TWThreat | `regressions/TWThreat` | 6 | Yes | [TWThreat](#twthreat) |
 | AutoLazy (older) | private `external-tests/AutoLazy` | 130 | No | private command below |
@@ -104,6 +104,7 @@ combat-log source and the ForgeUI settings window. Both run on `_msbt_runtime.py
 TOC file in a lupa model with ClassicAPI-only globals, a stateful widget model and `CL(...)`
 for combat log events. No client MPQs are needed; the BigWigs test uses the adjacent checkout.
 `test_big_combat_icon_2026_11_01.py` (8): the Icon switch on Enter/Leave Combat adds crossed swords at twice the font size, off by default; swords and text are red in combat and green out of it, and profiles with white or 1.2.1's swapped colours change.
+`test_frame_refs_2026_11_02.py` (1): each scroll area keeps its frame, so a message looks up none by name.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/MikScrollingBattleText" --run-tests --test-start regressions/MikScrollingBattleText
@@ -562,6 +563,10 @@ combat queue are cleared; enchant time comes from ClassicAPI alone; hooks leak n
 globals; an enabled notify event leaves "Notify when ready" off. The fixes are commits
 `e51cb39` to `2b07347`; the cut-out tests fail or cannot find their code on `b8778c9`,
 and the bank-bag and alert-on tests are controls.
+
+`test_frame_refs_2026_11_02.py` (2): the drawer cooldowns and worn-trinket queue badges keep their frames
+after the first lookup instead of building names per update. `gr_env.py` now names a `$parent` child after
+its `parent="X"` frame, as the client does (the drawer cooldowns `GearRackTrinkets_MenuNCD` were missing).
 
 `test_unit_events_2026_10_27.py` (1 test): `UNIT_INVENTORY_CHANGED` is registered
 with `RegisterUnitEvent` for the player only. It fails on `2b07347`.

@@ -420,6 +420,8 @@ class VanillaForgeAuditor:
                     warnings.append(f"[Rule A4 - Legacy gfind] Line {idx}: 'string.gfind' detected. Use 'string.gmatch', or 'string.match' for the first match.")
                 if re.search(r'\bstring\.len\s*\(|(?<![\w.:])strlen\s*\(', code_line):
                     warnings.append(f"[Rule A4 - Legacy string.len] Line {idx}: 'string.len(s)' detected. Use '#s' (strings only; numbers need tostring).")
+                if re.search(r'(?<![\w.:])getglobal\s*\(', code_line):
+                    warnings.append(f"[Rule A4 - Legacy getglobal] Line {idx}: 'getglobal(name)' detected. Use the frame's name, or _G[name]; keep frames used per update instead of looking them up.")
                 if re.search(r'\bunpack\s*\(\s*arg\s*\)', code_line):
                     warnings.append(f"[Rule A4 - Legacy vararg] Line {idx}: 'unpack(arg)' detected. Pass '...' on; it also keeps trailing nils.")
 

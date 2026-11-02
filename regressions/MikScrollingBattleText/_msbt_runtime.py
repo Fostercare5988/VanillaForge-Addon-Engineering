@@ -111,6 +111,8 @@ function ColorPickerFrame:GetColorRGB() return self.r,self.g,self.b end
 function PickerOkay() if ColorPickerFrame.func then ColorPickerFrame.func() end; HideUIPanel(ColorPickerFrame) end
 function PickerCancel() if ColorPickerFrame.cancelFunc then ColorPickerFrame.cancelFunc(ColorPickerFrame.previousValues) end; HideUIPanel(ColorPickerFrame) end
 function getglobal(name) return rawget(_G,name) or NewWidget(name) end
+-- The XML frames (MSBTFrame*) exist as soon as they are named, as in the client.
+setmetatable(_G, {__index=function(_,k) if type(k)=="string" and string.find(k,"^MSBTFrame") then return NewWidget(k) end end})
 setglobal=function(k,v) _G[k]=v end
 
 -- Fire an event at every frame registered for it, the way the client does.

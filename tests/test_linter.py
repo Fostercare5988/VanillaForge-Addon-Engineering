@@ -229,12 +229,14 @@ table.insert(args, nil)
         # backports replace mod, gfind, string.len and unpack(arg).
         for source in ("local r = mod(year, 4)\n", "for w in string.gfind(msg, \"%S+\") do end\n",
                        "local n = string.len(text)\n", "local n = strlen(text)\n",
-                       "function f(...) return g(unpack(arg)) end\n"):
+                       "function f(...) return g(unpack(arg)) end\n",
+                       "local f = getglobal(name .. \"Icon\")\n"):
             _, warnings, _ = self.audit(source)
             self.assertTrue(any("Rule A4" in w for w in warnings), source)
         for source in ("local r = year % 4\n", "for w in string.gmatch(msg, \"%S+\") do end\n",
                        "local n = #text\n", "local m = frame:mod(2)\n", "local x = t.strlen(s)\n",
-                       "return original(self, unpack(arg, 1, arg.n))\n"):
+                       "return original(self, unpack(arg, 1, arg.n))\n",
+                       "local f = _G[name .. \"Icon\"]\n"):
             _, warnings, _ = self.audit(source)
             self.assertFalse(any("Rule A4" in w for w in warnings), source)
 
