@@ -224,6 +224,18 @@ table.insert(args, nil)
         _, warnings, _ = self.audit("local remainder = math.mod(5, 2)\n")
         self.assertTrue(any("Rule A4" in warning for warning in warnings))
 
+    def test_a_table_built_on_a_busy_path_is_reported(self):
+        # FostercareTweaks 1.13: W.Update built 'found = {}' on every aura change.
+        _, warnings, _ = self.audit("function W.Update(unit)\n    local found = {}\n    return found\nend\n")
+        self.assertTrue(any("Rule D2" in w and "Line 2" in w for w in warnings))
+        _, warnings, _ = self.audit('f:SetScript("OnUpdate", function()\n    local t = { 1 }\nend)\n')
+        self.assertTrue(any("Rule D2" in w and "OnUpdate handler" in w for w in warnings))
+        for ok in ("local found = {}\nfunction W.Update(unit)\n    table.wipe(found)\nend\n",
+                   "function W.Add(name)\n    table.insert(list, { name = name })\nend\n",
+                   "function W.Update(unit)\n    local t = {} -- vanillaforge-ignore: D2\nend\n"):
+            _, warnings, _ = self.audit(ok)
+            self.assertFalse(any("Rule D2" in w for w in warnings), ok)
+
     def test_a_local_function_called_above_its_definition_is_reported(self):
         # FostercareTweaks 1.12.0: AnchorWeapon was called from an earlier function.
         source = "local function A()\n    B(1)\nend\nlocal function B(x)\nend\n"

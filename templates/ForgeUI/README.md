@@ -10,6 +10,7 @@ settings.
 | File | Purpose |
 | --- | --- |
 | `ForgeUI.lua` | Palettes, shapes and widgets, exported as `ns.UI`. |
+| `ForgeLayout.lua` | Pages built as sections, and the same pages in AddOn Options (`UI.NewLayout`, `UI.Book`). Load after `ForgeUI.lua`. |
 | `Media/Disc.tga` | White disc; every rounded shape is a tinted nine-slice of it. |
 | `Media/Shadow.tga` | Soft shadow disc for the card. |
 | `Media/Close.tga` | Close glyph. |
@@ -24,6 +25,44 @@ settings.
 4. Give every named frame the addon's prefix (`MyAddon_...`).
 5. Replace any locale layer and old skin code; keep SavedVariables keys.
 6. Run the linter and check the window in game at your UI scales.
+
+## Pages and AddOn Options
+
+Every addon's settings live in two places: its own window (`/command`), two
+columns, and **Game Menu > AddOn Options**, where each page is a category under
+the addon in one column at full size. ClassicAPI's AddOn Options gives a page
+about 360 pixels; shrinking a 500-wide page to fit made it unreadable
+(FostercareTweaks 1.12, 2026-11-02). So pages are never placed with fixed
+coordinates: they are built as sections with `ForgeLayout.lua`, and laid out for
+the width they get. FostercareTweaks `Settings.lua` is the full example.
+
+```lua
+local L, R = UI.L, UI.R
+local layout = UI.NewLayout()
+-- a widget made at (0, 0), then handed to the layout as an item
+layout:Heading(page, L, "Chat")
+layout:Switch(page, L, UI.Switch("MyAddon_Opt", page, "Label", "Tip", 0, 0, onClick))
+layout:Slider(page, R, UI.Slider("MyAddon_Size", page, "Size", 0, 0, 208, 1, 10, 1, onChange))
+layout:Hint(page, L, "Help text that wraps to its column.")
+layout:Button(page, R, button, { before = { 32, 4 }, indent = 36 })  -- beside a switch, or under it
+layout:Section(page, true)          -- a section across the page (lists, rows)
+layout:Add(page, L, { place = function(x, y, width) ... return height end })  -- a block
+layout:Footer(page, footerButton, 28)
+book = UI.Book({ name = "MyAddon", open = OpenWindow, panel = panel, pages = pages,
+    tabs = TAB_LIST, layout = layout, refresh = Refresh, select = function(i) tab = i end })
+-- Refresh: run the syncs, then book:Place(tab). Window OnShow: ShowTab(tab); pages[tab]:Show().
+```
+
+- A **section** has two columns (side by side in the window, the second under the
+  first in AddOn Options) or is full (`Section(page, true)`), for lists and rows.
+- A **block** (`place`) lays out lists, grids and cards for the width it gets:
+  two chips a row at 440 and over, one under; switches three a line or two.
+- Syncs set values and visibility only; positions come from `book:Place`, which
+  runs after them, so a page that grows or shrinks re-lays itself.
+- Name the window's tabs; their labels become the categories.
+- The standard test: every page in AddOn Options is one column (no control right
+  of the margin, none sharing a line), and back in the window two columns again
+  (`test_settings_2026_10_25.py`, `test_in_addon_options_every_page_is_one_column`).
 
 ## Palette
 

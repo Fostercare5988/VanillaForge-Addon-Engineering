@@ -110,7 +110,9 @@ the addon's existing convention. Details: CLASSICAPI_MASTER_REFERENCE.md §4.
   stale callbacks. Each addon owns its own data; integrations with other addons
   check availability and use narrow public functions.
 - **Settings:** use the ForgeUI kit in `templates/ForgeUI/` (see
-  [KNOWN_PATTERNS.md](KNOWN_PATTERNS.md#preferred-settings-theme)). Every option
+  [KNOWN_PATTERNS.md](KNOWN_PATTERNS.md#preferred-settings-theme)). Pages are
+  built as sections (`ForgeLayout.lua`) and every page is also in AddOn Options,
+  one column at full size (`/options <Addon>`). Every option
   needs a real player benefit. Player text is short and factual, with no
   developer jargon.
 - Recurring hazards and their fixes are in [KNOWN_PATTERNS.md](KNOWN_PATTERNS.md).
