@@ -39,8 +39,11 @@ FostercareTweaks = {
     IsEnabled = function() return true end,
     SetEventHandler = function(frame, fn) handlers[frame] = fn end,
     hooksecurefunc = function() end,
+    RestoreFramePosition = function() return false end,
+    RegisterFrameMover = function() end,
 }
 function hooksecurefunc() end
+TargetofTargetFrame = { IsShown = function() return false end }
 '''
 
 
