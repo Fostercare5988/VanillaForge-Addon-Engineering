@@ -154,6 +154,16 @@ class WeaponPlaces(unittest.TestCase):
         self.assertEqual(lua.eval("one.point[4]"), 0)
         self.assertEqual(lua.eval("two.point[4]"), -35)
 
+    def test_every_local_is_defined_before_it_is_called(self):
+        # 1.12.0 in play: "attempt to call global 'AnchorWeapon' (a nil value)"
+        # every frame: the per-frame updater was above the local it called.
+        import os, sys
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "tools"))
+        from vanillaforge_linter import VanillaForgeAuditor
+        path = os.path.join(os.environ["VANILLAFORGE_ADDON_ROOT"], "mods", "standard-player-auras.lua")
+        _, warnings, _ = VanillaForgeAuditor().audit_file(path)
+        self.assertEqual([w for w in warnings if "Rule A6" in w], [])
+
     def test_a_hand_change_moves_its_button_without_a_full_layout(self):
         self.assertIn("if button.fctAnchorHand ~= button:GetID() then AnchorWeapon(button) end", STANDARD)
 
