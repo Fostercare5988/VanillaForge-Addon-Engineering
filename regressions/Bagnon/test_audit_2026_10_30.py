@@ -13,7 +13,7 @@ from bgn_env import load
 FRAME = '''
     frame = widget("Bagnon")
     frame.size = 46; frame.player = "Tester"
-    widget("BagnonFreeSlots"); widget("BagnonTitle"); widget("BagnonSortButton")
+    widget("BagnonFreeSlots"); widget("BagnonTitle"); widget("BagnonSortButton"); widget("BagnonCloseButton"); widget("BagnonDropDown")
 '''
 
 
