@@ -330,5 +330,79 @@ class OldCodeIsGone(unittest.TestCase):
         self.assertNotIn("chat-class-colors", source("FostercareTweaks.toc"))
 
 
+# Options (each fails on 192e14d).
+
+RETIRED = {"Sell Junk": "mods/sell-junk.lua", "Vendor Values": "mods/vendor-values.lua",
+           "Item Rarity Borders": "mods/item-colors.lua", "Equip Compare": "mods/equip-compare.lua",
+           "Chat Hyperlinks": "mods/chat-tweaks.lua", "WorldMap Coordinates": "mods/worldmap-window.lua",
+           "WorldMap Class Colors": "mods/worldmap-window.lua", "Real Health Numbers": "mods/health-numbers.lua",
+           "Clear Raid Target Marks": "mods/raid-target-marks.lua"}
+
+
+class SwitchesEveryoneLeavesOn(unittest.TestCase):
+    """All ten characters had these on; none has a reason to turn them off."""
+
+    def test_they_are_always_on_and_have_no_switch(self):
+        settings = source("Settings.lua")
+        for title, path in RETIRED.items():
+            self.assertRegex(source(path), r'title = "%s",\s*always = true,' % re.escape(title), title)
+            self.assertNotIn('"%s"' % title, settings, title)
+
+    def test_their_saved_switch_is_cleared_and_they_start(self):
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute((CORE_PRELUDE % "2.2").replace("FostercareTweaks_Config = { overwrites = {} }",
+                                                     'FostercareTweaks_Config = { overwrites = {}, ["Vendor Values"] = 0 }'))
+        lua.execute(source("Core.lua"))
+        lua.execute(source("mods/vendor-values.lua").split("module.enable =")[0]
+                    + "started = 0; module.enable = function() started = started + 1 end")
+        lua.execute("FostercareTweaks:Initialize()")
+        self.assertIsNone(lua.eval('FostercareTweaks_Config["Vendor Values"]'))
+        self.assertEqual(lua.eval("started"), 1)
+
+    def test_the_window_says_what_is_always_on(self):
+        self.assertIn("Always on: sell prices, Shift to compare", source("Settings.lua"))
+
+
+class SlashCommands(unittest.TestCase):
+    def setUp(self):
+        lua = self.lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute((CORE_PRELUDE % "2.2") + r'''
+            function strsplittable(sep, str)
+                local t = {}
+                for w in string.gmatch(str, "[^" .. sep .. "]+") do t[#t + 1] = w end
+                return t
+            end
+            function ReloadUI() reloaded = true end
+        ''')
+        lua.execute(source("Core.lua"))
+        lua.execute(r'''
+            opened, resized = {}, 0
+            FostercareTweaks.OpenSettings = function(page) opened[#opened + 1] = page or "toggle" end
+            FostercareTweaks.UnitFrames = {
+                ApplyGroupDimensions = function() resized = resized + 1 end,
+                GetGroupDimensions = function() return { width = 64, height = 34, scale = 1 } end,
+                ToggleRaidTest = function() raidTest = true end }
+            slash = SlashCmdList["FOSTERCARETWEAKS"]
+        ''')
+
+    def test_pages_and_the_window(self):
+        self.lua.execute('slash(""); slash("UF"); slash("raid"); slash("bars"); slash("options")')
+        self.assertEqual(list(self.lua.eval("opened").values()), ["toggle", "unit", "raid", "bars", "toggle"])
+
+    def test_developer_commands_are_gone(self):
+        # The window has these sliders; /ft <key> <value> wrote any setting unchecked.
+        self.lua.execute('slash("groupsize 80 40"); slash("groupscale 2"); slash("raid_buff_count 8"); slash("reset")')
+        self.assertEqual(self.lua.eval("resized"), 0)
+        self.assertIsNone(self.lua.eval("FostercareTweaks_Config.overwrites.raid_buff_count"))
+        self.assertIsNone(self.lua.eval("reloaded"))
+
+    def test_the_documented_commands_stay(self):
+        self.lua.execute('slash("testraid")')
+        self.assertTrue(self.lua.eval("raidTest"))
+        self.lua.execute('FostercareTweaks_Config.unitframe_positions = {}; slash("resetuf")')
+        self.assertIsNone(self.lua.eval("FostercareTweaks_Config.unitframe_positions"))
+        self.assertTrue(self.lua.eval("reloaded"))
+
+
 if __name__ == "__main__":
     unittest.main()
