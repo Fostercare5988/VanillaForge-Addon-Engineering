@@ -246,6 +246,41 @@
       "finding": "Turns the full-screen world map into a window by hand (UIPanelWindows, scale, size, dragging).",
       "better": "OctoWoW's client has a windowed world map: the map's minimize/maximize buttons, WorldMapFrame_Minimize/_Maximize and the saved WORLDMAP_WINDOWED. Use or extend it instead of a second window mode.",
       "source": "Client FrameXML WorldMapFrame.lua/.xml (patch-4.mpq; tools/extract_framexml.py); servers/octowow.md"
+    },
+    {
+      "id": "cast-bar-value-per-frame",
+      "pattern": "\\b(UnitCastingInfo|UnitChannelInfo)\\b",
+      "finding": "Reads cast times and sets a status bar's value (and a countdown text) on every frame.",
+      "better": "UnitCastingDuration(unit) / UnitChannelDuration(unit) give a duration object. statusBar:SetTimerDuration(duration, interpolation, direction) fills the bar by itself, and C_DurationUtil.CreateDurationTextBinding() writes the countdown text. Call again on UNIT_SPELLCAST_DELAYED / CHANNEL_UPDATE. Anchor a spark to the bar's texture so it needs no OnUpdate.",
+      "source": "ClassicAPI docs/API.md#durationutil (1.19.0)"
+    },
+    {
+      "id": "proc-glow-by-aura-scan",
+      "pattern": "\\b(ActionButton_ShowOverlayGlow|ActionButton_HideOverlayGlow|ShowOverlayGlow)\\b",
+      "finding": "Finds proc alerts and glows by scanning auras or spell names.",
+      "better": "SPELL_ACTIVATION_OVERLAY_SHOW / _HIDE and _GLOW_SHOW / _GLOW_HIDE events, and IsSpellOverlayed(spellID).",
+      "source": "ClassicAPI docs/API.md#spellactivationoverlay (1.19.0; API only, the addon draws the art)"
+    },
+    {
+      "id": "ui-scale-poll",
+      "pattern": "\\bUIParent:GetScale\\(\\)",
+      "finding": "Reads the UI scale on a timer or every refresh to notice a change.",
+      "better": "UI_SCALE_CHANGED event: fires when the scale or window size is applied to UIParent.",
+      "source": "ClassicAPI docs/API.md#ui_scale_changed-event (1.19.0)"
+    },
+    {
+      "id": "name-completion-lists",
+      "pattern": "\\b(MailAutoCompleteBox|AutoCompleteEditBox|GetAutoCompleteResults)\\b",
+      "finding": "Builds its own list of known names (group, guild, friends, whispers) for an edit box.",
+      "better": "C_AutoComplete.GetAutoCompleteResults(name, numResults, cursorPosition, allowFullMatch, includeFlags, excludeFlags) and IsRecognizedName. Alts saved across sessions are not covered.",
+      "source": "ClassicAPI docs/API.md#autocomplete (1.19.0)"
+    },
+    {
+      "id": "nameplate-rebind-poll",
+      "pattern": "\\bfnpNextBindCheck\\b|plate\\.fnpUnitGUID\\s*==\\s*UnitGUID",
+      "finding": "Rechecks on a timer whether a plate frame still belongs to its unit.",
+      "better": "Since 1.19.0 a unit that moves to another plate fires NAME_PLATE_UNIT_REMOVED (old frame) and then NAME_PLATE_UNIT_ADDED (new frame), REMOVED first. During REMOVED, GetNamePlateForUnit gives the leaving frame.",
+      "source": "ClassicAPI commit aef68d5 (1.19.0)"
     }
   ]
 }
