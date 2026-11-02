@@ -45,6 +45,7 @@ RICH = '''
     layoutCalls = {}
     function BagnonFrame_Layout(frame, cols, space) layoutCalls[#layoutCalls + 1] = { frame:GetName(), cols, space } end
     function BagnonFrame_UpdateFreeSlots() end
+    function BagnonSearch_Update() end
     function BagnonFrame_Generate() end
     function BagnonFrame_SetStrata(frame, s) BagnonSets[frame:GetName()].strata = s end
     function BagnonFrame_SavePosition() end
@@ -70,6 +71,7 @@ class Settings(unittest.TestCase):
         self.assertFalse(lua.eval("Bagnon_FreeSlots.checked"))
         self.assertEqual(lua.eval("Bagnon_Enchants.checked"), True)
         self.assertEqual(lua.eval("Bagnon_SortButton.checked"), True)
+        self.assertEqual(lua.eval("Bagnon_Search.checked"), True)
         lua.execute('BagnonOptions_Open("Banknon")')
         self.assertEqual(lua.eval("Bagnon_Columns.value"), 8)
         self.assertEqual(lua.eval("Bagnon_Spacing.value"), 3)
@@ -118,6 +120,26 @@ class Header(unittest.TestCase):
         self.assertFalse(lua.eval("BagnonSortButton.shown"))
 
 
+class TitleStays(unittest.TestCase):
+    def test_title_anchors_do_not_depend_on_the_free_space_or_sort_options(self):
+        lua = load("localization", "utility", "frame")
+        lua.execute('''
+            frame = widget("Bagnon"); frame.size = 4; frame.player = "Tester"
+            for _, n in ipairs({ "FreeSlots", "Title", "SortButton", "CloseButton", "DropDown" }) do widget("Bagnon" .. n) end
+            BagnonDropDown.shown = true
+            anchors = {}
+            function BagnonTitle:SetPoint(point, target, rel) anchors[point] = target and target:GetName() end
+            local function run(free, sort)
+                BagnonSets.showFreeSlots, BagnonSets.showSortButton = free, sort
+                BagnonFrame_UpdateFreeSlots(frame)
+                return anchors.BOTTOMRIGHT
+            end
+            a = run(1, 1); b = run(0, 1); c = run(0, 0); d = run(1, 0)
+        ''')
+        for name in "abcd":
+            self.assertEqual(lua.eval(name), "BagnonFreeSlots")
+
+
 class Search(unittest.TestCase):
     SETUP = RICH + '''
         searchText = nil
@@ -157,9 +179,15 @@ class Search(unittest.TestCase):
         self.assertEqual(lua.eval("searchText"), "cloth")
         self.assertTrue(lua.eval("Bagnon_Searching()"))
 
+    def test_the_box_can_be_switched_off(self):
+        lua = self.search()
+        lua.execute('BagnonSearch.shown = true; BagnonSearch.text = "bow"; BagnonSets.showSearch = 0; BagnonSearch_Update(Bagnon, false)')
+        self.assertFalse(lua.eval("BagnonSearch.shown"))
+        self.assertEqual(lua.eval("searchText"), "")
+
     def test_a_cached_view_rests_the_box(self):
         lua = self.search()
-        lua.execute('BagnonSearch.text = "potion"; BagnonSearch_SetEnabled(Bagnon, false)')
+        lua.execute('BagnonSearch.text = "potion"; BagnonSearch_Update(Bagnon, true)')
         self.assertEqual(lua.eval("BagnonSearch.text"), "")
         self.assertEqual(lua.eval("searchText"), "")
 
