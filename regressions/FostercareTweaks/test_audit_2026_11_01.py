@@ -107,6 +107,7 @@ class ClassColorsFollowTheHooks(unittest.TestCase):
             function UnitIsPlayer() return true end
             function FT.NormalizeClass(c) return c end
             TargetFrame_CheckFaction, TargetFrame_Update, PlayerFrame_Update, PartyMemberFrame_UpdateMember = NOOP, NOOP, NOOP, NOOP
+            FT.UnitFrames = { ClassColors = { ROGUE = { r = 1, g = 0.96, b = 0.41 } } }
         ''')
         self.lua.execute(source("mods/unitframes-classcolor.lua"))
         self.lua.execute('FT.mods["Unit Frame Class Colors"]:enable()')
@@ -213,7 +214,7 @@ class HotPathsBuildNoTables(unittest.TestCase):
                 return buf or { quality = 2 }
             end }
             C_Item = { GetItemQualityByID = function() end }
-            MAX_CONTAINER_ITEMS = 3
+            MAX_CONTAINER_ITEMS, NUM_CONTAINER_FRAMES, NUM_BANKGENERIC_SLOTS = 3, 12, 24
             function GetItemQualityColor() return 1, 1, 1 end
             function GetInventoryItemQuality() end
             function GetInventoryItemLink() end
@@ -322,7 +323,7 @@ class ReducedBarLeavesLayoutsAlone(unittest.TestCase):
         lua = runtime()
         lua.execute(r'''
             hooked = {}
-            FT.hooksecurefunc = function(name, fn) hooked[name] = fn end
+            hooksecurefunc = function(name, fn) hooked[name] = fn end
             moves = 0
             MultiBarBottomLeft = Widget({ ClearAllPoints = function() moves = moves + 1 end })
             MultiBarBottomRight, MainMenuBar, MainMenuExpBar, ReputationWatchBar = Widget(), Widget(), Widget(), Widget()

@@ -28,8 +28,8 @@ hooks = {}
 FT = { overwrites = {} }
 FostercareTweaks = FT
 function FT:register(m) self.module = m; return m end
-function FT.hooksecurefunc(name, f) hooks[name] = f end
-function FT.Abbreviate(v) return tostring(v) end
+function hooksecurefunc(name, f) hooks[name] = f end
+function AbbreviateNumbers(v) return tostring(v) end
 function FT.GetUnitHealthValues(u) return UnitHealth(u), UnitHealthMax(u) end
 STANDARD_TEXT_FONT, UNKNOWNOBJECT = "font", "Unknown"
 floor = math.floor
@@ -40,6 +40,7 @@ local function text()
         SetPoint = function() end, SetFontObject = function() end, SetFont = function() end,
         SetHeight = function() end, SetJustifyH = function() end, SetAlpha = function() end }
 end
+TargetHPText, TargetHPPercText, TargetFrameHealthBarText = text(), text(), text()
 local function bar(name, unit, value, max)
     return { name = name, unit = unit, value = value, max = max, TextString = text(),
         GetName = function(s) return s.name end, Show = function() end,
@@ -96,7 +97,6 @@ class RaidNames(unittest.TestCase):
         lua.execute(BASE)
         lua.execute('''
             UF = { ClassColors = {} }
-            function UF.GetUnitHealthValues() return 100, 100 end
             function FT.NormalizeClass() end
             function UnitClass() end
             function UnitName() return %s end
@@ -109,7 +109,7 @@ class RaidNames(unittest.TestCase):
                 healthText = { GetText = function() end, SetText = function() end } }
         ''' % (unit_name, roster))
         lua.execute(between(RAID, "-- Range and colour change rarely", "local function UpdateButtonPower")
-                    + "\nUpdateButtonHealth(btn)")
+                    + "\nUpdateButtonIdentity(btn)")
         return lua.eval('btn.nameText.t')
 
     def test_roster_name_beats_unknown(self):
@@ -149,6 +149,9 @@ class SoloMarks(unittest.TestCase):
             function FT.GetNumber(_, d) return d end
             function FT.GetOverride() end
             function FT:RefreshRaidMarks() end
+            function TargetFrame_UpdateRaidTargetIcon() end
+            TargetRaidTargetIcon = setmetatable({}, { __index = function() return function() end end })
+            TargetPortrait = TargetRaidTargetIcon
             function CreateFrame() return { RegisterEvent = function() end } end
             function FT.SetEventHandler() end
         ''')

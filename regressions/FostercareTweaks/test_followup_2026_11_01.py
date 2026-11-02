@@ -117,7 +117,7 @@ class WorldMapWindowSize(unittest.TestCase):
         lua = self.lua = runtime()
         lua.execute(r'''
             hooks, scripts, ctrl = {}, {}, false
-            FT.hooksecurefunc = function(name, fn) hooks[name] = fn end
+            hooksecurefunc = function(name, fn) hooks[name] = fn end
             FT.HookScript = function(frame, script, fn) scripts[script] = fn end
             FT.HookAddonOrVariable = NOOP
             saved = {}
@@ -229,7 +229,7 @@ class RaidBarsWriteOnlyOnChange(unittest.TestCase):
 
     def test_a_new_maximum_is_written(self):
         # Control.
-        self.lua.execute("Health(btn); ranges = 0; UF.GetUnitHealthValues = function() return 3000, 5000 end; Health(btn)")
+        self.lua.execute("Health(btn); ranges = 0; FT.GetUnitHealthValues = function() return 3000, 5000 end; Health(btn)")
         self.assertEqual(self.lua.eval("ranges"), 1)
 
 
@@ -323,7 +323,7 @@ class ChatLinesCostLess(unittest.TestCase):
             RAID_CLASS_COLORS = { MAGE = {} }
             ChatFrame1 = { AddMessage = function(_, text) lines[#lines + 1] = text end }
         ''')
-        lua.execute(source("mods/chat-class-colors.lua"))
+        lua.execute(source("mods/chat-tweaks.lua"))
         lua.execute(r'''
             FT.mods["Chat Class Colors"]:enable()
             local gsub, n = string.gsub, 0

@@ -38,6 +38,7 @@ function W:GetName() return rawget(self, "name") end
 function W:GetObjectType() return rawget(self, "kind") or "Frame" end
 function W:GetHideCountdownNumbers() return rawget(self, "hideNumbers") or false end
 function W:GetHeight() return 36 end
+function W:GetFrameLevel() return 1 end
 function W:GetAlpha() return 1 end
 function W:IsVisible() return true end
 function W:Show() rawset(self, "shown", true) end
@@ -57,8 +58,8 @@ FostercareTweaks = FT
 function FT:register(m) return m end
 function FT.SetEventHandler() end
 FT.HookAddonOrVariable = NOOP -- c143613 still waited for GearRack
-function FT.TimeConvert(r) return tostring(math.ceil(r)) end
-function FT.hooksecurefunc(name, fn) if name == "CooldownFrame_SetTimer" then SetTimer = fn end end
+FT.Countdown = { FormatNumber = function(_, r) return tostring(math.ceil(r)) end }
+function hooksecurefunc(name, fn) if name == "CooldownFrame_SetTimer" then SetTimer = fn end end
 
 function Cooldown(kind, name)
     return Widget({ kind = kind, name = name, parent = Widget() })
@@ -119,7 +120,7 @@ class AuraButtonsUseNativeNumbers(unittest.TestCase):
     def test_aura_cooldowns_use_the_native_countdown(self):
         auras = source("mods/unitframes/auras.lua")
         body = auras[auras.index("local function CreateAuraButton"):auras.index("function Auras:ResetContainer")]
-        self.assertRegex(body, re.compile(r"btn\.cooldown:SetCountdownFormatter\(AURA_TIME\)"))
+        self.assertRegex(body, re.compile(r"btn\.cooldown:SetCountdownFormatter\(FT\.Countdown\)"))
         self.assertNotRegex(body, re.compile(r"SetHideCountdownNumbers\(true\)"))
 
 

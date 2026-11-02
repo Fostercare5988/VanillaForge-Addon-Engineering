@@ -81,6 +81,7 @@
     {
       "id": "cooldown-countdown-text",
       "pattern": "hooksecurefunc\\s*\\(\\s*\"CooldownFrame_SetTimer\"|CooldownFrame_SetTimer\\s*=",
+      "unless": "\"countdownForCooldowns\"",
       "finding": "Draws its own countdown text over cooldown frames.",
       "better": "Native Cooldown frames (1.17.9+) draw countdown numbers while the player's countdownForCooldowns CVar is 1; SetHideCountdownNumbers, GetCountdownFontString and the thresholds set them per frame. Read the CVar, never set it. Stock action buttons are 1.12 Models and get no numbers.",
       "source": "CLASSICAPI_MASTER_REFERENCE.md#cooldown-api-1179"
@@ -215,6 +216,7 @@
     {
       "id": "mount-state-poll",
       "pattern": "IsMounted\\s*\\(",
+      "unless": "PLAYER_MOUNT_DISPLAY_CHANGED|\"UI_ERROR_MESSAGE\"",
       "finding": "Reads the mount state, often from an aura or timer handler.",
       "better": "PLAYER_MOUNT_DISPLAY_CHANGED (1.18) fires when the player mounts, dismounts or changes mount; read IsMounted() inside it.",
       "source": "ClassicAPI docs/API.md#player_mount_display_changed-event"
@@ -236,6 +238,7 @@
     {
       "id": "chat-history-copy",
       "pattern": "(?i)chat_?history",
+      "unless": ":GetMessageInfo\\(",
       "finding": "Keeps a chat history by copying every line from an AddMessage wrapper into saved variables, and replays it with AddMessage.",
       "better": "smf:GetMessageInfo(index) reads a frame's lines (text, colour and extra values) when they are needed, for example at PLAYER_LOGOUT; smf:BackFillMessage(text, r, g, b, ...) restores them behind newer lines. No per-line wrapper.",
       "source": "ClassicAPI docs/API.md#smfgetmessageinfoindex and #smfbackfillmessagetext-r-g-b-"
@@ -250,6 +253,7 @@
     {
       "id": "cast-bar-value-per-frame",
       "pattern": "\\b(UnitCastingInfo|UnitChannelInfo)\\b",
+      "unless": ":SetTimerDuration\\(",
       "finding": "Reads cast times and sets a status bar's value (and a countdown text) on every frame.",
       "better": "UnitCastingDuration(unit) / UnitChannelDuration(unit) give a duration object. statusBar:SetTimerDuration(duration, interpolation, direction) fills the bar by itself, and C_DurationUtil.CreateDurationTextBinding() writes the countdown text. Call again on UNIT_SPELLCAST_DELAYED / CHANNEL_UPDATE. Anchor a spark to the bar's texture so it needs no OnUpdate.",
       "source": "ClassicAPI docs/API.md#durationutil (1.19.0)"

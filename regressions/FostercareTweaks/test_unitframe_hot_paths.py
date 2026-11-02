@@ -48,14 +48,14 @@ def raid_runtime():
     lua.execute(r'''
         FT = { GetRaidMarkSettings = function() return 14, "portrait" end,
                NormalizeClass = function(c) return c end,
-               Abbreviate = function(n) return n end }
+               GetUnitHealthValues = function() return 3000, 4000 end }
+        function AbbreviateNumbers(n) return n end
         layouts = 0
         UF = { ClassColors = { MAGE = { r = 0.4, g = 0.8, b = 0.9 } } }
         function UF.SetFontSize(text, size)
             local _, current = text:GetFont()
             if current ~= size then text:SetFont("x", size) end
         end
-        function UF.GetUnitHealthValues() return 3000, 4000 end
         function UF:GetRaidHealthFormat() return "deficit" end
         function UnitClass() return "Mage", "MAGE" end
         function UnitName() return "Jaina" end
@@ -94,7 +94,7 @@ class RaidHotPathTests(unittest.TestCase):
     def test_health_change_only_replaces_health_text(self):
         lua = raid_runtime()
         lua.execute('''RaidText(btn, 0); Health(btn); writes = 0
-            UF.GetUnitHealthValues = function() return 2000, 4000 end; Health(btn)''')
+            FT.GetUnitHealthValues = function() return 2000, 4000 end; Health(btn)''')
         self.assertEqual(lua.eval('writes'), 1)
         self.assertEqual(lua.eval('btn.healthText.text'), "-2000")
 

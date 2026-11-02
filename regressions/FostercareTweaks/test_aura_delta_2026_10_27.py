@@ -109,11 +109,9 @@ class PlayerAndTargetRows(unittest.TestCase):
         self.assertEqual(lua.eval("reads.target"), 1)
         self.assertEqual(lua.eval("timings"), 0)
 
-    def test_other_tokens_are_ignored(self):
-        lua = rows()
-        for unit in ("nameplate3", "raid5", "mark1", "focus"):
-            self.delta(lua, unit, "{ isFullUpdate = true }")
-        self.assertEqual(lua.eval("reads.player + reads.target"), 0)
+    def test_other_tokens_never_arrive(self):
+        # RegisterUnitEvent filters every event whose first argument is a unit.
+        self.assertIn('auraEventFrame:RegisterUnitEvent("UNIT_AURA_DELTA", "player", "target")', AURAS)
 
     def test_the_old_events_are_gone(self):
         self.assertNotIn('"PLAYER_AURAS_CHANGED"', AURAS)
@@ -163,7 +161,8 @@ class RaidButtons(unittest.TestCase):
     def test_raid_listens_to_the_delta(self):
         members = between(RAID, "local MEMBER_EVENTS", "local MEMBER_UNITS")
         self.assertNotIn('"UNIT_AURA"', members)
-        self.assertIn('raidFrame:RegisterEvent("UNIT_AURA_DELTA")', RAID)
+        self.assertIn('"UNIT_AURA_DELTA"', members)          # registered per member unit
+        self.assertNotIn('RegisterEvent("UNIT_AURA_DELTA")', RAID)
         self.assertIn("if not UpdateChangedRaidAuras(btn, a2) then UpdateButtonAuras(btn) end", RAID)
 
 

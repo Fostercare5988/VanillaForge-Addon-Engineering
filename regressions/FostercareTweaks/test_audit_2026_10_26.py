@@ -271,10 +271,10 @@ class UnitEventsReachOnlyTheirUnits(unittest.TestCase):
             UF = {}
             FT.UnitFrames = UF
         ''')
-        lua.execute(AuraCountdownIsNative.FORMATTER)
+        lua.execute(AuraCountdownIsNative.FORMATTER + "FT.Countdown = C_StringUtil.CreateNumericRuleFormatter()")
         lua.execute(source("mods/unitframes/auras.lua"))
-        # 1.6.1: UNIT_AURA_DELTA is a ClassicAPI event with no documented
-        # RegisterUnitEvent filter, so the handler drops the other tokens.
+        # RegisterUnitEvent filters every event whose first argument is a
+        # unit (ClassicAPI docs), UNIT_AURA_DELTA too.
         lua.execute('reads = 0; UF.Auras.UpdateBlizzTargetAuras = function() reads = reads + 1 end')
         frame = lua.eval('FCTweaksAuraEventFrame')
         fire = lua.globals().fire
@@ -329,8 +329,7 @@ class ChatTimestampsSkipCombatLog(unittest.TestCase):
             FT.rgbhex = function() return "|cffcccccc" end
             function date() return "18:21:57" end
         ''')
-        ct = source("mods/chat-tweaks.lua")
-        lua.execute(ct[ct.index("do\n-- Adds timestamps"):])
+        lua.execute(source("mods/chat-tweaks.lua"))
         lua.execute(r'''
             local m = FT.mods["Chat Timestamps"]; m.config = {}; m:enable()
             ChatFrame1:AddMessage("hello")
@@ -372,11 +371,11 @@ RAID_ROSTER = r'''
     function UF:IsRaidShowDebuffs() return true end
     function UF:IsRaidShowAggro() return false end
     function UF:GetRaidHealthFormat() return "deficit" end
-    function UF.GetUnitHealthValues() return 100, 100 end
+    function FT.GetUnitHealthValues() return 100, 100 end
     FT.RegisterFrameMover = NOOP
     function FT.ClampNumber(v, d, lo, hi) return math.max(lo, math.min(hi, tonumber(v) or d)) end
     function FT.NormalizeClass(c) return c end
-    function FT.Abbreviate(n) return n end
+    function AbbreviateNumbers(n) return n end
     timers = {}
     C_Timer.After = function(_, fn) timers[#timers + 1] = fn end
     function runTimers() local t = timers; timers = {}; for _, fn in ipairs(t) do fn() end end
@@ -464,15 +463,15 @@ class AuraCountdownIsNative(unittest.TestCase):
     def formatter(self):
         lua = runtime()
         lua.execute(self.FORMATTER)
-        auras = source("mods/unitframes/auras.lua").replace("\r\n", "\n")
-        lua.execute(auras[auras.index("local AURA_TIME"):auras.index("local function ResetAuraButton")].replace("local AURA_TIME", "AURA_TIME"))
+        helpers = source("Helpers.lua").replace("\r\n", "\n")
+        lua.execute(helpers[helpers.index("do\n    local Up"):helpers.index("local borderDef")])
         return lua
 
     def test_labels_keep_the_old_colours_and_units(self):
         lua = self.formatter()
         for seconds, text in ((3.24, "|cffff4444" + "3.3|r"), (7.2, "|cffffff33" + "8|r"), (30.1, "|cffffffff" + "31|r"),
                               (125, "|cffffffff" + "3m|r"), (7300, "|cffffffff" + "3h|r"), (90000, "|cffffffff" + "2d|r")):
-            self.assertEqual(lua.eval("AURA_TIME:FormatNumber(%s)" % seconds), text, seconds)
+            self.assertEqual(lua.eval("FT.Countdown:FormatNumber(%s)" % seconds), text, seconds)
 
     def test_no_ticker_and_no_per_icon_text(self):
         auras = source("mods/unitframes/auras.lua")

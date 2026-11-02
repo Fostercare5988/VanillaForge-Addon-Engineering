@@ -20,9 +20,10 @@ from lupa.lua51 import LuaRuntime
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
 
 from test_audit_2026_10_25 import source
+from test_audit_2026_10_26 import RAID_ROSTER, runtime
 from test_audit_2026_11_01 import CORE_PRELUDE
 from test_event_fanout import BASE, ROOT
-from test_unitframe_hot_paths import RAID, WIDGETS, slice
+from test_unitframe_hot_paths import RAID, WIDGETS, raid_runtime, slice
 
 BS = chr(92)
 
@@ -151,6 +152,182 @@ class NewCharacterKeepsTheMap(unittest.TestCase):
         self.assertIn("Blizzard Aura Controls", retired)
         text = source("Defaults.lua")
         self.assertEqual(sorted(k for k in retired if '["%s"]' % k in text), [])
+
+
+# Old code and hot paths (each fails on 192e14d).
+
+class ChatHasOneWrapper(unittest.TestCase):
+    """Links, timestamps and class colours each wrapped AddMessage: three calls
+    and three wrappers per chat line. One wrapper now runs their filters."""
+
+    def setUp(self):
+        lua = self.lua = runtime()
+        lua.execute(r'''
+            NUM_CHAT_WINDOWS = 2
+            got = {}
+            ChatFrame1 = { AddMessage = function(_, text) got[1] = text end }
+            ChatFrame2 = { combat = true, AddMessage = function(_, text) got[2] = text end }
+            native2 = ChatFrame2.AddMessage
+            function FT.IsCombatChatFrame(cf) return cf.combat == true end
+            function FT.GetPlayerClass(name) return name == "Jaina" and "MAGE" or nil end
+            FT.rgbhex = function() return "|cff3fc7eb" end
+            RAID_CLASS_COLORS = { MAGE = {} }
+            function date() return "[12:00:00] " end
+            function SetItemRef() end
+        ''')
+        lua.execute(source("mods/chat-tweaks.lua"))
+        lua.execute('FT.mods["Chat Hyperlinks"]:enable(); wrapped = ChatFrame1.AddMessage')
+        lua.execute('FT.mods["Chat Timestamps"]:enable(); FT.mods["Chat Class Colors"]:enable()')
+
+    def test_one_wrapper_runs_every_filter(self):
+        self.assertTrue(self.lua.eval("ChatFrame1.AddMessage == wrapped"))
+        self.lua.execute('ChatFrame1:AddMessage("|Hplayer:Jaina|h[Jaina]|h: see www.example.com")')
+        line = self.lua.eval("got[1]")
+        self.assertTrue(line.startswith("[12:00:00] "), line)
+        self.assertIn("|cff3fc7ebJaina", line)
+        self.assertIn("|Hurl:www.example.com|h", line)
+
+    def test_combat_log_is_left_alone(self):
+        self.assertTrue(self.lua.eval("ChatFrame2.AddMessage == native2"))
+
+
+class RaidHealthPath(unittest.TestCase):
+    def test_health_events_leave_name_and_class_alone(self):
+        lua = raid_runtime()
+        lua.execute('classes = 0; function UnitClass() classes = classes + 1; return "Mage", "MAGE" end')
+        lua.execute('Health(btn); Health(btn); Health(btn)')
+        self.assertEqual(lua.eval("classes"), 0)
+
+    def test_the_text_is_built_only_when_its_number_changes(self):
+        lua = raid_runtime()
+        lua.execute('built = 0; function AbbreviateNumbers(n) built = built + 1; return n end')
+        lua.execute('Health(btn); Health(btn); Health(btn)')
+        self.assertEqual(lua.eval("built"), 1)
+        lua.execute('FT.GetUnitHealthValues = function() return 2500, 4000 end; Health(btn)')
+        self.assertEqual(lua.eval("built"), 2)                        # control
+        self.assertEqual(lua.eval("btn.healthText.text"), "-1500")
+
+    def test_a_rebuilt_button_writes_its_text_again(self):
+        # The test grid writes the text itself; a roster pass after it must not
+        # trust the remembered number.
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(WIDGETS)
+        lua.execute(PARTY)
+        lua.execute(slice(RAID, "-- Unit events keep a member current. A roster", "-- Roster events come in bursts",
+                          "-- force: rebuild every button"))
+        lua.execute("groups[1].buttons[1].fctHealthShown = 5; UF:UpdateGroupRoster(true)")
+        self.assertIsNone(lua.eval("groups[1].buttons[1].fctHealthShown"))
+
+
+class MemberEventsOnly(unittest.TestCase):
+    def setUp(self):
+        lua = self.lua = runtime()
+        lua.execute(RAID_ROSTER)
+        lua.execute(source("mods/unitframes/raid.lua"))
+        lua.execute("UF:EnableRaidFrames(true)")
+
+    def test_aura_changes_of_other_tokens_never_arrive(self):
+        fire = self.lua.globals().fire
+        frame = self.lua.eval("FCTweaksRaidFrame")
+        full = self.lua.eval("{ isFullUpdate = true }")
+        for unit in ("nameplate3", "mark2", "focus", "target"):
+            self.assertFalse(fire(frame, "UNIT_AURA_DELTA", unit, full), unit)
+        self.assertTrue(fire(frame, "UNIT_AURA_DELTA", "raid3", full))     # control
+
+    def test_level_changes_are_not_heard(self):
+        # The buttons show no level.
+        self.assertFalse(self.lua.globals().fire(self.lua.eval("FCTweaksRaidFrame"), "UNIT_LEVEL", "raid3"))
+
+
+class WorldMapCoordinates(unittest.TestCase):
+    def setUp(self):
+        lua = self.lua = runtime()
+        lua.execute(r'''
+            texts = {}
+            local create = CreateFrame
+            function CreateFrame(kind, name, parent)
+                local f = create(kind, name, parent)
+                f.CreateFontString = function()
+                    local t = { sets = 0, SetPoint = NOOP }
+                    function t:SetText(s) self.value = s; self.sets = self.sets + 1 end
+                    texts[name] = t
+                    return t
+                end
+                return f
+            end
+            WorldMapButton = Widget()
+            function WorldMapButton:GetLeft() return 0 end
+            function WorldMapButton:GetTop() return 400 end
+            function WorldMapButton:GetWidth() return 400 end
+            function WorldMapButton:GetHeight() return 400 end
+            function WorldMapButton:GetEffectiveScale() return 1 end
+            over, px, py = false, 0.4567, 0.123
+            function MouseIsOver() return over end
+            function GetCursorPosition() return 100, 300 end
+            function GetPlayerMapPosition(unit) return px, py end
+            arg1 = 0.2
+        ''')
+        lua.execute(source("mods/worldmap-window.lua"))
+        lua.execute('FT.mods["WorldMap Coordinates"]:enable(); tick = FCTweaksWorldMapCursorCoords.scripts.OnUpdate')
+
+    def test_the_shown_map_gives_the_position(self):
+        self.lua.execute("tick()")
+        self.assertEqual(self.lua.eval("texts.FCTweaksWorldMapPlayerCoords.value"), "|cffffcc00Player: |r45.7 / 12.3")
+        self.assertEqual(self.lua.eval("texts.FCTweaksWorldMapCursorCoords.value"), "|cffffcc00Cursor: |rN/A")
+        self.lua.execute("over = true; tick()")
+        self.assertEqual(self.lua.eval("texts.FCTweaksWorldMapCursorCoords.value"), "|cffffcc00Cursor: |r25.0 / 25.0")
+
+    def test_off_the_shown_map_is_n_a(self):
+        self.lua.execute("px, py = 0, 0; tick()")
+        self.assertEqual(self.lua.eval("texts.FCTweaksWorldMapPlayerCoords.value"), "|cffffcc00Player: |rN/A")
+
+    def test_an_unchanged_position_writes_nothing(self):
+        self.lua.execute("tick(); tick(); tick()")
+        self.assertEqual(self.lua.eval("texts.FCTweaksWorldMapPlayerCoords.sets"), 1)
+
+
+class ExtraRowsQueueOneCallback(unittest.TestCase):
+    def setUp(self):
+        lua = self.lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(r'''
+            EA, refreshed, callbacks = {}, 0, {}
+            function RefreshVisible() refreshed = refreshed + 1 end
+            C_Timer = { After = function(_, fn) callbacks[#callbacks + 1] = fn end }
+        ''')
+        lua.execute(slice(source("ExtraActions.lua"), "-- One callback for every queued refresh", "local function SyncOwner")
+                    + "\nQueue = QueueRefresh")
+
+    def test_a_burst_is_one_refresh_through_one_function(self):
+        self.lua.execute("Queue(); Queue(); Queue(); callbacks[1](); Queue(); callbacks[2]()")
+        self.assertEqual(self.lua.eval("#callbacks"), 2)
+        self.assertEqual(self.lua.eval("refreshed"), 2)
+        self.assertTrue(self.lua.eval("callbacks[1] == callbacks[2]"))
+
+    def test_hidden_rows_drop_a_queued_refresh(self):
+        self.lua.execute("Queue(); EA.pending = nil; callbacks[1]()")      # SyncOwner hid the rows
+        self.assertEqual(self.lua.eval("refreshed"), 0)
+
+
+class OldCodeIsGone(unittest.TestCase):
+    def test_modules_carry_no_unread_fields(self):
+        for path in sorted((ROOT / "mods").rglob("*.lua")):
+            text = path.read_text("utf-8-sig")
+            self.assertNotRegex(text, r'\b(description|category) = "', path.name)
+        self.assertNotIn("mod.category", source("Core.lua"))
+
+    def test_no_aliases_for_client_functions(self):
+        helpers = source("Helpers.lua")
+        for alias in ("FT.hooksecurefunc =", "FT.Abbreviate =", "FT.TimeConvert ="):
+            self.assertNotIn(alias, helpers)
+        self.assertNotIn("UF.GetUnitHealthValues =", source("mods/unitframes/core.lua"))
+
+    def test_native_group_wrappers_take_fixed_arguments(self):
+        # Lua 5.0 builds a table for every call of a ... function.
+        self.assertNotIn("function(...)", source("mods/unitframes/native-group.lua"))
+
+    def test_one_chat_file(self):
+        self.assertFalse((ROOT / "mods/chat-class-colors.lua").exists())
+        self.assertNotIn("chat-class-colors", source("FostercareTweaks.toc"))
 
 
 if __name__ == "__main__":

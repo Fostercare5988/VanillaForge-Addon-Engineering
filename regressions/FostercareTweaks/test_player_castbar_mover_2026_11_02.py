@@ -13,7 +13,7 @@ class PlayerCastbarMover(unittest.TestCase):
             CastingBarFrame = CreateFrame("StatusBar", "CastingBarFrame")
             local FT = FostercareTweaks
             hooked = {}
-            FT.hooksecurefunc = function(name, fn) hooked[name] = fn end
+            hooksecurefunc = function(name, fn) hooked[name] = fn end
             placed = 0
             FT.RestoreFramePosition = function(frame, key) placed = placed + 1; return %s end
             FT.RegisterFrameMover = function(frame, key, label, rel, onStop) mover = { frame, key, label, rel, onStop } end
