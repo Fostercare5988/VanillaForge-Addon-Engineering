@@ -40,7 +40,9 @@ local function text()
         SetPoint = function() end, SetFontObject = function() end, SetFont = function() end,
         SetHeight = function() end, SetJustifyH = function() end, SetAlpha = function() end }
 end
-TargetHPText, TargetHPPercText, TargetFrameHealthBarText = text(), text(), text()
+-- TargetFrame.xml creates these two; TargetFrameHealthBarText is only passed,
+-- as nil, to UnitFrame_Initialize, so it stays undefined here as in game.
+TargetHPText, TargetHPPercText = text(), text()
 local function bar(name, unit, value, max)
     return { name = name, unit = unit, value = value, max = max, TextString = text(),
         GetName = function(s) return s.name end, Show = function() end,
