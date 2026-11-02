@@ -75,6 +75,7 @@ class Events(unittest.TestCase):
         end
         C_Timer.NewTimer = function(_, fn) local t = { Cancel = function() end, run = fn }; timers[#timers + 1] = t; return t end
         BankFrame = widget("BankFrame")
+        C_Container.SetBankAutosortDisabled = function() end
         Bagnon = widget("Bagnon"); Banknon = widget("Banknon")
         Bagnon.shown = true; Bagnon.player = "Tester"; Bagnon.size = 3
         Bagnon_SetAtBank(nil)
