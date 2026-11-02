@@ -47,6 +47,7 @@ function W:GetFont() return "f", 12, "" end
 function W:GetWidth() return 36 end
 function W:GetHeight() return 36 end
 function W:GetFrameLevel() return 1 end
+function W:GetNumPoints() return 0 end
 function W:GetParent() return rawget(self, "parent") end
 function W:GetName() return rawget(self, "name") end
 function W:IsShown() return rawget(self, "shown") end
