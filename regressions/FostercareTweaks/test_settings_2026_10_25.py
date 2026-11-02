@@ -131,8 +131,8 @@ class SettingsWindow(unittest.TestCase):
         lua = window()
         lua.execute('FostercareTweaks.OpenSettings("general")')
         self.assertFalse(lua.eval('widgets.FTOptReload1.shown'))
-        lua.execute('widgets.FTOpt_VendorValues:Click()')
-        self.assertEqual(lua.eval('FostercareTweaks_Config["Vendor Values"]'), 1)
+        lua.execute('widgets.FTOpt_MiniMapSquare:Click()')
+        self.assertEqual(lua.eval('FostercareTweaks_Config["MiniMap Square"]'), 1)
         self.assertTrue(lua.eval('widgets.FTOptReload1.shown'))
         self.assertTrue(lua.eval('widgets.FTOptReload5.shown'))
 

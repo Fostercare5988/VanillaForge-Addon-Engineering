@@ -15,7 +15,7 @@ class SlashSplitTests(unittest.TestCase):
             function SetCVar() end
             function CreateFrame() return { RegisterEvent = function() end, SetScript = function() end } end
             SlashCmdList = {}
-            FostercareTweaks_Config = { overwrites = { x = 1 } }
+            FostercareTweaks_Config = { overwrites = {}, unitframe_positions = { raid = {} } }
             reloaded = false
             function ReloadUI() reloaded = true end
             splits = 0
@@ -27,10 +27,10 @@ class SlashSplitTests(unittest.TestCase):
             end
         ''')
         lua.execute(source("Core.lua"))
-        lua.execute('SlashCmdList["FOSTERCARETWEAKS"]("reset")')
+        lua.execute('SlashCmdList["FOSTERCARETWEAKS"]("resetuf")')
         self.assertEqual(lua.eval('splits'), 1)
         self.assertTrue(lua.eval('reloaded'))
-        self.assertIsNone(lua.eval('next(FostercareTweaks_Config.overwrites)'))
+        self.assertIsNone(lua.eval('FostercareTweaks_Config.unitframe_positions'))
 
 
 if __name__ == "__main__":
