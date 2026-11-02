@@ -151,12 +151,30 @@ class WatchedAurasSettings(unittest.TestCase):
         before = lua.eval("heights[#heights]")
         lua.execute('widgets.FTOpt_WatchName:SetText("Rupture"); widgets.FTOpt_WatchDebuff:Click()')
         self.assertEqual(lua.eval("watched[1].unit"), "target")
-        self.assertEqual(lua.eval("widgets.FTOpt_WatchRow1.shown"), True)
+        self.assertTrue(lua.eval("widgets.FTOpt_WatchChip1.shown"))
+        self.assertTrue(lua.eval("widgets.FTOpt_WatchCard.shown"))          # a new aura opens its card
+        self.assertFalse(lua.eval("widgets.FTOpt_WatchTop.shown"))          # top right is for your buffs
         self.assertGreater(lua.eval("heights[#heights]"), before)
-        lua.execute('widgets.FTOpt_WatchMine1:Click()')
+        lua.execute('widgets.FTOpt_WatchMine:Click(); widgets.FTOpt_WatchRow:Click()')
         self.assertIsNone(lua.eval("watched[1].mine"))
-        lua.execute('widgets.FTOpt_WatchRemove1:Click()')
-        self.assertFalse(lua.eval("widgets.FTOpt_WatchRow1.shown"))
+        self.assertTrue(lua.eval("watched[1].inRow"))
+        lua.execute('widgets.FTOpt_WatchChip1:Click()')                     # click again: the card closes
+        self.assertFalse(lua.eval("widgets.FTOpt_WatchCard.shown"))
+        lua.execute('widgets.FTOpt_WatchChip1:Click(); widgets.FTOpt_WatchRemove:Click()')
+        self.assertFalse(lua.eval("widgets.FTOpt_WatchChip1.shown"))
+        self.assertFalse(lua.eval("widgets.FTOpt_WatchCard.shown"))
+
+    def test_the_list_is_two_chips_a_row(self):
+        # 2026-11-02 in play: fifteen auras made a list longer than the screen.
+        lua = window()
+        lua.execute('FostercareTweaks.OpenSettings("auras")')
+        for name in ("A", "B", "C", "D", "E"):
+            lua.execute('widgets.FTOpt_WatchName:SetText("%s"); widgets.FTOpt_WatchBuff:Click()' % name)
+        lua.execute('widgets.FTOpt_WatchChip5:Click()')                     # close the card
+        tops = [lua.eval("widgets.FTOpt_WatchChip%d.pt[5]" % i) for i in (1, 2, 3, 5)]
+        self.assertEqual(tops[0], tops[1])
+        self.assertEqual(tops[2] - tops[3], 28)
+        self.assertEqual(tops[0] - tops[3], 56)
 
 
 if __name__ == "__main__":
