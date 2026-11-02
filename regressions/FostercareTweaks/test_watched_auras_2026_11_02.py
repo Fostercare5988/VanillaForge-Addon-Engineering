@@ -14,6 +14,9 @@ from test_settings_2026_10_25 import window
 
 SETUP = r'''
     FT.Countdown = {}
+    lists = 0
+    FT.ApplyStandardAuraSettings = function() lists = lists + 1 end
+    FT.UnitFrames = { Auras = { UpdateBlizzPlayerAuras = function() end, UpdateBlizzTargetAuras = function() end } }
     FT.RestoreFramePosition = function(frame, key) restoredKeys = (restoredKeys or 0) + 1 end
     FT.RegisterFrameMover = function(frame, key) frame.moverKey = key end
     auras = { player = {}, target = {} }
