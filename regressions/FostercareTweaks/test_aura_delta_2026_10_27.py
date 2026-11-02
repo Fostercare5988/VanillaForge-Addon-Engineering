@@ -61,7 +61,7 @@ def rows():
         Auras = { UpdateBlizzPlayerAuras = function() reads.player = reads.player + 1 end,
                   UpdateBlizzTargetAuras = function() reads.target = reads.target + 1 end }
         auraEventFrame = { RegisterEvent = function() end }
-        FT = { SetEventHandler = function(_, fn) handler = fn end }
+        FT = { SetEventHandler = function(_, fn) handler = fn end, IsAuraHidden = function() return false end }
         timings = 0
         function UpdateAuraTiming(btn, guid, id, src, duration, expiration)
             timings = timings + 1; btn.expiration = expiration
