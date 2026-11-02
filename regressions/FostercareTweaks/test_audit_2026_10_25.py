@@ -4,7 +4,8 @@
   Health reaches 0 before UnitIsDead turns true.
 - Raid frames showed "Unknown" for players the client had not loaded yet.
 - Raid frames did not target on click: they now use ClassicAPI unit attributes.
-- Solo, the mark keys did nothing: they now set NamPower local marks.
+- Solo, the mark keys did nothing: NamPower's SetRaidTarget now sets local
+  marks (test_pass2_2026_11_02).
 Clicking, menus and local marks stay in-game checks.
 """
 from pathlib import Path
@@ -134,42 +135,6 @@ class RaidClicks(unittest.TestCase):
         self.assertIn('SetAttribute("type1", "target")', create)
         self.assertIn('SetAttribute("type2", "menu")', create)
         self.assertNotIn('SetScript("OnClick"', create)
-
-
-class SoloMarks(unittest.TestCase):
-    def setUp(self):
-        self.lua = LuaRuntime(unpack_returned_tuples=True)
-        self.lua.execute(BASE)
-        self.lua.execute('''
-            raid, party, marks, sent, native = 0, 0, {}, {}, {}
-            function GetNumRaidMembers() return raid end
-            function GetNumPartyMembers() return party end
-            function UnitGUID() return "0xF1" end
-            function GetRaidTargets() return marks end
-            function SetLocalRaidTargetIndex(u, i) table.insert(sent, i); marks[i] = i > 0 and "0xF1" or nil end
-            function SetRaidTargetIcon(u, i) table.insert(native, i) end
-            function FT.GetNumber(_, d) return d end
-            function FT.GetOverride() end
-            function FT:RefreshRaidMarks() end
-            function TargetFrame_UpdateRaidTargetIcon() end
-            TargetRaidTargetIcon = setmetatable({}, { __index = function() return function() end end })
-            TargetPortrait = TargetRaidTargetIcon
-            function CreateFrame() return { RegisterEvent = function() end } end
-            function FT.SetEventHandler() end
-        ''')
-        self.lua.execute(source("mods/raid-target-marks.lua"))
-        self.lua.execute('FT.module:enable()')
-
-    def test_solo_key_toggles_a_local_mark(self):
-        self.lua.execute('SetRaidTargetIcon("target", 8); SetRaidTargetIcon("target", 8)')
-        self.assertEqual(list(self.lua.eval('sent').values()), [8, 0])
-        self.assertEqual(len(self.lua.eval('native')), 0)
-
-    def test_grouped_key_uses_the_server_mark(self):
-        self.lua.execute('party = 1; SetRaidTargetIcon("target", 8)')
-        self.assertEqual(list(self.lua.eval('native').values()), [8])
-        self.assertEqual(len(self.lua.eval('sent')), 0)
-
 
 
 class RetiredSettings(unittest.TestCase):
