@@ -141,6 +141,8 @@ COOLDOWNS = r'''
     function GetTime() return now end
     cd = { [1784] = { startTime = 0, duration = 0, isOnGCD = false } }
     C_Spell = { GetSpellCooldown = function(id) lookups = (lookups or 0) + 1; return cd[id] end }
+    function FindSpellBookSlotByID(id) if cd[id] then return id, "spell" end end
+    function GetSpellCooldown(slot) local c = cd[slot]; return c.startTime, c.duration, 1 end
     function GetSpellInfo(id)
         if id == "Stealth" then return "Stealth", "", "stealth-icon", 0, nil, 0, 0, 0, 0, 1784 end
         return spells[id], "Rank 1", "Interface\\Icons\\Spell"
