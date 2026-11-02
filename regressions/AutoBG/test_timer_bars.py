@@ -49,6 +49,11 @@ function Widget:CreateFontString() return setmetatable({}, { __index = Widget })
 function CreateFrame(_, name) local f = setmetatable({ name = name }, { __index = Widget }); if name then _G[name] = f end; return f end
 UIParent = CreateFrame("Frame", "UIParent")
 local handle = { Cancel = function() end }
+Enum = { StatusBarInterpolation = { Immediate = 0 }, StatusBarTimerDirection = { ElapsedTime = 0, RemainingTime = 1 } }
+C_DurationUtil = { CreateDuration = function() return { SetTimeSpan = function(self, s, e) self.startTime, self.endTime = s, e end } end }
+function Widget:SetTimerDuration(d, i, dir) self.timer, self.timerDirection = d, dir; self.fillValue = nil end
+function Widget:SetMinMaxValues(lo, hi) self.timer = nil; self.maxValue = hi end
+function Widget:SetValue(v) self.fillValue = v end
 C_Timer = { After = function() end, NewTimer = function() return handle end, NewTicker = function() return handle end }
 MAX_BATTLEFIELD_QUEUES = 3
 function GetBattlefieldStatus() return "none" end

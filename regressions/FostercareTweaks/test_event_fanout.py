@@ -30,6 +30,8 @@ function Widget:CreateTexture() return setmetatable({}, { __index = Widget }) en
 function Widget:CreateFontString() return setmetatable({}, { __index = Widget }) end
 function CreateFrame(_, name) local f = setmetatable({ name = name }, { __index = Widget }); if name then _G[name] = f end; return f end
 timers, handlers = {}, {}
+Enum = { StatusBarInterpolation = { Immediate = 0 }, StatusBarTimerDirection = { ElapsedTime = 0, RemainingTime = 1 } }
+C_DurationUtil = { CreateDuration = function() return { SetTimeSpan = function(self, s, e) self.startTime, self.endTime = s, e end } end }
 C_Timer = { After = function(_, fn) table.insert(timers, fn) end }
 FostercareTweaks_Config = {}
 FostercareTweaks = {

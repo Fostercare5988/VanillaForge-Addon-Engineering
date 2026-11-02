@@ -92,6 +92,8 @@ function fire(frame, ev, unit, ...)
 end
 UIParent, TargetFrame, PlayerFrame = Widget(), Widget(), Widget()
 PlayerFrameManaBar = Widget()
+Enum = { StatusBarInterpolation = { Immediate = 0 }, StatusBarTimerDirection = { ElapsedTime = 0, RemainingTime = 1 } }
+C_DurationUtil = { CreateDuration = function() return { SetTimeSpan = function(self, s, e) self.startTime, self.endTime = s, e end } end }
 C_Timer = { After = NOOP, NewTicker = function() return { Cancel = NOOP } end }
 FostercareTweaks_Config = { overwrites = {} }
 FT = { mods = {}, overwrites = {} }
