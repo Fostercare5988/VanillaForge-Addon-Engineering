@@ -10,6 +10,8 @@ AutoLazy.lua (a handful of values); edit them there.
 
 Left out on purpose: the chat history in FostercareTweaks_Cache (private), and
 the spell and item lists of the extra action bars (they depend on the class).
+Also left out: switches the addon retires (modules with `always = true`, and the
+keys Core.lua clears on load), so a new character never runs an old migration.
 Pixel positions are filtered at first run by FostercareTweaks (Core.lua), so a
 smaller screen never gets a frame off screen.
 """
@@ -38,8 +40,27 @@ def to_python(value):
     return value
 
 
-def clean(config):
+def retired_keys(addon):
+    """Switch keys FostercareTweaks retires: titles of modules registered with
+    `always = true` (Core.lua clears their key) and keys Core.lua sets to nil."""
+    keys = set()
+    for path in Path(addon).rglob("*.lua"):
+        text = path.read_text("utf-8-sig")
+        for block in re.finditer(r"FT:register\(\{(.*?)\}\)", text, re.S):
+            title = re.search(r'title\s*=\s*"([^"]+)"', block.group(1))
+            if title and re.search(r"\balways\s*=\s*true", block.group(1)):
+                keys.add(title.group(1))
+    core = (Path(addon) / "Core.lua").read_text("utf-8-sig")
+    keys.update(re.findall(r'FostercareTweaks_Config\["([^"]+)"\]\s*=\s*nil', core))
+    for block in re.finditer(r"ipairs\(\{(.*?)\}\)\s*do\s*FostercareTweaks_Config\[key\]\s*=\s*nil", core, re.S):
+        keys.update(re.findall(r'"([^"]+)"', block.group(1)))
+    return keys
+
+
+def clean(config, retired=()):
     config.pop("Social Colors", None)
+    for key in retired:
+        config.pop(key, None)
     bars = config.get("actionbars", {}).get("bars", {})
     for bar in bars.values():
         bar.pop("actions", None)
@@ -95,8 +116,9 @@ def main():
     parser.add_argument("--tweaks", required=True, help="the author's FostercareTweaks.lua SavedVariables file")
     parser.add_argument("--addons", default=str(DEFAULT_ADDONS), help="the AddOns folder")
     args = parser.parse_args()
-    config = clean(to_python(load_config(args.tweaks)))
-    out = Path(args.addons) / "FostercareTweaks" / "Defaults.lua"
+    addon = Path(args.addons) / "FostercareTweaks"
+    config = clean(to_python(load_config(args.tweaks)), retired_keys(addon))
+    out = addon / "Defaults.lua"
     # The addon's files use CRLF.
     out.write_bytes(render(config).replace("\n", "\r\n").encode("utf-8"))
     print("wrote %s (%d settings)" % (out, len(config)))
