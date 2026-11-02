@@ -331,6 +331,27 @@ class VanillaForgeAuditor:
                 return True
         return False
 
+    HOT_FUNCTION = re.compile(r'^(\s*)(?:(?:local\s+)?function\s+([\w.:]*?(?:Update|OnEvent|OnUpdate|Refresh|Handler))\s*\('
+                              r'|.*SetScript\(\s*["\'](On(?:Update|Event))["\']\s*,\s*function\b)', re.I)
+
+    @classmethod
+    def _hot_functions(cls, code_lines):
+        """(name, first body line, end line) of each function named for a busy
+        path; the body is the lines until 'end' at the header's indent. Takes
+        lines with strings kept, so a SetScript handler's name can be read."""
+        found = []
+        for idx, line in enumerate(code_lines, 1):
+            m = cls.HOT_FUNCTION.match(line)
+            if not m:
+                continue
+            indent = m.group(1)
+            for end in range(idx + 1, len(code_lines) + 1):
+                text = code_lines[end - 1]
+                if text.rstrip() == indent + "end" or text.startswith(indent + "end)"):
+                    found.append((m.group(2) or m.group(3) + " handler", idx + 1, end))
+                    break
+        return found
+
     @staticmethod
     def _local_functions(code_lines):
         found = {}
@@ -380,6 +401,17 @@ class VanillaForgeAuditor:
                     if re.search(r'(?<![\w.:])%s\s*\(' % name, line) and not re.search(r'function\s+%s\b' % name, line) \
                             and not self._is_suppressed(raw_lines[idx - 1], "A6"):
                         warnings.append(f"[Rule A6 - Local Used Before Definition] Line {idx}: '{name}' is a local function defined on line {line_no}; here it is still a global. Move the definition up or declare 'local {name}' first.")
+                        break
+
+        # Rule D2: a table built in a function named for a busy path (an update,
+        # an event or OnUpdate handler, a refresh). Every '{' is a new table;
+        # 1.12 collects them in one full pass, which is where stutters come
+        # from (FostercareTweaks watched auras: one table per aura change).
+        if filepath.endswith('.lua'):
+            for name, first, last in self._hot_functions(no_comment_lines):
+                for idx in range(first, last):
+                    if '{' in code_lines[idx - 1] and not self._is_suppressed(raw_lines[idx - 1], "D2"):
+                        warnings.append(f"[Rule D2 - Table Per Call] Line {idx}: '{name}' builds a table each call. Reuse one (table.wipe) or build it once outside; '-- vanillaforge-ignore: D2' if this path is rare.")
                         break
 
         current_button_name = ""

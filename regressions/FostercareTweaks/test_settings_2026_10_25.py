@@ -124,7 +124,7 @@ def window():
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(BASE)
     ns = lua.table()
-    for name in ("ForgeUI.lua", "Settings.lua"):
+    for name in ("ForgeUI.lua", "ForgeLayout.lua", "Settings.lua"):
         lua.execute((ROOT / name).read_text("utf-8-sig"), "FostercareTweaks", ns)
     return lua
 

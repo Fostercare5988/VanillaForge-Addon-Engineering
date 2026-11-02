@@ -28,12 +28,16 @@ AUDIT
 6. Find, in every file: bugs (wrong behaviour, stale callbacks, state crossing
    characters, settings applied while disabled, string escapes Lua 5.0 drops);
    modernization (DLL primitives for polling, text scraping, wrapped Set*
-   methods, hand-rolled helpers); performance (repeated work per slot or event,
-   allocations, unchanged UI writes, layouts redone for nothing); old code
+   methods, hand-rolled helpers; Lua 5.0 forms that ClassicAPI's 5.1 backports
+   replace, linter A4); performance (repeated work per slot or event,
+   allocations: every '{' in an update, event or OnUpdate path, linter D2;
+   unchanged UI writes, layouts redone for nothing); old code
    (`getglobal` and name concatenation per call, `this`/`arg1` decoding by type,
    fallbacks for things that always exist, two files doing one job, copies of one
-   routine, hidden globals shared across files, a locale layer); and UI (options
-   that do not do what they say, player text, the settings window in the old style).
+   routine, hidden globals shared across files, a locale layer, a local function
+   called above its definition, linter A6); and UI (options that do not do what
+   they say, player text, the settings window in the old style, settings missing
+   from AddOn Options: the ForgeUI kit puts every page there, see /options).
 7. For each kind of finding, search the addon for the rest of that kind.
 
 FIX, in the same session
@@ -49,7 +53,8 @@ FIX, in the same session
    permissions, writes Lua path backslashes through the @@ placeholder; never use editors or
    shell heredocs that rewrite endings or collapse backslashes.
 10. After each batch: the addon's tests and the linter (tools/audit_addon.py ...
-    --run-tests; read the warning count too), and find_holes.py again, whose ghost
+    --run-tests; every warning is a lead to read, and A4, A6 and D2 are fixed or
+    suppressed with a reason), and find_holes.py again, whose ghost
     names include functions that XML scripts call and nothing defines.
     Then update README and docs, commit, and push (standing order).
 11. Write .private/audit-$ARGUMENTS-<date>.md (under 2 pages): findings ranked

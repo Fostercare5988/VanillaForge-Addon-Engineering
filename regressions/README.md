@@ -203,7 +203,9 @@ categories under FostercareTweaks, a category borrows its page, scaled to fit, a
 is called above its definition (linter A6; 1.12.0 called AnchorWeapon as a nil global every frame). 1.13.0: pages
 are laid out by sections; in AddOn Options every page is one column at full size (no control right of the margin,
 none sharing a line) and back in the window two columns again. 1.14.0 (`CooldownAfterTheBuff`, 5): a watched
-buff that ends shows its spell's cooldown greyed until ready, not the global cooldown, colour back with the buff and `ActionBarRows` in `test_settings_2026_10_25.py` (5: one row per bar).
+buff that ends shows its spell's cooldown greyed until ready, not the global cooldown, colour back with the buff.
+1.15.0 takes the layout and AddOn Options code from the VanillaForge kit (`templates/ForgeUI/ForgeLayout.lua`); the
+settings harness loads it and `ActionBarRows` in `test_settings_2026_10_25.py` (5: one row per bar).
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareTweaks" --run-tests --test-start regressions/FostercareTweaks --output .private/fct-current.json
