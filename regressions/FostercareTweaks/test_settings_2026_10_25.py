@@ -158,5 +158,45 @@ class SettingsWindow(unittest.TestCase):
         self.assertFalse(lua.eval('FostercareTweaks.ActionBars.editing'))
 
 
+class ActionBarRows(unittest.TestCase):
+    """2026-11-02 (the player's notes): one row per bar, no bar picker."""
+
+    def setUp(self):
+        self.lua = window()
+        self.lua.execute('heights = {}; local set = FostercareTweaksSettingsGUI.SetHeight;'
+                         ' FostercareTweaksSettingsGUI.SetHeight = function(_, h) heights[#heights + 1] = h end;'
+                         ' FostercareTweaks.OpenSettings("bars")')
+
+    def test_a_row_turns_its_bar_on_and_layouts_with_it(self):
+        lua = self.lua
+        lua.execute('widgets.FTOpt_BarShow_extra:Click()')
+        self.assertTrue(lua.eval('FostercareTweaks.ActionBars.enabled'))
+        self.assertTrue(lua.eval('FostercareTweaks.ActionBars:GetSettings("extra").visible'))
+
+    def test_the_main_bar_is_always_shown(self):
+        self.assertFalse(self.lua.eval('widgets.FTOpt_BarShow_main.enabled'))
+        self.assertTrue(self.lua.eval('widgets.FTOpt_BarShow_main.checked'))
+
+    def test_each_row_has_its_size(self):
+        lua = self.lua
+        lua.execute('local s = widgets.FTOpt_BarSize_extra; s:SetValue(1.25); s.scripts.OnValueChanged(s)')
+        self.assertEqual(lua.eval('FostercareTweaks.ActionBars:GetSettings("extra").scale'), 1.25)
+
+    def test_more_opens_the_rest_under_the_row_and_closes_again(self):
+        lua = self.lua
+        closed = lua.eval('heights[#heights]')
+        lua.execute('widgets.FTOpt_BarMore_main:Click()')
+        self.assertTrue(lua.eval('widgets.FTOpt_BarDetails.shown'))
+        self.assertGreater(lua.eval('heights[#heights]'), closed)
+        lua.execute('widgets.FTOpt_Bar_growUp:Click()')
+        self.assertTrue(lua.eval('FostercareTweaks.ActionBars:GetSettings("main").growUp'))
+        lua.execute('widgets.FTOpt_BarMore_main:Click()')
+        self.assertFalse(lua.eval('widgets.FTOpt_BarDetails.shown'))
+        self.assertEqual(lua.eval('heights[#heights]'), closed)
+
+    def test_no_bar_picker(self):
+        self.assertIsNone(self.lua.eval('widgets.FTOpt_Barmain'))
+
+
 if __name__ == "__main__":
     unittest.main()
