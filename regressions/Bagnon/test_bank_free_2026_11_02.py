@@ -12,7 +12,7 @@ from bgn_env import load
 FRAME = '''
     Bagnon_SetAtBank(true)
     frame = widget("Banknon"); frame.player = "Tester"
-    widget("BanknonFreeSlots"); widget("BanknonTitle"); widget("BanknonSortButton")
+    widget("BanknonFreeSlots"); widget("BanknonTitle"); widget("BanknonSortButton"); widget("BanknonCloseButton"); widget("BanknonDropDown")
     bagSlots[-1] = 24; bagSlots[5] = 16; bagSlots[6] = 16
     for b = 7, 10 do bagSlots[b] = 0 end
     -- bank: 20 of 24 used; bag 5: 3 of 16 used; bag 6: full
