@@ -181,12 +181,15 @@ take away something players rely on.
    python -B tools/audit_addon.py "<addon folder>" --run-tests --test-start regressions/<Addon> --output "%TEMP%\audit-<Addon>.json"
    ```
 
-   Lint findings are hints, not orders. Without a suite, the linter alone:
-   `python -B tools/vanillaforge_linter.py "<addon folder>"`.
+   Lint findings are hints, not orders, but read the warning count as well as the
+   error count (rule A5 catches string escapes Lua 5.0 drops, as a warning). Without
+   a suite, the linter alone: `python -B tools/vanillaforge_linter.py "<addon folder>"`.
 2. When behaviour changes on purpose, update the test that encoded the old
    behaviour. For a bug fix, add a test that fails on the old code where
    practical. Suites and their commands: [regressions/README.md](regressions/README.md).
-3. Keep each file's line endings (several addons use CRLF).
+3. Keep each file's line endings (several addons use CRLF). Patch addon files with
+   [tools/addon_edit.py](tools/addon_edit.py): it keeps the endings and the
+   backslashes of Lua paths (the `@@` placeholder writes two; KNOWN_PATTERNS KP-60).
 4. Report what changed, the test results and what to check in game. Tests are
    not in-game proof; say which behaviour still needs a game check.
 5. Git: run `git status` before editing. Commit each coherent step after its
@@ -204,6 +207,7 @@ take away something players rely on.
 | An addon's regression tests | [regressions/README.md](regressions/README.md) |
 | The settings style | `templates/ForgeUI/` |
 | DLL versions and upstream tracking | [UPSTREAM_VERSIONS.json](UPSTREAM_VERSIONS.json), `python -B tools/check_upstream.py` |
+| Patch addon files safely | [tools/addon_edit.py](tools/addon_edit.py) |
 | Take a new DLL release | `python -B tools/upgrade_dll.py [component] [--pin]`: what changed, the pin, leads in every addon |
 | Earlier audits, workflows and decisions | [archive/](archive/README.md), for history only |
 

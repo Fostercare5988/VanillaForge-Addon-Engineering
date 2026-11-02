@@ -45,10 +45,12 @@ FIX, in the same session
    label per option, tooltips for detail, no jargon). Retire options completely:
    code, setting (cleared on load), slash command, docs. Delete dead code, files
    and assets. Keep behaviour and SavedVariables players rely on; say what they
-   will notice. Keep each file's line endings; edit files in place with a
-   byte-safe patcher, never with tools that rewrite endings or permissions.
-10. After each batch: the addon's tests, the linter (tools/audit_addon.py ...
-    --run-tests), and a load-order check that every function the XML calls exists.
+   will notice. Patch files with tools/addon_edit.py (keeps line endings and
+   permissions, writes Lua path backslashes through the @@ placeholder; never use editors or
+   shell heredocs that rewrite endings or collapse backslashes.
+10. After each batch: the addon's tests and the linter (tools/audit_addon.py ...
+    --run-tests; read the warning count too), and find_holes.py again, whose ghost
+    names include functions that XML scripts call and nothing defines.
     Then update README and docs, commit, and push (standing order).
 11. Write .private/audit-$ARGUMENTS-<date>.md (under 2 pages): findings ranked
     P1/P2/P3 with file:line, evidence and what was done, what could not be done

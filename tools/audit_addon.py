@@ -257,8 +257,9 @@ def describe_tests(label, tests):
 def summary(report, destination=None):
     """One line for the terminal; the JSON report holds the evidence."""
     lint = sum(module.get("lint", {}).get("errors", {}).get("count", 0) for module in report["modules"])
+    warnings = sum(module.get("lint", {}).get("warnings", {}).get("count", 0) for module in report["modules"])
     parts = [f"{Path(report['addon']).name}: {report['module_count']} modules",
-             f"{len(report['graph_errors'])} graph errors", f"{lint} lint errors",
+             f"{len(report['graph_errors'])} graph errors", f"{lint} lint errors, {warnings} warnings",
              describe_tests("tests", report["tests"])]
     if "private_tests" in report:
         parts.append(describe_tests("private tests", report["private_tests"]))
