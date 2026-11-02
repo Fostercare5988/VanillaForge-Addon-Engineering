@@ -212,17 +212,31 @@ table.insert(args, nil)
         _, warnings, _ = self.audit(
             "local remainder = math.mod(5, 2) -- vanillaforge-ignore: A4\n"
         )
-        self.assertFalse(any("Legacy math.mod" in warning for warning in warnings))
+        self.assertFalse(any("Rule A4" in warning for warning in warnings))
 
     def test_legacy_octowow_suppression_remains_compatible(self):
         _, warnings, _ = self.audit(
             "local remainder = math.mod(5, 2) -- octowow-ignore: A4\n"
         )
-        self.assertFalse(any("Legacy math.mod" in warning for warning in warnings))
+        self.assertFalse(any("Rule A4" in warning for warning in warnings))
 
     def test_unsuppressed_math_mod_is_still_reported(self):
         _, warnings, _ = self.audit("local remainder = math.mod(5, 2)\n")
-        self.assertTrue(any("Legacy math.mod" in warning for warning in warnings))
+        self.assertTrue(any("Rule A4" in warning for warning in warnings))
+
+    def test_lua50_forms_with_classicapi_backports_are_reported(self):
+        # 2026-11-02, the user: use ClassicAPI wherever it can. Its 5.1
+        # backports replace mod, gfind, string.len and unpack(arg).
+        for source in ("local r = mod(year, 4)\n", "for w in string.gfind(msg, \"%S+\") do end\n",
+                       "local n = string.len(text)\n", "local n = strlen(text)\n",
+                       "function f(...) return g(unpack(arg)) end\n"):
+            _, warnings, _ = self.audit(source)
+            self.assertTrue(any("Rule A4" in w for w in warnings), source)
+        for source in ("local r = year % 4\n", "for w in string.gmatch(msg, \"%S+\") do end\n",
+                       "local n = #text\n", "local m = frame:mod(2)\n", "local x = t.strlen(s)\n",
+                       "return original(self, unpack(arg, 1, arg.n))\n"):
+            _, warnings, _ = self.audit(source)
+            self.assertFalse(any("Rule A4" in w for w in warnings), source)
 
     def test_locale_code_is_reported_english_only(self):
         for source in ('if GetLocale() == "deDE" then PLAYER_CLASS = "KRIEGER" end\n',

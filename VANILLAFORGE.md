@@ -72,7 +72,9 @@ The client and the server are English only: no localization, locale tables or
 `GetLocale()` branches. Modernizing an addon removes its locale layer.
 
 Lua is 5.0 with ClassicAPI's 5.1 backports: `#t`, `...`, `select`, `%`,
-`string.match`/`gmatch`, string methods. `#` is not `table.getn`; leave
+`string.match`/`gmatch`, string methods, `table.wipe`. Write them, never the 5.0
+forms they replace: `%` not `mod`, `gmatch` not `gfind`, `#s` not `string.len`,
+`...` not `unpack(arg)` (linter rule A4). `#` is not `table.getn`; leave
 `table.getn` where code relies on it. Handlers always get `this`, `event` and
 `arg1`...; positional `(self, event, ...)` arguments usually work too. Follow
 the addon's existing convention. Details: CLASSICAPI_MASTER_REFERENCE.md §4.

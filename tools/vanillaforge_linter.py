@@ -412,9 +412,16 @@ class VanillaForgeAuditor:
             # 8. Rule A4: Obsolete Lua 5.0 Constructs
             # A3 retired: getn/setn preserve intentional stored-length contracts,
             # including weak-valued pools. Syntax alone cannot justify replacement.
+            # ClassicAPI's 5.1 backports replace these (CLASSICAPI_MASTER_REFERENCE 4).
             if not self._is_suppressed(raw_line, "A4"):
-                if re.search(r'\bmath\.mod\s*\(', code_line):
-                    warnings.append(f"[Rule A4 - Legacy math.mod] Line {idx}: 'math.mod(a, b)' detected. Use modern '%' modulo operator.")
+                if re.search(r'(?<![\w.:])(?:math\.)?mod\s*\(', code_line):
+                    warnings.append(f"[Rule A4 - Legacy mod] Line {idx}: 'mod(a, b)' detected. Use the '%' operator (equal for non-negative numbers; '%' takes the sign of b).")
+                if re.search(r'\bgfind\s*\(', code_line):
+                    warnings.append(f"[Rule A4 - Legacy gfind] Line {idx}: 'string.gfind' detected. Use 'string.gmatch', or 'string.match' for the first match.")
+                if re.search(r'\bstring\.len\s*\(|(?<![\w.:])strlen\s*\(', code_line):
+                    warnings.append(f"[Rule A4 - Legacy string.len] Line {idx}: 'string.len(s)' detected. Use '#s' (strings only; numbers need tostring).")
+                if re.search(r'\bunpack\s*\(\s*arg\s*\)', code_line):
+                    warnings.append(f"[Rule A4 - Legacy vararg] Line {idx}: 'unpack(arg)' detected. Pass '...' on; it also keeps trailing nils.")
 
             # 8b. Rule A5: Dropped escape. Lua 5.0 drops the backslash of an unknown
             # escape, so "Interface\Icons\X" names "InterfaceIconsX" and the texture
