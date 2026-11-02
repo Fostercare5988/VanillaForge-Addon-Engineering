@@ -9,7 +9,15 @@ Bugs (each fails on 192e14d):
 - Defaults.lua still carried the retired "WorldMap Window" switch, so a new
   character's first login switched the account's world map to windowed.
 
-Widget mocks record our calls; drawing stays an in-game check.
+Old code and hot paths: three chat AddMessage wrappers, raid health events
+that rewrote name and class and built text every time, aura deltas of every
+nameplate and mark token, world map coordinates resolved by name with a table
+every 0.1 s, a closure per Extra Rows refresh, unread module fields, aliases
+and vararg wrappers. Options: nine switches every character leaves on, and
+developer slash commands.
+
+Every test fails on 192e14d except SlashCommands.test_the_documented_commands_stay
+(a control). Widget mocks record our calls; drawing stays an in-game check.
 """
 import re
 import sys

@@ -90,7 +90,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareAuras | `regressions/FostercareAuras` | 60 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 61 | Yes | [FostercareNameplates](#fostercarenameplates) |
-| FostercareTweaks | `regressions/FostercareTweaks` | 144 | Yes | [FostercareTweaks](#fostercaretweaks) |
+| FostercareTweaks | `regressions/FostercareTweaks` | 187 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 67 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 42 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
@@ -232,6 +232,22 @@ tick writes its widgets only when the bar or settings change; Equip Compare has
 no tooltip watch; the clock wakes once a minute; Reduced Actionbar leaves the
 bottom bars to custom layouts. Fifteen fail on `ba4d058`; three are controls.
 `test_audit_2026_10_25.py` now stubs `geterrorhandler` for `FT:Initialize`.
+
+The 2026-11-02 audit (FostercareTweaks 1.8.0) adds `test_audit_2026_11_02.py`
+(29 tests). Bugs: the target cast bar's texture paths lost their backslashes,
+plus a scan of every string in the addon for escapes Lua 5.0 drops; a party
+member who leads wears the crown and a leader change reads the roster; a new
+character's defaults carry no retired switch (checked against
+`export_defaults.retired_keys`). Old code: one chat `AddMessage` wrapper runs
+links, timestamps and class colours; raid health events leave name and class
+alone and build the text only when its number changes; raid aura deltas and
+levels of other tokens never arrive; world map coordinates come from the shown
+map; Extra Rows queue one static refresh; no unread module fields, aliases or
+vararg wrappers. Options: nine switches are always on and cleared on load;
+`/ft` opens the window or a page, the developer commands are gone. All fail on
+`192e14d` except one control. Harnesses now mock `hooksecurefunc`,
+`AbbreviateNumbers`, `FT.GetUnitHealthValues`, `FT.Countdown` and the stock
+frames the addon no longer checks for.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareTweaks" --run-tests --test-start regressions/FostercareTweaks --output .private/fct-current.json
