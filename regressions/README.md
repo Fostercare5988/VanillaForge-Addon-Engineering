@@ -84,7 +84,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 5 | Yes | [ActionBarProfiles](#actionbarprofiles) |
 | AutoBG | `regressions/AutoBG` | 199 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 32 | Yes | [AutoLazy](#autolazy) |
-| Bagnon | `regressions/Bagnon` | 15 | Yes | [Bagnon](#bagnon) |
+| Bagnon | `regressions/Bagnon` | 38 | Yes | [Bagnon](#bagnon) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
 | !ErrorLog | `regressions/ErrorLog` | 2 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
@@ -632,6 +632,14 @@ Three fail on 1.1.0.
 `test_native_countdown_2026_11_01.py` (8): the enchant badge on a bagged weapon is counted down by a native
 Cooldown frame (no ticker, one `SetCooldown` per application, `OnCooldownDone` hides it, `3c` replaces the
 time at 5 charges or fewer), and a native `-1` slot rarity comes from `C_Item.GetItemQualityByID`.
+`test_bank_free_2026_11_02.py` (2), `test_audit_2026_11_02.py` (3), `test_cleanup_2026_11_02.py` (6) and
+`test_settings_search_2026_11_02.py` (13) cover the 2026-11-02 rework: the bank counts its free slots itself
+(ClassicAPI answers 0 for bank bags), no Lua file has a string escape Lua 5.0 drops, a bank bag's family comes from its
+item, one tooltip script, no layout pass for an unchanged layout, retired settings cleared on load, the search box
+and the dimming of non-matching slots, the header and title anchors under every option, and the ForgeUI settings window.
+That window is built for real: `test_settings_search_2026_11_02.py` loads `ForgeUI.lua` and `options/Options.lua` against
+a mock that gives every widget `CreateTexture`, `CreateFontString` and `SetScript`, then clicks the switches. Use it as the
+pattern for any addon that gets a ForgeUI window.
 
 ## ClassicAPI 1.19.0 pass (2026-11-02)
 

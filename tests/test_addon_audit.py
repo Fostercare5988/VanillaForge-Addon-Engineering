@@ -212,7 +212,7 @@ class AddonAuditTests(unittest.TestCase):
                                          "--compare", str(previous)]), 0)
         lines = output.getvalue().splitlines()
         self.assertEqual(len(lines), 1)
-        self.assertEqual(lines[0], "Addon: 2 modules, 0 graph errors, 0 lint errors, tests not_run, "
+        self.assertEqual(lines[0], "Addon: 2 modules, 0 graph errors, 0 lint errors, 0 warnings, tests not_run, "
                          "compare unchanged (0 modules); status human_review_pending -> " + str(destination.resolve()))
 
     def private_suite_summary(self, body=None):

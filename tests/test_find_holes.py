@@ -147,5 +147,20 @@ class ReplacementUnless(unittest.TestCase):
             self.assertEqual(leads["range-poll-ticker"]["where"], ["Poll.lua:1"])
 
 
+class XmlScriptGhosts(unittest.TestCase):
+    def test_a_function_an_xml_script_calls_that_nothing_defines_is_a_ghost(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "Probe", {
+                "Probe.toc": "## Title: Probe\nProbe.xml\nProbe.lua\n",
+                "Probe.lua": "function ProbeKnown() end\n",
+                "Probe.xml": '<Ui><Button name="ProbeButton"><Scripts><OnClick>ProbeKnown(); ProbeMissing(this);</OnClick></Scripts></Button></Ui>',
+            })
+            probe = HOLES.Addon(root / "Probe")
+            ghosts = HOLES.ghosts(probe, [probe], set(), set(), set())
+        self.assertEqual([g["name"] for g in ghosts], ["ProbeMissing"])
+        self.assertIn("(script)", ghosts[0]["where"][0])
+
+
 if __name__ == "__main__":
     unittest.main()

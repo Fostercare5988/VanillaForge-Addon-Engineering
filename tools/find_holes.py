@@ -256,8 +256,8 @@ def doc_text():
 # Checks ----------------------------------------------------------------------
 
 def ghosts(addon, everyone, game, docs, wotlk):
-    """CamelCase globals used that nothing defines: not this addon, another
-    installed addon, the game's code or any DLL doc."""
+    """CamelCase globals used, in Lua and in XML scripts, that nothing defines: not this
+    addon, another installed addon, the game's code or any DLL doc."""
     defined = game | docs
     for other in everyone:
         defined |= other.defs
@@ -269,6 +269,17 @@ def ghosts(addon, everyone, game, docs, wotlk):
             if (CAMEL.match(name) and name not in defined and name not in local
                     and not from_template(name, defined) and not numbered(name, defined)):
                 found[name].append("%s:%d" % (rel, line))
+    # The functions XML scripts call (OnClick, OnShow, ...) are read like Lua: a renamed or
+    # removed function leaves a button that errors only when it is clicked.
+    for rel, text in addon.files.items():
+        if rel.lower().endswith(".xml"):
+            for _, body in re.findall(r"<(On\w+)>(.*?)</\1>", text, re.S):
+                code = strip_lua(body)
+                local = local_names(code)
+                for name, _line in global_uses(code):
+                    if (CAMEL.match(name) and name not in defined and name not in local
+                            and not from_template(name, defined) and not numbered(name, defined)):
+                        found[name].append("%s (script)" % rel)
     return [{"name": n, "where": w[:3], "uses": len(w),
              "note": "exists only in the WotLK 3.3.5 client" if n in wotlk else ""}
             for n, w in sorted(found.items())]
