@@ -34,6 +34,7 @@ TargetFrameNameBackground = NewTexture(nil, nil, "BACKGROUND")
 TargetFrameNameBackground.texture = "blizzard"
 MAX_PARTY_MEMBERS = 4
 function FostercareTweaks.NormalizeClass(c) return c and string.upper(c) end
+FostercareTweaks.UnitFrames = { ClassColors = RAID_CLASS_COLORS }
 targetIsPlayer = true
 function UnitExists(u) return u == "player" or u == "target" end
 function UnitIsPlayer(u) return u == "player" or (u == "target" and targetIsPlayer) end
