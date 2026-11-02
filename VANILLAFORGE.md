@@ -11,7 +11,8 @@ material: search it for the question at hand, never read it whole.
 ## How we think
 
 We audit, clean, refactor, improve, develop and maintain. The work is not done
-when the code runs; it is done when nothing in it can be done better.
+when the code runs; it is done when nothing in it can be done better. An audit
+does not end with a list: it ends with the fixes made, tested and pushed.
 
 - **Every line earns its place.** Deleting is the best fix. Code nobody uses,
   code for things that do not exist, and options nobody turns on are holes.
@@ -20,8 +21,11 @@ when the code runs; it is done when nothing in it can be done better.
 - **Low coupling, high cohesion.** Each addon owns its data; each module does
   one job. Every connection between addons is visible, narrow and deliberate.
   A hidden connection is a hole.
-- **Old is a question, not a verdict.** Working code still gets asked: why is
-  this here, is there a better way now? Keep it when the answer is good.
+- **Old is a question, not a verdict.** Most of this code is from 2006. Working
+  code still gets asked: why is this here, is there a better way now (a DLL, an
+  event, a smaller design)? When there is, replace it. "It works" is not a reason
+  to keep it; "players rely on it" is, and that means behaviour and settings,
+  not the lines that produce them.
 - **Wonder.** Read the players' settings, the error log and the stutter report.
   The best findings come from asking what is really used and what really costs.
 - **Evidence beats memory.** Docs, measurements and tests decide; a guess is
@@ -95,11 +99,11 @@ the addon's existing convention. Details: CLASSICAPI_MASTER_REFERENCE.md §4.
   one to the player (AutoBG's `~`), and it stops looking like a guess as soon
   as evidence arrives.
 - **Fix the kind, not just the case.** After finding a problem, search the addon
-  for others of the same kind and list them with the fix. Fix them all when the
-  user asked for that kind of fix; otherwise ask once with the full list.
-- **Keep what works.** Change only what the task needs; keep existing behaviour
-  and SavedVariables unless asked. Old but correct code is not a reason to
-  rewrite.
+  for others of the same kind and fix them all.
+- **Keep what players rely on.** Keep behaviour players notice and their
+  SavedVariables, or migrate or clear them on purpose. The code itself is not
+  protected: rewrite old working code when the result is leaner, clearer or
+  cheaper, and say in the report what players will notice.
 - **Own your state.** Asynchronous work tracks its current request and ignores
   stale callbacks. Each addon owns its own data; integrations with other addons
   check availability and use narrow public functions.
@@ -129,7 +133,7 @@ measuring tool:
 A stutter with almost no addon time is the engine (model loading, shader
 compiles, drawing), not addon code. Fix measured problems first.
 
-## 4. Audit: find the holes
+## 4. Audit: find the holes, then close them
 
 Start every audit with the hole finder; it reads the addon next to all the
 others, the game's own code, the DLL docs and every character's saved settings:
@@ -154,8 +158,20 @@ below, in this order, and write the answers in `.private/audit-<Addon>-<date>.md
 5. **What runs too often?** Timers and per-frame work that run when nothing
    changed, garbage built on hot paths (Lua 5.0 collects in one full pass).
 6. **What do players see and use?** Their settings, errors and stutters; what is
-   confusing in the settings window.
-7. **Of each finding: is it a kind?** Search for the rest of that kind (§2).
+   confusing in the settings window. An option every character leaves alone, or
+   that has no reason to be off, becomes permanent: retire it (§2).
+7. **What is just old?** The 2006 habits: `getglobal` and name concatenation per
+   call, handlers that decode `this` or `arg1` by type, wrapped `Set*` methods
+   where a script event exists, fallbacks for things that always exist, two files
+   doing one job, the same work repeated per slot or per event, tables built per
+   call, settings windows in the old style (move them to ForgeUI).
+8. **Of each finding: is it a kind?** Search for the rest of that kind (§2).
+
+Then fix everything the audit found, in one pass of coherent batches: the
+bugs, the old code, the options that should not exist, the settings window. Each
+batch ends with the checks in §5; commit and push it. Stop to ask only when a
+fix needs something the DLLs cannot do (say so and offer the options), or would
+take away something players rely on.
 
 ## 5. Before calling it done
 
