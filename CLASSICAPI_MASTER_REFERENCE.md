@@ -887,6 +887,19 @@ GetCurrentChatEvent   -- 1.17.3
 Since 1.17.0 every `CHAT_MSG_*` event also carries `arg11` (lineID) and `arg12`
 (sender GUID). See [v1.17 chat](#chat-arguments-and-getcurrentchatevent).
 
+Name completion for edit boxes (1.19.0, API only; it draws nothing):
+
+```lua
+C_AutoComplete.GetAutoCompleteResults   -- (name, numResults, cursorPosition, allowFullMatch, includeFlags, excludeFlags)
+C_AutoComplete.IsRecognizedName
+Enum.AutoCompleteEntryFlag              -- InGroup, InGuild, Friend, InteractedWith, Online, ...
+Enum.AutoCompletePriority
+```
+
+Known names: group, guild roster (after `GuildRoster()`), friends and whispers
+since login. CVars: `autoCompleteResortNamesOnRecency`,
+`autoCompleteWhenEditingFromCenter`, `autoCompleteUseContext`.
+
 ---
 
 ## 22. Chat Bubbles — `C_ChatBubbles`
@@ -1889,6 +1902,24 @@ C_Spell.UnitChannelInfo(unit)
 
 plus `UNIT_SPELLCAST_*` events where appropriate.
 
+1.19.0 adds duration objects for casts (see Duration under Time):
+`UnitCastingDuration(unit)` / `UnitChannelDuration(unit)`. A call returns a
+snapshot; call again on `UNIT_SPELLCAST_DELAYED` / `_CHANNEL_UPDATE`.
+
+Spell alerts and proc glows (1.19.0, API only; the addon draws the art):
+
+```lua
+C_SpellActivationOverlay.IsSpellOverlayed
+IsSpellOverlayed
+```
+
+```text
+SPELL_ACTIVATION_OVERLAY_SHOW        -- spellID, texture, locationType, scale, r, g, b
+SPELL_ACTIVATION_OVERLAY_HIDE        -- spellID (nil = every alert)
+SPELL_ACTIVATION_OVERLAY_GLOW_SHOW   -- spellID
+SPELL_ACTIVATION_OVERLAY_GLOW_HIDE   -- spellID
+```
+
 ---
 
 ## 56. SpellBook — `C_SpellBook`
@@ -1961,7 +1992,16 @@ C_SwingTimer.IsTargetWithinSwingRange(swingType)
 ```lua
 GetPhysicalScreenSize
 CopyToClipboard
+GetCallstackHeight             -- 1.19.0, for error handlers
+GetErrorCallstackHeight
+SetErrorCallstackHeight
 ```
+
+Event `UI_SCALE_CHANGED` (1.19.0, no payload) fires when the game applies the
+interface scale to `UIParent`: scale or `useUiScale` changed, or the window
+resized. ClassicAPI also replaces the stock Lua error box with a Lua error
+window (`/luaerrors`, `/luaerrors clear`); it stays closed when `!BugGrabber`
+or an addon's own error handler takes the errors.
 
 ---
 
@@ -2048,6 +2088,16 @@ C_DateAndTime.GetServerTimeLocal
 ```
 
 This should be checked before writing custom timer queues or home-grown server-time synchronization.
+
+Durations (1.19.0): `C_DurationUtil.CreateDuration()` holds a start and a
+length (`SetTimeFromStart`, `GetRemainingDuration`, `GetElapsedPercent`,
+`HasExpired`, `Format*Duration`). `C_DurationUtil.CreateDurationTextBinding()`
+writes a countdown into a font string by itself (no `SetText` per frame), and
+`statusBar:SetTimerDuration(duration [, interpolation [, direction]])` fills a
+bar by itself. Sources: `UnitCastingDuration`, `UnitChannelDuration`,
+`GetTotemDuration`. `statusBar:SetValue` / `SetMinMaxValues` take an
+`Enum.StatusBarInterpolation` (`ExponentialEaseOut`). Details: API.md
+`## DurationUtil`.
 
 ---
 
@@ -3251,8 +3301,9 @@ globals. It returns nothing outside a chat event.
 - `C_Item.GetItemCount` uses the engine's search: it counts equipped bags and
   the keyring and skips broken items. With the bank flag, it reads the bank
   even when the bank is closed. Flags `"0"` are false.
-- Totems: `GetTotemInfo` / `GetTotemTimeLeft` / `GetTotemDuration` use whole
-  seconds and raise an error for a slot outside 1 to 4.
+- Totems: `GetTotemInfo` / `GetTotemTimeLeft` use whole seconds and raise an
+  error for a slot outside 1 to 4. `GetTotemDuration(slot)` returns a duration
+  object with exact times (1.19.0), not a number.
 - `PLAYER_EQUIPMENT_CHANGED` comes after `ITEM_LOCK_CHANGED`.
   `UPDATE_INVENTORY_DURABILITY` fires on every recompute, including at login
   and for bag items.
