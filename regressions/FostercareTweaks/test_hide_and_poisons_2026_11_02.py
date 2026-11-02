@@ -136,6 +136,66 @@ POISONS = WIDGETS + r'''
 '''
 
 
+COOLDOWNS = r'''
+    now = 100
+    function GetTime() return now end
+    cd = { [1784] = { startTime = 0, duration = 0, isOnGCD = false } }
+    C_Spell = { GetSpellCooldown = function(id) lookups = (lookups or 0) + 1; return cd[id] end }
+    function GetSpellInfo(id)
+        if id == "Stealth" then return "Stealth", "", "stealth-icon", 0, nil, 0, 0, 0, 0, 1784 end
+        return spells[id], "Rank 1", "Interface\\Icons\\Spell"
+    end
+'''
+
+
+class CooldownAfterTheBuff(unittest.TestCase):
+    # 2026-11-02, the player: "I can't see Stealth's cooldown when I unstealth".
+    def setUp(self):
+        self.lua = watched(COOLDOWNS)
+        self.lua.execute('''W.Add("Stealth", "player"); icon = FCTweaksWatch_watch_player_Stealth
+            icon.texture.SetDesaturated = function(self, v) self.grey = v end
+            icon.cooldown.SetReverse = function(self, v) self.reverse = v end
+            icon.cooldown.SetCooldown = function(self, s, d) self.start, self.duration = s, d end
+            auras.player[1] = { name = "Stealth", id = 1784 }; fire(events, "UNIT_AURA_DELTA", "player", {})''')
+
+    def test_stealth_ends_and_its_cooldown_shows_greyed(self):
+        lua = self.lua
+        self.assertTrue(lua.eval("icon.shown"))
+        lua.execute('''auras.player = {}; cd[1784] = { startTime = 100, duration = 10, isOnGCD = false }
+            fire(events, "SPELL_UPDATE_COOLDOWN")''')
+        self.assertTrue(lua.eval("icon.shown"))
+        self.assertTrue(lua.eval("icon.texture.grey"))
+        self.assertEqual(lua.eval("icon.cooldown.duration"), 10)
+        self.assertFalse(lua.eval("icon.cooldown.reverse"))                 # a filling sweep, not a draining one
+        lua.execute('now = 111; icon.cooldown.scripts.OnCooldownDone()')
+        self.assertFalse(lua.eval("icon.shown"))                            # ready: gone
+
+    def test_the_global_cooldown_does_not_count(self):
+        lua = self.lua
+        lua.execute('''auras.player = {}; cd[1784] = { startTime = 100, duration = 1.5, isOnGCD = true }
+            fire(events, "SPELL_UPDATE_COOLDOWN")''')
+        self.assertFalse(lua.eval("icon.shown"))
+
+    def test_back_in_stealth_the_colour_and_timer_return(self):
+        lua = self.lua
+        lua.execute('''auras.player = {}; cd[1784] = { startTime = 100, duration = 10, isOnGCD = false }
+            fire(events, "SPELL_UPDATE_COOLDOWN")
+            auras.player[1] = { name = "Stealth", id = 1784 }; fire(events, "UNIT_AURA_DELTA", "player", {})''')
+        self.assertFalse(lua.eval("icon.texture.grey"))
+        self.assertTrue(lua.eval("icon.cooldown.reverse"))
+
+    def test_switched_off_it_just_hides(self):
+        lua = self.lua
+        lua.execute('''W.SetShown(1, "cooldown", false); auras.player = {}
+            cd[1784] = { startTime = 100, duration = 10, isOnGCD = false }; fire(events, "UNIT_AURA_DELTA", "player", {})''')
+        self.assertFalse(lua.eval("icon.shown"))
+
+    def test_the_spell_is_looked_up_once_and_no_table_per_update(self):
+        src = source("mods/watched-auras.lua")
+        self.assertIn("table.wipe(found)", src)
+        self.assertNotIn("local found = {}\n    if UnitExists", src)
+
+
 class WeaponPlaces(unittest.TestCase):
     def test_main_hand_left_off_hand_right_whichever_is_enchanted(self):
         # 2026-11-02 in play: the native updater gives TempEnchant1 to the off
