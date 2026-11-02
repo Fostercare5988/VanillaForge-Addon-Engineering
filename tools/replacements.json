@@ -2,6 +2,13 @@
   "about": "Old ways a DLL now does better. find_holes.py reports a match as a lead, not a verdict: read the code first. Add an entry whenever an audit finds a new one; cite where the better way is documented.",
   "entries": [
     {
+      "id": "action-range-usable-polling",
+      "pattern": "\\bIsActionInRange\\s*\\(|\\brangeTimer\\b|\\bActionButton_OnUpdate\\s*\\(|\"ACTIONBAR_UPDATE_USABLE\"",
+      "finding": "Polls action slots for range every frame, or re-reads every button's usable state on each ACTIONBAR_UPDATE_USABLE.",
+      "better": "C_ActionBar.EnableActionRangeCheck(slot, true) with ACTION_RANGE_CHECK_UPDATE (fires on change only), and ACTION_USABLE_CHANGED (only the slots that changed). Keep an OnUpdate only while a button flashes or its tooltip is shown.",
+      "source": "ClassicAPI docs/API.md#c_actionbarenableactionrangecheckslot-enable, #action_usable_changed-event (1.19.1+)"
+    },
+    {
       "id": "player-class-scanners",
       "pattern": "\\b(GetFriendInfo|GetGuildRosterInfo|GetWhoInfo)\\s*\\(",
       "finding": "Scans friends, guild or /who, often to remember players' classes. (The battleground scoreboard stays the source for enemies never seen, so it is not reported.)",
