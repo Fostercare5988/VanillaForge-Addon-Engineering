@@ -34,6 +34,18 @@ SETUP = r'''
 '''
 
 
+RECORD = r'''
+    local create = CreateFrame
+    CreateFrame = function(...)
+        local f = create(...)
+        f.SetFrameStrata = function(self, s) self.strata = s end
+        f.SetPoint = function(self, ...) self.pt = { ... } end
+        f.GetPoint = function(self) return unpack(self.pt) end
+        return f
+    end
+'''
+
+
 def watched(extra=""):
     lua = runtime()
     lua.execute(SETUP + extra)
@@ -88,6 +100,22 @@ class WatchedAuras(unittest.TestCase):
         lua.execute('auras.player[1] = { name = "Envenom" }; fire(events, "UNIT_AURA_DELTA", "player", {}); W.Remove(1)')
         self.assertFalse(icon(lua, "watch_player_Envenom").shown)
         self.assertEqual(lua.eval("#W.List()"), 0)
+
+    def test_icons_draw_in_front_and_new_ones_start_clear(self):
+        # 2026-11-02 in play: the eighth icon (Blind) started on the target frame,
+        # under its mover, and could not be found.
+        lua = watched(RECORD)
+        for name in ("A", "B", "C", "D", "E", "F", "G", "Blind", "I"):
+            lua.execute('W.Add("%s", "player")' % name)
+        blind = icon(lua, "watch_player_Blind")
+        self.assertEqual(blind.strata, "HIGH")
+        points = lua.eval('(function() local t = {} for _, k in ipairs({"A", "Blind", "I"}) do'
+                          ' local _, _, _, px, py = _G["FCTweaksWatch_watch_player_" .. k]:GetPoint(1); t[#t + 1] = px; t[#t + 1] = py end return t end)()')
+        ax, ay, bx, by, ix, iy = (points[i] for i in range(1, 7))
+        self.assertGreater(ay, 0)                      # above the centre, not on the unit frames
+        self.assertEqual(by, ay)
+        self.assertEqual(bx, -ax)                      # a row of eight, centred
+        self.assertEqual((ix, iy), (ax, ay + 42))      # the ninth starts the next row
 
     def test_each_icon_moves_with_its_own_key(self):
         # Positions sit with the other frames, so each zone layout keeps its own.
