@@ -44,3 +44,19 @@ class PlayerCastbarMover(unittest.TestCase):
         self.assertFalse(lua.eval("CastingBarFrame:IsShown()"))
         lua.execute('local b = CastingBarFrame; b:Show(); b.casting = 1; b.fctRestoreShown(b)')
         self.assertTrue(lua.eval("CastingBarFrame:IsShown()"))
+
+
+class BorderlessCastbars(unittest.TestCase):
+    def test_the_native_border_and_flash_art_are_removed(self):
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(BASE + r'''
+            CastingBarFrame = CreateFrame("StatusBar", "CastingBarFrame")
+            CastingBarBorder = CreateFrame("Frame"); CastingBarFlash = CreateFrame("Frame")
+            for _, t in ipairs({ CastingBarBorder, CastingBarFlash }) do t.SetTexture = function(self, v) self.tex = v or "none" end end
+            FostercareTweaks.RestoreFramePosition = function() return false end
+            FostercareTweaks.RegisterFrameMover = function() end
+        ''')
+        lua.execute(SOURCE)
+        lua.execute('FostercareTweaks.mods["Borderless Castbars"]:enable()')
+        self.assertEqual(lua.eval("CastingBarBorder.tex"), "none")
+        self.assertEqual(lua.eval("CastingBarFlash.tex"), "none")
