@@ -8,7 +8,7 @@ installation. Addon-specific replays require Python and `lupa` with `lupa.lua51`
 Run from VanillaForge, replacing the addon path with the maintained checkout:
 
 ```text
-python -B tools/audit_addon.py "<AddOns>/FostercareAuras" --run-tests --test-start regressions/FostercareAuras --output .private/auras-current.json
+python -B tools/audit_addon.py "<AddOns>/FostercareTweaks" --run-tests --test-start regressions/FostercareTweaks --output .private/fct-current.json
 ```
 
 The audit runner supplies `VANILLAFORGE_ADDON_ROOT` to the test process and records
@@ -25,12 +25,12 @@ approval or establish matching DLLs, settings, test coverage or native behavior.
 ## ClassicAPI 1.17.11 pass (2026-10-27)
 
 Every suite mocks `CLASSIC_API_VERSION = 11711`; since 2026-10-30 the value does not matter, guards only check that it is a number.
-`test_classicapi_1_17_11.py` in FostercareAuras (3),
-MikScrollingBattleText (2), OctoMail (1) and FostercareTweaks (1): unit events
-only for the units read, sorts with `strcmputf8i`, the slash command with
-`strsplittable`, OctoMail's unused tooltip frame gone. All seven fail on the
-commits before the pass. The FostercareAuras and MikScrollingBattleText mocks
-filter `RegisterUnitEvent` registrations by unit, as the engine does.
+`test_classicapi_1_17_11.py` in MikScrollingBattleText (2), OctoMail (1) and
+FostercareTweaks (1): unit events only for the units read, sorts with
+`strcmputf8i`, the slash command with `strsplittable`, OctoMail's unused tooltip
+frame gone. All four fail on the commits before the pass. The
+MikScrollingBattleText mock filters `RegisterUnitEvent` registrations by unit,
+as the engine does.
 
 ## Unit buttons and chat-text cleanup (2026-10-27)
 
@@ -49,25 +49,6 @@ MikScrollingBattleText `test_cleanup_2026_10_27.py` (6): the Search Pattern
 trigger type (chat text, used by no character) is retired with its editor,
 event list and `/msbt search`; XP comes from `PLAYER_XP_UPDATE` (quests and
 exploring too, level-ups counted). All six fail on `f433e27`.
-
-## FostercareAuras 1.2.0-local audit (2026-10-27)
-
-`test_audit_2026_10_27.py` (grid default, one-walk target scan, local loop
-counters, unused textures), `test_audit_2026_10_27b.py` (no per-unit GUID
-health/power events, no Turtle spell data) and `test_ui_2026_10_27.py` (ForgeUI
-window, retired modules, forced refresh honoured, idle handlers, the editor as
-the load-on-demand addon FostercareAuras_Edit, read from the sibling folder).
-`test_saved_settings.py` checks retired saved data is cleared; the Groups and
-custom-code tests were removed with their features.
-
-The 1.3.0-local rogue pass (same day) adds `test_rogue_2026_10_27.py` (poison
-icon from the weapon's temp enchant, Weapon tab, AddOn Options entry, tracker
-icons by name lookup) and `test_editor_smoke.py`: `fa_harness.py` loads both
-addons through login under a permissive widget mock, then the test opens the
-editor on every tracker type and clicks every visible control, so a removed
-widget that is still used fails here instead of in game. The other classes'
-procs and forms, talent checks, bag snapshots and trinket on-use tests left
-with their features. 48 tests.
 
 ## Suite index
 
@@ -88,17 +69,15 @@ that folder's `verified-repositories.json` and `validation.json`.
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
 | !ErrorLog | `regressions/ErrorLog` | 2 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
-| FostercareAuras | `regressions/FostercareAuras` | 60 | Yes | [FostercareAuras](#fostercareauras) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 61 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 210 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 67 | Yes | [GearRack](#gearrack) |
-| MikScrollingBattleText | `regressions/MikScrollingBattleText` | 42 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
+| MikScrollingBattleText | `regressions/MikScrollingBattleText` | 46 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
 | TWThreat | `regressions/TWThreat` | 6 | Yes | [TWThreat](#twthreat) |
 | AutoLazy (older) | private `external-tests/AutoLazy` | 130 | No | private command below |
 | aux-addon | private `external-tests/aux-addon` | 5 | No | private command below |
 | BetterCharacterStats | private `external-tests/BetterCharacterStats` | 9 | No | private command below |
-| FostercareAuras (older) | private `external-tests/FostercareAuras` | 33 | No | private command below |
 | TWThreat | private `external-tests/TWThreat` | 4 | No | private command below |
 | UnitXP_SP3_Addon | private `external-tests/UnitXP_SP3_Addon` | 4 | No | private command below |
 
@@ -117,44 +96,6 @@ Counts are test methods as of 20 October 2026; update this table when a suite
 gains or loses tests. Moving a private suite here means switching it to
 `VANILLAFORGE_ADDON_ROOT` and removing archived fixture paths.
 
-## FostercareAuras
-
-Eleven actual-source regressions cover bag changes with an intervening snapshot,
-equipment/bag ordering, 200-event invalidation bursts, reentrant ability/aura/custom
-evaluation, ongoing slides, removed frames and foreign global state. Six delivery
-and three slide tests fail the preceding installed source for the intended defects.
-The other two tests preserve existing slide and deferred-reflow behavior.
-
-`test_combat_log_procs.py` (1.1.0-local, ClassicAPI 1.17.3) feeds
-`COMBAT_LOG_EVENT_UNFILTERED` payloads to the real proc block: Overpower stays on
-the unit that dodged (by GUID, not name), Revenge opens on any attacker's dodge,
-parry or block, and Riposte, Surprise Attack, Arcane Surge and Lacerate open on
-their miss types, resists and crits. Seven fail on 1.0.1, which parsed chat text;
-the eighth is a control.
-
-`test_item_use.py` (1.1.0-local) runs the real `_GetInventorySlotState`: an
-equipped item counts as on-use only when `C_Item.GetItemSpell` names an ON_USE
-spell, the slot tooltip is never read, and an item-cache miss is retried while a
-hit is cached. All three fail on the tooltip-parsing code.
-
-`test_condition_checks.py` runs the real talent and form checks. The talent mode
-is normalized once per mode string (fails on 1.1.0-local, which rebuilt its cache
-on every check); the paladin and druid form results are pinned across the move of
-the form name lists into tables built once.
-
-`test_lookups.py`: pet stack counts come from `FostercarePetAuras.GetStacks` with no
-aura rescan, and a spell NamPower reports missing from the spellbook costs no
-spellbook walk. Both fail on 1.1.0-local.
-
-`test_saved_settings.py` runs the real SavedVariables init block: the retired
-`FostercareAurasDB.settings` table is cleared on load (fails on 1.1.0-local) and
-kept settings survive.
-
-The harness executes complete selected Lua function/event bodies with explicit
-state and widget mocks. It uses Lua 5.1 and does not prove WoW Lua 5.0/native widget
-semantics, appearance, frame times or gameplay. Native acceptance stays with the
-[current runtime checklist](../archive/audit/OCTOWOW_RUNTIME_VERIFICATION.md#current-acceptance-pass-2026-10-12).
-
 ## MikScrollingBattleText
 
 `test_msbt_fixes.py` (10) covers the [2026-10-12 audit](../archive/audit/MSBT_2026-10-12_AUDIT.md)
@@ -162,7 +103,7 @@ repairs F1-F6; `test_msbt_audit_2026_10_25.py` (20) covers the 2026-10-25 audit,
 combat-log source and the ForgeUI settings window. Both run on `_msbt_runtime.py`: every
 TOC file in a lupa model with ClassicAPI-only globals, a stateful widget model and `CL(...)`
 for combat log events. No client MPQs are needed; the BigWigs test uses the adjacent checkout.
-`test_big_combat_icon_2026_11_01.py` (4): the Icon switch on Enter/Leave Combat adds a texture at twice the font size, off by default.
+`test_big_combat_icon_2026_11_01.py` (8): the Icon switch on Enter/Leave Combat adds crossed swords at twice the font size, off by default; swords and text are red in combat and green out of it, and profiles with white or 1.2.1's swapped colours change.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/MikScrollingBattleText" --run-tests --test-start regressions/MikScrollingBattleText
@@ -250,8 +191,8 @@ vararg wrappers. Options: nine switches are always on and cleared on load;
 frames the addon no longer checks for.
 
 The player's notes the same day add `test_zone_layouts_2026_11_02.py` (9: a layout per zone, combat waits,
-shared extra-row spells, frames go home), `test_watched_auras_2026_11_02.py` (9, with the FostercareAuras
-import) and `ActionBarRows` in `test_settings_2026_10_25.py` (5: one row per bar).
+shared extra-row spells, frames go home), `test_watched_auras_2026_11_02.py` (9; 1.9.1
+retires FostercareAuras and its one-time import) and `ActionBarRows` in `test_settings_2026_10_25.py` (5: one row per bar).
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareTweaks" --run-tests --test-start regressions/FostercareTweaks --output .private/fct-current.json

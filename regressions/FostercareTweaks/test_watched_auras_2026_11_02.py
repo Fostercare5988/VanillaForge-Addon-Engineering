@@ -1,9 +1,10 @@
 """Watched auras (2026-11-02, the player's notes: movable specific auras).
 
 Chosen buffs on you and debuffs on your target, each its own icon with the
-time left, shown while the aura is up and moved with Ctrl+Shift. A
-FostercareAuras setup is imported once. Every test fails on 192e14d, which has
-no watched auras. The icons' look and the countdown drawing stay in-game checks.
+time left, shown while the aura is up and moved with Ctrl+Shift. They replace
+FostercareAuras, retired in 1.9.1 with the one-time import that 1.9.0 ran. Every
+test fails on 192e14d, which has no watched auras. The icons' look and the
+countdown drawing stay in-game checks.
 """
 import unittest
 
@@ -95,34 +96,19 @@ class WatchedAuras(unittest.TestCase):
         self.assertEqual(icon(lua, "watch_player_Envenom").moverKey, "watch_player_Envenom")
 
 
-FOSTERCARE_AURAS = r'''
-    FostercareAurasDB = { spells = {
-        Rupture_Debuff = { type = "Debuff", displayName = "Rupture", spellid = 8640, order = 4, offsetX = 172, offsetY = -105,
-            iconTexture = "Interface\\Icons\\Ability_Rogue_Rupture", conditions = { aura = { onlyMine = true } } },
-        Envenom_Buff = { type = "Buff", displayName = "Envenom", spellid = 52531, order = 1, offsetX = -241, offsetY = -120 },
-        ExposeArmor_Debuff = { type = "Debuff", displayName = "Expose Armor", spellid = 8649, order = 9,
-            conditions = { aura = { onlyMine = false } } },
-        Poison_Item = { type = "Item", displayName = "---EQUIPPED WEAPON SLOTS---", order = 8 },
-    } }
-'''
+class AfterTheImport(unittest.TestCase):
+    # 1.9.0 copied FostercareAuras setups once, spell IDs as text: matched by
+    # name only. 1.9.1 has no import; it turns them into numbers.
+    def test_text_ids_match_again(self):
+        lua = watched('''FostercareTweaks_Config.watchedImported = true
+            FostercareTweaks_Config.watched = { { name = "Rupture", spellId = "8640", unit = "target", mine = true } }''')
+        self.assertEqual(lua.eval("W.List()[1].spellId"), 8640)
+        self.assertIsNone(lua.eval("FostercareTweaks_Config.watchedImported"))
+        lua.execute('auras.target[1] = { name = "Rupture (Rank 6)", id = 8640, source = "player" }; W.Update("target")')
+        self.assertTrue(icon(lua, "watch_target_Rupture").shown)
 
-
-class ImportFromFostercareAuras(unittest.TestCase):
-    def test_buffs_and_debuffs_come_over_once_in_order(self):
-        lua = watched(FOSTERCARE_AURAS)
-        names = [lua.eval("W.List()[%d].name" % i) for i in range(1, 4)]
-        self.assertEqual(names, ["Envenom", "Rupture", "Expose Armor"])
-        self.assertEqual(lua.eval("W.List()[2].unit"), "target")
-        self.assertTrue(lua.eval("W.List()[2].mine"))
-        self.assertIsNone(lua.eval("W.List()[3].mine"))
-        self.assertEqual(lua.eval("#W.List()"), 3)                 # the weapon slot is the Weapon enchants area
-        pos = lua.eval("FostercareTweaks_Config.unitframe_positions.watch_target_Rupture")
-        self.assertEqual((pos.point, pos.x, pos.y), ("CENTER", 172, -105))
-        lua.execute('FT.mods["Watched Auras"].enable()')
-        self.assertEqual(lua.eval("#W.List()"), 3)
-
-    def test_without_fostercare_auras_the_list_starts_empty(self):
-        lua = watched()
+    def test_a_fostercare_auras_setup_is_not_read(self):
+        lua = watched('FostercareAurasDB = { spells = { E = { type = "Buff", displayName = "Envenom", order = 1 } } }')
         self.assertEqual(lua.eval("#W.List()"), 0)
 
 
