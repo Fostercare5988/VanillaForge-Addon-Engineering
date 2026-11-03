@@ -77,5 +77,50 @@ class SpyBattlegroundTests(unittest.TestCase):
         self.assertIsNone(lua.eval('AutoBG_Settings.Spy.Stats and AutoBG_Settings.Spy.Stats["mayve-nz"]'))
 
 
+class MovedPathTests(unittest.TestCase):
+    """Paths the 2026-11-03 cleanup moved; these pass on the old code too."""
+
+    def test_match_end_lines_are_read_only_in_a_battleground(self):
+        from lupa.lua51 import LuaRuntime
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(core.BASE)
+        lua.execute(core.CORE)
+        lua.execute('''
+            registered = {}
+            function AutoBGFrame:RegisterEvent(e) registered[e] = true end
+            function AutoBGFrame:UnregisterEvent(e) registered[e] = nil end
+        ''')
+        core.fire(lua, "ADDON_LOADED", "AutoBG")
+        self.assertIsNone(lua.eval('registered.CHAT_MSG_SYSTEM'))
+        lua.execute('pvp, zone = true, "Warsong Gulch"')
+        core.fire(lua, "PLAYER_ENTERING_WORLD")
+        self.assertTrue(lua.eval('registered.CHAT_MSG_BG_SYSTEM_HORDE and registered.CHAT_MSG_SYSTEM'))
+        lua.execute('pvp, zone = false, "Orgrimmar"')
+        core.fire(lua, "PLAYER_ENTERING_WORLD")
+        self.assertIsNone(lua.eval('registered.CHAT_MSG_SYSTEM'))
+
+    def test_a_name_with_no_queue_says_so(self):
+        lua = core.runtime()
+        lua.execute('queued = {}; function JoinBattlegroundQueue(t) table.insert(queued, t) end')
+        lua.execute('AutoBG_TriggerBattlegroundFinder("Blood Ring")')
+        self.assertEqual(lua.eval('#queued'), 0)
+        lua.execute('AutoBG_TriggerBattlegroundFinder("tg")')
+        self.assertEqual(lua.eval('queued[1]'), "ThornGorge")
+
+    def test_old_targets_leftovers_are_cleared(self):
+        import test_targets_guid_events as targets
+        lua = targets.runtime()
+        lua.execute('''
+            AutoBG_Settings.Targets.pos = {}
+            AutoBG_Settings.Targets.Spy = { Enabled = true }
+            AutoBG_Settings.Targets.IndependentPositionsVersion = 1
+            AutoBG_Settings.Positions = { AutoBG_TargetsMainFrame = { x = 1 }, AutoBG_TargetsMainFrame10 = { x = 2 } }
+            AutoBG_Targets:EnsureOptions()
+        ''')
+        self.assertIsNone(lua.eval('AutoBG_Settings.Targets.pos or AutoBG_Settings.Targets.Spy or AutoBG_Settings.Targets.IndependentPositionsVersion'))
+        self.assertIsNone(lua.eval('AutoBG_Settings.Positions.AutoBG_TargetsMainFrame'))
+        self.assertEqual(lua.eval('AutoBG_Settings.Positions.AutoBG_TargetsMainFrame10.x'), 2)
+
+
 if __name__ == "__main__":
     unittest.main()

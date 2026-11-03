@@ -38,6 +38,12 @@ end
 function Widget:GetScript(kind) return self.scripts and self.scripts[kind] end
 function CreateFrame(_, name) local f = setmetatable({ name = name }, { __index = Widget }); if name then _G[name] = f end; return f end
 UIParent = CreateFrame("Frame", "UIParent")
+-- Always in the client: the battlemaster window (FrameXML) and, after all
+-- AutoBG files load, the enemy frames and Spy that ADDON_LOADED fills.
+BattlefieldFrame = CreateFrame("Frame", "BattlefieldFrame")
+TWMiniMapBattlefieldFrame = CreateFrame("Button", "TWMiniMapBattlefieldFrame")
+AutoBG_Targets = { EnsureOptions = function() AutoBG_Settings.Targets = AutoBG_Settings.Targets or {} end }
+AutoBG_Spy = { EnsureOptions = function() AutoBG_Settings.Spy = AutoBG_Settings.Spy or {}; return AutoBG_Settings.Spy end }
 messages = {}
 DEFAULT_CHAT_FRAME = { AddMessage = function(_, msg) table.insert(messages, msg) end }
 function hooksecurefunc() end
