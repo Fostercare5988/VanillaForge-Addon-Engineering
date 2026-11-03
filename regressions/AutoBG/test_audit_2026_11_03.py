@@ -198,5 +198,47 @@ class TimerEventTests(unittest.TestCase):
         self.assertIsNone(lua.eval('AutoBG_Settings.TestAllTimers'))
 
 
+class EnemyFrameEventTests(unittest.TestCase):
+    def runtime(self):
+        import test_targets_guid_events as tge
+        lua = tge.runtime()
+        lua.execute('clock = 1000; function GetTime() return clock end')
+        return lua, tge
+
+    def test_unit_spellcast_succeeded_is_not_registered(self):
+        # UNIT_CASTEVENT already reports every cast, instants included.
+        import test_targets_guid_events as tge
+        from lupa.lua51 import LuaRuntime
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(tge.BASE + 'unitEvents = {}')
+        lua.execute('''local w = getmetatable(CreateFrame("Frame")).__index
+            function w:RegisterUnitEvent(e) unitEvents[e] = true end''')
+        tge.addon_loader.load(lua, tge.TARGETS, "AutoBG_Targets.lua")
+        lua.execute('AutoBG_Targets.scripts.OnEvent(AutoBG_Targets, "PLAYER_LOGIN")')
+        lua.execute('AutoBG_Targets.scripts.OnEvent(AutoBG_Targets, "UPDATE_BATTLEFIELD_STATUS")')
+        self.assertTrue(lua.eval('unitEvents.UNIT_AURA_DELTA'))
+        self.assertIsNone(lua.eval('unitEvents.UNIT_SPELLCAST_SUCCEEDED'))
+
+    def test_a_creatures_swings_are_looked_up_once(self):
+        lua, tge = self.runtime()
+        lua.execute('''nameCalls = 0
+            local unitName = UnitName
+            function UnitName(u) nameCalls = nameCalls + 1; return unitName(u) end''')
+        for _ in range(5):
+            tge.fire(lua, "UNIT_CASTEVENT", "0xF130000000000077", "", "MAINHAND", 0, 0)
+        self.assertEqual(lua.eval('nameCalls'), 0)  # not a player GUID: no name asked
+        lua.execute('guidNames["0x0000000000000099"] = "Stranger"')
+        for _ in range(5):
+            tge.fire(lua, "UNIT_CASTEVENT", "0x0000000000000099", "", "MAINHAND", 0, 0)
+        self.assertEqual(lua.eval('nameCalls'), 1)
+
+    def test_potion_stealth_ends_on_the_half_second_ticker(self):
+        lua, tge = self.runtime()
+        tge.fire(lua, "BUFF_ADDED_OTHER", tge.GROM, 1, 11392, 1, 60, 5, 0)
+        self.assertEqual(tge.row_text(lua), "|cff00ffffINVIS POT|r")
+        lua.execute('clock = clock + 19; for _, fn in ipairs(tickers) do fn() end')
+        self.assertEqual(tge.row_text(lua), "100%")
+
+
 if __name__ == "__main__":
     unittest.main()

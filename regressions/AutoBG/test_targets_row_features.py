@@ -25,7 +25,8 @@ def tick(lua):
 
 
 def animate(lua, seconds=0):
-    lua.execute('clock = clock + %s; local c = AutoBG_TargetCast1; c.scripts.OnUpdate(c)' % seconds)
+    """Time passes and the half-second ticker runs (the bars fill by themselves)."""
+    lua.execute('clock = clock + %s; for _, fn in ipairs(tickers) do fn() end' % seconds)
 
 
 def record_colors(lua, row=1):
@@ -85,9 +86,16 @@ class CastBarTests(unittest.TestCase):
         lua = setup()
         lua.execute('channels["%s"] = { name = "Arcane Missiles", start = 999000, finish = 1001000 }' % GROM)
         fire(lua, "UNIT_CASTEVENT", GROM, "", "CHANNEL", 10212, 2000)
-        animate(lua)
-        # Half way through a channel: half of the 93-pixel bar remains.
-        self.assertEqual(lua.eval('AutoBG_TargetCast1.barWidth'), 47)
+        # The bar drains by itself over the channel's span, in seconds.
+        self.assertEqual(lua.eval('AutoBG_TargetCast1.Bar.direction'), 1)
+        self.assertEqual(lua.eval('AutoBG_TargetCast1.Bar.timer.start'), 999)
+        self.assertEqual(lua.eval('AutoBG_TargetCast1.Bar.timer.finish'), 1001)
+
+    def test_cast_fills_and_needs_no_script_per_frame(self):
+        lua = setup()
+        self.start_heal(lua)
+        self.assertEqual(lua.eval('AutoBG_TargetCast1.Bar.direction'), 0)
+        self.assertIsNone(lua.eval('AutoBG_TargetCast1.scripts.OnUpdate'))
 
     def test_clicking_the_cast_bar_targets_the_caster(self):
         # 2026-10-27: the cast bar is a unit button too; left targets, right focuses.
