@@ -22,6 +22,9 @@ end
 function Widget:GetValue() return self.value or 0 end
 function Widget:SetHeight(h) self.height = h end
 calls = {}
+timersPreview = nil
+function AutoBG_Timers_SetPreview(on) timersPreview = on end
+function AutoBG_FC_SetPreview(on) fcPreview = on end
 AutoBG_Targets.DisableConfigMode = function(self) self.isConfig = false; table.insert(calls, "targets off") end
 AutoBG_Targets.EnableConfigMode = function(self, size) self.isConfig = true; table.insert(calls, "targets " .. size) end
 AutoBG_Spy.EnableTestMode = function(self) self.isTestMode = true; table.insert(calls, "spy on") end
@@ -63,11 +66,11 @@ class OptionsLayoutTests(unittest.TestCase):
         lua.execute('AutoBG_OpenOptions("spy")')
         click(lua, "AutoBG_BtnTestAll")
         self.assertEqual(list(lua.eval('calls').values()), ["targets 10", "spy on"])
-        self.assertTrue(lua.eval('AutoBG_Settings.TestAllTimers'))
+        self.assertTrue(lua.eval('timersPreview'))
         self.assertTrue(lua.eval('AutoBG_BtnTestAll.selected'))
         self.assertEqual(lua.eval('AutoBG_BtnTestAll.text'), "Hide preview")
         click(lua, "AutoBG_BtnTestAll")
-        self.assertFalse(lua.eval('AutoBG_Settings.TestAllTimers'))
+        self.assertFalse(lua.eval('timersPreview'))
         self.assertFalse(lua.eval('AutoBG_Spy.isTestMode'))
         self.assertFalse(lua.eval('AutoBG_BtnTestAll.selected'))
         self.assertEqual(lua.eval('AutoBG_BtnTestAll.text'), "Preview frames")
@@ -79,7 +82,7 @@ class OptionsLayoutTests(unittest.TestCase):
         lua.execute('AutoBG_OptionsPanel:Hide(); AutoBG_OptionsPanel.scripts.OnHide()')
         self.assertFalse(lua.eval('AutoBG_Spy.isTestMode'))
         self.assertFalse(lua.eval('AutoBG_Targets.isConfig'))
-        self.assertFalse(lua.eval('AutoBG_Settings.TestAllTimers'))
+        self.assertFalse(lua.eval('timersPreview'))
 
     def test_switches_save_their_settings(self):
         lua = runtime()

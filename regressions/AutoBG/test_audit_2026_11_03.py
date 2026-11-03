@@ -122,5 +122,81 @@ class MovedPathTests(unittest.TestCase):
         self.assertEqual(lua.eval('AutoBG_Settings.Positions.AutoBG_TargetsMainFrame10.x'), 2)
 
 
+class CarrierEventTests(unittest.TestCase):
+    """Carrier health follows NamPower UNIT_HEALTH_GUID; a 0.5 s ticker finds
+    the unit and reads the distance (it was a 0.15 s poll of everything)."""
+
+    def runtime(self):
+        import test_carrier_health as tch
+        from lupa.lua51 import LuaRuntime
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(tch.BASE + '''
+            hp, maxHp = 3690, 4500
+            intervals, registered = {}, {}
+            C_Timer.NewTicker = function(s) table.insert(intervals, s); return { Cancel = function() end } end
+        ''')
+        lua.execute(tch.FC)
+        lua.execute('''
+            function AutoBG_FCEventFrame:RegisterEvent(e) registered[e] = true end
+            function AutoBG_FCEventFrame:UnregisterEvent(e) registered[e] = nil end
+        ''')
+        lua.execute('local f = AutoBG_FCEventFrame; f.scripts.OnEvent(f, "PLAYER_ENTERING_WORLD")')
+        lua.execute('local f = AutoBG_FCEventFrame; f.scripts.OnEvent(f, "CHAT_MSG_BG_SYSTEM_HORDE", "The Horde flag was picked up by Grom!")')
+        lua.execute('AutoBG_FC_UpdateVisibility()')
+        return lua
+
+    def test_health_event_updates_the_carrier_at_once(self):
+        lua = self.runtime()
+        self.assertTrue(lua.eval('registered.UNIT_HEALTH_GUID'))
+        self.assertEqual(lua.eval('intervals[1]'), 0.5)
+        lua.execute('hp = 900; local f = AutoBG_FCEventFrame; f.scripts.OnEvent(f, "UNIT_HEALTH_GUID", "0x00000000000000C3", 0, 0, 0, 0, 0, 3)')
+        self.assertEqual(lua.eval('AutoBG_AllianceFC.hpText.text'), "900 / 4500")
+
+    def test_other_units_health_is_ignored(self):
+        lua = self.runtime()
+        lua.execute('hp = 900; local f = AutoBG_FCEventFrame; f.scripts.OnEvent(f, "UNIT_HEALTH_GUID", "0x0000000000000099", 0, 0, 0, 0, 0, 0)')
+        self.assertEqual(lua.eval('AutoBG_AllianceFC.hpText.text'), "3690 / 4500")
+
+    def test_no_health_events_without_a_carrier(self):
+        lua = self.runtime()
+        lua.execute('local f = AutoBG_FCEventFrame; f.scripts.OnEvent(f, "CHAT_MSG_BG_SYSTEM_ALLIANCE", "The Horde flag was dropped by Grom!")')
+        self.assertIsNone(lua.eval('registered.UNIT_HEALTH_GUID'))
+
+
+class TimerEventTests(unittest.TestCase):
+    def runtime(self, zone, pvp):
+        import test_timer_bars as ttb
+        from lupa.lua51 import LuaRuntime
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(ttb.BASE + '''
+            function GetRealZoneText() return "%s" end
+            function IsInInstance() return %s end
+            registered = {}
+        ''' % (zone, '1, "pvp"' if pvp else 'nil, "none"'))
+        lua.execute(ttb.TIMERS)
+        lua.execute('''
+            function AutoBG_TimersEventFrame:RegisterEvent(e) registered[e] = true end
+            function AutoBG_TimersEventFrame:UnregisterEvent(e) registered[e] = nil end
+            local f = AutoBG_TimersEventFrame; f.scripts.OnEvent(f, "PLAYER_ENTERING_WORLD")
+        ''')
+        return lua
+
+    def test_battleground_lines_are_read_only_in_a_battleground(self):
+        self.assertIsNone(self.runtime("Orgrimmar", False).eval('registered.CHAT_MSG_MONSTER_YELL'))
+        self.assertTrue(self.runtime("Alterac Valley", True).eval('registered.CHAT_MSG_MONSTER_YELL'))
+
+    def test_a_captured_flag_starts_its_return_row(self):
+        lua = self.runtime("Warsong Gulch", True)
+        lua.execute('local f = AutoBG_TimersEventFrame; f.scripts.OnEvent(f, "CHAT_MSG_BG_SYSTEM_ALLIANCE", "Tester captured the Horde flag!")')
+        self.assertEqual(lua.eval('AutoBG_WSGFlagFrame.rows[1].labelFs.text'), "Horde Flag")
+        self.assertEqual(lua.eval('AutoBG_WSGFlagFrame.rows[1].timeFs.text'), "23")
+
+    def test_the_preview_is_never_saved(self):
+        lua = self.runtime("Orgrimmar", False)
+        lua.execute('AutoBG_Timers_SetPreview(true); AutoBG_Timers_UpdateVisibility()')
+        self.assertTrue(lua.eval('AutoBG_NodeFrame.shown'))
+        self.assertIsNone(lua.eval('AutoBG_Settings.TestAllTimers'))
+
+
 if __name__ == "__main__":
     unittest.main()

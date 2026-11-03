@@ -15,6 +15,13 @@ TIMERS = (ROOT / "AutoBG_Timers.lua").read_text("utf-8-sig")
 BASE = r'''
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 CLASSIC_API_VERSION, SUPERWOW_VERSION = 11711, "2.2"
+-- AutoBG.lua's shared helpers (loaded before this file in the client).
+function AutoBG_SavePosition() end
+function AutoBG_LoadPosition() end
+function AutoBG_FindPlayerClass(name) return name and playerClasses and playerClasses[name] end
+function AutoBG_GetClassColor() return nil end
+function AutoBG_GetBGIcon() return nil end
+function GetAreaSpiritHealerTime() return 0 end
 local Widget = {}
 setmetatable(Widget, { __index = function(_, name)
     if string.find(name, "^%u") then return function() end end
@@ -62,7 +69,7 @@ function GetRealZoneText() return "Orgrimmar" end
 function IsInInstance() return nil, "none" end
 function UnitFactionGroup() return "Alliance" end
 function GetNumWorldStateUI() return 0 end
-AutoBG_Settings = { TestAllTimers = true, ABTimers = true, AVTimers = true, WSGTimers = true,
+AutoBG_Settings = { ABTimers = true, AVTimers = true, WSGTimers = true,
                     StartTimer = true, NodeColors = true, ABProjection = false,
                     RessTimer = false, QueueTimers = false }
 '''
@@ -72,7 +79,7 @@ def runtime():
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(BASE)
     lua.execute(TIMERS)
-    lua.execute('AutoBG_Timers_UpdateVisibility()')
+    lua.execute('AutoBG_Timers_SetPreview(true); AutoBG_Timers_UpdateVisibility()')
     return lua
 
 
@@ -118,7 +125,6 @@ class TimerBarTests(unittest.TestCase):
     def start_clock(self, line, event="CHAT_MSG_BG_SYSTEM_NEUTRAL"):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(BASE + r'''
-            AutoBG_Settings.TestAllTimers = false
             function GetRealZoneText() return "Alterac Valley" end
             function IsInInstance() return 1, "pvp" end
         ''')
@@ -145,7 +151,6 @@ class TimerBarTests(unittest.TestCase):
     def test_open_world_arathi_highlands_is_not_arathi_basin(self):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(BASE + r'''
-            AutoBG_Settings.TestAllTimers = false
             AutoBG_Settings.ABProjection = true
             function GetRealZoneText() return "Arathi Highlands" end
             worldStateReads = 0
