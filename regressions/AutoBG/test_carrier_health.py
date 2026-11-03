@@ -13,6 +13,13 @@ FC = (ROOT / "AutoBG_FC.lua").read_text("utf-8-sig")
 
 BASE = r'''
 CLASSIC_API_VERSION, SUPERWOW_VERSION = 11711, "2.2"
+-- AutoBG.lua's shared helpers (loaded before this file in the client).
+function AutoBG_SavePosition() end
+function AutoBG_LoadPosition() end
+function AutoBG_FindPlayerClass(name) return name and playerClasses and playerClasses[name] end
+function AutoBG_GetClassColor() return nil end
+function AutoBG_GetBGIcon() return nil end
+function GetUnitField() return nil end -- NamPower; nil for units it has no fields for
 local Widget = {}
 setmetatable(Widget, { __index = function(_, name)
     if string.find(name, "^%u") then return function() end end
@@ -111,9 +118,9 @@ class CarrierHealthTests(unittest.TestCase):
 
     def test_live_carrier_returns_after_timer_test_mode(self):
         lua = runtime(3690, 4500)
-        lua.execute('AutoBG_Settings.TestAllTimers = true; AutoBG_FC_UpdateVisibility()')
+        lua.execute('AutoBG_FC_SetPreview(true); AutoBG_FC_UpdateVisibility()')
         self.assertIn("Alliance Druid", lua.eval('AutoBG_AllianceFC.nameText.text'))
-        lua.execute('AutoBG_Settings.TestAllTimers = false; AutoBG_FC_UpdateVisibility()')
+        lua.execute('AutoBG_FC_SetPreview(false); AutoBG_FC_UpdateVisibility()')
         self.assertEqual(lua.eval('AutoBG_AllianceFC.nameText.text'), "Grom")
         self.assertEqual(lua.eval('AutoBG_AllianceFC.hpText.text'), "3690 / 4500")
 

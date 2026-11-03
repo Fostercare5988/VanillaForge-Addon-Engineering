@@ -34,7 +34,6 @@ now = 1000
 function GetTime() return now end
 tickIntervals = {}
 C_Timer.NewTicker = function(interval) table.insert(tickIntervals, interval); return { Cancel = function() end } end
-AutoBG_Settings.TestAllTimers = false
 function GetRealZoneText() return "Alterac Valley" end
 function IsInInstance() return 1, "pvp" end
 function GetNumRaidMembers() return 0 end

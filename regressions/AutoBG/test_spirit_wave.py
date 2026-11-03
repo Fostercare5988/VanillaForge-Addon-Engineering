@@ -15,6 +15,13 @@ TIMERS = (ROOT / "AutoBG_Timers.lua").read_text("utf-8-sig")
 BASE = r'''
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 CLASSIC_API_VERSION, SUPERWOW_VERSION = 11711, "2.2"
+-- AutoBG.lua's shared helpers (loaded before this file in the client).
+function AutoBG_SavePosition() end
+function AutoBG_LoadPosition() end
+function AutoBG_FindPlayerClass(name) return name and playerClasses and playerClasses[name] end
+function AutoBG_GetClassColor() return nil end
+function AutoBG_GetBGIcon() return nil end
+function GetAreaSpiritHealerTime() return 0 end
 local Widget = {}
 setmetatable(Widget, { __index = function(_, name)
     if string.find(name, "^%u") then return function() end end

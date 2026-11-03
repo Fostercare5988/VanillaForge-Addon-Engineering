@@ -48,7 +48,6 @@ class MessageFactionTests(unittest.TestCase):
     def runtime(self, prelude):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(ttb.BASE + r'''
-            AutoBG_Settings.TestAllTimers = false
             function GetRealZoneText() return "Arathi Basin" end
             function IsInInstance() return 1, "pvp" end
             function UnitName(u) if u == "player" then return "Tester" end end

@@ -13,7 +13,6 @@ from lupa.lua51 import LuaRuntime
 from test_timer_bars import BASE, TIMERS
 
 AB = r'''
-AutoBG_Settings.TestAllTimers = false
 AutoBG_Settings.ABProjection = true
 function GetRealZoneText() return "Arathi Basin" end
 function IsInInstance() return 1, "pvp" end
