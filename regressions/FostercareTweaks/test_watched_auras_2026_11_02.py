@@ -111,7 +111,7 @@ class WatchedAuras(unittest.TestCase):
         for name in ("A", "B", "C", "D", "E", "F", "G", "Blind", "I"):
             lua.execute('W.Add("%s", "player")' % name)
         blind = icon(lua, "watch_player_Blind")
-        self.assertEqual(blind.strata, "HIGH")
+        self.assertNotEqual(blind.strata, "HIGH")      # 2026-11-03: windows draw over them
         points = lua.eval('(function() local t = {} for _, k in ipairs({"A", "Blind", "I"}) do'
                           ' local _, _, _, px, py = _G["FCTweaksWatch_watch_player_" .. k]:GetPoint(1); t[#t + 1] = px; t[#t + 1] = py end return t end)()')
         ax, ay, bx, by, ix, iy = (points[i] for i in range(1, 7))

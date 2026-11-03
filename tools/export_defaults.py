@@ -59,9 +59,6 @@ def retired_keys(addon):
 
 def clean(config, retired=()):
     config.pop("Social Colors", None)
-    # The zone layouts are the author's own copies; a new character starts with one.
-    config.pop("profiles", None)
-    config.pop("profile", None)
     for key in retired:
         config.pop(key, None)
     bars = config.get("actionbars", {}).get("bars", {})
