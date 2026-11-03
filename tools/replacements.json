@@ -313,6 +313,20 @@
       "finding": "Drops unit events for other tokens in Lua, after the handler already ran for every token naming the unit.",
       "better": "frame:RegisterUnitEvent(event, units...); for plates, the nameplate1..N tokens (grow the list when a plate takes a higher slot: FostercareNameplates FNP.RegisterPlateEvent).",
       "source": "ClassicAPI docs/API.md#frameregisteruniteventevent-units"
+    },
+    {
+      "id": "remote-pushback-poll",
+      "pattern": "(?i)pushback",
+      "finding": "Re-reads another unit's cast on a timer or every frame so the bar follows pushback.",
+      "better": "Nothing to follow: the server sends pushback only to the caster, so another unit's cast keeps its first span. Fill the bar with statusBar:SetTimerDuration from C_Spell.UnitCastingInfo times; end it on the cast events, with a slow backstop for casts the engine clears silently.",
+      "source": "ClassicAPI docs/API.md#unit_spellcast_-events (non-player limits), #c_spellunitcastinginfounit--c_spellcastinginfo"
+    },
+    {
+      "id": "spellcast-succeeded-beside-castevent",
+      "pattern": "[\"']UNIT_SPELLCAST_SUCCEEDED[\"']",
+      "finding": "Registers ClassicAPI UNIT_SPELLCAST_SUCCEEDED for other units. A lead only when the addon also reads SuperWoW UNIT_CASTEVENT: that reports the same casts (SMSG_SPELL_GO, instants included) for every unit, so the token events add only de-duplication work.",
+      "better": "Keep one cast source: UNIT_CASTEVENT when swings matter too, otherwise NamPower SPELL_GO_OTHER; UNIT_SPELLCAST_* for the player or token-bound frames.",
+      "source": "ClassicAPI docs/API.md#unit_spellcast_-events; SuperWoW wiki Features.md (UNIT_CASTEVENT)"
     }
   ]
 }

@@ -63,7 +63,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | Addon | Location | Tests | Portable | Run |
 | --- | --- | ---: | --- | --- |
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 5 | Yes | [ActionBarProfiles](#actionbarprofiles) |
-| AutoBG | `regressions/AutoBG` | 199 | Yes | [AutoBG](#autobg) |
+| AutoBG | `regressions/AutoBG` | 223 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 32 | Yes | [AutoLazy](#autolazy) |
 | Bagnon | `regressions/Bagnon` | 38 | Yes | [Bagnon](#bagnon) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
@@ -665,6 +665,13 @@ covers a missed stop event and an old timer never hides a newer cast, and DELAYE
 (which never fire for other units) are no longer registered.
 AutoBG `test_timer_fill_2026_11_02.py` (4): a counting row drains from a time span, frames write no fill, the
 spark appears part way, preview rows hold a value.
+AutoBG `test_audit_2026_11_03.py` (19): `/abg t` uses the one preview switch, leaving a queue is not a
+missed enter, Spy records nothing in a battleground instance (these three fail on `2b10a35`); match chat
+and objective lines only in battlegrounds, unknown queue names, old Targets leftovers cleared, carrier
+health from `UNIT_HEALTH_GUID` on a 0.5 s ticker, the preview never saved, timed cast bars without
+`OnUpdate`, no `UNIT_SPELLCAST_SUCCEEDED`, a creature's swings looked up once, potion stealth ending on
+the ticker. The core, Timers, carrier, Spy and flag-watch harnesses now load what the client always has
+(BattlefieldFrame, AutoBG.lua's helpers, NamPower's `GetNampowerVersion`, the event globals).
 ErrorLog `test_error_stack_2026_11_02.py` (4): the saved stack starts at `GetCallstackHeight() -
 GetErrorCallstackHeight() + 1`, a direct call at the caller, a repeat reads no stack, and ClassicAPI's window
 (the handler found at load) opens only with `/err popup` on. Native drawing, the spark on the bar texture and
