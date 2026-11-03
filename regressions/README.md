@@ -69,7 +69,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
 | !ErrorLog | `regressions/ErrorLog` | 13 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
-| FostercareNameplates | `regressions/FostercareNameplates` | 89 | Yes | [FostercareNameplates](#fostercarenameplates) |
+| FostercareNameplates | `regressions/FostercareNameplates` | 90 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 251 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 69 | Yes | [GearRack](#gearrack) |
 | FostercareBattleText | `regressions/FostercareBattleText` | 72 | Yes | [FostercareBattleText](#fostercarebattletext) |
@@ -418,6 +418,9 @@ addon, a category borrows its page and gives it back, in AddOn Options every pag
 and back in the window two columns, the preview moves with the page, the window keeps its 1.6.0
 control positions within 4 px, and the window closes AddOn Options. `fnp_env.py` records
 `SetParent` and gives `InterfaceOptionsFrame` and `GameMenuFrame`. Five fail on 1.6.0.
+1.7.1 adds `test_the_preview_is_shown_again_after_each_move` (8th): in play every AddOn Options
+page had an empty space where the preview belongs; it was made in the hidden window and moved
+without a Show. Fails on `cf53153`.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareNameplates" --run-tests --test-start regressions/FostercareNameplates --output .private/fnp-current.json

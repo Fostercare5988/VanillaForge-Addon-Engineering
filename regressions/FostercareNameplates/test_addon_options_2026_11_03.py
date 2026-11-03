@@ -103,7 +103,8 @@ class AddOnOptions(unittest.TestCase):
     def test_the_preview_moves_with_the_page(self):
         lua = self.lua
         self.host(3)
-        holder = "(function() for _, w in ipairs(frames) do if w.points and w.points[1] and w.points[1][2] == FNPOptPage3 and w.parent == FNPOptPage3 and not w.name then return w end end end)()"
+        holder = "FNPOptPreview"
+        self.assertTrue(lua.eval("FNPOptPreview.parent == FNPOptPage3"))
         self.assertEqual(lua.eval(holder + ".points[1][4]"), 28)                 # first, at the margin
         self.assertEqual(lua.eval(holder + ".points[1][5]"), -98)
         self.assertLess(lua.eval("FNPOpt_nameplate_target_glow.points[1][5]"), -98 - 148)
@@ -123,7 +124,6 @@ class AddOnOptions(unittest.TestCase):
         self.host(3)
         self.assertEqual(lua.eval("#shows"), 1)
         self.assertTrue(lua.eval("shows[1] == FNPOptPage3 and FNPOptPreview:IsShown()"))
-        lua.execute("FostercareNameplates.Nameplates = FostercareNameplates.Nameplates; host.holder.scripts = host.holder.scripts")
         lua.execute("FNPOpt_nameplate_target_glow.scripts.OnClick()")       # a refresh on the same page
         self.assertEqual(lua.eval("#shows"), 1)
         lua.execute("host.scripts.OnHide(host)")
