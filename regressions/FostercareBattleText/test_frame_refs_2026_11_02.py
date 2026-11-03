@@ -7,20 +7,17 @@ from the globals, the message finds no frame.
 """
 import unittest
 
-import _msbt_runtime as m
+import _fbt_runtime as m
 
 
 class FrameRefs(unittest.TestCase):
     def test_a_message_looks_up_no_frame_by_name(self):
         lua = m.runtime()
+        # 2.0.0: the areas are made in Lua and have no global names at all.
         lua.execute('''
-            MikSBT.CombatEventsHandler = RealCombatEventsHandler
-            area = MSBTFrameNotification
+            FBT.CombatEventsHandler = RealCombatEventsHandler
+            area = FBT.scrollAreas.Notification.Frame
             area.shown = false
-            setmetatable(_G, nil)
-            for _, name in ipairs({ "MSBTFrameIncoming", "MSBTFrameOutgoing", "MSBTFrameNotification" }) do
-                rawset(_G, name, nil)
-            end
             lookups = 0
             getglobal = function(name) lookups = lookups + 1; return rawget(_G, name) end
             Fire("PLAYER_REGEN_DISABLED")

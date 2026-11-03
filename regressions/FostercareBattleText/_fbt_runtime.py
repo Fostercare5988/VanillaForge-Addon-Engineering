@@ -1,11 +1,11 @@
-"""Self-contained Lua model of MSBT for regression tests.
+"""Self-contained Lua model of FostercareBattleText (formerly MSBT) for regression tests.
 
 Loads every TOC Lua file, including the ForgeUI settings window, into lupa with
 mocked ClassicAPI globals and a small stateful widget model (checked state,
 text, values, clicks, show/hide scripts). It needs no client MPQs. Lua 5.0
 generic `for k,v in t do` loops are adapted to `pairs`. Not in-game proof.
 
-Requires VANILLAFORGE_ADDON_ROOT=<AddOns>/MikScrollingBattleText and lupa.
+Requires VANILLAFORGE_ADDON_ROOT=<AddOns>/FostercareBattleText and lupa.
 """
 from pathlib import Path
 import os
@@ -14,8 +14,9 @@ import re
 from lupa.lua51 import LuaRuntime
 
 ROOT = Path(os.environ.get("VANILLAFORGE_ADDON_ROOT", "")).resolve()
-if not (ROOT / "MikScrollingBattleText.toc").is_file():
-    raise RuntimeError("Set VANILLAFORGE_ADDON_ROOT to the MikScrollingBattleText folder")
+TOC = "FostercareBattleText.toc"
+if not (ROOT / TOC).is_file():
+    raise RuntimeError("Set VANILLAFORGE_ADDON_ROOT to the FostercareBattleText folder")
 
 CORE_SKIP = set()
 
@@ -26,7 +27,7 @@ def lua50(source):
 
 def toc_lua_files():
     files = []
-    for line in (ROOT / "MikScrollingBattleText.toc").read_text("utf-8-sig").splitlines():
+    for line in (ROOT / TOC).read_text("utf-8-sig").splitlines():
         line = line.strip()
         if line and not line.startswith("#") and line.endswith(".lua") and line not in CORE_SKIP:
             files.append(line)
@@ -111,8 +112,6 @@ function ColorPickerFrame:GetColorRGB() return self.r,self.g,self.b end
 function PickerOkay() if ColorPickerFrame.func then ColorPickerFrame.func() end; HideUIPanel(ColorPickerFrame) end
 function PickerCancel() if ColorPickerFrame.cancelFunc then ColorPickerFrame.cancelFunc(ColorPickerFrame.previousValues) end; HideUIPanel(ColorPickerFrame) end
 function getglobal(name) return rawget(_G,name) or NewWidget(name) end
--- The XML frames (MSBTFrame*) exist as soon as they are named, as in the client.
-setmetatable(_G, {__index=function(_,k) if type(k)=="string" and string.find(k,"^MSBTFrame") then return NewWidget(k) end end})
 setglobal=function(k,v) _G[k]=v end
 
 -- Fire an event at every frame registered for it, the way the client does.
@@ -216,35 +215,30 @@ COMBATLOG_OBJECT_TYPE_PLAYER=0x400; COMBATLOG_OBJECT_TYPE_NPC=0x800; COMBATLOG_O
 
 
 def runtime(saved=None):
-    """Boot the core files like the client: TOC files, XML OnLoad, ADDON_LOADED, PEW.
+    """Boot the addon like the client: TOC files, ADDON_LOADED, PEW.
 
-    saved: optional Lua source that sets MikSBT_Save before ADDON_LOADED.
+    saved: optional Lua source that sets FostercareBattleTextDB before ADDON_LOADED.
     """
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(BOOT)
-    lua.execute("MCEHEventFrame=NewWidget('MCEHEventFrame'); MSBTEventFrame=NewWidget('MSBTEventFrame')")
     # Each file runs like the client loads it: (addonName, shared namespace).
     load_file = lua.eval('''function(source, name)
       ADDON_NS = ADDON_NS or {}
       local chunk = assert(loadstring(source, "@" .. name))
-      chunk("MikScrollingBattleText", ADDON_NS)
+      chunk("FostercareBattleText", ADDON_NS)
     end''')
     for name in toc_lua_files():
         load_file(lua50((ROOT / name).read_text("utf-8-sig")), name)
-    lua.execute('''
-    MCEHEventFrame:SetScript("OnEvent", function() MikCEH.OnEvent() end)
-    MSBTEventFrame:SetScript("OnEvent", function() MikSBT.OnEvent() end)
-    this=MCEHEventFrame; MikCEH.OnLoad()
-    this=MSBTEventFrame; MikSBT.OnLoad()
-    ''')
+    # The namespace, as tests and /run see it.
+    lua.execute("FBT = FostercareBattleText")
     if saved is not None:
         lua.execute(saved)
     lua.execute('''
-    Fire("ADDON_LOADED","MikScrollingBattleText")
+    Fire("ADDON_LOADED","FostercareBattleText")
     Fire("PLAYER_ENTERING_WORLD")
     -- Record what reaches the display layer; keep the real handler reachable.
-    sent={}; RealCombatEventsHandler=MikSBT.CombatEventsHandler
-    MikSBT.CombatEventsHandler=function(e) local c={} for k,v in pairs(e) do c[k]=v end table.insert(sent,c) end
+    sent={}; RealCombatEventsHandler=FBT.CombatEventsHandler
+    FBT.CombatEventsHandler=function(e) local c={} for k,v in pairs(e) do c[k]=v end table.insert(sent,c) end
     calls={}
     ''')
     return lua

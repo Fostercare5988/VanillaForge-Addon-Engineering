@@ -72,7 +72,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | FostercareNameplates | `regressions/FostercareNameplates` | 89 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 246 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 69 | Yes | [GearRack](#gearrack) |
-| MikScrollingBattleText | `regressions/MikScrollingBattleText` | 47 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
+| FostercareBattleText | `regressions/FostercareBattleText` | 61 | Yes | [FostercareBattleText](#fostercarebattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
 | TWThreat | `regressions/TWThreat` | 6 | Yes | [TWThreat](#twthreat) |
 | AutoLazy (older) | private `external-tests/AutoLazy` | 130 | No | private command below |
@@ -96,18 +96,28 @@ Counts are test methods as of 20 October 2026; update this table when a suite
 gains or loses tests. Moving a private suite here means switching it to
 `VANILLAFORGE_ADDON_ROOT` and removing archived fixture paths.
 
-## MikScrollingBattleText
+## FostercareBattleText
 
+Formerly MikScrollingBattleText (MSBT); renamed in 2.0.0 (2026-11-03). Every test runs on
+`_fbt_runtime.py`: every TOC file in a lupa model with ClassicAPI-only globals, a stateful
+widget model and `CL(...)` for combat log events. No client MPQs are needed.
 `test_msbt_fixes.py` (10) covers the [2026-10-12 audit](../archive/audit/MSBT_2026-10-12_AUDIT.md)
-repairs F1-F6; `test_msbt_audit_2026_10_25.py` (20) covers the 2026-10-25 audit, the
-combat-log source and the ForgeUI settings window. Both run on `_msbt_runtime.py`: every
-TOC file in a lupa model with ClassicAPI-only globals, a stateful widget model and `CL(...)`
-for combat log events. No client MPQs are needed; the BigWigs test uses the adjacent checkout.
-`test_big_combat_icon_2026_11_01.py` (8): the Icon switch on Enter/Leave Combat adds crossed swords at twice the font size, off by default; swords and text are red in combat and green out of it, and profiles with white or 1.2.1's swapped colours change.
+repairs F1-F6; `test_msbt_audit_2026_10_25.py` (19) the 2026-10-25 audit, the
+combat-log source and the ForgeUI settings window; `test_cleanup_2026_10_27.py` (5) XP
+from `PLAYER_XP_UPDATE` and the retired Search Pattern type; `test_classicapi_1_17_11.py` (2)
+unit-filtered health and mana events.
+`test_big_combat_icon_2026_11_01.py` (6): the Icon switch on Enter/Leave Combat adds crossed swords at twice the font size, off by default; swords and text are red in combat and green out of it.
 `test_frame_refs_2026_11_02.py` (1): each scroll area keeps its frame, so a message looks up none by name.
+`test_audit_2026_11_03.py` (8): the merge queues recover after an error, mana in druid
+forms from `UNIT_POWER_UPDATE`, health and mana events only for units with triggers,
+plain-text filters without a pcall per message, named damage shields, the font editor
+title. All fail on MSBT 1.2.2 (`dc1d9dd`).
+`test_fbt_2_0_0.py` (10): the rename (one global namespace, nothing loads without
+ClassicAPI, `/fbt` and `/msbt`), honor and skill patterns, the one scroll function,
+sticky stacking and the merge trailer.
 
 ```text
-python -B tools/audit_addon.py "<AddOns>/MikScrollingBattleText" --run-tests --test-start regressions/MikScrollingBattleText
+python -B tools/audit_addon.py "<AddOns>/FostercareBattleText" --run-tests --test-start regressions/FostercareBattleText
 ```
 ## FostercareTweaks
 

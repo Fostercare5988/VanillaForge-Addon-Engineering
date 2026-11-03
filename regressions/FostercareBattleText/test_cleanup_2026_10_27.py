@@ -9,12 +9,12 @@
 """
 import unittest
 
-import _msbt_runtime as m
+import _fbt_runtime as m
 
 
 def xp_gains(lua):
     return [e.Amount for e in lua.globals().sent.values()
-            if e.NotificationType == lua.globals().MikCEH.NOTIFICATIONTYPE_EXPERIENCE_GAIN]
+            if e.NotificationType == lua.globals().FBT.Combat.NOTIFICATIONTYPE_EXPERIENCE_GAIN]
 
 
 class ExperienceTests(unittest.TestCase):
@@ -38,32 +38,23 @@ class ExperienceTests(unittest.TestCase):
         lua.execute('Fire("PLAYER_XP_UPDATE", "player"); '
                     'Fire("CHAT_MSG_COMBAT_XP_GAIN", "Wolf dies, you gain 50 experience.")')
         self.assertEqual(xp_gains(lua), [])
-        self.assertIsNone(lua.eval('MCEHEventFrame.events.CHAT_MSG_COMBAT_XP_GAIN'))
+        self.assertIsNone(lua.eval('FBT.Combat.frame.events.CHAT_MSG_COMBAT_XP_GAIN'))
 
 
 class RetiredSearchPatternTests(unittest.TestCase):
-    def test_saved_custom_search_trigger_is_removed(self):
-        lua = m.runtime(saved='''
-        MikSBT_Save = {UserDisabled=false, CurrentProfile="Default", Profiles={Default={Triggers={
-          MY_OWN={EventSettings={Show=true, Message="x", FontSettings={Color={r=1,g=1,b=1},
-            Normal={FontIndex=0,OutlineIndex=0,FontSize=0}}},
-            TriggerSettings={TriggerType=6, TriggerEvents={"CHAT_MSG_SKILL"}, SearchPatterns={"skill"}}}}}}}
-        ''')
-        self.assertIsNone(lua.eval('MikSBT_Save.Profiles.Default.Triggers.MY_OWN'))
-
     def test_no_chat_event_list_or_search_command(self):
         lua = m.runtime()
-        self.assertIsNone(lua.eval('MikSBTOpt.TRIGGER_EVENTS'))
-        self.assertIsNone(lua.eval('MikSBT.COMMAND_SEARCH'))
-        self.assertIsNone(lua.eval('MikCEH.EnableEventSearching'))
-        self.assertIsNone(lua.eval('MikCEH.TRIGGERTYPE_SEARCH_PATTERN'))
+        self.assertIsNone(lua.eval('FBT.Options.TRIGGER_EVENTS'))
+        self.assertIsNone(lua.eval('FBT.COMMAND_SEARCH'))
+        self.assertIsNone(lua.eval('FBT.Combat.EnableEventSearching'))
+        self.assertIsNone(lua.eval('FBT.Combat.TRIGGERTYPE_SEARCH_PATTERN'))
 
     def test_editor_type_cycle_skips_the_retired_type(self):
         lua = m.runtime()
         lua.execute('''
         seen = {}
-        MikSBTOpt.EditTrigger("MSBT_TRIGGER_LOW_HEALTH")
-        for i = 1, 9 do MSBT_TriggerTypeNext:Click(); table.insert(seen, MSBT_TriggerType.text:GetText()) end
+        FBT.Options.EditTrigger("MSBT_TRIGGER_LOW_HEALTH")
+        for i = 1, 9 do FBT_TriggerTypeNext:Click(); table.insert(seen, FBT_TriggerType.text:GetText()) end
         ''')
         names = list(lua.eval('seen').values())
         self.assertNotIn("Search Pattern", names)

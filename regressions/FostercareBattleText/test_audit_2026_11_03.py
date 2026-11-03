@@ -1,16 +1,16 @@
 """Reproductions for the 2026-11-03 audit (.private/audit-FostercareBattleText-2026-11-03.md).
 
 Each test states the wanted behaviour and fails on MSBT 1.2.2 (dc1d9dd).
-Lua model only (_msbt_runtime.py); not in-game proof.
+Lua model only (_fbt_runtime.py); not in-game proof.
 """
 import unittest
 
-import _msbt_runtime as m
+import _fbt_runtime as m
 
 
 def display(lua):
     """Let the real display layer take the events again."""
-    lua.execute("MikSBT.CombatEventsHandler = RealCombatEventsHandler")
+    lua.execute("FBT.CombatEventsHandler = RealCombatEventsHandler")
 
 
 class MergeRecovers(unittest.TestCase):  # P2-1
@@ -21,8 +21,8 @@ class MergeRecovers(unittest.TestCase):  # P2-1
         display(lua)
         lua.execute('''
             shown = 0
-            local real, failOnce = MikSBT.AddAnimation, true
-            MikSBT.AddAnimation = function(e)
+            local real, failOnce = FBT.AddAnimation, true
+            FBT.AddAnimation = function(e)
               if failOnce then failOnce = false; error("boom") end
               shown = shown + 1
               return real(e)
@@ -57,7 +57,7 @@ class DruidMana(unittest.TestCase):  # P2-2
         lua = m.runtime()
         lua.execute('''
             units.player.class = "DRUID"
-            MikSBTOpt.ShowTab(1); MSBT_ShowAllManaGains:Click()
+            FBT.Options.ShowTab(1); FBT_ShowAllManaGains:Click()
             sent = {}
             units.player.powertype = 1; units.player.power = 0     -- bear form
             units.player.mana = 110
@@ -74,23 +74,23 @@ class EventsOnlyWhenNeeded(unittest.TestCase):  # P3-2
         # the player, pet and target reached Lua all fight long for nothing.
         lua = m.runtime()
         lua.execute('''
-            for _, trigger in pairs(MikSBT.CurrentProfile.Triggers) do trigger.EventSettings.Show = false end
-            MikSBT.RegisterTriggers(); MikCEH.RegisterEvents()
+            for _, trigger in pairs(FBT.CurrentProfile.Triggers) do trigger.EventSettings.Show = false end
+            FBT.RegisterTriggers(); FBT.Combat.RegisterEvents()
         ''')
-        events = lua.eval("MCEHEventFrame.events")
+        events = lua.eval("FBT.Combat.frame.events")
         for name in ("UNIT_HEALTH", "UNIT_MANA", "UNIT_POWER_UPDATE", "PLAYER_TARGET_CHANGED"):
             self.assertIsNone(events[name], name)
 
     def test_a_target_trigger_takes_target_health_only(self):
         lua = m.runtime()
         lua.execute('''
-            for _, trigger in pairs(MikSBT.CurrentProfile.Triggers) do trigger.EventSettings.Show = false end
-            local execute = MikSBT.CurrentProfile.Triggers.MSBT_TRIGGER_EXECUTE
+            for _, trigger in pairs(FBT.CurrentProfile.Triggers) do trigger.EventSettings.Show = false end
+            local execute = FBT.CurrentProfile.Triggers.MSBT_TRIGGER_EXECUTE
             execute.EventSettings.Show = true; execute.TriggerSettings.Classes = nil
-            MikSBT.RegisterTriggers(); MikCEH.RegisterEvents()
+            FBT.RegisterTriggers(); FBT.Combat.RegisterEvents()
         ''')
-        self.assertEqual(list(lua.eval("MCEHEventFrame.events.UNIT_HEALTH").values()), ["target"])
-        self.assertTrue(lua.eval("MCEHEventFrame.events.PLAYER_TARGET_CHANGED"))
+        self.assertEqual(list(lua.eval("FBT.Combat.frame.events.UNIT_HEALTH").values()), ["target"])
+        self.assertTrue(lua.eval("FBT.Combat.frame.events.PLAYER_TARGET_CHANGED"))
 
 
 class FilterText(unittest.TestCase):  # P3-3
@@ -111,10 +111,10 @@ class FilterText(unittest.TestCase):  # P3-3
         lua = m.runtime()
         display(lua)
         lua.execute('''
-            MikSBT.CurrentProfile.Suppressions.Mine = {Enabled = true, SearchPattern = "-[Bless"}
+            FBT.CurrentProfile.Suppressions.Mine = {Enabled = true, SearchPattern = "-[Bless"}
             shown = 0
-            local real = MikSBT.GetNextAnimationDisplayInfo
-            MikSBT.GetNextAnimationDisplayInfo = function(e) shown = shown + 1; return real(e) end
+            local real = FBT.GetNextAnimationDisplayInfo
+            FBT.GetNextAnimationDisplayInfo = function(e) shown = shown + 1; return real(e) end
             CL("SPELL_AURA_REMOVED", "0xPAL", "Pally", "0xPLAYER", "Hero", 19740, "Blessing of Might", 2, "BUFF")
             CL("SPELL_AURA_REMOVED", "0xPAL", "Pally", "0xPLAYER", "Hero", 20217, "Kings", 2, "BUFF")
         ''')
@@ -124,8 +124,8 @@ class FilterText(unittest.TestCase):  # P3-3
 class FontEditorTitle(unittest.TestCase):  # P3-4
     def test_the_font_editor_names_the_event_in_words(self):
         lua = m.runtime()
-        lua.execute('MikSBTOpt.ShowTab(3); MSBT_IncomingRow1Font:Click()')
-        self.assertEqual(lua.eval("MSBT_FontEditor.title.text"), "Melee Damage")
+        lua.execute('FBT.Options.ShowTab(3); FBT_IncomingRow1Font:Click()')
+        self.assertEqual(lua.eval("FBT_FontEditor.title.text"), "Melee Damage")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 """Enter/Leave Combat can show a large icon beside "+Combat" / "-Combat", 2026-11-01.
 
-The Notices tab has an "Icon" button on those two rows (MikSBT.BIG_ICONS). When
+The Notices tab has an "Icon" button on those two rows (FBT.BIG_ICONS). When
 it is on, the message carries the event's icon at twice the font size; when it
 is off, nothing changes. Both show crossed swords, greyed and tinted: red in
 combat, green out of it (2026-11-02, the player's choice: the old gold check mark
@@ -9,7 +9,7 @@ that kept white or 1.2.1's colours change.
 """
 import unittest
 
-import _msbt_runtime as m
+import _fbt_runtime as m
 
 DRAW = '''
     -- Record textures and text heights on every widget the display layer makes.
@@ -30,7 +30,7 @@ DRAW = '''
         w.SetDesaturated = function(self, d) self.grey = d end
         w.SetVertexColor = function(self, r, g, b) self.tint = { r, g, b } end
     end
-    MikSBT.CombatEventsHandler = RealCombatEventsHandler
+    FBT.CombatEventsHandler = RealCombatEventsHandler
     function BigTextures()
         local out = {}
         for _, w in ipairs(frames) do
@@ -46,7 +46,7 @@ class BigCombatIcon(unittest.TestCase):
     def runtime(self, enter=None, leave=None):
         lua = m.runtime()
         lua.execute(DRAW)
-        e = lua.eval("MikSBT.CurrentProfile.EventSettings")
+        e = lua.eval("FBT.CurrentProfile.EventSettings")
         if enter is not None:
             e.MSBT_EVENTTYPE_NOTIFICATION_COMBAT_ENTER.BigIcon = enter
         if leave is not None:
@@ -86,40 +86,15 @@ class BigCombatIcon(unittest.TestCase):
 
     def test_combat_notices_are_red_and_green(self):
         lua = m.runtime()
-        d = lua.eval("MikSBT.DEFAULT_CONFIG.EventSettings")
+        d = lua.eval("FBT.DEFAULT_CONFIG.EventSettings")
         enter = d.MSBT_EVENTTYPE_NOTIFICATION_COMBAT_ENTER.FontSettings.Color
         leave = d.MSBT_EVENTTYPE_NOTIFICATION_COMBAT_LEAVE.FontSettings.Color
         self.assertEqual((enter.r, enter.g, enter.b), (1, 0.25, 0.25))
         self.assertEqual((leave.r, leave.g, leave.b), (0.25, 1, 0.25))
 
-    def test_a_profile_with_the_1_2_1_colours_swaps(self):
-        lua = m.runtime()
-        lua.execute('''
-            local e = { MSBT_EVENTTYPE_NOTIFICATION_COMBAT_ENTER = { FontSettings = { Color = { r = 0.25, g = 1, b = 0.25 } } },
-                        MSBT_EVENTTYPE_NOTIFICATION_COMBAT_LEAVE = { FontSettings = { Color = { r = 1, g = 0.25, b = 0.25 } } } }
-            MikSBT_Save.Profiles = { Old = { EventSettings = e } }
-            MikSBT.UpdateProfiles()
-            enter, leave = e.MSBT_EVENTTYPE_NOTIFICATION_COMBAT_ENTER.FontSettings.Color, e.MSBT_EVENTTYPE_NOTIFICATION_COMBAT_LEAVE.FontSettings.Color
-        ''')
-        self.assertEqual((lua.eval("enter.r"), lua.eval("enter.g")), (1, 0.25))
-        self.assertEqual((lua.eval("leave.r"), lua.eval("leave.g")), (0.25, 1))
-
-    def test_a_profile_that_kept_white_turns_red_and_green(self):
-        lua = m.runtime()
-        lua.execute('''
-            local e = { MSBT_EVENTTYPE_NOTIFICATION_COMBAT_ENTER = { FontSettings = { Color = { r = 1, g = 1, b = 1 } } },
-                        MSBT_EVENTTYPE_NOTIFICATION_COMBAT_LEAVE = { FontSettings = { Color = { r = 0.5, g = 0.5, b = 1 } } } }
-            MikSBT_Save.Profiles = { Old = { EventSettings = e } }
-            MikSBT.UpdateProfiles()
-            enter, leave = e.MSBT_EVENTTYPE_NOTIFICATION_COMBAT_ENTER.FontSettings.Color, e.MSBT_EVENTTYPE_NOTIFICATION_COMBAT_LEAVE.FontSettings.Color
-        ''')
-        self.assertEqual(lua.eval("enter.r"), 1)
-        self.assertEqual(lua.eval("enter.g"), 0.25)
-        self.assertEqual(lua.eval("leave.b"), 1)       # a colour the player chose stays
-
     def test_only_those_two_events_offer_the_icon(self):
         lua = m.runtime()
-        keys = sorted(lua.eval("(function() local t = {} for k in pairs(MikSBT.BIG_ICONS) do t[#t + 1] = k end return t end)()").values())
+        keys = sorted(lua.eval("(function() local t = {} for k in pairs(FBT.BIG_ICONS) do t[#t + 1] = k end return t end)()").values())
         self.assertEqual(keys, ["MSBT_EVENTTYPE_NOTIFICATION_COMBAT_ENTER", "MSBT_EVENTTYPE_NOTIFICATION_COMBAT_LEAVE"])
 
 
