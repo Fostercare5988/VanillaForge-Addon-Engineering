@@ -72,7 +72,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | FostercareNameplates | `regressions/FostercareNameplates` | 89 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 246 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 69 | Yes | [GearRack](#gearrack) |
-| FostercareBattleText | `regressions/FostercareBattleText` | 61 | Yes | [FostercareBattleText](#fostercarebattletext) |
+| FostercareBattleText | `regressions/FostercareBattleText` | 72 | Yes | [FostercareBattleText](#fostercarebattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
 | TWThreat | `regressions/TWThreat` | 6 | Yes | [TWThreat](#twthreat) |
 | AutoLazy (older) | private `external-tests/AutoLazy` | 130 | No | private command below |
@@ -115,6 +115,9 @@ title. All fail on MSBT 1.2.2 (`dc1d9dd`).
 `test_fbt_2_0_0.py` (10): the rename (one global namespace, nothing loads without
 ClassicAPI, `/fbt` and `/msbt`), honor and skill patterns, the one scroll function,
 sticky stacking and the merge trailer.
+`test_options_2026_11_03.py` (11): every page is a category under the addon in AddOn Options,
+borrowed and given back, one column there (nothing right of the margin, no shared line, rows inside 320)
+and the window's places unchanged; the window closes AddOn Options.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareBattleText" --run-tests --test-start regressions/FostercareBattleText
