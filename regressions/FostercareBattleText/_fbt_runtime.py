@@ -73,6 +73,9 @@ function Widget:Enable() self.disabled=nil end
 function Widget:Disable() self.disabled=true end
 function Widget:IsEnabled() return not self.disabled and 1 or nil end
 function Widget:SetWidth(v) self.width=v end
+-- Anchors are recorded: { point, relativeTo, relativePoint, x, y } (ForgeLayout tests).
+function Widget:SetPoint(...) self.pt={...} end
+function Widget:ClearAllPoints() self.pt=nil end
 function Widget:SetHeight(v) self.height=v end
 function Widget:GetWidth() return self.width or 0 end
 function Widget:GetHeight() return self.height or 0 end
@@ -99,6 +102,7 @@ end
 -- ClassicAPI's AddOn Options list; entries are recorded in order.
 categories = {}
 function InterfaceOptions_AddCategory(panel) table.insert(categories, panel) end
+InterfaceOptionsFrame=NewWidget("InterfaceOptionsFrame"); GameMenuFrame=NewWidget("GameMenuFrame")
 function CreateFrame(kind,name,parent) local w=NewWidget(name,kind,parent); w.shown=true; return w end
 UIParent=NewWidget("UIParent"); UIParent.shown=true
 GameTooltip=NewWidget("GameTooltip")
