@@ -27,6 +27,7 @@ function AutoBG_Timers_SetPreview(on) timersPreview = on end
 function AutoBG_FC_SetPreview(on) fcPreview = on end
 AutoBG_Targets.DisableConfigMode = function(self) self.isConfig = false; table.insert(calls, "targets off") end
 AutoBG_Targets.EnableConfigMode = function(self, size) self.isConfig = true; table.insert(calls, "targets " .. size) end
+AutoBG_Spy.EnsureOptions = function() AutoBG_Settings.Spy = AutoBG_Settings.Spy or {}; return AutoBG_Settings.Spy end
 AutoBG_Spy.EnableTestMode = function(self) self.isTestMode = true; table.insert(calls, "spy on") end
 AutoBG_Spy.DisableTestMode = function(self) self.isTestMode = false; table.insert(calls, "spy off") end
 AutoBG_Settings.Spy = { Enabled = true, SoundAlert = true, StealthAlert = true, Timeout = 30, MaxRows = 5, Scale = 1 }
