@@ -132,12 +132,28 @@ class QueueBarTests(unittest.TestCase):
 
 
 class ArenaFrameTests(unittest.TestCase):
-    def test_an_arena_is_spys_not_the_enemy_frames(self):
+    def test_an_arena_has_its_own_enemy_frame_bracket(self):
         import test_targets_guid_events as tge
         lua = tge.runtime()
         lua.execute('function GetBattlefieldStatus(i) if i == 1 then return "active", "Arena" end return "none" end')
         lua.execute('ARENA = "Arena"; AutoBG_Targets:BattlefieldScoreUpdate(true)')
-        self.assertFalse(lua.eval('AutoBG_Targets.activeBG'))
+        self.assertTrue(lua.eval('AutoBG_Targets.activeBG'))
+        self.assertTrue(lua.eval('AutoBG_Targets.activeArena'))
+        self.assertEqual(lua.eval('AutoBG_Targets.currentSize'), 5)
+        self.assertEqual(lua.eval('AutoBG_Settings.Targets.ButtonWidth[5]'), 195)
+
+
+    def test_an_enemy_seen_in_an_arena_joins_the_frames(self):
+        # The scoreboard may not list the other team; a sighting must.
+        import test_targets_guid_events as tge
+        lua = tge.runtime(sighting=False)
+        lua.execute('''ARENA = "Arena"
+            function GetBattlefieldStatus(i) if i == 1 then return "active", "Arena" end return "none" end
+            function UnitCanAttack() return true end
+            AutoBG_Targets:BattlefieldScoreUpdate(true)
+            target = "Grom"''')
+        lua.execute('AutoBG_Targets.scripts.OnEvent(AutoBG_Targets, "PLAYER_TARGET_CHANGED")')
+        self.assertEqual(lua.eval('AutoBG_TargetButton1.targetName'), "Grom")
 
 
 class ArenaSpyTests(unittest.TestCase):
@@ -148,7 +164,7 @@ class ArenaSpyTests(unittest.TestCase):
         lua = runtime()
         # The shared zone helper from AutoBG.lua, with the OctoWoW arena names.
         lua.execute('''
-            local zones = { ["lordaeron arena"] = true, ["sunstrider court"] = true, ["circle of blood"] = true }
+            local zones = { ["lordaeron arena"] = true, ["sunstrider court"] = true, ["blood ring"] = true }
             function AutoBG_IsArenaZone()
                 local inInstance, t = IsInInstance()
                 return (inInstance and t == "arena") or zones[string.lower(GetRealZoneText())] == true
@@ -166,7 +182,7 @@ class ArenaSpyTests(unittest.TestCase):
     def test_spy_lists_enemies_in_each_arena(self):
         self.assertTrue(self.sighting("arena", "Lordaeron Arena"))
         self.assertTrue(self.sighting("pvp", "Sunstrider Court"))
-        self.assertTrue(self.sighting("pvp", "Circle of Blood"))
+        self.assertTrue(self.sighting("pvp", "Blood Ring"))
 
     def test_spy_stays_off_in_a_battleground(self):
         self.assertFalse(self.sighting("pvp", "Warsong Gulch"))
