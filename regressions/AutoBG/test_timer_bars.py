@@ -22,6 +22,8 @@ function AutoBG_FindPlayerClass(name) return name and playerClasses and playerCl
 function AutoBG_GetClassColor() return nil end
 function AutoBG_GetBGIcon() return nil end
 function GetAreaSpiritHealerTime() return 0 end
+ARENA = "Arena"
+function OctoBGQueueName(map) return map end -- the client's FrameXML (BattlefieldFrame.lua)
 local Widget = {}
 setmetatable(Widget, { __index = function(_, name)
     if string.find(name, "^%u") then return function() end end

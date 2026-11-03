@@ -50,6 +50,7 @@ function NewWidget(name) return CreateFrame("Frame", name) end
 UIParent = CreateFrame("Frame", "UIParent")
 -- Always in the client: the battlemaster window (FrameXML) and, after all
 -- AutoBG files load, the enemy frames and Spy that ADDON_LOADED fills.
+ARENA = "Arena" -- GlobalStrings
 BattlefieldFrame = CreateFrame("Frame", "BattlefieldFrame")
 TWMiniMapBattlefieldFrame = CreateFrame("Button", "TWMiniMapBattlefieldFrame")
 AutoBG_Targets = { EnsureOptions = function() AutoBG_Settings.Targets = AutoBG_Settings.Targets or {} end }
