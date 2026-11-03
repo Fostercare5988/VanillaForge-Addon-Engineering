@@ -62,8 +62,27 @@ function Widget:Click(button)
 end
 function CreateFrame(_, name) local f = setmetatable({ name = name }, { __index = Widget }); if name then _G[name] = f end; return f end
 UIParent = CreateFrame("Frame", "UIParent")
-local handle = { Cancel = function() end }
-C_Timer = { NewTicker = function() return handle end }
+tickers = {}
+C_Timer = { NewTicker = function(_, fn)
+    table.insert(tickers, fn)
+    return { Cancel = function() for i, f in ipairs(tickers) do if f == fn then table.remove(tickers, i) end end end }
+end }
+-- ClassicAPI timed status bars: the bar keeps the duration object it is given.
+Enum = { StatusBarInterpolation = { Immediate = 0 }, StatusBarTimerDirection = { ElapsedTime = 0, RemainingTime = 1 } }
+C_DurationUtil = { CreateDuration = function() return { SetTimeSpan = function(self, s, e) self.start, self.finish = s, e end } end }
+function Widget:SetTimerDuration(d, _, direction) self.timer, self.direction = d, direction end
+function Widget:SetStatusBarColor(r, g, b) self.color = { r, g, b } end
+-- AutoBG.lua, loaded before this file in the client.
+AutoBG_CLASS_COLORS = {
+    HUNTER = { r = 0.67, g = 0.83, b = 0.45 }, WARLOCK = { r = 0.58, g = 0.51, b = 0.79 },
+    PRIEST = { r = 1, g = 1, b = 1 }, PALADIN = { r = 0.96, g = 0.55, b = 0.73 },
+    MAGE = { r = 0.41, g = 0.8, b = 0.94 }, ROGUE = { r = 1, g = 0.96, b = 0.41 },
+    DRUID = { r = 1, g = 0.49, b = 0.04 }, SHAMAN = { r = 0, g = 0.44, b = 0.87 },
+    WARRIOR = { r = 0.78, g = 0.61, b = 0.43 },
+}
+function AutoBG_LoadPosition() end
+function AutoBG_SavePosition() end
+function AutoBG_GetEnemyCarrier() return enemyCarrier end
 C_UnitAuras = { GetAuraSlots = function() return nil, 0 end }
 function GetTime() return 1000 end
 MAX_BATTLEFIELD_QUEUES = 3
