@@ -29,6 +29,7 @@ function GetNumRaidMembers() return 0 end
 function GetNumPartyMembers() return 2 end
 function ReloadUI() end
 SlashCmdList = {}
+function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 local kinds = {}
 function CreateFrame(kind)
     kind = kind or "Frame"
@@ -42,6 +43,7 @@ function CreateFrame(kind)
         function index:GetScript(s) return self.scripts[s] end
         function index:Hide() end
         function index:RegisterEvent() end
+        function index:RegisterAllEvents() end
         kinds[kind] = index
     end
     return setmetatable({ scripts = {} }, { __index = index })
@@ -71,12 +73,12 @@ def load():
 SESSION = '''
     local gear, lazy = handler("GearRack", 30), handler("AutoLazy", 5)
     collect = handler("GearRack", -12000, 95)
-    tick(nil, 0.016)
+    tick()
     now = now + 10
     for _ = 1, 10 do gear(nil, "BAG_UPDATE"); lazy(nil, "BAG_UPDATE") end
-    tick(nil, 0.016)
+    clockv = clockv + 16; tick()
     collect(nil, "UNIT_INVENTORY_CHANGED")
-    tick(nil, 0.107)
+    clockv = clockv + 12; tick() -- 95 ms in the handler + 12 ms of the frame
     ErrorLog.OpenStutters()
 '''
 
