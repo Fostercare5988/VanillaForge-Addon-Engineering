@@ -11,8 +11,10 @@ class UnitEventScopeTests(unittest.TestCase):
     def test_health_and_mana_events_are_unit_filtered(self):
         l = m.runtime()
         l.execute('MikCEH.RegisterEvents()')
-        self.assertEqual(list(l.eval('MCEHEventFrame.events.UNIT_HEALTH').values()), ["player", "pet", "target"])
-        self.assertEqual(list(l.eval('MCEHEventFrame.events.UNIT_MANA').values()), ["player"])
+        # 2026-11-03: only the units with triggers (a priest's defaults: Low
+        # Health, Low Mana); mana from UNIT_POWER_UPDATE.
+        self.assertEqual(list(l.eval('MCEHEventFrame.events.UNIT_HEALTH').values()), ["player"])
+        self.assertEqual(list(l.eval('MCEHEventFrame.events.UNIT_POWER_UPDATE').values()), ["player"])
 
     def test_nameplate_health_never_reaches_the_handler(self):
         l = m.runtime()
