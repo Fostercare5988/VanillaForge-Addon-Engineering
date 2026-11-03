@@ -5,7 +5,8 @@
 - Realmlist: `play.octowow.st` (realms C'Thun, N'Zoth, Y'Shaarj)
 - Website: https://octowow.st/
 - Server patch: custom 1.18.1 content on the 1.12.1 client (build 5875, Interface 11200)
-- Client distribution: revision 2026.10.10, listed on the website on 15 October 2026,
+- Client distribution: revision 2026.10.31 (patch-4, patch-5 and patch-O dated
+  2026-10-31; the previous revision was 2026.10.10, listed on 15 October 2026),
   started through `VanillaFixes.exe` with DXVK
 - Language: English (enUS) only
 
@@ -54,3 +55,13 @@ Do not trust for this server:
 - 2026-10-27, seen in AutoBG's saved Spy stats: battlegrounds are cross-realm and
   name players from another realm "Name-Realm" ("Mayve-NZ" in Alterac Valley).
   Name matching must handle the suffix.
+- Source-verified 2026-11-03 (client 2026.10.31 FrameXML): the battlemaster window
+  lists two reserved instance numbers after First Available, `OCTO_BG_ROW_XF_ID`
+  9001 (Cross-Faction) and `OCTO_BG_ROW_FX_ID` 9002 (Factioned); a pick is joined
+  by its list index, and the queue status reports the number (9000 labels First
+  Available). `OctoBGQueueName(map, id)` names the queue. The client announces it
+  can draw them with ".owl caps 1" at each loading screen. Arenas
+  (Turtle_ArenaUI.lua, unchanged since 2026.10.10): `JoinArenaQueue(0)` Skirmish,
+  1-3 Rated 2v2/3v3/5v5, `LeaveArenaQueue()`; one arena queue at a time, status
+  map `ARENA`. New `OctoBGQueueCounts`: queue counts on the minimap tooltip,
+  hardcore realm only (CHAT_MSG_ADDON prefix OCTO_BGQ).

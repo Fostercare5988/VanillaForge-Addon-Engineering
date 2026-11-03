@@ -63,7 +63,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | Addon | Location | Tests | Portable | Run |
 | --- | --- | ---: | --- | --- |
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 5 | Yes | [ActionBarProfiles](#actionbarprofiles) |
-| AutoBG | `regressions/AutoBG` | 223 | Yes | [AutoBG](#autobg) |
+| AutoBG | `regressions/AutoBG` | 232 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 32 | Yes | [AutoLazy](#autolazy) |
 | Bagnon | `regressions/Bagnon` | 38 | Yes | [Bagnon](#bagnon) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
@@ -696,6 +696,10 @@ health from `UNIT_HEALTH_GUID` on a 0.5 s ticker, the preview never saved, timed
 `OnUpdate`, no `UNIT_SPELLCAST_SUCCEEDED`, a creature's swings looked up once, potion stealth ending on
 the ticker. The core, Timers, carrier, Spy and flag-watch harnesses now load what the client always has
 (BattlefieldFrame, AutoBG.lua's helpers, NamPower's `GetNampowerVersion`, the event globals).
+AutoBG `test_client_2026_10_31.py` (9): OctoWoW client 2026.10.31. The Cross-Faction row is joined when
+listed, else First Available; Auto queue and `/abg q arena` call `JoinArenaQueue` with the chosen type;
+Leave queues uses `LeaveArenaQueue` for the arena queue; no auto-release, no spirit-healer bar and the
+10-size enemy frames in an arena; queue bars use `OctoBGQueueName`. Eight fail on AutoBG `4a92a80`.
 ErrorLog `test_error_stack_2026_11_02.py` (4): the saved stack starts at `GetCallstackHeight() -
 GetErrorCallstackHeight() + 1`, a direct call at the caller, a repeat reads no stack, and ClassicAPI's window
 (the handler found at load) opens only with `/err popup` on. Native drawing, the spark on the bar texture and
