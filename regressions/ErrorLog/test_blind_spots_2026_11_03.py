@@ -161,5 +161,32 @@ class BlindSpots(unittest.TestCase):
         self.assertEqual(lua.eval("db.hitches[1].lua"), 0)
 
 
+    def test_shortened_paths_still_name_their_addon(self):
+        # The game keeps the last 52 characters of a long path.
+        lua = load()
+        lua.execute(r"""
+            function GetNumAddOns() return 3 end
+            local names = { "MikScrollingBattleText", "FostercareNameplates", "Bagnon" }
+            function GetAddOnInfo(i) return names[i] end
+            local function setBy(path)
+                stack = path
+                local f = CreateFrame("Frame")
+                f:SetScript("OnEvent", function() end)
+                stack = "Interface\\AddOns\\!ErrorLog\\Profiler.lua:1: in function"
+                return f.scripts.OnEvent
+            end
+            msbt = setBy("...dOns\\MikScrollingBattleText\\MikCombatEventHelper.lua:536: in function `OnLoad'")
+            fnp = setBy("...stercareNameplates\\modules\\VeryLongModuleName_Plates.lua:12: in function")
+            game = setBy("...ameXML\\ChatFrame.lua:40: in function")
+            now = now + 10; clockv = 0; tick()
+            msbt(); fnp(); game()
+            clockv = clockv + 16; tick()
+        """)
+        lua.execute("ErrorLog.OpenStutters()")
+        text = lua.eval("text")
+        self.assertIn("MikScrollingBattleText", text)
+        self.assertIn("FostercareNameplates", text)
+        self.assertNotIn("ameXML", text)
+
 if __name__ == "__main__":
     unittest.main()
