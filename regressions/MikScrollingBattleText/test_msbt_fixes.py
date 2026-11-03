@@ -144,7 +144,7 @@ class ManaEnableBaseline(unittest.TestCase):  # F6
             for _,t in pairs(MikSBT.CurrentProfile.Triggers) do
               if t.TriggerSettings.TriggerType==MikCEH.TRIGGERTYPE_SELF_MANA then t.EventSettings.Show=false end end
             units.player.mana=initialMana; MikSBT.RegisterTriggers()
-            local function ManaEvent() now=now+1; Fire("UNIT_MANA","player") end
+            local function ManaEvent() now=now+1; Fire("UNIT_POWER_UPDATE","player","MANA") end
             local function gains() local g={} for _,e in ipairs(sent) do if e.NotificationType==MikCEH.NOTIFICATIONTYPE_POWER_GAIN then table.insert(g,e.Amount) end end return g end
             units.player.mana=offMana; ManaEvent()
             MikSBTOpt.ShowTab(1); MSBT_ShowAllManaGains:Click()

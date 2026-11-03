@@ -63,10 +63,10 @@ class ManaRegenText(unittest.TestCase):  # P3-4
     def test_observed_mana_gain_does_no_name_lookups(self):
         lua = m.runtime()
         lua.execute('''
-        MikSBT.CurrentProfile.ShowAllManaGains=true; MikCEH.ResetManaBaseline()
+        MikSBT.CurrentProfile.ShowAllManaGains=true; MikCEH.UpdateUnitEvents()
         MikSBT.CombatEventsHandler=RealCombatEventsHandler
         units.player.mana=147; calls={}
-        Fire("UNIT_MANA","player"); RunTimers()
+        Fire("UNIT_POWER_UPDATE","player","MANA"); RunTimers()
         ''')
         g = lua.globals()
         self.assertIsNone(g.calls["GetSpellIdForName"], "spell lookup for a regen tick")

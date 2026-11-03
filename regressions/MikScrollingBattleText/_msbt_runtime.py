@@ -164,7 +164,11 @@ function UnitMana(u) local v=Resolve(u); return v and v.mana or 0 end
 function UnitManaMax(u) local v=Resolve(u); return v and v.maxmana or 0 end
 function UnitXP(u) local v=Resolve(u); return v and v.xp or 0 end
 function UnitXPMax(u) local v=Resolve(u); return v and v.maxxp or 0 end
-function UnitPowerType() return 0 end
+-- ClassicAPI power getters: type 0 is mana whatever the form; no type is the
+-- primary power (units.player.powertype, 0 when unset).
+function UnitPowerType(u) local v=Resolve(u); return v and v.powertype or 0 end
+function UnitPower(u,t) local v=Resolve(u); if not v then return 0 end; if t==0 or (t==nil and (v.powertype or 0)==0) then return v.mana or 0 end; return v.power or 0 end
+function UnitPowerMax(u,t) local v=Resolve(u); if not v then return 0 end; if t==0 or (t==nil and (v.powertype or 0)==0) then return v.maxmana or 0 end; return v.maxpower or 100 end
 function GetComboPoints() return 0 end
 function GetTime() return now end
 spellNamesMock={}
