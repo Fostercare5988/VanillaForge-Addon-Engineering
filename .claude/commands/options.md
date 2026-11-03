@@ -1,5 +1,5 @@
 Put the settings of the addon $ARGUMENTS, at
-C:\Users\Fostercare\Desktop\client-2026-10-10\Interface\AddOns\$ARGUMENTS,
+C:\Users\Fostercare\Desktop\OctoWoW\Interface\AddOns\$ARGUMENTS,
 into AddOn Options the way FostercareTweaks 1.15 does: its window keeps two
 columns, and every page is also a category under the addon in Game Menu >
 AddOn Options, one column at full size. Follow VANILLAFORGE.md. One addon only.

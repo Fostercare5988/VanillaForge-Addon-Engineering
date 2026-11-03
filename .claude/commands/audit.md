@@ -1,5 +1,5 @@
 Full VanillaForge audit of the addon $ARGUMENTS, at
-C:\Users\Fostercare\Desktop\client-2026-10-10\Interface\AddOns\$ARGUMENTS,
+C:\Users\Fostercare\Desktop\OctoWoW\Interface\AddOns\$ARGUMENTS,
 and then the fixes. Follow VANILLAFORGE.md. The active server profile is
 servers/octowow.md. DLLs are assumed installed; do not inspect or hash them.
 
