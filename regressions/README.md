@@ -70,7 +70,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | !ErrorLog | `regressions/ErrorLog` | 2 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 89 | Yes | [FostercareNameplates](#fostercarenameplates) |
-| FostercareTweaks | `regressions/FostercareTweaks` | 251 | Yes | [FostercareTweaks](#fostercaretweaks) |
+| FostercareTweaks | `regressions/FostercareTweaks` | 246 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 69 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 47 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
@@ -191,8 +191,7 @@ vararg wrappers. Options: nine switches are always on and cleared on load;
 `AbbreviateNumbers`, `FT.GetUnitHealthValues`, `FT.Countdown` and the stock
 frames the addon no longer checks for.
 
-The player's notes the same day add `test_zone_layouts_2026_11_02.py` (9: a layout per zone, combat waits,
-shared extra-row spells, frames go home), `test_watched_auras_2026_11_02.py` (10; 1.9.1
+The player's notes the same day add `test_watched_auras_2026_11_02.py` (10; 1.9.1
 retires FostercareAuras and its one-time import, 1.9.2 draws the icons in front)
 and `test_hide_and_poisons_2026_11_02.py` (8, 1.10.0: a watched aura leaves that unit's lists, Hide leaves them all,
 Blizzard's buffs close up; each weapon shows its poison from the bags, else the proc spell, read on events).
@@ -215,6 +214,9 @@ for Ctrl+Shift, power text formatted once, chat lines without links run no URL p
 per module, no DLL version in comments). All fail on `a798dc8`. Tests of retired migrations are gone
 (Hide Errors and the 10-26 options, Modern frames, 1.10 Hide entries, text spell IDs, old minimap keys);
 Core harnesses stub `FostercareTweaks.ActionBars`.
+
+1.17.0 retires layouts by zone (`test_zone_layouts_2026_11_02.py` is gone; `test_retire_layouts_2026_11_03.py`, 4: file,
+TOC entry, Core clears the three saved keys, no leftover mover restore code) and draws watched icons in MEDIUM strata.
 
 FostercareTweaks 1.16.1 (ClassicAPI 1.19.1) adds `test_action_range_events_2026_11_03.py` (7: Extra Row 1 enables
 its twelve slots' range check once and listens only while shown, hotkey colour and range dot follow

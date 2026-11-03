@@ -107,10 +107,6 @@ function FT.ActionBars:SetEnabled(v) self.enabled = v end
 function FT.ActionBars:SetEditing(v) if v and not self.enabled then return end; self.editing = v end
 function FT.ActionBars:SetValue(id, k, v) self:GetSettings(id)[k] = v end
 function FT.ActionBars:ResetBar() end
-FT.LAYOUT_NAMES = { world = "World", bg = "Battlegrounds", instance = "Dungeons and raids" }
-function FT.ZoneLayout() return "world" end
-function FT.SwitchLayout(name) switched = name end
-function FT.CopyLayoutToAll() copied = true end
 watched = {}
 FT.WatchedAuras = { List = function() return watched end,
     Add = function(name, unit) table.insert(watched, { name = name, unit = unit, mine = unit == "target" or nil }) end,
