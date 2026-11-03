@@ -21,7 +21,14 @@ function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 local Frame = {}
 function Frame:RegisterEvent() end
 function Frame:UnregisterEvent() end
-function Frame:SetScript(_, fn) self.onEvent = fn end
+-- The client sets the legacy event globals before the script runs.
+function Frame:SetScript(_, fn)
+    self.onEvent = function(s, ev, ...)
+        event = ev
+        arg1, arg2, arg3, arg4, arg5, arg6, arg7 = ...
+        return fn(s, ev, ...)
+    end
+end
 function CreateFrame() return setmetatable({}, { __index = Frame }) end
 tick = nil
 C_Timer = { NewTicker = function(_, fn) tick = fn; return { Cancel = function() tick = nil end } end }
