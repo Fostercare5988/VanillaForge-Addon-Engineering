@@ -45,6 +45,8 @@ function Widget:GetCountdownFontString() self.numbers = self.numbers or widget()
 function Widget:Show() self.shown = true end
 function Widget:Hide() self.shown = false end
 function Widget:IsShown() return self.shown end
+function Widget:SetParent(p) self.parent = p end
+function Widget:GetParent() return self.parent end
 function Widget:SetScript(k, f) self.scripts[k] = f end
 function Widget:GetScript(k) return self.scripts[k] end
 function Widget:RegisterEvent(e) self.events[e] = true end
@@ -86,6 +88,10 @@ function Widget:SetTimerDuration(d, interpolation, direction)
     self.timer, self.timerDirection = d, direction; count("SetTimerDuration")
 end
 UIParent = widget("UIParent")
+-- ClassicAPI's AddOn Options window and the game menu, closed.
+InterfaceOptionsFrame, GameMenuFrame = widget("InterfaceOptionsFrame"), widget("GameMenuFrame")
+InterfaceOptionsFrame.shown, GameMenuFrame.shown = false, false
+function HideUIPanel(f) f:Hide() end
 setmetatable(_G, { __index = function(_, k)
     if type(k) == "string" and string.find(k, "^FNP") then return widget(k) end
 end })

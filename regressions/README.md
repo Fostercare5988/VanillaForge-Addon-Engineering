@@ -69,7 +69,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
 | !ErrorLog | `regressions/ErrorLog` | 2 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
-| FostercareNameplates | `regressions/FostercareNameplates` | 82 | Yes | [FostercareNameplates](#fostercarenameplates) |
+| FostercareNameplates | `regressions/FostercareNameplates` | 89 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 251 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 69 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 47 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
@@ -395,6 +395,11 @@ native countdown carries the `~` formatter and `OnCooldownDone` redraws the row.
 mocks `RegisterUnitEvent` (fire honours the unit filter), `IsEventRegistered`,
 `C_StringUtil.CreateNumericRuleFormatter` and `table.wipe`. Fourteen fail on the code before
 their batch.
+`test_addon_options_2026_11_03.py` (7, 1.7.0, ForgeLayout): every page is a category under the
+addon, a category borrows its page and gives it back, in AddOn Options every page is one column
+and back in the window two columns, the preview moves with the page, the window keeps its 1.6.0
+control positions within 4 px, and the window closes AddOn Options. `fnp_env.py` records
+`SetParent` and gives `InterfaceOptionsFrame` and `GameMenuFrame`. Five fail on 1.6.0.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareNameplates" --run-tests --test-start regressions/FostercareNameplates --output .private/fnp-current.json
