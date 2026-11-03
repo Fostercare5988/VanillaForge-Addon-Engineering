@@ -87,14 +87,16 @@ class NameplateAuraDelta(unittest.TestCase):
 class Wiring(unittest.TestCase):
     def test_details_listen_to_the_delta(self):
         src = (fnp_env.ROOT / "Details.lua").read_text("utf-8-sig")
-        events = src[src.index("local DETAIL_EVENTS"):src.index("}", src.index("local DETAIL_EVENTS"))]
+        events = src[src.index("local PLATE_EVENTS"):src.index("}", src.index("local PLATE_EVENTS"))]
         self.assertIn('"UNIT_AURA_DELTA"', events)
         self.assertNotIn('"UNIT_AURA"', events)
         self.assertIn("if NP:AuraDeltaShows(plate, unit, info) then NP:Queue(plate, kind) end", src)
 
-    def test_cooldown_icons_hide_native_numbers(self):
+    def test_cooldown_icons_count_down_natively(self):
+        # Since 2026-11-03 the native numbers carry the "~" (a countdown formatter).
         src = (fnp_env.ROOT / "Cooldowns.lua").read_text("utf-8-sig")
-        self.assertIn("icon.sweep:SetHideCountdownNumbers(true)", src)
+        self.assertIn("sweep:SetCountdownFormatter(ESTIMATE)", src)
+        self.assertNotIn("SetHideCountdownNumbers(true)", src)
         self.assertNotIn("CooldownFrame_SetTimer", src)
 
 

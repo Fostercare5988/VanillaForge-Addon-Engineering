@@ -24,6 +24,8 @@ DEFAULT_CHAT_FRAME = { AddMessage = function(_, m) table.insert(messages, m) end
 STANDARD_TEXT_FONT = "Fonts\\FRIZQT__.TTF"
 UISpecialFrames, RAID_CLASS_COLORS = {}, { MAGE = { r = 0.4, g = 0.8, b = 1 } }
 CLOSE, SlashCmdList = "Close", {}
+-- ClassicAPI backport.
+function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 
 local Widget = {}
 local count
@@ -46,6 +48,14 @@ function Widget:IsShown() return self.shown end
 function Widget:SetScript(k, f) self.scripts[k] = f end
 function Widget:GetScript(k) return self.scripts[k] end
 function Widget:RegisterEvent(e) self.events[e] = true end
+-- ClassicAPI RegisterUnitEvent: the handler runs only for the listed tokens.
+function Widget:RegisterUnitEvent(e, ...)
+    local units = {}
+    for i = 1, select("#", ...) do units[select(i, ...)] = true end
+    self.events[e] = units
+end
+function Widget:UnregisterEvent(e) self.events[e] = nil end
+function Widget:IsEventRegistered(e) return self.events[e] ~= nil end
 function Widget:UnregisterAllEvents() self.events = {} end
 function Widget:GetWidth() return 110 end
 function Widget:GetHeight() return 14 end
@@ -112,7 +122,11 @@ C_EventUtils = { IsEventValid = function() return true end }
 C_Timer = { After = function() count("After") end,
     NewTicker = function() return { Cancel = function() end } end }
 Enum = { StatusBarInterpolation = { Immediate = 0 },
-    StatusBarTimerDirection = { ElapsedTime = 0, RemainingTime = 1 } }
+    StatusBarTimerDirection = { ElapsedTime = 0, RemainingTime = 1 },
+    NumericRuleFormatRounding = { Nearest = 0, Up = 1, Down = 2 } }
+C_StringUtil = { CreateNumericRuleFormatter = function()
+    return { SetBreakpoints = function(self, b) self.breakpoints = b end }
+end }
 C_DurationUtil = { CreateDuration = function()
     return { SetTimeSpan = function(self, startTime, endTime) self.startTime, self.endTime = startTime, endTime end }
 end }
@@ -162,9 +176,12 @@ function runFrames(plate, frames)
     end
 end
 
-function fire(ev, a1)
+function fire(ev, a1, ...)
     for _, f in ipairs(frames) do
-        if f.events[ev] and f.scripts.OnEvent then f.scripts.OnEvent(f, ev, a1) end
+        local registered = f.events[ev]
+        if registered and f.scripts.OnEvent and (registered == true or registered[a1]) then
+            f.scripts.OnEvent(f, ev, a1, ...)
+        end
     end
 end
 '''

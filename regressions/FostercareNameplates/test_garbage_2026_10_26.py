@@ -85,11 +85,11 @@ class EventWork(unittest.TestCase):
             C_NamePlate.GetNamePlateForUnit = function(u) if u == "target" then return plate end return forUnit(u) end
         ''')
 
-    def test_swing_keeps_the_cast_query(self):
-        self.lua.execute('fire("UNIT_CASTEVENT", "0xF1")')
-        self.assertIsNotNone(self.lua.eval('plate.fnpCastbar.nextQuery'))
+    def test_a_swing_asks_nothing_and_a_cast_start_asks(self):
+        self.lua.execute('calls = {}; fire("UNIT_CASTEVENT", "0xF1")')
+        self.assertIsNone(self.lua.eval('calls.UnitCastingInfo'))
         self.lua.execute('fire("UNIT_SPELLCAST_START", "nameplate1")')
-        self.assertIsNone(self.lua.eval('plate.fnpCastbar.nextQuery'))
+        self.assertIsNotNone(self.lua.eval('calls.UnitCastingInfo'))
 
     def test_other_tokens_of_the_unit_are_skipped(self):
         self.lua.execute('FostercareNameplates.Nameplates.pending = {}; fire("UNIT_HEALTH", "target")')
