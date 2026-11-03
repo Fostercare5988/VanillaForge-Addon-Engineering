@@ -81,5 +81,35 @@ class HealthText(unittest.TestCase):
         self.assertEqual(lua.eval("plate.fnpHealth.fnpText"), "50")
 
 
+class RetiredOptions(unittest.TestCase):
+    PRELUDE = '''
+        cast = { name = "Polymorph", s = now * 1000, e = (now + 1.5) * 1000 }
+        C_Spell.UnitCastingInfo = function() return cast.name, "", "tex", cast.s, cast.e, false, 1, true end
+        C_Spell.UnitChannelInfo = function() end
+        local create = CreateFrame
+        function CreateFrame(kind, name)
+            local frame = create(kind, name)
+            frame.SetStatusBarColor = function(self, r) self.red = r end
+            return frame
+        end
+    '''
+
+    def test_casts_you_cannot_interrupt_are_always_grey(self):
+        """"Grey when uninterruptible" was on for every character and has no
+        reason to be off: retired 2026-11-03, saved choice cleared. Fails on 1.5.0."""
+        lua = load('{ overwrites = { nameplate_uninterruptible = 0 } }', self.PRELUDE)
+        lua.execute('plate = nativePlate("0xF1", "nameplate1"); fire("UNIT_SPELLCAST_START", "nameplate1")')
+        self.assertEqual(lua.eval("plate.fnpCastbar.red"), 0.65)
+        self.assertIsNone(lua.eval("FostercareNameplates_Config.overwrites.nameplate_uninterruptible"))
+        self.assertIsNone(lua.eval('rawget(_G, "FNPOpt_nameplate_uninterruptible")'))
+
+    def test_slash_command_toggles_the_window(self):
+        lua = load()
+        lua.execute("FostercareNameplatesSettingsGUI:Hide(); SlashCmdList.FOSTERCARENAMEPLATES()")
+        self.assertTrue(lua.eval("FostercareNameplatesSettingsGUI:IsShown()"))
+        lua.execute("SlashCmdList.FOSTERCARENAMEPLATES()")
+        self.assertFalse(lua.eval("FostercareNameplatesSettingsGUI:IsShown()"))
+
+
 if __name__ == "__main__":
     unittest.main()

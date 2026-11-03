@@ -69,7 +69,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
 | !ErrorLog | `regressions/ErrorLog` | 2 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
-| FostercareNameplates | `regressions/FostercareNameplates` | 61 | Yes | [FostercareNameplates](#fostercarenameplates) |
+| FostercareNameplates | `regressions/FostercareNameplates` | 82 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 251 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 69 | Yes | [GearRack](#gearrack) |
 | MikScrollingBattleText | `regressions/MikScrollingBattleText` | 47 | Yes | [MikScrollingBattleText](#mikscrollingbattletext) |
@@ -381,6 +381,20 @@ settings window; `fnp_env.py` records `InterfaceOptions_AddCategory` panels.
 
 `test_class_query_2026_10_30.py` (2 tests): class colors ask `UnitIsPlayer` once per plate unit; a
 non-player was asked every 0.5 s. One fails on 1.4.4.
+
+2026-11-03 audit (1.6.0, `.private/audit-FostercareNameplates-2026-11-03.md`):
+`test_audit_2026_11_03.py` (10): with details off, settings changes leave plates to the game
+and turning details off restores them once; logout stops every module's events; a loading
+screen announces plates that changed unit; unit events are registered for nameplate tokens
+only and the list grows past slot 40; unchanged health builds no text; uninterruptible casts
+are always grey (option retired, saved value cleared); `/fnp` toggles the window.
+`test_castbar_timer_2026_11_02.py` now expects event-driven bars (no query during a cast or
+while idle, STOP hides the bar, a 0.5 s backstop only while a bar is up, a plate that comes
+into view mid-cast shows it). `test_cooldown_tick_2026_10_26.py` now expects no ticker: the
+native countdown carries the `~` formatter and `OnCooldownDone` redraws the row. `fnp_env.py`
+mocks `RegisterUnitEvent` (fire honours the unit filter), `IsEventRegistered`,
+`C_StringUtil.CreateNumericRuleFormatter` and `table.wipe`. Fourteen fail on the code before
+their batch.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareNameplates" --run-tests --test-start regressions/FostercareNameplates --output .private/fnp-current.json
