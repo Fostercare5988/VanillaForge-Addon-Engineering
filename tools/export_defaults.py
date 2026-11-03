@@ -22,7 +22,7 @@ from pathlib import Path
 
 from lupa.lua51 import LuaRuntime
 
-DEFAULT_ADDONS = Path(r"C:\Users\Fostercare\Desktop\client-2026-10-10\Interface\AddOns")
+DEFAULT_ADDONS = Path(r"C:\Users\Fostercare\Desktop\OctoWoW\Interface\AddOns")
 
 
 def load_config(path):
