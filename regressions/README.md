@@ -67,7 +67,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | AutoLazy | `regressions/AutoLazy` | 32 | Yes | [AutoLazy](#autolazy) |
 | Bagnon | `regressions/Bagnon` | 38 | Yes | [Bagnon](#bagnon) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
-| !ErrorLog | `regressions/ErrorLog` | 2 | Yes | [!ErrorLog](#errorlog) |
+| !ErrorLog | `regressions/ErrorLog` | 12 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 89 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 246 | Yes | [FostercareTweaks](#fostercaretweaks) |
@@ -416,8 +416,15 @@ collection started inside, and marks a slow handler call that held one. Both fai
 on 1.0.0. They run `Profiler.lua` alone with a stub `ErrorLog`, widget mocks and a
 memory counter the test sets; real collector timing stays an in-game check.
 
+`test_blind_spots_2026_11_03.py` (6, 1.3.0), from Stratholme stutters that all showed 0 ms of addon
+time: a `hooksecurefunc` hook is charged to its addon and the game handler around it keeps only its
+own time ("Game UI and XML", wrapped after `PLAYER_LOGIN`), the slow frame is the profiler's clock
+between ticks (not the engine's `elapsed`), each slow frame keeps its most frequent events, and
+the profiler's own frames stay unwrapped. All six fail on 1.2.0; the engine's real dispatch order
+stays an in-game check.
+
 ```text
-python -B tools/audit_addon.py "<AddOns>/!ErrorLog" --run-tests --test-start regressions/ErrorLog --output "%TEMP%udit-ErrorLog.json"
+python -B tools/audit_addon.py "<AddOns>/!ErrorLog" --run-tests --test-start regressions/ErrorLog --output "%TEMP%\audit-ErrorLog.json"
 ```
 
 ## ActionBarProfiles
