@@ -299,6 +299,20 @@
       "finding": "Sets a local raid mark by hand when solo, often by replacing SetRaidTargetIcon.",
       "better": "NamPower's own SetRaidTarget falls back to a local mark when you are not in a group (NP_EnableLocalSetRaidTarget, on by default), for the mark keys, the unit menu and every other caller. Redraw your own frames after it if they need it: hooksecurefunc(\"SetRaidTarget\", ...).",
       "source": "NamPower README.md (NP_EnableLocalSetRaidTarget, Local Raid Marker Helpers)"
+    },
+    {
+      "id": "countdown-text-ticker",
+      "pattern": "SetHideCountdownNumbers\\(\\s*true",
+      "finding": "Hides a Cooldown frame's native numbers to draw its own countdown text (a prefix such as ~, a color, minutes) on a timer.",
+      "better": "cooldown:SetCountdownFormatter(C_StringUtil.CreateNumericRuleFormatter()) with breakpoints such as { threshold = 0, step = 1, rounding = Up, format = \"~%d\" } and { threshold = 60, format = \"~%dm\", components = { { div = 60, step = 1, rounding = Up } } }; OnCooldownDone for the end. Numbers show while countdownForCooldowns is 1.",
+      "source": "ClassicAPI docs/API.md#c_stringutilcreatenumericruleformatter, Cooldown methods (SetCountdownFormatter)"
+    },
+    {
+      "id": "lua-unit-token-filter",
+      "pattern": "string\\.find\\(\\s*\\w+\\s*,\\s*\"\\^(nameplate|party|raid|target|focus)",
+      "finding": "Drops unit events for other tokens in Lua, after the handler already ran for every token naming the unit.",
+      "better": "frame:RegisterUnitEvent(event, units...); for plates, the nameplate1..N tokens (grow the list when a plate takes a higher slot: FostercareNameplates FNP.RegisterPlateEvent).",
+      "source": "ClassicAPI docs/API.md#frameregisteruniteventevent-units"
     }
   ]
 }
