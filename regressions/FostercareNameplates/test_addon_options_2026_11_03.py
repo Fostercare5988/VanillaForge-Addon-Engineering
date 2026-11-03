@@ -111,6 +111,25 @@ class AddOnOptions(unittest.TestCase):
         self.assertEqual(lua.eval(holder + ".points[1][4]"), 264)                # top of the right column
         self.assertEqual(lua.eval("FNPOpt_nameplate_target_glow.points[1][5]"), -120)
 
+    def test_the_preview_is_shown_again_after_each_move(self):
+        """2026-11-03 in play: every AddOn Options page had an empty space at the
+        top. The preview was made in the hidden window and moved without a Show;
+        the pages themselves are shown after their move. Fails on cf53153."""
+        lua = self.lua
+        lua.execute('''
+            shows = {}
+            FNPOptPreview.Show = function(self) self.shown = true; shows[#shows + 1] = self.parent end
+        ''')
+        self.host(3)
+        self.assertEqual(lua.eval("#shows"), 1)
+        self.assertTrue(lua.eval("shows[1] == FNPOptPage3 and FNPOptPreview:IsShown()"))
+        lua.execute("FostercareNameplates.Nameplates = FostercareNameplates.Nameplates; host.holder.scripts = host.holder.scripts")
+        lua.execute("FNPOpt_nameplate_target_glow.scripts.OnClick()")       # a refresh on the same page
+        self.assertEqual(lua.eval("#shows"), 1)
+        lua.execute("host.scripts.OnHide(host)")
+        self.host(4)
+        self.assertTrue(lua.eval("#shows == 2 and shows[2] == FNPOptPage4"))
+
     def test_the_window_keeps_its_layout(self):
         lua = self.lua
         lua.execute(OPEN)

@@ -70,7 +70,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | !ErrorLog | `regressions/ErrorLog` | 13 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 89 | Yes | [FostercareNameplates](#fostercarenameplates) |
-| FostercareTweaks | `regressions/FostercareTweaks` | 246 | Yes | [FostercareTweaks](#fostercaretweaks) |
+| FostercareTweaks | `regressions/FostercareTweaks` | 251 | Yes | [FostercareTweaks](#fostercaretweaks) |
 | GearRack | `regressions/GearRack` | 69 | Yes | [GearRack](#gearrack) |
 | FostercareBattleText | `regressions/FostercareBattleText` | 72 | Yes | [FostercareBattleText](#fostercarebattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
@@ -230,6 +230,9 @@ Core harnesses stub `FostercareTweaks.ActionBars`.
 
 1.17.0 retires layouts by zone (`test_zone_layouts_2026_11_02.py` is gone; `test_retire_layouts_2026_11_03.py`, 4: file,
 TOC entry, Core clears the three saved keys, no leftover mover restore code) and draws watched icons in MEDIUM strata.
+
+1.17.1 adds `test_chat_links_2026_11_03.py` (3: a line with a link came out empty; the splitter built it from a wiped, reused
+table read by `table.concat`, now plain concatenation).
 
 FostercareTweaks 1.16.1 (ClassicAPI 1.19.1) adds `test_action_range_events_2026_11_03.py` (7: Extra Row 1 enables
 its twelve slots' range check once and listens only while shown, hotkey colour and range dot follow
