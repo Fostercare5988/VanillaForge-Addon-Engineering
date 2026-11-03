@@ -51,3 +51,6 @@ Do not trust for this server:
   10793, 10795 and 10796 are mounts; 8342 is Defibrillate; 23133 and 23134 are
   engineering summons; 32612 does not exist. Vanish casts 1856/1857 apply auras
   11327/11329.
+- 2026-10-27, seen in AutoBG's saved Spy stats: battlegrounds are cross-realm and
+  name players from another realm "Name-Realm" ("Mayve-NZ" in Alterac Valley).
+  Name matching must handle the suffix.
