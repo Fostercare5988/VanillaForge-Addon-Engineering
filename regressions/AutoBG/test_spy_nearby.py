@@ -97,8 +97,15 @@ function IsShiftKeyDown() return shift end
 function IsControlKeyDown() return ctrl end
 function GetNumPartyMembers() return 0 end
 function PlaySound() end
+-- AutoBG.lua and the enemy frames load before Spy in the client.
+function AutoBG_LoadPosition() end
+function AutoBG_SavePosition() end
+function UnitInParty() return nil end
+function UnitInRaid() return nil end
+function UnitDistanceSquared() return 0, false end -- ClassicAPI; unchecked here
 AutoBG_Targets = {
     activeBG = false,
+    StripRealm = function(n) return (string.gsub(n or "", "%-.*$", "")) end,
     ResolveClassToken = function(c) return string.upper(c) end,
     GetClassColor = function() return { r = 1, g = 1, b = 1 } end,
     CheckUnitStealth = function() return false end,

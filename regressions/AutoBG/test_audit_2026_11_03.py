@@ -240,5 +240,25 @@ class EnemyFrameEventTests(unittest.TestCase):
         self.assertEqual(tge.row_text(lua), "100%")
 
 
+class SpyEventTests(unittest.TestCase):
+    def test_unit_spellcast_succeeded_is_not_registered(self):
+        from lupa.lua51 import LuaRuntime
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(spy.BASE + 'unitEvents = {}')
+        lua.execute('''local w = getmetatable(CreateFrame("Frame")).__index
+            function w:RegisterUnitEvent(e) unitEvents[e] = true end''')
+        spy.addon_loader.load(lua, spy.SPY, "AutoBG_Spy.lua")
+        self.assertTrue(lua.eval('unitEvents.UNIT_AURA_DELTA'))
+        self.assertIsNone(lua.eval('unitEvents.UNIT_SPELLCAST_SUCCEEDED'))
+
+    def test_a_friendly_players_casts_never_list_them(self):
+        lua = spy.runtime()
+        lua.execute('function UnitCanAttack(_, u) return u ~= "0x0000000000000003" end; names["0x0000000000000003"] = "Friend"')
+        spy.fire(lua, "UNIT_CASTEVENT", "0x0000000000000003", "0x0000000000000000", "CAST", 1234, 0)
+        lua.execute('AutoBG_Spy:RenderRows()')
+        self.assertIsNone(lua.eval('AutoBG_Settings.Spy.Stats and AutoBG_Settings.Spy.Stats.friend'))
+        self.assertNotEqual(lua.eval('AutoBG_SpyRow1.targetName'), "Friend")
+
+
 if __name__ == "__main__":
     unittest.main()
