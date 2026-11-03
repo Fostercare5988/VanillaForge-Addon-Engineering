@@ -132,13 +132,44 @@ class QueueBarTests(unittest.TestCase):
 
 
 class ArenaFrameTests(unittest.TestCase):
-    def test_an_arena_uses_the_smallest_enemy_frames(self):
+    def test_an_arena_is_spys_not_the_enemy_frames(self):
         import test_targets_guid_events as tge
         lua = tge.runtime()
-        lua.execute('AutoBG_Targets:SetupButtonLayout(40)')
         lua.execute('function GetBattlefieldStatus(i) if i == 1 then return "active", "Arena" end return "none" end')
         lua.execute('ARENA = "Arena"; AutoBG_Targets:BattlefieldScoreUpdate(true)')
-        self.assertEqual(lua.eval('AutoBG_Targets.currentSize'), 10)
+        self.assertFalse(lua.eval('AutoBG_Targets.activeBG'))
+
+
+class ArenaSpyTests(unittest.TestCase):
+    """Spy works in the arenas (2v2, 3v3, 5v5) and stays off in battlegrounds."""
+
+    def sighting(self, instance, zone=None):
+        from test_spy_nearby import advance, runtime
+        lua = runtime()
+        # The shared zone helper from AutoBG.lua, with the OctoWoW arena names.
+        lua.execute('''
+            local zones = { ["lordaeron arena"] = true, ["sunstrider court"] = true, ["circle of blood"] = true }
+            function AutoBG_IsArenaZone()
+                local inInstance, t = IsInInstance()
+                return (inInstance and t == "arena") or zones[string.lower(GetRealZoneText())] == true
+            end
+        ''')
+        if zone:
+            lua.execute('zoneName = "%s"' % zone)
+        lua.execute('function IsInInstance() return 1, "%s" end' % instance)
+        from test_spy_nearby import fire
+        fire(lua, "PLAYER_ENTERING_WORLD")
+        lua.execute('AutoBG_Spy:RecordEnemy("Grom", "WARRIOR", 60, "0x0000000000000001", 100, nil, nil, "Orc")')
+        advance(lua, 1)
+        return lua.eval('AutoBG_Spy.Frame.shown') and True or False
+
+    def test_spy_lists_enemies_in_each_arena(self):
+        self.assertTrue(self.sighting("arena", "Lordaeron Arena"))
+        self.assertTrue(self.sighting("pvp", "Sunstrider Court"))
+        self.assertTrue(self.sighting("pvp", "Circle of Blood"))
+
+    def test_spy_stays_off_in_a_battleground(self):
+        self.assertFalse(self.sighting("pvp", "Warsong Gulch"))
 
 
 if __name__ == "__main__":
