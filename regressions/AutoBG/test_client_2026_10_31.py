@@ -234,6 +234,57 @@ class ArenaFrameTests(unittest.TestCase):
         self.assertFalse(lua.eval('AutoBG_Targets.activeBG'))
 
 
+class ArenaPetTests(unittest.TestCase):
+    """Enemy pets are listed in arenas only."""
+
+    def setup(self, arena=True):
+        import test_targets_guid_events as tge
+        from addon_loader import ROOT, load
+        lua = tge.runtime(sighting=False)
+        lua.execute('''ARENA = "Arena"
+            function AutoBG_IsArenaZone() return %s end
+            function GetBattlefieldStatus(i) if i == 1 then return "active", "%s" end return "none" end
+            function UnitExists(u) return u ~= "gone" end
+            function UnitIsMinion(u) return u == "0xF140000000000001" or u == "0xF140000000000002" end
+            function UnitCreatureType(u) if u == "0xF140000000000002" then return "Totem" end return "Demon" end
+            function UnitOwnerGUID() return "0x0000000000000099" end
+            function UnitName(u) if u == "0x0000000000000099" then return "Spanthout" end return "Felguard" end
+            timers = {}
+            C_Timer.NewTimer = function(_, fn) table.insert(timers, fn); return { Cancel = function() end } end
+            AutoBG_Targets:BattlefieldScoreUpdate(true)''' % ("true" if arena else "false", "Arena" if arena else "Warsong Gulch"))
+        load(lua, (ROOT / "AutoBG_ArenaPets.lua").read_text("utf-8-sig"), "AutoBG_ArenaPets.lua")
+        lua.execute('AutoBG_Targets:BattlefieldScoreUpdate(true); AutoBG_Targets.MainFrame.GetWidth = function() return 150 end')
+        return lua
+
+    def health(self, lua, guid):
+        lua.execute('AutoBG_ArenaPetsListener.scripts.OnEvent(AutoBG_ArenaPetsListener, "UNIT_HEALTH_GUID", "%s")' % guid)
+
+    def test_an_enemy_pet_is_listed_with_its_owner(self):
+        lua = self.setup()
+        self.health(lua, "0xF140000000000001")
+        self.assertEqual(lua.eval('AutoBG_ArenaPets.Count()'), 1)
+        lua.execute('for _, fn in ipairs(timers) do fn() end')
+        self.assertEqual(lua.eval('AutoBG_ArenaPet1.Name.text'), "Felguard |cffaaaaaaSpanthout|r")
+
+    def test_a_totem_and_a_player_are_not_pets(self):
+        lua = self.setup()
+        self.health(lua, "0xF140000000000002")
+        self.health(lua, "0x0000000000000042")
+        self.assertEqual(lua.eval('AutoBG_ArenaPets.Count()'), 0)
+
+    def test_a_new_pet_replaces_the_old_one_of_the_same_owner(self):
+        lua = self.setup()
+        lua.execute('function UnitIsMinion() return true end')
+        self.health(lua, "0xF140000000000001")
+        self.health(lua, "0xF140000000000003")
+        self.assertEqual(lua.eval('AutoBG_ArenaPets.Count()'), 1)
+
+    def test_nothing_is_listed_in_a_battleground(self):
+        lua = self.setup(arena=False)
+        self.health(lua, "0xF140000000000001")
+        self.assertEqual(lua.eval('AutoBG_ArenaPets.Count()'), 0)
+
+
 class CrossFactionBattlegroundTests(unittest.TestCase):
     """Teams mix factions: a roster name you cannot attack is a teammate."""
 
