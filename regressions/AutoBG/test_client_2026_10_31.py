@@ -217,7 +217,7 @@ class CrossFactionBattlegroundTests(unittest.TestCase):
 
 
 class ArenaSpyTests(unittest.TestCase):
-    """Spy works in the arenas (2v2, 3v3, 5v5) and stays off in battlegrounds."""
+    """Spy rests in the arenas (2v2, 3v3, 5v5) and in battlegrounds: the enemy frames own them."""
 
     def sighting(self, instance, zone=None):
         from test_spy_nearby import advance, runtime
@@ -239,10 +239,10 @@ class ArenaSpyTests(unittest.TestCase):
         advance(lua, 1)
         return lua.eval('AutoBG_Spy.Frame.shown') and True or False
 
-    def test_spy_lists_enemies_in_each_arena(self):
-        self.assertTrue(self.sighting("arena", "Lordaeron Arena"))
-        self.assertTrue(self.sighting("pvp", "Sunstrider Court"))
-        self.assertTrue(self.sighting("pvp", "Blood Ring"))
+    def test_spy_stays_off_in_each_arena(self):
+        self.assertFalse(self.sighting("arena", "Lordaeron Arena"))
+        self.assertFalse(self.sighting("pvp", "Sunstrider Court"))
+        self.assertFalse(self.sighting("pvp", "Blood Ring"))
 
     def test_spy_stays_off_in_a_battleground(self):
         self.assertFalse(self.sighting("pvp", "Warsong Gulch"))
