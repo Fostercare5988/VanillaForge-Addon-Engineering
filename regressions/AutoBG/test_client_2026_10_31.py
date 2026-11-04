@@ -305,6 +305,129 @@ class ArenaPetTests(unittest.TestCase):
         self.assertEqual(lua.eval('AutoBG_ArenaPets.Count()'), 0)
 
 
+class ArenaExtrasTests(unittest.TestCase):
+    """The power bar, the icon strip, the drinking alert and the callouts."""
+    GUID = "0x0000000000000042"
+
+    def setup(self):
+        import test_targets_guid_events as tge
+        from addon_loader import ROOT, load
+        lua = tge.runtime(sighting=False)
+        lua.execute('''ARENA = "Arena"
+            function AutoBG_IsArenaZone() return true end
+            function GetBattlefieldStatus(i) if i == 1 then return "active", "Arena" end return "none" end
+            guidNames["0x0000000000000042"] = "Grom"
+            names = { [11] = "Blink", [12] = "Frostbolt", [77] = "Drink", [88] = "Shadow Sight", [99] = "Power Word: Shield" }
+            function GetSpellInfo(id) return names[id], nil, "Icon" .. id end
+            mana = { cur = 30, max = 100 }
+            function UnitMana() return mana.cur end
+            function UnitManaMax() return mana.max end
+            function UnitPowerType() return 0 end
+            said, errors, sounds, shadow = {}, {}, {}, {}
+            function SendChatMessage(text, channel) table.insert(said, channel .. ": " .. text) end
+            UIErrorsFrame = { AddMessage = function(_, text) table.insert(errors, text) end }
+            function PlaySound(name) table.insert(sounds, name) end
+            function AutoBG_Timers_ShadowSight(who, enemy) table.insert(shadow, who .. (enemy and " enemy" or "")) end
+            function UnitCanAttack() return true end
+            function UnitClass() return "Mage", "MAGE" end
+            getmetatable(UIParent).__index.SetTexture = function(self, t) self.texture = t end''')
+        load(lua, (ROOT / "AutoBG_Arena.lua").read_text("utf-8-sig"), "AutoBG_Arena.lua")
+        lua.execute('AutoBG_Targets:BattlefieldScoreUpdate(true)')
+        tge.fire(lua, "UNIT_HEALTH_GUID", self.GUID)
+        lua.execute('for i = 1, 5 do AutoBG_TargetButton1.GetWidth = function() return 150 end end')
+        return lua
+
+    def event(self, lua, ev, *args):
+        values = ", ".join(repr(a) if isinstance(a, str) else str(a) for a in args)
+        lua.execute('AutoBG_ArenaListener.scripts.OnEvent(AutoBG_ArenaListener, "%s", %s)' % (ev, values))
+
+    def test_the_power_bar_follows_the_enemy_power(self):
+        lua = self.setup()
+        lua.execute('AutoBG_Arena.Tick()')
+        self.assertTrue(lua.eval('AutoBG_TargetButton1.PowerBar.shown'))
+
+    def test_an_instant_ability_gets_an_icon_but_a_cast_time_spell_does_not(self):
+        lua = self.setup()
+        self.event(lua, "UNIT_CASTEVENT", self.GUID, "x", "START", 12)
+        self.event(lua, "UNIT_CASTEVENT", self.GUID, "x", "CAST", 12)
+        self.event(lua, "UNIT_CASTEVENT", self.GUID, "x", "CAST", 11)
+        lua.execute('AutoBG_Arena.Tick()')
+        self.assertEqual(lua.eval('AutoBG_TargetButton1.Strip.slots[1].Icon.texture'), "Icon11")
+        self.assertFalse(lua.eval('AutoBG_TargetButton1.Strip.slots[2].shown'))
+
+    def test_a_used_again_and_again_spell_is_hidden(self):
+        lua = self.setup()
+        for _ in range(3):
+            self.event(lua, "UNIT_CASTEVENT", self.GUID, "x", "CAST", 11)
+        lua.execute('AutoBG_Arena.Tick()')
+        self.assertFalse(lua.eval('AutoBG_TargetButton1.Strip.slots[1].shown'))
+
+    def test_a_buff_gained_later_shows_and_one_at_first_sight_does_not(self):
+        lua = self.setup()
+        self.event(lua, "UNIT_CASTEVENT", self.GUID, "x", "CAST", 11)
+        self.event(lua, "BUFF_ADDED_OTHER", self.GUID, 1, 99, 1, 60, 0, 0)
+        lua.execute('AutoBG_Arena.Tick()')
+        self.assertEqual(lua.eval('AutoBG_TargetButton1.Strip.slots[1].Icon.texture'), "Icon11")
+        lua.execute('NOW = 1003')
+        self.event(lua, "BUFF_ADDED_OTHER", self.GUID, 1, 99, 1, 60, 0, 0)
+        lua.execute('AutoBG_Arena.Tick()')
+        self.assertEqual(lua.eval('AutoBG_TargetButton1.Strip.slots[1].Icon.texture'), "Icon99")
+
+    def test_an_enemy_drinking_is_announced(self):
+        lua = self.setup()
+        self.event(lua, "UNIT_CASTEVENT", self.GUID, "x", "CAST", 11)
+        lua.execute('NOW = 1003')
+        self.event(lua, "BUFF_ADDED_OTHER", self.GUID, 1, 77, 1, 60, 0, 0)
+        self.assertEqual(list(lua.eval('errors').values()), ["Grom is drinking!"])
+        self.assertEqual(list(lua.eval('sounds').values()), ["RaidWarning"])
+
+    def test_callouts_are_off_until_switched_on_and_say_each_thing_once(self):
+        lua = self.setup()
+        lua.execute('health.hp = 800; raidSize = 5')
+        self.event(lua, "UNIT_HEALTH_GUID", self.GUID)
+        self.assertEqual(lua.eval('#said'), 0)
+        lua.execute('AutoBG_ArenaOptions().Callouts = true')
+        self.event(lua, "UNIT_HEALTH_GUID", self.GUID)
+        self.event(lua, "UNIT_HEALTH_GUID", self.GUID)
+        self.event(lua, "UNIT_DIED", self.GUID)
+        self.event(lua, "UNIT_DIED", self.GUID)
+        self.assertEqual(list(lua.eval('said').values()), ["RAID: Grom is LOW (20%)", "RAID: Grom is DEAD"])
+
+    def test_a_shadow_sight_pickup_goes_to_the_timers(self):
+        lua = self.setup()
+        self.event(lua, "BUFF_ADDED_OTHER", self.GUID, 1, 88, 1, 60, 0, 0)
+        self.assertEqual(list(lua.eval('shadow').values()), ["Grom enemy"])
+
+    def test_nothing_is_decorated_outside_an_arena(self):
+        lua = self.setup()
+        lua.execute('AutoBG_Arena.Tick(); AutoBG_Arena.SetActive(false)')
+        self.assertFalse(lua.eval('AutoBG_TargetButton1.Strip.shown'))
+
+
+class ShadowSightTests(unittest.TestCase):
+    def runtime(self):
+        import test_timer_bars as ttb
+        from lupa.lua51 import LuaRuntime
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(ttb.BASE + '''
+            function GetRealZoneText() return "Blood Ring" end
+            function IsInInstance() return 1, "pvp" end
+            function AutoBG_IsArenaZone() return true end
+            function AutoBG_ArenaOptions() return { ShadowSight = true } end''')
+        lua.execute(ttb.TIMERS)
+        lua.execute('local f = AutoBG_TimersEventFrame; f.scripts.OnEvent(f, "PLAYER_ENTERING_WORLD")')
+        return lua
+
+    def test_the_orbs_are_timed_from_the_start_of_the_round_and_a_pickup_adds_the_rest(self):
+        lua = self.runtime()
+        lua.execute('local f = AutoBG_TimersEventFrame; f.scripts.OnEvent(f, "CHAT_MSG_BG_SYSTEM_NEUTRAL", "The Arena battle has begun!")')
+        self.assertEqual(lua.eval('AutoBG_ShadowSightFrame.rows[1].labelFs.text'), "Orbs appear")
+        lua.execute('AutoBG_Timers_ShadowSight("Grom", true)')
+        self.assertEqual(lua.eval('AutoBG_ShadowSightFrame.rows[1].labelFs.text'), "Shadow Sight: Grom (enemy)")
+        self.assertEqual(lua.eval('AutoBG_ShadowSightFrame.rows[2].labelFs.text'), "Orb back")
+        self.assertIsNone(lua.eval('AutoBG_ShadowSightFrame.rows[3].labelFs.text'))
+
+
 class CrossFactionBattlegroundTests(unittest.TestCase):
     """Teams mix factions: a roster name you cannot attack is a teammate."""
 
