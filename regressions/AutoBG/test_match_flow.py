@@ -197,6 +197,30 @@ class ArenaRejoinTests(unittest.TestCase):
         lua.execute('local i = 1; while i <= #timers and i < 20 do timers[i](); i = i + 1 end')
         self.assertEqual(list(lua.eval('joined').values()), [0])
 
+    def test_a_queued_skirmish_is_not_joined_again(self):
+        # The queue may be reported under the arena's own name; it still counts.
+        lua = runtime()
+        lua.execute('''
+            AutoBG_Settings.AutoLeave, AutoBG_Settings.AutoRejoin, AutoBG_Settings.ArenaType = true, true, 0
+            joined = {}
+            function JoinArenaQueue(t) table.insert(joined, t) end
+            function AutoBG_HasDeserter() return false end
+            timers = {}
+            C_Timer.NewTimer = function(_, fn) table.insert(timers, fn); return { Cancel = function() end } end
+            zone, pvp = "Sunstrider Court", true''')
+        fire(lua, "PLAYER_ENTERING_WORLD")
+        lua.execute('winner = 1')
+        fire(lua, "CHAT_MSG_BG_SYSTEM_NEUTRAL", "Gold wins!")
+        lua.execute('for _, fn in ipairs(delayed) do fn() end')
+        lua.execute('pvp, winner = false, nil')
+        fire(lua, "PLAYER_LEAVING_WORLD")
+        fire(lua, "PLAYER_ENTERING_WORLD")
+        lua.execute('local i = 1; while i <= #timers and i < 3 do timers[i](); i = i + 1 end')
+        lua.execute('function GetBattlefieldStatus(i) if i == 1 then return "queued", "Blood Ring" end return "none" end')
+        fire(lua, "UPDATE_BATTLEFIELD_STATUS")
+        lua.execute('local i = 1; while i <= #timers and i < 40 do timers[i](); i = i + 1 end')
+        self.assertEqual(list(lua.eval('joined').values()), [0])
+
 
 if __name__ == '__main__':
     unittest.main()
