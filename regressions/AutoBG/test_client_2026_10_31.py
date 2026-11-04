@@ -19,6 +19,7 @@ import test_match_flow as core
 CLIENT = r'''
 ARENA = "Arena"
 OCTO_BG_ROW_FA_ID, OCTO_BG_ROW_XF_ID, OCTO_BG_ROW_FX_ID = 9000, 9001, 9002
+function AutoBG_QueueMap(map) return map end
 function OctoBGQueueName(map, id)
     local labels = { [9000] = "First Available", [9001] = "Cross-Faction", [9002] = "Factioned" }
     if labels[id] then return map .. " (" .. labels[id] .. ")" end
