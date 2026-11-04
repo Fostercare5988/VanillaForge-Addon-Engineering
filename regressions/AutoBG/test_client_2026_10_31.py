@@ -168,6 +168,25 @@ class ArenaFrameTests(unittest.TestCase):
         self.assertEqual(lua.eval('AutoBG_Targets.EnemyCount()'), 0)
 
 
+class CrossFactionBattlegroundTests(unittest.TestCase):
+    """Teams mix factions: a roster name you cannot attack is a teammate."""
+
+    def test_a_teammate_on_the_enemy_side_of_the_scoreboard_leaves_the_list(self):
+        import test_targets_guid_events as tge
+        lua = tge.runtime(sighting=False)
+        lua.execute('function UnitCanAttack() return false end; target = "Grom"')
+        lua.execute('AutoBG_Targets.scripts.OnEvent(AutoBG_Targets, "PLAYER_TARGET_CHANGED")')
+        self.assertEqual(lua.eval('AutoBG_Targets.EnemyCount()'), 0)
+
+    def test_an_attackable_player_the_scoreboard_missed_joins_the_list(self):
+        import test_targets_guid_events as tge
+        lua = tge.runtime(sighting=False)
+        lua.execute('''function UnitClass() return "Mage", "MAGE" end
+            target = "Zed"''')
+        lua.execute('AutoBG_Targets.scripts.OnEvent(AutoBG_Targets, "PLAYER_TARGET_CHANGED")')
+        self.assertEqual(lua.eval('AutoBG_Targets.EnemyCount()'), 2)
+
+
 class ArenaSpyTests(unittest.TestCase):
     """Spy works in the arenas (2v2, 3v3, 5v5) and stays off in battlegrounds."""
 

@@ -97,6 +97,8 @@ function UnitFactionGroup() return "Alliance" end
 target = nil
 function UnitExists(u) return u == "player" or (u == "target" and target ~= nil) or u == "0x0000000000000042" end
 function UnitIsPlayer() return 1 end
+function UnitCanAttack() return true end
+function UnitClass() return "Warrior", "WARRIOR" end
 function UnitIsVisible() return 1 end
 function UnitIsDeadOrGhost() return nil end
 function UnitIsDead() return nil end
