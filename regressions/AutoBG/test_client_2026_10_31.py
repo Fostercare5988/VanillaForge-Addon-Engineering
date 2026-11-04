@@ -187,6 +187,42 @@ class ArenaFrameTests(unittest.TestCase):
             for _, tick in ipairs(tickers) do tick() end''')
         self.assertEqual(lua.eval('(AutoBG_Targets.GetEnemy(1))'), "Grom")
 
+    def test_unitxp_steps_through_the_enemies_and_clears_the_target(self):
+        import test_targets_guid_events as tge
+        lua = tge.runtime(sighting=False)
+        lua.execute('''ARENA = "Arena"
+            function AutoBG_IsArenaZone() return true end
+            function GetBattlefieldStatus(i) if i == 1 then return "active", "Arena" end return "none" end
+            function UnitCanAttack() return true end
+            function UnitClass() return "Warrior", "WARRIOR" end
+            AutoBG_Targets:BattlefieldScoreUpdate(true)
+            local names, i = { "Grom", "Thrall", "Rexxar" }, 0
+            local exists, name, guid = UnitExists, UnitName, UnitGUID
+            function UnitExists(u) if u == "target" then return target ~= nil end return exists(u) end
+            function UnitName(u) if u == "target" then return target end return name(u) end
+            function UnitGUID(u) if u == "target" then return target and ("0x" .. target) end return guid(u) end
+            function ClearTarget() target = nil end
+            function UnitXP(a, b)
+                i = i % 3 + 1
+                target = names[i]
+                return true
+            end
+            for _, tick in ipairs(tickers) do tick() end''')
+        self.assertEqual(lua.eval('AutoBG_Targets.EnemyCount()'), 3)
+        self.assertIsNone(lua.eval('target'))
+
+    def test_the_sweep_leaves_your_own_target_alone(self):
+        import test_targets_guid_events as tge
+        lua = tge.runtime(sighting=False)
+        lua.execute('''ARENA = "Arena"
+            function AutoBG_IsArenaZone() return true end
+            function GetBattlefieldStatus(i) if i == 1 then return "active", "Arena" end return "none" end
+            AutoBG_Targets:BattlefieldScoreUpdate(true)
+            target = "Mine"; moved = false
+            function UnitXP() moved = true; return true end
+            for _, tick in ipairs(tickers) do tick() end''')
+        self.assertFalse(lua.eval('moved'))
+
     def test_a_queue_status_that_lingers_after_leaving_is_not_an_arena(self):
         import test_targets_guid_events as tge
         lua = tge.runtime(sighting=False)
