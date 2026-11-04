@@ -172,5 +172,31 @@ class AutoLeaveTests(unittest.TestCase):
         self.assertEqual(list(lua.eval('leaves').values()), [0])
 
 
+class ArenaRejoinTests(unittest.TestCase):
+    def test_skirmish_is_queued_again_after_the_auto_leave(self):
+        # The world loads while the old zone still reads as the arena (and the
+        # arena flag is still up): outside an instance that is not the arena.
+        lua = runtime()
+        lua.execute('''
+            AutoBG_Settings.AutoLeave, AutoBG_Settings.AutoRejoin, AutoBG_Settings.ArenaType = true, true, 0
+            joined = {}
+            function JoinArenaQueue(t) table.insert(joined, t) end
+            function IsActiveBattlefieldArena() return true end
+            function AutoBG_HasDeserter() return false end
+            timers = {}
+            C_Timer.NewTimer = function(_, fn) table.insert(timers, fn); return { Cancel = function() end } end
+            zone, pvp = "Sunstrider Court", true''')
+        fire(lua, "PLAYER_ENTERING_WORLD")
+        lua.execute('winner = 1')
+        fire(lua, "CHAT_MSG_BG_SYSTEM_NEUTRAL", "Gold wins!")
+        lua.execute('for _, fn in ipairs(delayed) do fn() end')
+        self.assertEqual(list(lua.eval('leaves').values()), [0])
+        lua.execute('pvp, winner = false, nil')
+        fire(lua, "PLAYER_LEAVING_WORLD")
+        fire(lua, "PLAYER_ENTERING_WORLD")
+        lua.execute('local i = 1; while i <= #timers and i < 20 do timers[i](); i = i + 1 end')
+        self.assertEqual(list(lua.eval('joined').values()), [0])
+
+
 if __name__ == '__main__':
     unittest.main()
