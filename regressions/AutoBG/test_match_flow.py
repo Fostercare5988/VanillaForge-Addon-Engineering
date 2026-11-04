@@ -221,6 +221,16 @@ class ArenaRejoinTests(unittest.TestCase):
         lua.execute('local i = 1; while i <= #timers and i < 40 do timers[i](); i = i + 1 end')
         self.assertEqual(list(lua.eval('joined').values()), [0])
 
+    def test_a_queued_skirmish_listed_by_its_arena_is_left_with_the_arena_call(self):
+        lua = runtime()
+        lua.execute('''
+            left, ported = 0, 0
+            function LeaveArenaQueue() left = left + 1 end
+            function AcceptBattlefieldPort() ported = ported + 1 end
+            function GetBattlefieldStatus(i) if i == 1 then return "queued", "Blood Ring" end return "none" end
+            AutoBG_CancelAllQueues()''')
+        self.assertEqual((lua.eval('left'), lua.eval('ported')), (1, 0))
+
 
 if __name__ == '__main__':
     unittest.main()

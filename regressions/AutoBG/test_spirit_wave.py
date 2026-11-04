@@ -13,6 +13,7 @@ ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 TIMERS = (ROOT / "AutoBG_Timers.lua").read_text("utf-8-sig")
 
 BASE = r'''
+function AutoBG_QueueMap(map) return map end
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 CLASSIC_API_VERSION, SUPERWOW_VERSION = 11711, "2.2"
 -- AutoBG.lua's shared helpers (loaded before this file in the client).
