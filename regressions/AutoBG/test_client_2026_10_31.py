@@ -234,6 +234,26 @@ class ArenaFrameTests(unittest.TestCase):
         self.assertFalse(lua.eval('AutoBG_Targets.activeBG'))
 
 
+class LateEnemyTests(unittest.TestCase):
+    def test_a_player_who_was_not_an_enemy_at_first_is_looked_at_again(self):
+        # Seen once before the match was known, a hostile player must not stay ignored.
+        import test_targets_guid_events as tge
+        lua = tge.runtime(sighting=False)
+        lua.execute('''ARENA = "Arena"
+            function AutoBG_IsArenaZone() return true end
+            function GetBattlefieldStatus(i) if i == 1 then return "active", "Arena" end return "none" end
+            hostile = false
+            guidNames["0x0000000000000042"] = "Grom"
+            function UnitCanAttack() return hostile end
+            function UnitClass() return "Rogue", "ROGUE" end
+            AutoBG_Targets:BattlefieldScoreUpdate(true)''')
+        tge.fire(lua, "UNIT_HEALTH_GUID", "0x0000000000000042")
+        self.assertEqual(lua.eval('AutoBG_Targets.EnemyCount()'), 0)
+        lua.execute('hostile = true; NOW = 1006')
+        tge.fire(lua, "UNIT_HEALTH_GUID", "0x0000000000000042")
+        self.assertEqual(lua.eval('AutoBG_Targets.EnemyCount()'), 1)
+
+
 class ArenaPetTests(unittest.TestCase):
     """Enemy pets are listed in arenas only."""
 

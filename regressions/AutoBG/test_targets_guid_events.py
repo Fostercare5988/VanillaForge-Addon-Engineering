@@ -84,7 +84,7 @@ function AutoBG_LoadPosition() end
 function AutoBG_SavePosition() end
 function AutoBG_GetEnemyCarrier() return enemyCarrier end
 C_UnitAuras = { GetAuraSlots = function() return nil, 0 end }
-function GetTime() return 1000 end
+function GetTime() return NOW or 1000 end
 MAX_BATTLEFIELD_QUEUES = 3
 function GetBattlefieldStatus(i) if i == 1 then return "active", "Warsong Gulch" end return "none" end
 function RequestBattlefieldScoreData() end
