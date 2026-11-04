@@ -184,6 +184,27 @@ class ArenaFrameTests(unittest.TestCase):
         self.assertEqual(lua.eval('AutoBG_Targets.EnemyCount()'), 1)
         self.assertEqual(lua.eval('(AutoBG_Targets.GetEnemy(1))'), "Grom")
 
+    def test_the_whole_other_team_is_listed_before_anyone_is_seen(self):
+        import test_targets_guid_events as tge
+        lua = tge.runtime(sighting=False)
+        lua.execute('''ARENA = "Arena"
+            function AutoBG_IsArenaZone() return true end
+            function GetBattlefieldStatus(i) if i == 1 then return "active", "Arena" end return "none" end
+            AutoBG_Targets:BattlefieldScoreUpdate(true)''')
+        tge.fire(lua, "CHAT_MSG_ADDON", "TW_ARENA",
+                 "S2C_SCOREBOARD;0;6;Tester|1|0:Ann|1|0:A1|2|0:A2|2|0:A3|2|0:A4|2|0:A5|2|0")
+        self.assertEqual(lua.eval('AutoBG_Targets.EnemyCount()'), 5)
+
+    def test_a_scoreboard_message_missed_is_read_from_the_client(self):
+        import test_targets_guid_events as tge
+        lua = tge.runtime(sighting=False)
+        lua.execute('''ARENA = "Arena"
+            function AutoBG_IsArenaZone() return true end
+            WorldStateScoreFrame = { arenaData = "S2C_SCOREBOARD;0;4;Tester|1|0:Ann|1|0:A1|2|0:A2|2|0" }
+            function GetBattlefieldStatus(i) if i == 1 then return "active", "Arena" end return "none" end
+            AutoBG_Targets:BattlefieldScoreUpdate(true)''')
+        self.assertEqual(lua.eval('AutoBG_Targets.EnemyCount()'), 2)
+
     def test_a_queue_status_that_lingers_after_leaving_is_not_an_arena(self):
         import test_targets_guid_events as tge
         lua = tge.runtime(sighting=False)
