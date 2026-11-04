@@ -355,6 +355,15 @@ class ArenaExtrasTests(unittest.TestCase):
         self.assertEqual(lua.eval('AutoBG_TargetButton1.Strip.slots[1].Icon.texture'), "Icon11")
         self.assertFalse(lua.eval('AutoBG_TargetButton1.Strip.slots[2].shown'))
 
+    def test_more_abilities_than_the_list_holds_do_not_break_it(self):
+        # table.remove leaves a length counter in this Lua; the full list must not use it.
+        lua = self.setup()
+        lua.execute('for id = 100, 120 do names[id] = "Spell" .. id end')
+        for spell in range(100, 121):
+            self.event(lua, "UNIT_CASTEVENT", self.GUID, "x", "CAST", spell)
+        lua.execute('AutoBG_Arena.Tick()')
+        self.assertTrue(lua.eval('AutoBG_TargetButton1.Strip.slots[1].shown'))
+
     def test_a_used_again_and_again_spell_is_hidden(self):
         lua = self.setup()
         for _ in range(3):
