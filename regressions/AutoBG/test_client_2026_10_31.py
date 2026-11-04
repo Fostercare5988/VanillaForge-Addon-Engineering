@@ -150,10 +150,22 @@ class ArenaFrameTests(unittest.TestCase):
         lua.execute('''ARENA = "Arena"
             function GetBattlefieldStatus(i) if i == 1 then return "active", "Arena" end return "none" end
             function UnitCanAttack() return true end
+            function UnitClass() return "Warrior", "WARRIOR" end
             AutoBG_Targets:BattlefieldScoreUpdate(true)
             target = "Grom"''')
         lua.execute('AutoBG_Targets.scripts.OnEvent(AutoBG_Targets, "PLAYER_TARGET_CHANGED")')
         self.assertEqual(lua.eval('AutoBG_TargetButton1.targetName'), "Grom")
+
+
+    def test_the_scoreboard_does_not_pick_arena_opponents(self):
+        # Cross-faction: a team mixes factions, so only a sighting you can
+        # attack lists an opponent in an arena.
+        import test_targets_guid_events as tge
+        lua = tge.runtime(sighting=False)
+        lua.execute('''ARENA = "Arena"
+            function GetBattlefieldStatus(i) if i == 1 then return "active", "Arena" end return "none" end
+            AutoBG_Targets:BattlefieldScoreUpdate(true)''')
+        self.assertEqual(lua.eval('AutoBG_Targets.EnemyCount()'), 0)
 
 
 class ArenaSpyTests(unittest.TestCase):
