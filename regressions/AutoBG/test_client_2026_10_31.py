@@ -124,6 +124,7 @@ class QueueBarTests(unittest.TestCase):
             function GetNumRaidMembers() return 0 end
             function GetRealZoneText() return "Blood Ring" end
             function IsInInstance() return 1, "pvp" end
+            function AutoBG_IsArenaZone() return true end
             function GetBattlefieldStatus(i) if i == 1 then return "active", "Arena", 0 end return "none" end
         ''')
         lua.execute(ttb.TIMERS)
@@ -136,7 +137,7 @@ class ArenaFrameTests(unittest.TestCase):
         import test_targets_guid_events as tge
         lua = tge.runtime()
         lua.execute('function GetBattlefieldStatus(i) if i == 1 then return "active", "Arena" end return "none" end')
-        lua.execute('ARENA = "Arena"; AutoBG_Targets:BattlefieldScoreUpdate(true)')
+        lua.execute('ARENA = "Arena"; function AutoBG_IsArenaZone() return true end; AutoBG_Targets:BattlefieldScoreUpdate(true)')
         self.assertTrue(lua.eval('AutoBG_Targets.activeBG'))
         self.assertTrue(lua.eval('AutoBG_Targets.activeArena'))
         self.assertEqual(lua.eval('AutoBG_Targets.currentSize'), 5)
@@ -148,6 +149,7 @@ class ArenaFrameTests(unittest.TestCase):
         import test_targets_guid_events as tge
         lua = tge.runtime(sighting=False)
         lua.execute('''ARENA = "Arena"
+            function AutoBG_IsArenaZone() return true end
             function GetBattlefieldStatus(i) if i == 1 then return "active", "Arena" end return "none" end
             function UnitCanAttack() return true end
             function UnitClass() return "Warrior", "WARRIOR" end
@@ -163,9 +165,33 @@ class ArenaFrameTests(unittest.TestCase):
         import test_targets_guid_events as tge
         lua = tge.runtime(sighting=False)
         lua.execute('''ARENA = "Arena"
+            function AutoBG_IsArenaZone() return true end
             function GetBattlefieldStatus(i) if i == 1 then return "active", "Arena" end return "none" end
             AutoBG_Targets:BattlefieldScoreUpdate(true)''')
         self.assertEqual(lua.eval('AutoBG_Targets.EnemyCount()'), 0)
+
+
+    def test_the_server_scoreboard_names_the_other_team(self):
+        # TW_ARENA "S2C_SCOREBOARD": name|team|x per player. Opponents are the
+        # players on another team, whatever their faction.
+        import test_targets_guid_events as tge
+        lua = tge.runtime(sighting=False)
+        lua.execute('''ARENA = "Arena"
+            function AutoBG_IsArenaZone() return true end
+            function GetBattlefieldStatus(i) if i == 1 then return "active", "Arena" end return "none" end
+            AutoBG_Targets:BattlefieldScoreUpdate(true)''')
+        tge.fire(lua, "CHAT_MSG_ADDON", "TW_ARENA", "S2C_SCOREBOARD;0;2;Tester|1|0:Grom|2|0")
+        self.assertEqual(lua.eval('AutoBG_Targets.EnemyCount()'), 1)
+        self.assertEqual(lua.eval('(AutoBG_Targets.GetEnemy(1))'), "Grom")
+
+    def test_a_queue_status_that_lingers_after_leaving_is_not_an_arena(self):
+        import test_targets_guid_events as tge
+        lua = tge.runtime(sighting=False)
+        lua.execute('''ARENA = "Arena"
+            function AutoBG_IsArenaZone() return false end
+            function GetBattlefieldStatus(i) if i == 1 then return "active", "Arena" end return "none" end
+            AutoBG_Targets:BattlefieldScoreUpdate(true)''')
+        self.assertFalse(lua.eval('AutoBG_Targets.activeBG'))
 
 
 class CrossFactionBattlegroundTests(unittest.TestCase):
