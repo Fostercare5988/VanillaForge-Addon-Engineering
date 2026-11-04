@@ -304,6 +304,35 @@ class ArenaPetTests(unittest.TestCase):
         self.health(lua, "0xF140000000000001")
         self.assertEqual(lua.eval('AutoBG_ArenaPets.Count()'), 0)
 
+    def test_the_owner_of_a_seen_pet_is_added_to_the_enemy_list(self):
+        # A hunter who stays out of sight is still an enemy once his pet shows.
+        lua = self.setup()
+        lua.execute('local g = UnitGUID; function UnitGUID(u) if u == "0x0000000000000099" then return u end return g(u) end')
+        self.assertEqual(lua.eval('AutoBG_Targets.EnemyCount()'), 0)
+        self.health(lua, "0xF140000000000001")
+        self.assertEqual(lua.eval('AutoBG_Targets.EnemyCount()'), 1)
+
+    def test_a_renamed_pet_and_a_late_owner_are_picked_up(self):
+        lua = self.setup()
+        lua.execute('''petName, ownerKnown = "Unknown", false
+            function UnitOwnerGUID(u) if ownerKnown then return "0x0000000000000099" end end
+            function UnitName(u)
+                if u == "0x0000000000000099" then return "Spanthout" end
+                return petName
+            end''')
+        self.health(lua, "0xF140000000000001")
+        lua.execute('for _, fn in ipairs(timers) do fn() end')
+        self.assertEqual(lua.eval('AutoBG_ArenaPet1.Name.text'), "Pet")
+        lua.execute('petName, ownerKnown = "Wolf", true')
+        lua.execute('for _, fn in ipairs(timers) do fn() end; timers = {}')
+        self.health(lua, "0xF140000000000001")
+        lua.execute('for _, fn in ipairs(timers) do fn() end')
+        self.assertEqual(lua.eval('AutoBG_ArenaPet1.Name.text'), "Wolf |cffaaaaaaSpanthout|r")
+        lua.execute('petName = "Rex"; timers = {}')
+        lua.execute('AutoBG_ArenaPets.Tick()')
+        lua.execute('for _, fn in ipairs(timers) do fn() end')
+        self.assertEqual(lua.eval('AutoBG_ArenaPet1.Name.text'), "Rex |cffaaaaaaSpanthout|r")
+
 
 class ArenaExtrasTests(unittest.TestCase):
     """The power bar, the icon strip, the drinking alert and the callouts."""
@@ -317,7 +346,7 @@ class ArenaExtrasTests(unittest.TestCase):
             function AutoBG_IsArenaZone() return true end
             function GetBattlefieldStatus(i) if i == 1 then return "active", "Arena" end return "none" end
             guidNames["0x0000000000000042"] = "Grom"
-            names = { [11] = "Blink", [12] = "Frostbolt", [77] = "Drink", [88] = "Shadow Sight", [99] = "Power Word: Shield" }
+            names = { [11] = "Blink", [12] = "Frostbolt", [21] = "Divine Shield", [22] = "Blessing of Freedom", [77] = "Drink", [88] = "Shadow Sight", [99] = "Power Word: Shield" }
             function GetSpellInfo(id) return names[id], nil, "Icon" .. id end
             mana = { cur = 30, max = 100 }
             function UnitMana() return mana.cur end
@@ -346,45 +375,43 @@ class ArenaExtrasTests(unittest.TestCase):
         lua.execute('AutoBG_Arena.Tick()')
         self.assertTrue(lua.eval('AutoBG_TargetButton1.PowerBar.shown'))
 
-    def test_an_instant_ability_gets_an_icon_but_a_cast_time_spell_does_not(self):
+    def test_only_a_key_ability_gets_an_icon(self):
         lua = self.setup()
-        self.event(lua, "UNIT_CASTEVENT", self.GUID, "x", "START", 12)
-        self.event(lua, "UNIT_CASTEVENT", self.GUID, "x", "CAST", 12)
         self.event(lua, "UNIT_CASTEVENT", self.GUID, "x", "CAST", 11)
+        self.event(lua, "UNIT_CASTEVENT", self.GUID, "x", "CAST", 21)
         lua.execute('AutoBG_Arena.Tick()')
-        self.assertEqual(lua.eval('AutoBG_TargetButton1.Strip.slots[1].Icon.texture'), "Icon11")
+        self.assertEqual(lua.eval('AutoBG_TargetButton1.Strip.slots[1].Icon.texture'), "Icon21")
         self.assertFalse(lua.eval('AutoBG_TargetButton1.Strip.slots[2].shown'))
 
-    def test_more_abilities_than_the_list_holds_do_not_break_it(self):
-        # table.remove leaves a length counter in this Lua; the full list must not use it.
+    def test_a_blessing_shows_gold_on_its_receiver_and_counts_down_once_measured(self):
         lua = self.setup()
-        lua.execute('for id = 100, 120 do names[id] = "Spell" .. id end')
-        for spell in range(100, 121):
-            self.event(lua, "UNIT_CASTEVENT", self.GUID, "x", "CAST", spell)
+        self.event(lua, "BUFF_ADDED_OTHER", self.GUID, 1, 99, 1, 60, 0, 0)  # first sight: the unit is known
+        lua.execute('NOW = 1003')
+        self.event(lua, "BUFF_ADDED_OTHER", self.GUID, 1, 22, 1, 60, 0, 0)
+        lua.execute('NOW = 1005; AutoBG_Arena.Tick()')
+        slot = 'AutoBG_TargetButton1.Strip.slots[1]'
+        self.assertEqual(lua.eval(slot + '.Icon.texture'), "Icon22")
+        self.assertEqual(lua.eval(slot + '.Age.text'), "2")  # seconds since: no length known yet
+        lua.execute('NOW = 1013')
+        self.event(lua, "BUFF_REMOVED_OTHER", self.GUID, 1, 22, 1, 60, 0, 0)
+        self.assertEqual(lua.eval('AutoBG_ArenaOptions().Durations["Blessing of Freedom"]'), 10)
+        lua.execute('NOW = 1020')
+        self.event(lua, "BUFF_ADDED_OTHER", self.GUID, 1, 22, 1, 60, 0, 0)
+        lua.execute('NOW = 1024; AutoBG_Arena.Tick()')
+        self.assertEqual(lua.eval(slot + '.Age.text'), "6")  # 10 s long, 4 s gone
+
+    def test_a_used_ability_is_grey_and_the_buff_wins_while_it_is_on(self):
+        lua = self.setup()
+        self.event(lua, "UNIT_CASTEVENT", self.GUID, "x", "CAST", 21)
+        lua.execute('NOW = 1003')
+        self.event(lua, "BUFF_ADDED_OTHER", self.GUID, 1, 21, 1, 60, 0, 0)
         lua.execute('AutoBG_Arena.Tick()')
         self.assertTrue(lua.eval('AutoBG_TargetButton1.Strip.slots[1].shown'))
-
-    def test_a_used_again_and_again_spell_is_hidden(self):
-        lua = self.setup()
-        for _ in range(3):
-            self.event(lua, "UNIT_CASTEVENT", self.GUID, "x", "CAST", 11)
-        lua.execute('AutoBG_Arena.Tick()')
-        self.assertFalse(lua.eval('AutoBG_TargetButton1.Strip.slots[1].shown'))
-
-    def test_a_buff_gained_later_shows_and_one_at_first_sight_does_not(self):
-        lua = self.setup()
-        self.event(lua, "UNIT_CASTEVENT", self.GUID, "x", "CAST", 11)
-        self.event(lua, "BUFF_ADDED_OTHER", self.GUID, 1, 99, 1, 60, 0, 0)
-        lua.execute('AutoBG_Arena.Tick()')
-        self.assertEqual(lua.eval('AutoBG_TargetButton1.Strip.slots[1].Icon.texture'), "Icon11")
-        lua.execute('NOW = 1003')
-        self.event(lua, "BUFF_ADDED_OTHER", self.GUID, 1, 99, 1, 60, 0, 0)
-        lua.execute('AutoBG_Arena.Tick()')
-        self.assertEqual(lua.eval('AutoBG_TargetButton1.Strip.slots[1].Icon.texture'), "Icon99")
+        self.assertFalse(lua.eval('AutoBG_TargetButton1.Strip.slots[2].shown'))
 
     def test_an_enemy_drinking_is_announced(self):
         lua = self.setup()
-        self.event(lua, "UNIT_CASTEVENT", self.GUID, "x", "CAST", 11)
+        self.event(lua, "BUFF_ADDED_OTHER", self.GUID, 1, 99, 1, 60, 0, 0)
         lua.execute('NOW = 1003')
         self.event(lua, "BUFF_ADDED_OTHER", self.GUID, 1, 77, 1, 60, 0, 0)
         self.assertEqual(list(lua.eval('errors').values()), ["Grom is drinking!"])
