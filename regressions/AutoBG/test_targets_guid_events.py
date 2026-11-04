@@ -142,7 +142,7 @@ AutoBG_Settings = {}
 -- AutoBG.lua's arena settings.
 function AutoBG_ArenaOptions()
     AutoBG_Settings.Arena = AutoBG_Settings.Arena or { Scan = true, Pets = true, Mana = true, Abilities = true,
-        Buffs = true, Drinking = true, ShadowSight = true, Callouts = false }
+        Drinking = true, ShadowSight = true, Callouts = false }
     return AutoBG_Settings.Arena
 end
 '''
