@@ -92,11 +92,22 @@ class SmoothBars(unittest.TestCase):
 
 
 class Targets(unittest.TestCase):
-    def test_normal_npcs_show_threat(self):
-        lua = fight(setup='target.classification = "normal"; target.name = "Young Sawtooth Crocolisk"')
+    def test_rares_show_threat(self):
+        lua = fight(setup='target.classification = "rare"; target.name = "Rare Croc"')
         lua.execute('packet("Me:1:300:100:1;Parting:0:120:40:1"); step(0.01)')
         self.assertIsNotNone(lua.eval('bars()["Parting"]'))
-        self.assertIn("Young Sawtooth", lua.eval("TWTMainTitle.text"))
+        self.assertIn("Rare Croc", lua.eval("TWTMainTitle.text"))
+
+    def test_rare_glow_image(self):
+        lua = fight("{ glow = true }", 'target.classification = "rare"')
+        lua.execute('packet("Me:0:300:30:1;Parting:1:900:100:1"); step(0.01)')
+        self.assertTrue(lua.eval('TWThreatDisplayTargetGlow.texture').endswith("images\\rare"))
+
+    def test_normal_mobs_do_not(self):
+        lua = fight(setup='target.classification = "normal"; target.name = "Young Sawtooth Crocolisk"')
+        self.assertEqual(lua.eval('(function() local n = 0 for _, m in ipairs(sent) do '
+                                  'if m.prefix == "TWT_UDTSv4" then n = n + 1 end end return n end)()'), 0)
+        self.assertNotIn("Crocolisk", lua.eval("TWTMainTitle.text"))
 
     def test_title_names_the_target_before_the_first_answer(self):
         lua = fight()
