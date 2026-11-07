@@ -184,7 +184,7 @@ class SettingsWording(unittest.TestCase):
 
     def test_labels_and_tooltips(self):
         code = source("Settings.lua")
-        self.assertIn('"Dismount to attack, fly, talk"', code)
+        self.assertNotIn('"Dismount to attack, fly, talk"', code)
         self.assertNotIn("Spells do this in ClassicAPI", code)
         self.assertNotIn('"Target buffs", nil', code)
         self.assertNotIn('"Target debuffs", nil', code)

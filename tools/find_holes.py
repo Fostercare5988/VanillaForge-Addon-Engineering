@@ -380,16 +380,22 @@ def stale_notes(addon, docs):
     return findings
 
 
+# A guard that reads a DLL's version number instead of checking that it is loaded.
+DLL_VERSION_GUARD = re.compile(
+    r"CLASSIC_API_VERSION\s*(?:<|>=?)\s*(\w+)|(?:MIN_CLASSIC_API|local\s+minimum)\s*=\s*(\d{5})\b"
+    r"|(tostring\s*\(\s*SUPERWOW_VERSION\b|=\s*GetNampowerVersion\s*\(\s*\))")
+
+
 def version_drift(addon):
-    # Only UPSTREAM_VERSIONS.json names a ClassicAPI version; guards check that it is loaded.
+    # Only UPSTREAM_VERSIONS.json names a DLL version; guards check that each is loaded.
     findings = []
-    toc_version = addon.meta.get("x-classicapi-min-version")
-    if toc_version:
-        findings.append({"where": addon.toc.name, "found": toc_version})
+    for key, value in addon.meta.items():
+        if re.fullmatch(r"x-[\w-]+-min-version", key):
+            findings.append({"where": "%s (%s)" % (addon.toc.name, key), "found": value})
     for rel, text in addon.lua():
-        for m in re.finditer(r"CLASSIC_API_VERSION\s*(?:<|>=?)\s*(\w+)|(?:MIN_CLASSIC_API|local\s+minimum)\s*=\s*(\d{5})\b", text):
+        for m in DLL_VERSION_GUARD.finditer(text):
             findings.append({"where": "%s:%d" % (rel, text.count("\n", 0, m.start()) + 1),
-                             "found": m.group(1) or m.group(2)})
+                             "found": m.group(1) or m.group(2) or m.group(3)})
     return findings
 
 
@@ -519,7 +525,7 @@ def report(results, out):
             % (f["name"], f["uses"], ", ".join(f["where"]), ("  [" + f["note"] + "]") if f["note"] else ""))
     section("Stale notes (the docs cover them)", results["stale_notes"],
             lambda f: "%s: %s" % (f["where"], ", ".join(f["covered"])))
-    section("Names a ClassicAPI version (only UPSTREAM_VERSIONS.json may)", results["version_drift"], lambda f: "%s: %s" % (f["where"], f["found"]))
+    section("Names a DLL version (only UPSTREAM_VERSIONS.json may)", results["version_drift"], lambda f: "%s: %s" % (f["where"], f["found"]))
 
 
 def main(argv=None):

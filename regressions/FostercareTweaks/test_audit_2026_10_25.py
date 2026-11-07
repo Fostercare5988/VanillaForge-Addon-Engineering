@@ -155,12 +155,14 @@ class RetiredSettings(unittest.TestCase):
         lua.execute(source("Core.lua") + "\nif FostercareTweaks then FostercareTweaks.ActionBars = { Initialize = function() end } end")
         return lua
 
-    def test_auto_dismount_is_kept_again(self):
-        # 2026-10-26: Auto Dismount is back for the actions ClassicAPI's cast
-        # settings miss, so its saved switch stays and the CVars stay the
-        # player's own.
+    def test_auto_dismount_switch_is_cleared(self):
+        # 2026-11-07: Auto Dismount retired for ClassicAPI 1.20.1's settings,
+        # which now cover attacks, flights, NPCs and items. Its saved switch
+        # goes; the CVars stay the player's own (the 2026-10-25 retirement
+        # already turned them on for characters that had ours on).
         lua = self.load('{ ["Auto Dismount"] = 1 }')
-        self.assertEqual(lua.eval('FostercareTweaks_Config["Auto Dismount"]'), 1)
+        lua.execute('FostercareTweaks:Initialize()')
+        self.assertIsNone(lua.eval('FostercareTweaks_Config["Auto Dismount"]'))
         self.assertIsNone(lua.eval('next(cvars)'))
 
     def test_permanent_module_runs_and_keeps_no_switch(self):
@@ -174,10 +176,6 @@ class RetiredSettings(unittest.TestCase):
         ''')
         self.assertTrue(lua.eval('ran'))
         self.assertIsNone(lua.eval('FostercareTweaks_Config["Cooldown Numbers"]'))
-
-    def test_dismount_off_leaves_cvars_alone(self):
-        lua = self.load('{ ["Auto Dismount"] = 0 }')
-        self.assertIsNone(lua.eval('cvars.autoDismount'))
 
     def test_saved_players_and_alias_gone(self):
         lua = self.load('{}')

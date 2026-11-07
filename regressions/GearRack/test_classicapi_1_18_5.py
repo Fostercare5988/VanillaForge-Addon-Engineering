@@ -53,6 +53,16 @@ class GetFormTests(unittest.TestCase):
         self.assertIn('type(CLASSIC_API_VERSION)~="number" then', boot)
         self.assertNotIn("X-ClassicAPI-Min-Version", (ROOT / "GearRack.toc").read_text("utf-8-sig"))
 
+    def test_guard_names_no_dll_version(self):
+        # 2026-11-07: SuperWoW and NamPower too; the guard checks they are loaded.
+        boot = (ROOT / "src/Bootstrap.lua").read_text("utf-8-sig")
+        toc = (ROOT / "GearRack.toc").read_text("utf-8-sig")
+        for old in ("tostring(SUPERWOW_VERSION", "=GetNampowerVersion()", "4.6.2", "2.2 or newer"):
+            self.assertNotIn(old, boot)
+        self.assertNotIn("-Min-Version", toc)
+        self.assertIn('elseif not SUPERWOW_VERSION then', boot)
+        self.assertIn('elseif type(GetNampowerVersion)~="function" then', boot)
+
 
 if __name__ == "__main__":
     unittest.main()

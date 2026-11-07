@@ -65,13 +65,13 @@ that folder's `verified-repositories.json` and `validation.json`.
 | ActionBarProfiles | `regressions/ActionBarProfiles` | 5 | Yes | [ActionBarProfiles](#actionbarprofiles) |
 | AutoBG | `regressions/AutoBG` | 232 | Yes | [AutoBG](#autobg) |
 | AutoLazy | `regressions/AutoLazy` | 32 | Yes | [AutoLazy](#autolazy) |
-| Bagnon | `regressions/Bagnon` | 38 | Yes | [Bagnon](#bagnon) |
+| Bagnon | `regressions/Bagnon` | 39 | Yes | [Bagnon](#bagnon) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
 | !ErrorLog | `regressions/ErrorLog` | 18 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 90 | Yes | [FostercareNameplates](#fostercarenameplates) |
-| FostercareTweaks | `regressions/FostercareTweaks` | 251 | Yes | [FostercareTweaks](#fostercaretweaks) |
-| GearRack | `regressions/GearRack` | 69 | Yes | [GearRack](#gearrack) |
+| FostercareTweaks | `regressions/FostercareTweaks` | 250 | Yes | [FostercareTweaks](#fostercaretweaks) |
+| GearRack | `regressions/GearRack` | 74 | Yes | [GearRack](#gearrack) |
 | FostercareBattleText | `regressions/FostercareBattleText` | 72 | Yes | [FostercareBattleText](#fostercarebattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
 | TWThreat | `regressions/TWThreat` | 6 | Yes | [TWThreat](#twthreat) |
@@ -237,6 +237,14 @@ table read by `table.concat`, now plain concatenation).
 FostercareTweaks 1.16.1 (ClassicAPI 1.19.1) adds `test_action_range_events_2026_11_03.py` (7: Extra Row 1 enables
 its twelve slots' range check once and listens only while shown, hotkey colour and range dot follow
 `ACTION_RANGE_CHECK_UPDATE`, the stock update runs only while a button flashes or shows its tooltip).
+
+FostercareTweaks 1.18.0 (ClassicAPI 1.20) adds `test_classicapi_1_20_2026_11_07.py` (6): Reagent Counter
+reads each button through `C_ActionBar.GetSpell`, `IsConsumableSpell` and `GetSpellCastCount` (a reagent
+spell shows its count, `*` over 999; a spell without reagents and an item keep the game's count; a macro
+follows the spell its button shows; a modifier or target change redraws only macros whose spell changed, a
+bag change every button; no slot scan or reagent lists, in Extra Rows 2-7 too). All six fail on 1.17.1. Auto
+Dismount is retired: `AutoDismountRetired` replaces the six fallback tests, the saved switch is cleared
+with the CVars untouched, and `ReagentListsAskedOnce` is gone with the lists it guarded.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/FostercareTweaks" --run-tests --test-start regressions/FostercareTweaks --output .private/fct-current.json
@@ -650,6 +658,12 @@ its `parent="X"` frame, as the client does (the drawer cooldowns `GearRackTrinke
 with `RegisterUnitEvent` for the player only. It fails on `2b07347`.
 `test_options_entry_2026_10_27.py` (3 tests): AddOn Options lists one GearRack
 page whose Gear sets and Trinkets buttons open their windows. They fail on `e138cf7`.
+`test_bank_space_2026_11_07.py` (6, ClassicAPI 1.19.3): free slots come from `GetContainerNumFreeSlots` and
+`GetContainerFreeSlots` for every bag, the open bank too: a full bank slot is never chosen (`HasContainerItem`
+answers bags 0 to 4 only, so the old walk took any bank slot and `SendBankItem` refused it), claimed slots and
+specialty bags are skipped, a full bag builds no list; `ValidBag` is gone. All six fail on `e2c84b5`.
+`test_classicapi_1_18_5.py` adds `test_guard_names_no_dll_version`: SuperWoW and NamPower are checked loaded, and
+the TOC has no `-Min-Version` line.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/GearRack" --run-tests --test-start regressions/GearRack --output .private/gearrack-current.json
@@ -676,10 +690,10 @@ Three fail on 1.1.0.
 `test_native_countdown_2026_11_01.py` (8): the enchant badge on a bagged weapon is counted down by a native
 Cooldown frame (no ticker, one `SetCooldown` per application, `OnCooldownDone` hides it, `3c` replaces the
 time at 5 charges or fewer), and a native `-1` slot rarity comes from `C_Item.GetItemQualityByID`.
-`test_bank_free_2026_11_02.py` (2), `test_audit_2026_11_02.py` (3), `test_cleanup_2026_11_02.py` (6) and
-`test_settings_search_2026_11_02.py` (13) cover the 2026-11-02 rework: the bank counts its free slots itself
-(ClassicAPI answers 0 for bank bags), no Lua file has a string escape Lua 5.0 drops, a bank bag's family comes from its
-item, one tooltip script, no layout pass for an unchanged layout, retired settings cleared on load, the search box
+`test_bank_free_2026_11_02.py` (2), `test_audit_2026_11_02.py` (4), `test_cleanup_2026_11_02.py` (6) and
+`test_settings_search_2026_11_02.py` (13) cover the 2026-11-02 rework: the bank counts its free slots (since
+2026-11-07 through ClassicAPI 1.19.3, which answers the open bank; no slot walk), no Lua file has a string escape Lua
+5.0 drops, an open bank bag's family comes from ClassicAPI (and a missing bag reads 0), one tooltip script, no layout pass for an unchanged layout, retired settings cleared on load, the search box
 and the dimming of non-matching slots, the header and title anchors under every option, and the ForgeUI settings window.
 That window is built for real: `test_settings_search_2026_11_02.py` loads `ForgeUI.lua` and `options/Options.lua` against
 a mock that gives every widget `CreateTexture`, `CreateFontString` and `SetScript`, then clicks the switches. Use it as the
