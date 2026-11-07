@@ -36,8 +36,6 @@ CALLS = {
 PATTERNS = {kind: re.compile(r"(?<![\w])(" + names + r")\s*\(") for kind, names in CALLS.items()}
 HANDLER = re.compile(r"<(On\w+|Binding)\b[^>]*>(.*?)</\1\s*>", re.S)
 ARGUMENT = re.compile(r"\s*(['\"])([^'\"\n]*)\1\s*(?=[,)])")
-# Older adapted suites, one folder per addon (regressions/README.md, "Private suites").
-PRIVATE_SUITES = Path(__file__).resolve().parents[1] / ".private" / "portfolio-review-2026-10-12" / "external-tests"
 
 
 def inside(path, root):
@@ -237,14 +235,6 @@ def run_tests(start, pattern, timeout, source_root=None):
         return dict(result, status="timeout", tests_run=None)
 
 
-def run_private_suite(addon, root, timeout):
-    """Run the addon's older private suite, if it has one. Absence is not a failure."""
-    start = Path(root) / addon.name
-    if not start.is_dir():
-        return {"status": "absent", "start": str(start)}
-    return dict(run_tests(start, "test*.py", timeout, addon), start=str(start))
-
-
 def describe_tests(label, tests):
     text = f"{label} {tests['status']}"
     if tests.get("tests_run") is None:
@@ -261,8 +251,6 @@ def summary(report, destination=None):
     parts = [f"{Path(report['addon']).name}: {report['module_count']} modules",
              f"{len(report['graph_errors'])} graph errors", f"{lint} lint errors, {warnings} warnings",
              describe_tests("tests", report["tests"])]
-    if "private_tests" in report:
-        parts.append(describe_tests("private tests", report["private_tests"]))
     comparison = report.get("comparison")
     if comparison:
         changed = sum(len(comparison[key]) for key in ("changed_modules", "added_modules", "removed_modules"))
@@ -281,9 +269,6 @@ def main(argv=None):
     parser.add_argument("--test-start", type=Path, help="Test directory; default <addon>/tests")
     parser.add_argument("--test-pattern", default="test*.py")
     parser.add_argument("--test-timeout", type=float, default=60)
-    parser.add_argument("--private-suites", action="store_true",
-                        help="Also run the addon's older private suite (<private root>/<addon folder>), if present")
-    parser.add_argument("--private-suite-root", type=Path, default=PRIVATE_SUITES, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     try:
         addon = args.addon.resolve()
@@ -304,8 +289,6 @@ def main(argv=None):
         report = audit(addon, args.toc)
         if args.compare:
             report["comparison"] = compare_reports(report, json.loads(args.compare.read_text(encoding="utf-8-sig")))
-        if args.private_suites:
-            report["private_tests"] = run_private_suite(addon, args.private_suite_root, args.test_timeout)
         if args.run_tests:
             report["tests"] = run_tests((args.test_start or addon / "tests").resolve(),
                                         args.test_pattern, args.test_timeout, addon)
@@ -331,8 +314,7 @@ def main(argv=None):
             print(output, end="")
             print(summary(report), file=sys.stderr)
         return int(report["status"] == "source_checks_failed"
-                   or report["tests"]["status"] in {"failed", "timeout", "invalidated"}
-                   or report.get("private_tests", {}).get("status") in {"failed", "timeout"})
+                   or report["tests"]["status"] in {"failed", "timeout", "invalidated"})
     except (OSError, ValueError) as error:
         print(f"Audit failed: {error}", file=sys.stderr)
         return 2

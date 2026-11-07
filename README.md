@@ -22,7 +22,7 @@ does not only guard against mistakes; it hunts for what can be done better.
 | [KNOWN_PATTERNS.md](KNOWN_PATTERNS.md) | Recurring hazards and their fixes |
 | [regressions/](regressions/README.md) | Behaviour tests for the maintained addons |
 | `templates/ForgeUI/` | The shared settings look |
-| `tools/` | Hole finder, linter, audit and test runner, FrameXML extractor, upstream doc fetcher and checker |
+| `tools/` | Hole finder, linter, audit and test runner, game checks, FrameXML extractor, upstream doc fetcher and checker |
 | `tools/replacements.json` | Old ways a DLL now does better; grows with every audit |
 | [archive/](archive/README.md) | Earlier workflows and audits, for history |
 
@@ -34,6 +34,7 @@ Run from this folder. Python 3; regression tests also need `lupa`.
 python -B tools/find_holes.py "<addon folder>"
 python -B tools/audit_addon.py "<addon folder>" --run-tests --test-start regressions/<Addon> --output "<report.json>"
 python -B tools/vanillaforge_linter.py "<addon folder>"
+python -B tools/game_checks.py [push|pull]
 python -B tools/extract_framexml.py --client "<client folder>" --all
 python -B tools/fetch_upstream_docs.py
 python -B tools/check_upstream.py

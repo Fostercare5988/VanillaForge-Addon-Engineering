@@ -56,37 +56,6 @@ v1.18.5 -> 11805
 v1.20.4 -> 12004
 ```
 
-Older stamps, for reading old code:
-
-```text
-v1.15.8 -> 11508
-v1.15.9 -> 11509
-v1.15.10 -> 11510
-v1.15.11 -> 11511
-v1.15.12 -> 11512
-v1.15.13 -> 11513
-v1.15.14 -> 11514
-v1.15.15 -> 11515
-v1.15.16 -> 11516
-v1.16.0 -> 11600
-v1.17.0 -> 11700
-v1.17.3 -> 11703
-v1.17.4 -> 11704
-v1.17.5 -> 11705
-v1.17.6 -> 11706
-v1.17.7 -> 11707
-v1.17.8 -> 11708
-v1.17.9 -> 11709
-v1.17.10 -> 11710
-v1.17.11 -> 11711
-v1.17.12 -> 11712
-v1.17.13 -> 11713
-v1.18.0 -> 11800
-v1.18.5 -> 11805
-v1.19.2 -> 11902
-v1.20.4 -> 12004
-```
-
 The VanillaForge support baseline is the latest release, pinned in
 `UPSTREAM_VERSIONS.json`. No other file names it.
 
@@ -265,7 +234,11 @@ debugstack(thread, ...)      -- a coroutine's stack
 debuglocals([level [, skipFunctionsAndUserdata]])  -- error handlers only
 ```
 
-and other helpers documented under the official Lua section.
+and other helpers documented under the official Lua section. This list is a
+sample: `table.maxn`, `strmatch`, `strsplit`, `strtrim`, `strjoin`,
+`strsplittable` and more are backported too. Before calling a Lua function
+absent, grep `.private/upstream/classicapi/docs/API.md` (its Lua section) and
+`docs/BlizzardScriptAPI.md` section 3 (the game's own base library).
 
 `gsub` with a function replacement keeps Lua 5.0's rule: a `nil` or `false`
 return **removes** the match (5.1 keeps it). Return the match itself to keep
@@ -285,7 +258,7 @@ two-argument `table.insert(t, nil)` marks an intentional trailing nil reservatio
 stored final slot keeps the original length. Healing is a read-time answer, not
 a write-back of the stored count.
 
-**New in v1.15.12:** when the metatable's raw string `__mode` contains `"v"`
+When the metatable's raw string `__mode` contains `"v"`
 (including `"v"` and `"kv"`), the reader preserves the stored length even if the
 stored final slot is nil. GC can clear weak values without any writer changing
 the length; that nil therefore does not prove stale writer state. This exception
@@ -630,7 +603,7 @@ Supported conditions include standard macro conditionals:
 `[outdoors]`, `[stance:N]` / `[form:N]`, `[mod:shift|ctrl|alt]`, `[pet:name]`,
 `[button:N]` / `[btn:N]`, `[actionbar:N]`, and the ClassicAPI extension `[known:spellID|name]`.
 
-#### `[button:N]` / `[btn:N]` Click-Context Evaluation (v1.15.9+)
+#### `[button:N]` / `[btn:N]` Click-Context Evaluation
 
 `[button:N]` reads the mouse button of the click the macro is executing inside, matching what `GetMouseButtonClicked()` returns.
 
@@ -1040,7 +1013,7 @@ C_CVar.SetCVarBitfield
 C_CVar.SetTempCVar
 ```
 
-### Temporary Session CVars (v1.15.13+)
+### Temporary Session CVars
 
 ClassicAPI v1.15.13 introduces non-persistent session CVar manipulation:
 
@@ -1144,7 +1117,7 @@ Modernization use cases:
 - use delayed/batch container events
 - obtain direct IDs/info without tooltip scraping
 
-### Equipment Slot Grouping in SortBags (v1.15.13+)
+### Equipment Slot Grouping in SortBags
 
 [SOURCE-VERIFIED] The existing `C_Container.SortBags()` and
 `C_Container.SortBankBags()` gain a new ordering; their signatures are unchanged.
@@ -1727,7 +1700,7 @@ C_LossOfControl.GetActiveLossOfControlDataCount()
 C_LossOfControl.GetSchoolLockout([filterMask])
 ```
 
-### `C_LossOfControl.GetSchoolLockout([filterMask])` (v1.15.9+)
+### `C_LossOfControl.GetSchoolLockout([filterMask])`
 
 Returns the school-interrupt lockout state directly without building the full
 active effect list:
@@ -1787,7 +1760,7 @@ GetLooseMacroIcons(iconList)
 GetLooseMacroItemIcons(itemList)
 ```
 
-### Macro Icon Enumeration Architecture (v1.15.9+)
+### Macro Icon Enumeration Architecture
 
 ClassicAPI categorizes macro icons across two dimensions:
 1. **Origin**: `loose` (custom icons placed by the user on disk in `Interface\Icons\`) vs `mpq` (shipped inside the client MPQ archives).
@@ -1804,7 +1777,7 @@ ClassicAPI categorizes macro icons across two dimensions:
 - `GetMacroIconInfo(index)` returns `""` (empty string) rather than `nil` when queried with an out-of-bounds index.
 - Call `GetNumMacroIcons()` before iterating `GetMacroIconInfo(index)`; do not assume the latter initializes the list. The four ClassicAPI append-to-table enumerators above also call `EnsureLoaded()` when the engine count is zero. This loading behavior predates v1.15.14.
 
-### Question-mark icon availability (v1.15.14+)
+### Question-mark icon availability
 
 [SOURCE-VERIFIED] On initial loading of an empty engine icon list, ClassicAPI
 seeds `INV_Misc_QuestionMark`, lets the original loader sort and deduplicate,
@@ -3024,87 +2997,20 @@ Furthermore, if an addon intentionally declares a hard enhanced-client capabilit
 
 # PART XI — REFERENCE MAINTENANCE
 
-## 103. Source Snapshot
+## 103. Sources
 
-This document was built from the official repository:
+This reference is written from the maintainers' own docs, fetched into
+`.private/upstream/` by `python -B tools/fetch_upstream_docs.py` at the release
+pinned in `UPSTREAM_VERSIONS.json` (the only file that names a version), and
+from the source files cited where a section says [SOURCE-VERIFIED]. Where it
+and upstream's `docs/API.md` disagree, API.md wins (section 105).
 
-```text
-brues-code/ClassicAPI
-release: v1.17.11 (tag commit 317539dbd8aa9e9cd7a23441c0e355bb85c7e2ab)
-commit:  317539dbd8aa9e9cd7a23441c0e355bb85c7e2ab
-branch:  master
-```
+## 104. Taking a new release
 
-Official source files used as primary reference (v1.17.11):
-
-```text
-README.md (blob: 0e9caaa69eab05385d058b8404768b9bb33c33a8)
-docs/API.md (blob: fb0bfad60bb898eca5e862df8f85b104f2dbcd84)
-commit messages v1.17.8...v1.17.11 (behaviour API.md leaves out)
-src/frame/Alpha.cpp (at abd5367, the nameplate alpha rules)
-```
-
-Source files read for earlier snapshots (v1.15.16, commit 7ccbbaaf):
-
-```text
-src/macro/Icons.cpp (blob: 5ad755eaf93c13bc4fea5e353f6ea40fea23e964)
-src/macro/IconPath.cpp (blob: 40cd511660c76ec48ec8e22c96fad58c5cf1e7c2)
-src/Offsets.h (blob: 9e10fb5f691d18aa23c1e1e90756da84042a08e9)
-src/macro/ShowTooltip.cpp (blob: 24a8aa1158c5c93754b10e4d263c3dd6a90047e0)
-src/table/Length.cpp (blob: 5c3f9dfdbedd34ae016caefd038e3003facf6b28)
-src/cvar/Temp.cpp (blob: 3810691c26dc7e91ca2af75ad615c7e32945d58f)
-src/container/SortBags.cpp (blob: b6d77b3b7bc6e8a9b2361fa4bfbcf1d2117acf7a)
-src/nameplate/Events.cpp (blob: cebb4ac06c43f85dd907f74cd19b908bbd540897)
-src/api/Version.cpp (blob: 33c3ea05a268203cc96c0056557a497a141843a1)
-CMakeLists.txt (blob: 830adb8a01e930faa3016184faface04b67b8ff6)
-src/unit/TokenExtensions.cpp (blob: 1bb9fa98dc16defa0e8a8c75d8ef96225b87b61f)
-src/unit/Position.cpp (blob: 156568032d2a419a7d3fedc006b3d7651bc9d975)
-Earlier verified source knowledge retained (Swing.cpp, SwingRange.cpp, Equipment.cpp, Data.cpp, Custom.cpp, Offsets.h)
-```
-
-The v1.15.12 API reference blob was:
-
-```text
-0ab67379ec55e5e9ebe92595b40611cc5d482164
-```
-
-The v1.15.14 release makes the question-mark icon the first engine macro icon
-and selectable without a separate icon-injection workaround. No API signatures,
-event payloads, bag sorting or Lua table semantics change in this release. See
-[the v1.15.14 audit](archive/docs/CLASSICAPI_1.15.14_AUDIT.md) for the full one-commit range,
-independently verified provenance and runtime requirements.
-
-The v1.15.13 release added:
-
-- `C_CVar.SetTempCVar` and `C_CVar.RemoveTempCVar` (session-only CVar overrides without `Config.wtf` persistence)
-- Baganator-style equipment slot grouping in `C_Container.SortBags()` and `C_Container.SortBankBags()`
-- Nameplate announcement retries while prerequisites remain unmet (no new event payloads)
-
-The complete three-commit `v1.15.12...v1.15.13` range, release/DLL provenance,
-review corrections and runtime requirements are recorded in
-[the v1.15.13 audit](archive/docs/CLASSICAPI_1.15.13_AUDIT.md).
-The [earlier audit](archive/docs/CLASSICAPI_1.15.12_AUDIT.md) retains v1.15.10 through
-v1.15.12 provenance; its macro and weak-table knowledge remains valid.
-
----
-
-## 104. Refresh Protocol
-
-When updating this master reference:
-
-1. Fetch current `README.md`.
-2. Fetch current `docs/API.md`.
-3. Compare the API.md blob SHA with the snapshot above.
-4. Review changed API sections.
-5. Update:
-   - namespace inventory
-   - events
-   - Lua compatibility behavior
-   - macro behavior
-   - modern client features
-   - caveats
-6. Do not copy unfinished TODO items into the active API catalog.
-7. Increment the local document revision/date if your repository tracks revisions.
+`python -B tools/upgrade_dll.py classicapi --pin` shows what changed, pins the
+release and lists the leads in every addon; then this reference is brought up
+to date for the changed sections. Earlier snapshots, release notes and the old
+refresh steps are in [archive/docs/CLASSICAPI_HISTORY.md](archive/docs/CLASSICAPI_HISTORY.md).
 
 ---
 
@@ -3203,7 +3109,7 @@ Before writing a workaround for a limitation commonly associated with stock WoW 
 ClassicAPI exists specifically to make many of those limitations obsolete.
 
 
-## v1.15.15 source-verified addon contracts
+## Tooltip units and equipment sets (since 1.15.15)
 [SOURCE-VERIFIED] GameTooltip:GetUnit() returns (name, unitToken) or nothing when no unit is shown. SetUnit retains its input token; world hover uses mouseover; unit-attribute frames retain their token, including offline/far group members. Binding exists before OnTooltipSetUnit. GetUnitGUID remains (name, guid) and now resolves roster/name-cache names without a live object. Same-GUID world hover while an existing SetUnit tooltip stays visible can retain the earlier token. Tokens are mutable; use GUID identity for retained references.
 
 [SOURCE-VERIFIED] C_EquipmentSet.PickupEquipmentSet(setID) puts a native set on the cursor; unknown IDs do nothing. GetCursorInfo and GetActionInfo return "equipmentset", setName; the second value is a name, not a numeric ID. CURSOR_CHANGED reports Enum.UICursorType.EquipmentSet. Action clicks fire WEAR_EQUIPMENT_SET(setID); the event alone does not equip. The bundled EquipmentManager checks item locks and casting, then calls UseEquipmentSet. Do not add duplicate equip handlers.
@@ -3211,17 +3117,11 @@ ClassicAPI exists specifically to make many of those limitations obsolete.
 Set action placements persist in the per-character native equipment-set file, not addon SavedVariables or server action type. Rename/save repaint buttons; deleting a set clears its buttons. Native sets do not automatically import addon outfit schemas. Item/spell trackers must classify type before inferring identity from icons.
 [UNVERIFIED - TEST FIRST] Verify tooltip tokens/events for live/offline roster units and action pickup/place/swap/use/delete/relogin. No local runtime verification is claimed. See [v1.15.15 audit](archive/docs/CLASSICAPI_1.15.15_AUDIT.md).
 
-## v1.15.16 source-verified addon contracts
-[SOURCE-VERIFIED] Compatibility-only release; no new public Lua API symbols, events, or return signature changes. Bundled `!!!ClassicAPI` compatibility module `AddOns/!!!ClassicAPI/Util/AddOnCompat.lua` intercepts `Turtle_GroupUI` via `EventUtil.ContinueOnAddOnLoaded` and wraps the global `GroupFrame_ToggleMovement(state)` function. Under modern script dispatch, frame buttons pass the widget (`self`) as the first argument to `OnClick`; this wrapper sanitizes any non-numeric `state` argument to `nil` before calling the original function, preventing an arithmetic error (`1 - state` at `Turtle_GroupUI.lua:409`). See [v1.15.16 audit](archive/docs/CLASSICAPI_1.15.16_AUDIT.md).
-
-## v1.16.0 source-verified API and behavior contracts
+## Quest log, tooltips, hooks and macros (since 1.16.0)
 [SOURCE-VERIFIED] The pinned [v1.16.0 API reference](https://github.com/brues-code/ClassicAPI/blob/99de63755bdc368cf8d35ce3a09dc46dafc20930/docs/API.md) documents `C_QuestLog.GetInfo(index)` as a row-info table which does not contain completion state. `C_QuestLog.GetQuestLogTitle(index)` returns a modern row tuple; `isComplete` is `1` for complete, `-1` for failed, and `nil` otherwise. Its third value is `suggestedGroup` (always `0` here), unlike the legacy global `GetQuestLogTitle` third-value quest tag.
-
-[SUPERSEDED in 1.17] In 1.16.0, `CreateFrame("Cooldown", ...)` was a Model, `SetReverse` / `SetDrawEdge` changed nothing and XML could not create it. 1.17.0 and 1.17.1 changed all three; see [v1.17 Cooldown](#native-cooldown-frame-1171).
 
 [SOURCE-VERIFIED] `GameTooltip:AddTexture` inserts an icon only on an eligible line and returns success/failure. `HookScript` forwards the same script arguments to both handlers; `hooksecurefunc` runs its callback after the original, forwards arguments, and preserves original return values. Macro APIs accept names as well as indexes. For an unknown name, `GetMacroInfo` returns nils, `PickupMacro` / `DeleteMacro` do nothing, and `EditMacro` changes no macro and returns the first empty slot or 0. `string.trim` and `string.join` are also documented.
 
-This release adds 4.3.4-era API coverage plus behavior fixes across frames, tooltips, hooks, XML, nameplate/unit events, quest-log behavior and Lua compatibility. See the [v1.16.0 audit](archive/docs/CLASSICAPI_1.16.0_AUDIT.md) for upstream provenance, deployment evidence and portfolio displacement candidates. In-game behavior remains unverified locally.
 
 ## v1.17.0 to v1.17.3 API and behavior contracts
 

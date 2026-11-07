@@ -217,6 +217,8 @@ take away something players rely on.
 | Old ways a DLL now does better | [tools/replacements.json](tools/replacements.json), read by `tools/find_holes.py` |
 | Server facts and data sources | [servers/](servers/) |
 | An addon's regression tests | [regressions/README.md](regressions/README.md) |
+| The game's Lua and engine model for tests | `regressions/wowlua.py`, `regressions/wowkit.py` |
+| What only the game can answer, and the answers | `python -B tools/game_checks.py`; `/check` in `!ErrorLog` |
 | The settings style | `templates/ForgeUI/` |
 | DLL versions and upstream tracking | [UPSTREAM_VERSIONS.json](UPSTREAM_VERSIONS.json), `python -B tools/check_upstream.py` |
 | Patch addon files safely | [tools/addon_edit.py](tools/addon_edit.py) |
