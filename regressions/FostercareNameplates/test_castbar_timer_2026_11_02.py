@@ -82,8 +82,8 @@ class CastbarTimer(unittest.TestCase):
         self.assertTrue(self.lua.eval("other.fnpCastbar and other.fnpCastbar:IsShown()"))
 
     def test_cast_events_are_heard_for_nameplate_tokens_only(self):
-        self.assertTrue(self.lua.eval("FNPNameplateCastEvents.events.UNIT_SPELLCAST_START.nameplate1"))
-        self.assertIsNone(self.lua.eval("FNPNameplateCastEvents.events.UNIT_SPELLCAST_START.target"))
+        self.assertTrue(self.lua.eval("receives(FNPNameplateCastEvents, 'UNIT_SPELLCAST_START', 'nameplate1')"))
+        self.assertFalse(self.lua.eval("receives(FNPNameplateCastEvents, 'UNIT_SPELLCAST_START', 'target')"))
 
 
 class Rebinding(unittest.TestCase):

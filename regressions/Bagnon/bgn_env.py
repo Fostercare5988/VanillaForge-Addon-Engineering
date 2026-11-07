@@ -1,4 +1,4 @@
-"""Shared Lua 5.1 environment for the Bagnon regressions (2026-10-30).
+"""The Bagnon regressions on the shared game model (wowkit), 2026-10-30.
 
 Loads the real Utility, Frame and Item files against widget mocks. The XML
 frames (Bagnon, Banknon and their children) are replaced by permissive stubs, so
@@ -6,7 +6,7 @@ these tests prove Lua logic and call counts, not layout, drawing or input.
 """
 import os
 from pathlib import Path
-from wowlua import LuaRuntime
+import wowkit
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 
@@ -16,40 +16,15 @@ function count(name, n) calls[name] = (calls[name] or 0) + (n or 1) end
 Bagnon_EngineReady = 1
 KEYRING_CONTAINER = -2
 BACKPACK_TOOLTIP = "Backpack"
-function format(...) return string.format(...) end
-tinsert = table.insert
-UISpecialFrames = {}
 
--- Permissive widget: every method exists, SetText/GetText/SetPoint are recorded.
-widgets = {}
+-- XML stand-ins start hidden.
 function widget(name, id)
-    local w = { name = name, id = id or 0, points = 0 }
-    function w:GetName() return self.name end
-    function w:GetID() return self.id end
-    function w:SetID(i) self.id = i end
-    function w:SetText(t) self.text = t end
-    function w:GetText() return self.text end
-    function w:SetPoint() self.points = self.points + 1 end
-    function w:IsShown() return self.shown and true or false end
-    function w:IsVisible() return self.shown and true or false end
-    function w:Show() self.shown = true end
-    function w:Hide() self.shown = false end
-    function w:GetParent() return self.parent end
-    function w:SetParent(p) self.parent = p end
-    function w:SetVertexColor(r, g, b) self.color = { r, g, b } end
-    function w:SetBackdropBorderColor() end
-    function w:GetAlpha() return 1 end
-    setmetatable(w, { __index = function(_, key)
-        if string.find(key, "^[A-Z]") then return function() end end
-    end })
-    if name then _G[name] = w end
+    local w = newWidget("Frame", name)
+    w.shown, w.id = false, id or 0
     return w
 end
-function getglobal(n) return _G[n] end
+function Widget:SetVertexColor(r, g, b) self.color = { r, g, b } end
 function CreateFrame(_, name) return widget(name) end
-function hooksecurefunc() end
-C_Timer = { NewTimer = function() return { Cancel = function() end } end,
-            NewTicker = function() return { Cancel = function() end } end }
 UnitName = function() return "Tester" end
 function GetRealmName() return "Realm" end
 BagnonForeverData = { Realm = { Alt = {
@@ -99,7 +74,7 @@ FILES = {"utility": "core/Utility.lua", "localization": "localization.lua", "dat
 
 
 def load(*names):
-    lua = LuaRuntime(unpack_returned_tuples=True)
+    lua = wowkit.runtime()
     lua.execute(MOCK)
     lua.execute("BagnonSets = { showFreeSlots = 1, qualityBorders = 1, Bagnon = { bags = {-2, 0, 1, 2, 3, 4} } }")
     for name in names or ("localization", "utility", "frame", "item"):

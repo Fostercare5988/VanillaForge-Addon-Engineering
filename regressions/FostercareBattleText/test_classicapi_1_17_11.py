@@ -13,8 +13,8 @@ class UnitEventScopeTests(unittest.TestCase):
         l.execute('FBT.Combat.RegisterEvents()')
         # 2026-11-03: only the units with triggers (a priest's defaults: Low
         # Health, Low Mana); mana from UNIT_POWER_UPDATE.
-        self.assertEqual(list(l.eval('FBT.Combat.frame.events.UNIT_HEALTH').values()), ["player"])
-        self.assertEqual(list(l.eval('FBT.Combat.frame.events.UNIT_POWER_UPDATE').values()), ["player"])
+        self.assertEqual(list(l.eval("{select(2, FBT.Combat.frame:IsEventRegistered('UNIT_HEALTH'))}").values()), ["player"])
+        self.assertEqual(list(l.eval("{select(2, FBT.Combat.frame:IsEventRegistered('UNIT_POWER_UPDATE'))}").values()), ["player"])
 
     def test_nameplate_health_never_reaches_the_handler(self):
         l = m.runtime()

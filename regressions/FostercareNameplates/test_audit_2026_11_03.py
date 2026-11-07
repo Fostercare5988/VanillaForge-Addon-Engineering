@@ -60,11 +60,11 @@ class Lifecycle(unittest.TestCase):
     def test_unit_events_are_heard_for_nameplate_tokens_only(self):
         lua = load()
         lua.execute('plate = nativePlate("0xF1", "nameplate1")')
-        self.assertTrue(lua.eval("FNPNameplateDetailsEvents.events.UNIT_HEALTH.nameplate40"))
-        self.assertIsNone(lua.eval("FNPNameplateDetailsEvents.events.UNIT_HEALTH.raid1"))
+        self.assertTrue(lua.eval("receives(FNPNameplateDetailsEvents, 'UNIT_HEALTH', 'nameplate40')"))
+        self.assertFalse(lua.eval("receives(FNPNameplateDetailsEvents, 'UNIT_HEALTH', 'raid1')"))
         lua.execute('far = nativePlate("0xF9", "nameplate57")')
-        self.assertTrue(lua.eval("FNPNameplateDetailsEvents.events.UNIT_HEALTH.nameplate57"))
-        self.assertTrue(lua.eval("FNPNameplateCastEvents.events.UNIT_SPELLCAST_START.nameplate57"))
+        self.assertTrue(lua.eval("receives(FNPNameplateDetailsEvents, 'UNIT_HEALTH', 'nameplate57')"))
+        self.assertTrue(lua.eval("receives(FNPNameplateCastEvents, 'UNIT_SPELLCAST_START', 'nameplate57')"))
 
 
 class HealthText(unittest.TestCase):

@@ -1,73 +1,32 @@
-"""Shared Lua 5.1 environment for the OctoMail regressions.
+"""The OctoMail regressions on the shared game model (wowkit).
 
-Loads the Script files named in the selected OctoMail.xml, in order, with
-generic widget mocks. Lua 5.0 `for k, v in t do` loops are rewritten to
-`pairs(t)` because lupa runs Lua 5.1. Native widget behavior, real event
-payloads and the server's mail handling remain in-game checks.
+Loads the Script files named in the selected OctoMail.xml, in order. Frames
+start hidden here (MailFrame is shown on load, as opening a mailbox does), and
+XML frames are made on first use. Native widget behaviour, real event payloads
+and the server's mail handling remain in-game checks.
 """
 from pathlib import Path
 import os
-import re
-from wowlua import LuaRuntime
+
+import wowkit
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
-XML = (ROOT / "OctoMail.xml").read_text("utf-8-sig")
-SCRIPTS = re.findall(r'<Script file="([^"]+)"', XML)
-
-_LUA50_FOR = re.compile(r"\bin\s+(?!pairs\b|ipairs\b)([^\n]+?)\s+do\b")
-
-
-def lua51(source):
-    return _LUA50_FOR.sub(r"in pairs(\1) do", source)
-
+SCRIPTS = wowkit.xml_scripts(ROOT, "OctoMail.xml")
 
 BASE = r'''
 CLASSIC_API_VERSION, SUPERWOW_VERSION = 11711, "2.2"
-function table.setn() end
-mod = math.mod or math.fmod
-getn = table.getn
-tinsert = table.insert
-floor = math.floor
-messages = {}
-DEFAULT_CHAT_FRAME = { AddMessage = function(_, m) table.insert(messages, m) end }
+messages, tickers = chat, timers
+local function widget(name) local w = newWidget("Frame", name); w.shown = false; return w end
 
-local Widget = {}
-local WidgetMeta = { __index = function(t, k)
-    if Widget[k] then return Widget[k] end
-    if string.find(k, "^%u") then return function() end end
-end }
-local function widget(name)
-    local w = setmetatable({ name = name, scripts = {}, shown = false, enabled = true }, WidgetMeta)
-    if name then rawset(_G, name, w) end
-    return w
-end
-newWidget = widget
-function Widget:GetName() return self.name end
-function Widget:Show() self.shown = true end
-function Widget:Hide() self.shown = false end
-function Widget:IsVisible() return self.shown end
-function Widget:IsShown() return self.shown end
-function Widget:Enable() self.enabled = true end
-function Widget:Disable() self.enabled = false end
-function Widget:IsEnabled() return self.enabled and 1 or nil end
-function Widget:SetText(t) self.text = t end
+-- Edit boxes answer "" when empty; the sizes are what OctoMail's layout reads.
 function Widget:GetText() return self.text or "" end
-function Widget:SetChecked(v) self.checked = v end
-function Widget:GetChecked() return self.checked end
-function Widget:SetScript(k, f) self.scripts[k] = f end
-function Widget:GetScript(k) return self.scripts[k] end
 function Widget:GetHeight() return 14 end
 function Widget:GetWidth() return 37 end
 function Widget:GetStringWidth() return 40 end
-function Widget:GetValue() return self.value or 0 end
-function Widget:SetValue(v) self.value = v end
-function Widget:GetMinMaxValues() return 0, 0 end
 function Widget:GetID() return self.id or 1 end
-function Widget:GetFontString() self.fs = self.fs or widget(); return self.fs end
+function Widget:GetFontString() self.fontString = self.fontString or widget(); return self.fontString end
 function Widget:GetRegions() local r = {} for i = 1, 10 do r[i] = widget() end return unpack(r) end
-function Widget:CreateTexture(name) return widget(name) end
-function Widget:CreateFontString(name) return widget(name) end
-function Widget:RegisterEvent(e) self.events = self.events or {}; self.events[e] = true end
+function CreateFrame(_, name) return widget(name) end
 
 local AUTO = { "^Mail", "^OctoMail%u", "^SendMail", "^Inbox", "^OpenMail", "^Stationery", "^MoneyReceived" }
 setmetatable(_G, { __index = function(_, k)
@@ -77,12 +36,7 @@ setmetatable(_G, { __index = function(_, k)
     end
 end })
 
--- ClassicAPI's AddOn Options list; entries are recorded in order.
-categories = {}
-function InterfaceOptions_AddCategory(panel) table.insert(categories, panel) end
-function CreateFrame(_, name) return widget(name) end
-UIParent, WorldFrame, GameTooltip, TradeFrame = widget("UIParent"), widget("WorldFrame"), widget("GameTooltip"), widget("TradeFrame")
-UISpecialFrames, SlashCmdList = {}, {}
+WorldFrame, GameTooltip, TradeFrame = widget("WorldFrame"), widget("GameTooltip"), widget("TradeFrame")
 UIPanelWindows = { MailFrame = { area = "left", pushable = 0 } }
 NORMAL_FONT_COLOR = { r = 1, g = 0.82, b = 0 }
 GRAY_FONT_COLOR = { r = 0.5, g = 0.5, b = 0.5 }
@@ -99,8 +53,6 @@ OPENMAIL, INBOX, EMPTY, NO_ATTACHMENTS, ERROR_CAPS = "Open All", "Inbox", "Empty
 
 now = 1760000000
 function time(t) return now end
-function GetTime() return 100 end
-function GetLocale() return "enUS" end
 function GetCVar() return "OctoWoW" end
 function GetRealmName() return "OctoWoW" end
 function UnitFactionGroup() return "Horde" end
@@ -125,7 +77,6 @@ function CheckInbox() end
 MAX_COD_AMOUNT, COPPER_PER_GOLD = 10000, 10000
 SEND_MONEY_CONFIRMATION, ACCEPT, CANCEL = "Send money to %s?", "Accept", "Cancel"
 StaticPopupDialogs, popups = {}, {}
-tickers = {}
 -- ClassicAPI: coin icons in the real client; plain letters here.
 function GetCoinTextureString(copper)
     local g, s, c = math.floor(copper / 10000), math.floor(copper % 10000 / 100), copper % 100
@@ -135,12 +86,6 @@ function GetCoinTextureString(copper)
     if c > 0 or #t == 0 then t[#t + 1] = c .. "c" end
     return table.concat(t, " ")
 end
-C_Timer = { NewTicker = function(seconds, fn)
-    local h = { seconds = seconds, fn = fn }
-    function h:Cancel() self.cancelled = true end
-    table.insert(tickers, h)
-    return h
-end }
 function StaticPopup_Show(which, text) table.insert(popups, which) end
 function StaticPopup_Hide() end
 function GetNumFriends() return 0 end
@@ -182,25 +127,17 @@ function SendMail(to, subject, body) table.insert(sent, { to = to, subject = sub
 function SetSendMailCOD(a) codAmount = a end
 function SetSendMailMoney(a) moneyAmount = a end
 
-function fire(e, a1)
-    local f = OctoMailFrame
-    if f.events and f.events[e] then
-        event, arg1 = e, a1
-        f.scripts.OnEvent()
-    end
-end
-function frame() local f = OctoMailFrame.scripts.OnUpdate; if f then f() end end
+function frame() run(OctoMailFrame, "OnUpdate") end
 '''
 
 
 def load(prelude=""):
     """Return a runtime with OctoMail loaded and ADDON_LOADED/PLAYER_LOGIN fired."""
-    lua = LuaRuntime(unpack_returned_tuples=True)
+    lua = wowkit.runtime()
     lua.execute(BASE)
     if prelude:
         lua.execute(prelude)
-    for name in SCRIPTS:
-        lua.execute(lua51((ROOT / name).read_text("utf-8-sig")))
-    if lua.eval("rawget(_G, \"OctoMailFrame\") ~= nil and OctoMailFrame.events ~= nil"):
+    wowkit.load_files(lua, ROOT, SCRIPTS, "OctoMail")
+    if lua.eval('rawget(_G, "OctoMailFrame") ~= nil'):
         lua.execute('fire("ADDON_LOADED", "OctoMail"); fire("PLAYER_LOGIN"); MailFrame:Show()')
     return lua

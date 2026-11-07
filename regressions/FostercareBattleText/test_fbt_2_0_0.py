@@ -34,7 +34,7 @@ class Namespace(unittest.TestCase):
         self.assertEqual(lua.eval("type(FostercareBattleTextDB.Profiles.Default)"), "table")
 
     def test_without_classicapi_nothing_loads(self):
-        lua = m.LuaRuntime(unpack_returned_tuples=True)
+        lua = m.wowkit.runtime()
         lua.execute(m.BOOT)
         lua.execute("CLASSIC_API_VERSION = nil")
         load = lua.eval('''function(source, name)
@@ -42,7 +42,7 @@ class Namespace(unittest.TestCase):
         end''')
         lua.execute("NS = {}")
         for name in m.toc_lua_files():
-            load(m.lua50((m.ROOT / name).read_text("utf-8-sig")), name)
+            load(m.wowkit.lua50((m.ROOT / name).read_text("utf-8-sig")), name)
         self.assertIsNone(lua.eval("FostercareBattleText"))
         self.assertIsNone(lua.eval("NS.Combat"))
         self.assertIn("ClassicAPI", lua.eval("chat[1]"))

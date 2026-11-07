@@ -1,93 +1,40 @@
-"""Shared Lua 5.1 environment for the FostercareNameplates regressions.
+"""The FostercareNameplates regressions on the shared game model (wowkit).
 
-Runs the selected addon's TOC files in order with generic widget mocks, then
-models the client's SavedVariables load: a stock 1.12 client restores saved
-tables after the addon's files run; ClassicAPI restores them first when the TOC
-declares `## LoadSavedVariablesFirst: 1`. Native nameplate rendering, real event
+Loads the addon with wowkit.load_addon, which restores the saved table when
+the client does (before the files with `## LoadSavedVariablesFirst: 1`). Native nameplate rendering, real event
 payloads and engine timing remain in-game checks.
 """
 from pathlib import Path
 import os
-import re
-from wowlua import LuaRuntime
+import wowkit
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
-TOC = (ROOT / "FostercareNameplates.toc").read_text("utf-8-sig")
-FILES = [line.strip() for line in TOC.splitlines()
-         if line.strip() and not line.startswith("#")]
-SV_FIRST = re.search(r"^## LoadSavedVariablesFirst:\s*1\s*$", TOC, re.M) is not None
 
 BASE = r'''
 CLASSIC_API_VERSION, SUPERWOW_VERSION = 11711, "2.2"
-messages = {}
-DEFAULT_CHAT_FRAME = { AddMessage = function(_, m) table.insert(messages, m) end }
+messages = chat
 STANDARD_TEXT_FONT = "Fonts\\FRIZQT__.TTF"
-UISpecialFrames, RAID_CLASS_COLORS = {}, { MAGE = { r = 0.4, g = 0.8, b = 1 } }
-CLOSE, SlashCmdList = "Close", {}
--- ClassicAPI backport.
-function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
-
-local Widget = {}
-local count
-local Meta = { __index = function(_, k)
-    if Widget[k] then return Widget[k] end
-    if string.find(k, "^%u") then return function() end end
-end }
-frames = {}
-local function widget(name)
-    local w = setmetatable({ name = name, scripts = {}, events = {}, shown = true }, Meta)
-    if name then rawset(_G, name, w) end
-    table.insert(frames, w)
-    return w
-end
-function Widget:GetName() return self.name end
+RAID_CLASS_COLORS = { MAGE = { r = 0.4, g = 0.8, b = 1 } }
+CLOSE = "Close"
+-- The kit's widgets, with the sizes and records FNP's layout and tests read.
+frames = widgets
+local function widget(name) return newWidget("Frame", name) end
 function Widget:GetCountdownFontString() self.numbers = self.numbers or widget(); return self.numbers end
-function Widget:Show() self.shown = true end
-function Widget:Hide() self.shown = false end
-function Widget:IsShown() return self.shown end
-function Widget:SetParent(p) self.parent = p end
-function Widget:GetParent() return self.parent end
-function Widget:SetScript(k, f) self.scripts[k] = f end
-function Widget:GetScript(k) return self.scripts[k] end
-function Widget:RegisterEvent(e) self.events[e] = true end
--- ClassicAPI RegisterUnitEvent: the handler runs only for the listed tokens.
-function Widget:RegisterUnitEvent(e, ...)
-    local units = {}
-    for i = 1, select("#", ...) do units[select(i, ...)] = true end
-    self.events[e] = units
-end
-function Widget:UnregisterEvent(e) self.events[e] = nil end
-function Widget:IsEventRegistered(e) return self.events[e] ~= nil end
-function Widget:UnregisterAllEvents() self.events = {} end
 function Widget:GetWidth() return 110 end
 function Widget:GetHeight() return 14 end
-function Widget:GetScale() return 1 end
 function Widget:GetFont() return STANDARD_TEXT_FONT, self.fontSize or 12, "" end
 function Widget:SetFont(_, size) self.fontSize = size end
-function Widget:GetNumPoints() return self.points and table.getn(self.points) or 0 end
-function Widget:GetPoint(i) local p = self.points and self.points[i or 1]; if p then return unpack(p) end end
-function Widget:SetPoint(p, a, r, x, y)
-    self.points = self.points or {}; table.insert(self.points, { p, a, r, x or 0, y or 0 })
-end
-function Widget:ClearAllPoints() self.points = {} end
+function Widget:SetPoint(p, a, r, x, y) table.insert(self.points, { p, a, r, x or 0, y or 0 }) end
 function Widget:GetFontString() self.fs = self.fs or widget(); return self.fs end
 function Widget:GetNormalTexture() return widget() end
 function Widget:GetPushedTexture() return widget() end
 function Widget:GetDisabledTexture() return widget() end
 function Widget:GetHighlightTexture() return widget() end
 function Widget:GetCheckedTexture() return widget() end
-function Widget:CreateTexture() return widget() end
-function Widget:CreateFontString() return widget() end
-function Widget:GetChecked() return self.checked end
-function Widget:SetChecked(v) self.checked = v end
-function Widget:GetValue() return self.value or 0 end
-function Widget:GetAlpha() return self.alpha or 1 end
-function Widget:SetAlpha(v) self.alpha = v end
 function Widget:SetValue(v) self.value = v; count("SetValue") end
 function Widget:SetTimerDuration(d, interpolation, direction)
     self.timer, self.timerDirection = d, direction; count("SetTimerDuration")
 end
-UIParent = widget("UIParent")
 -- ClassicAPI's AddOn Options window and the game menu, closed.
 InterfaceOptionsFrame, GameMenuFrame = widget("InterfaceOptionsFrame"), widget("GameMenuFrame")
 InterfaceOptionsFrame.shown, GameMenuFrame.shown = false, false
@@ -95,14 +42,8 @@ function HideUIPanel(f) f:Hide() end
 setmetatable(_G, { __index = function(_, k)
     if type(k) == "string" and string.find(k, "^FNP") then return widget(k) end
 end })
-function CreateFrame(_, name) return widget(name) end
 function SetRaidTargetIconTexture() end
--- ClassicAPI's AddOn Options list; entries are recorded in order.
-categories = {}
-function InterfaceOptions_AddCategory(panel) table.insert(categories, panel) end
 function GetAddOnMetadata() return "test" end
-now = 100
-function GetTime() return now end
 calls = {}
 function count(name) calls[name] = (calls[name] or 0) + 1 end
 function UnitGUID() return nil end
@@ -182,31 +123,15 @@ function runFrames(plate, frames)
     end
 end
 
-function fire(ev, a1, ...)
-    for _, f in ipairs(frames) do
-        local registered = f.events[ev]
-        if registered and f.scripts.OnEvent and (registered == true or registered[a1]) then
-            f.scripts.OnEvent(f, ev, a1, ...)
-        end
-    end
-end
 '''
 
 
 def load(saved=None, prelude=""):
     """Run the addon. `saved` is Lua source for the restored saved table."""
-    lua = LuaRuntime(unpack_returned_tuples=True)
+    lua = wowkit.runtime()
     lua.execute(BASE)
     lua.execute(prelude)
-    restore = "FostercareNameplates_Config = %s" % saved if saved else ""
-    if restore and SV_FIRST:
-        lua.execute(restore)
-    # ClassicAPI passes each file the addon name and one shared table.
-    ns = lua.table()
-    for name in FILES:
-        source = (ROOT / name.replace("\\", "/")).read_text("utf-8-sig")
-        lua.execute(source, "FostercareNameplates", ns)
-    if restore and not SV_FIRST:
-        lua.execute(restore)
+    restore = "FostercareNameplates_Config = %s" % saved if saved else None
+    wowkit.load_addon(lua, ROOT, "FostercareNameplates", restore)
     lua.execute('fire("VARIABLES_LOADED")')
     return lua

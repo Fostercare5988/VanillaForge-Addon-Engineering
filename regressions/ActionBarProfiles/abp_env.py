@@ -1,4 +1,4 @@
-"""Shared Lua 5.1 environment for the ActionBarProfiles regressions.
+"""The ActionBarProfiles regressions on the shared game model (wowkit).
 
 Adapted from the 2026-10-11 modernization harness. Mocks follow the ClassicAPI
 GetCursorInfo/GetActionInfo and SuperWoW GetActionText shapes; they do not prove
@@ -6,13 +6,14 @@ native action-bar placement, item counts or cursor behavior.
 """
 from pathlib import Path
 import os
-from wowlua import LuaRuntime
+import wowkit
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 SOURCE = ROOT / "ActionBarProfiles.lua"
 
 MOCK = r'''
-messages, calls, bars, spells, macros, bags, equipment, sets = {}, {}, {}, {}, {}, {}, {}, {}
+messages = chat
+calls, bars, spells, macros, bags, equipment, sets = {}, {}, {}, {}, {}, {}, {}, {}
 local function count(name) calls[name] = (calls[name] or 0) + 1 end
 function inc(name) count(name) end
 function clone(value)
@@ -22,11 +23,10 @@ end
 function expect(value, message) if not value then error(message or 'expectation failed') end end
 function link(id) return '|cff00ff00|Hitem:'..id..':0:0:0|h[Item '..id..']|h|r' end
 SUPERWOW_VERSION = '2.2'; MAX_SKILLLINE_TABS = 4; NUM_BAG_SLOTS = 4; BOOKTYPE_SPELL = 'spell'
-getn, tinsert, tremove, getglobal = table.getn, table.insert, table.remove, function(name) return _G[name] end
+-- The game's trigonometry aliases take degrees (FrameXML never calls them; ABP does).
 cos = function(value) return math.cos(math.rad(value)) end
 sin = function(value) return math.sin(math.rad(value)) end
-DEFAULT_CHAT_FRAME = { AddMessage = function(_, message) table.insert(messages, message) end }
-SlashCmdList, StaticPopupDialogs = {}, {}; SAVE = 'Save'; CANCEL = 'Cancel'
+StaticPopupDialogs = {}; SAVE = 'Save'; CANCEL = 'Cancel'
 cvars = { realmName = 'Realm', autoSelfCast = '1' }
 function UnitName() return 'Player' end
 function GetCVar(name) return cvars[name] end
@@ -164,20 +164,11 @@ function newFrame(name)
         if string.find(key, '^[A-Z]') then error('unsupported widget method: '..key) end
     end})
 end
--- AddOn Options entry: any widget call is accepted; the panels and OnClick scripts are kept.
-categories, InterfaceOptionsFrame, GameMenuFrame = {}, nil, nil
-function InterfaceOptions_AddCategory(panel) table.insert(categories, panel) end
-function CreateFrame(_, name)
-    return setmetatable({name = name, scripts = {}}, {__index = function(self, key)
-        if key == 'SetScript' then return function(w, kind, fn) w.scripts[kind] = fn end end
-        if key == 'CreateFontString' then return function() return CreateFrame() end end
-        return function(w) return w end
-    end})
-end
+-- ABP's own frames (above) are strict; the AddOn Options entry uses the kit's widgets.
+InterfaceOptionsFrame, GameMenuFrame = nil, nil
 ActionBarProfiles_IconFrame = newFrame('ActionBarProfiles_IconFrame')
 ABP_DropDownMenu = newFrame('ABP_DropDownMenu')
 Minimap = newFrame('Minimap'); Minimap.scale = 0.8; Minimap.left = 100; Minimap.bottom = 100; Minimap.top = 240
-UIParent = { GetScale = function() return 1 end }
 GameTooltip = { Hide = function() end }
 function GetCursorPosition() return cursorX, cursorY end
 function startup()
@@ -194,7 +185,7 @@ function resetCounts() calls = {} end
 
 
 def load(setup=""):
-    lua = LuaRuntime(unpack_returned_tuples=True)
+    lua = wowkit.runtime()
     lua.execute(MOCK)
     lua.execute(setup)
     lua.execute(SOURCE.read_text(encoding="utf-8-sig"))

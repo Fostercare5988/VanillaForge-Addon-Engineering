@@ -10,12 +10,10 @@ per flush. Fails on 1.4.2. The real rate stays an in-game /lag check.
 """
 import re
 import unittest
-from wowlua import LuaRuntime
 import fnp_env
+import wowkit
 
-# One shared no-op: an __index returning a fresh `function() end` is fake garbage.
-BASE = fnp_env.BASE.replace('local Widget = {}', 'local Widget = {}\nlocal NOOP = function() end').replace(
-    'if string.find(k, "^%u") then return function() end end', 'if string.find(k, "^%u") then return NOOP end')
+# wowkit builds no garbage of its own (one shared no-op, no per-event tables).
 VARARG = re.compile(r'(function\b[\w.:\s]*\(([^()]*)\.\.\.\))')
 SCENE = '''
     local queue, n = {}, 0
@@ -47,15 +45,17 @@ SCENE = '''
 
 
 def load(lua50):
-    lua = LuaRuntime(unpack_returned_tuples=True)
-    lua.execute(BASE)
-    lua.execute("FostercareNameplates_Config = { overwrites = { nameplate_health_target = 0 } }")
-    ns = lua.table()
-    for name in fnp_env.FILES:
-        source = (fnp_env.ROOT / name).read_text("utf-8-sig")
+    lua = wowkit.runtime()
+    lua.execute(fnp_env.BASE)
+
+    def arg_tables(source):
+        source = wowkit.lua50(source)
         if lua50:
             source = VARARG.sub(lambda m: m.group(1) + ' local __arg = { n = select("#", ...), ... };', source)
-        lua.execute(source, "FostercareNameplates", ns)
+        return source
+    wowkit.load_addon(lua, fnp_env.ROOT, "FostercareNameplates",
+                      "FostercareNameplates_Config = { overwrites = { nameplate_health_target = 0 } }",
+                      rewrite=arg_tables)
     lua.execute('fire("VARIABLES_LOADED")')
     lua.execute(SCENE)
     return lua

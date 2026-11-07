@@ -22,6 +22,14 @@ directly. `wowlua.py` removes the libraries the client does not open (`os`, `io`
 `debug`, `require`...), applies ClassicAPI's `gsub` rule and gives the short
 aliases; `tests/test_wowlua.py` keeps every suite on it.
 
+The game model is `wowkit.py`: widgets, events (with ClassicAPI's unit filters),
+time and timers, and the loader (TOC order, `(addonName, namespace)`, saved
+variables restored when the client does, XML frame names). A harness adds only
+its addon's API and data and redefines a `Widget` method only where it records
+something its own way. Every `*_env.py` harness and the FostercareBattleText
+runtime use it. AutoBG and FostercareTweaks still build their mocks inline in
+each test file; move them to the kit when those tests are next touched.
+
 Use `--compare <previous-audit.json>` to list changed, added, removed and identical
 loaded modules and load-graph changes. Preserve the previous report. Matching
 source supports selective reuse of earlier review; it does not transfer review

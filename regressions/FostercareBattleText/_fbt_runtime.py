@@ -1,17 +1,14 @@
-"""Self-contained Lua model of FostercareBattleText (formerly MSBT) for regression tests.
+"""FostercareBattleText (formerly MSBT) on the shared game model (wowkit).
 
-Loads every TOC Lua file, including the ForgeUI settings window, into lupa with
-mocked ClassicAPI globals and a small stateful widget model (checked state,
-text, values, clicks, show/hide scripts). It needs no client MPQs. Lua 5.0
-generic `for k,v in t do` loops are adapted to `pairs`. Not in-game proof.
+Loads every TOC Lua file, including the ForgeUI settings window, with mocked
+ClassicAPI globals on the kit's widgets (checked state, text, values, clicks,
+show/hide scripts). It needs no client MPQs. Not in-game proof.
 
 Requires VANILLAFORGE_ADDON_ROOT=<AddOns>/FostercareBattleText and lupa.
 """
 from pathlib import Path
 import os
-import re
-
-from wowlua import LuaRuntime
+import wowkit
 
 ROOT = Path(os.environ.get("VANILLAFORGE_ADDON_ROOT", "")).resolve()
 TOC = "FostercareBattleText.toc"
@@ -19,10 +16,6 @@ if not (ROOT / TOC).is_file():
     raise RuntimeError("Set VANILLAFORGE_ADDON_ROOT to the FostercareBattleText folder")
 
 CORE_SKIP = set()
-
-
-def lua50(source):
-    return re.sub(r'for ([\w_, ]+) in ([\w.\[\]"\']+) do', r'for \1 in pairs(\2) do', source)
 
 
 def toc_lua_files():
@@ -39,72 +32,35 @@ CLASSIC_API_VERSION=11711;  -- ClassicAPI only: no SuperWoW or NamPower globals
 now=1; event=nil; this=nil; cvars={}; calls={}; frames={};
 local function count(name) calls[name]=(calls[name] or 0)+1 end
 
--- Minimal widget model: every unknown method is a no-op; event registration is recorded.
-local Widget={}
-local function Run(w,script,...) local f=w.scripts[script]; if f then local old=this; this=w; f(w,...); this=old end end
-function Widget:RegisterEvent(e) self.events[e]=true end
--- Like the engine: the event reaches the frame only for these units.
-function Widget:RegisterUnitEvent(e,...) self.events[e]={...} end
-local function Wants(reg,unit) if reg==true then return true end if not reg then return false end for _,u in ipairs(reg) do if u==unit then return true end end return false end
-function Widget:UnregisterEvent(e) self.events[e]=nil end
-function Widget:UnregisterAllEvents() for k in pairs(self.events) do self.events[k]=nil end end
-function Widget:SetScript(k,f) self.scripts[k]=f end
-function Widget:GetScript(k) return self.scripts[k] end
-function Widget:GetName() return self.name end
-function Widget:GetParent() return self.parent end
-function Widget:SetParent(p) self.parent=p end
-function Widget:IsVisible() return self.shown end
-function Widget:IsShown() return self.shown end
-function Widget:Show() if not self.shown then self.shown=true; Run(self,"OnShow") end end
-function Widget:Hide() if self.shown then self.shown=false; Run(self,"OnHide") end end
-function Widget:CreateTexture(name) local t=NewWidget(name,"Texture",self); t.shown=true; return t end
-function Widget:CreateFontString(name) local t=NewWidget(name,"FontString",self); t.shown=true; return t end
-function Widget:SetFontString(fs) self.fontString=fs end
-function Widget:GetFontString() return self.fontString end
+-- The kit's widgets, with what FBT's settings tests drive: anchors in `pt`,
+-- focus, clicks that toggle a checkbutton first, scripts on value and text changes.
+frames = widgets
+function NewWidget(name, kind, parent) local w = newWidget(kind, name, parent); w.shown = false; return w end
+-- Made through NewWidget, so a test can wrap it to record every widget.
+function Widget:CreateTexture(name) local t = NewWidget(name, "Texture", self); t.shown = true; return t end
+function Widget:CreateFontString(name) local t = NewWidget(name, "FontString", self); t.shown = true; return t end
+function CreateFrame(kind, name, parent) local w = NewWidget(name, kind, parent); w.shown = true; return w end
+local Run = run
 function Widget:SetText(t) self.text=t; if self.fontString then self.fontString:SetText(t) end; if self.kind=="EditBox" then Run(self,"OnTextChanged") end end
 function Widget:GetText() return self.text or "" end
 function Widget:SetTextColor(r,g,b) self.color={r,g,b} end
 function Widget:SetChecked(v) self.checked=(v and v~=0) and 1 or nil end
-function Widget:GetChecked() return self.checked end
-function Widget:SetMinMaxValues(a,b) self.min,self.max=a,b end
 function Widget:SetValue(v) self.value=v; Run(self,"OnValueChanged") end
-function Widget:GetValue() return self.value or 0 end
-function Widget:Enable() self.disabled=nil end
-function Widget:Disable() self.disabled=true end
-function Widget:IsEnabled() return not self.disabled and 1 or nil end
-function Widget:SetWidth(v) self.width=v end
 -- Anchors are recorded: { point, relativeTo, relativePoint, x, y } (ForgeLayout tests).
 function Widget:SetPoint(...) self.pt={...} end
 function Widget:ClearAllPoints() self.pt=nil end
-function Widget:SetHeight(v) self.height=v end
-function Widget:GetWidth() return self.width or 0 end
-function Widget:GetHeight() return self.height or 0 end
 function Widget:GetFrameLevel() return 1 end
 function Widget:SetFocus() self.focus=true end
 function Widget:ClearFocus() if self.focus then self.focus=nil; Run(self,"OnEditFocusLost") end end
 -- A player click: a checkbutton toggles before OnClick, as natively.
 function Widget:Click()
-  if self.disabled then return end
+  if not self.enabled then return end
   if self.kind=="CheckButton" then self:SetChecked(not self.checked) end
   Run(self,"OnClick")
 end
 function Widget:PressEnter() Run(self,"OnEnterPressed") end
 function Widget:PressEscape() Run(self,"OnEscapePressed") end
--- Unknown methods (capitalised keys) are no-ops; unknown fields stay nil.
-local function NoOp() end
-local WidgetMeta={__index=function(t,k) return Widget[k] or (type(k)=="string" and string.find(k,"^%u") and NoOp) or nil end}
-function NewWidget(name,kind,parent)
-  local w=setmetatable({name=name,kind=kind,parent=parent,events={},scripts={},shown=false},WidgetMeta)
-  table.insert(frames,w)
-  if name then _G[name]=w end
-  return w
-end
--- ClassicAPI's AddOn Options list; entries are recorded in order.
-categories = {}
-function InterfaceOptions_AddCategory(panel) table.insert(categories, panel) end
 InterfaceOptionsFrame=NewWidget("InterfaceOptionsFrame"); GameMenuFrame=NewWidget("GameMenuFrame")
-function CreateFrame(kind,name,parent) local w=NewWidget(name,kind,parent); w.shown=true; return w end
-UIParent=NewWidget("UIParent"); UIParent.shown=true
 GameTooltip=NewWidget("GameTooltip")
 function ShowUIPanel(f) f:Show() end
 function HideUIPanel(f) f:Hide() end
@@ -118,16 +74,11 @@ function PickerCancel() if ColorPickerFrame.cancelFunc then ColorPickerFrame.can
 function getglobal(name) return rawget(_G,name) or NewWidget(name) end
 setglobal=function(k,v) _G[k]=v end
 
--- Fire an event at every frame registered for it, the way the client does.
+-- Fire an event with every argument kept: the combat log reads them back.
 function Fire(e,...)
-  local a={n=select("#",...),...}
-  event=e
-  for i=1,24 do _G["arg"..i]=a[i] end
-  cleu=a
-  for _,f in ipairs(frames) do
-    local h=f.scripts.OnEvent
-    if Wants(f.events[e],a[1]) and h then this=f; h(f,e,unpack(a,1,a.n)) end
-  end
+  cleu={n=select("#",...),...}
+  for i=1,24 do _G["arg"..i]=cleu[i] end
+  fire(e,...)
 end
 function CombatLogGetCurrentEventInfo() count("CombatLogGetCurrentEventInfo"); return unpack(cleu,1,cleu.n) end
 -- One combat log event: subevent, source GUID/name, dest GUID/name, then the
@@ -141,9 +92,6 @@ end
 -- Bit library (ClassicAPI ships one; lupa's 5.1 has none).
 bit={}
 function bit.band(a,b) local r,p=0,1 while a>0 and b>0 do if math.mod(a,2)==1 and math.mod(b,2)==1 then r=r+p end; a=math.floor(a/2); b=math.floor(b/2); p=p*2 end; return r end
-math.mod=math.mod or math.fmod
-string.gfind=string.gmatch
-function table.wipe(t) for k in pairs(t) do t[k]=nil end return t end
 
 -- Instrument string.lower before the addon caches it.
 local lower=string.lower
@@ -173,7 +121,6 @@ function UnitPowerType(u) local v=Resolve(u); return v and v.powertype or 0 end
 function UnitPower(u,t) local v=Resolve(u); if not v then return 0 end; if t==0 or (t==nil and (v.powertype or 0)==0) then return v.mana or 0 end; return v.power or 0 end
 function UnitPowerMax(u,t) local v=Resolve(u); if not v then return 0 end; if t==0 or (t==nil and (v.powertype or 0)==0) then return v.maxmana or 0 end; return v.maxpower or 100 end
 function GetComboPoints() return 0 end
-function GetTime() return now end
 spellNamesMock={}
 function GetSpellInfo(id) return spellNamesMock[id] or "Spell"..id,"Rank 1","Interface\\Icons\\Spell"..id end
 function GetSpellIdForName(n) count("GetSpellIdForName") return 0 end
@@ -185,8 +132,6 @@ function SetCVar(k,v) cvars[k]=tostring(v) end
 function GetCVar(k) return cvars[k] end
 function PlaySoundFile() count("PlaySoundFile") end
 function PlaySound() end
-DEFAULT_CHAT_FRAME={AddMessage=function(self,m) table.insert(chat,m) end}; chat={}
-SlashCmdList={}; UISpecialFrames={}
 timers={}
 C_Timer={}
 function C_Timer.NewTimer(d,f) local t={f=f,Cancel=function(self) self.cancelled=true end}; table.insert(timers,t); return t end
@@ -223,7 +168,7 @@ def runtime(saved=None):
 
     saved: optional Lua source that sets FostercareBattleTextDB before ADDON_LOADED.
     """
-    lua = LuaRuntime(unpack_returned_tuples=True)
+    lua = wowkit.runtime()
     lua.execute(BOOT)
     # Each file runs like the client loads it: (addonName, shared namespace).
     load_file = lua.eval('''function(source, name)
@@ -232,7 +177,7 @@ def runtime(saved=None):
       chunk("FostercareBattleText", ADDON_NS)
     end''')
     for name in toc_lua_files():
-        load_file(lua50((ROOT / name).read_text("utf-8-sig")), name)
+        load_file(wowkit.lua50((ROOT / name).read_text("utf-8-sig")), name)
     # The namespace, as tests and /run see it.
     lua.execute("FBT = FostercareBattleText")
     if saved is not None:

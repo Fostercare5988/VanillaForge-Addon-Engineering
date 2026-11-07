@@ -89,7 +89,7 @@ class EventsOnlyWhenNeeded(unittest.TestCase):  # P3-2
             execute.EventSettings.Show = true; execute.TriggerSettings.Classes = nil
             FBT.RegisterTriggers(); FBT.Combat.RegisterEvents()
         ''')
-        self.assertEqual(list(lua.eval("FBT.Combat.frame.events.UNIT_HEALTH").values()), ["target"])
+        self.assertEqual(list(lua.eval("{select(2, FBT.Combat.frame:IsEventRegistered('UNIT_HEALTH'))}").values()), ["target"])
         self.assertTrue(lua.eval("FBT.Combat.frame.events.PLAYER_TARGET_CHANGED"))
 
 

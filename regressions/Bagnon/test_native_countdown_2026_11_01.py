@@ -54,7 +54,7 @@ class EnchantBadge(unittest.TestCase):
         self.update()
         self.assertEqual(self.lua.eval("tickers"), 0)
         self.assertEqual(self.lua.eval("sweeps[1].duration"), 1800)
-        self.assertEqual(self.lua.eval("slot.enchantOverlay:IsShown()"), True)
+        self.assertTrue(self.lua.eval("slot.enchantOverlay:IsShown()"))
 
     def test_reading_the_same_enchant_keeps_the_countdown(self):
         self.update()
@@ -79,13 +79,13 @@ class EnchantBadge(unittest.TestCase):
         self.update()
         self.lua.execute("enchant = { false, 0, 0, 0 }")
         self.update()
-        self.assertEqual(self.lua.eval("slot.enchantOverlay:IsShown()"), False)
+        self.assertFalse(self.lua.eval("slot.enchantOverlay:IsShown()"))
         self.assertEqual(self.lua.eval("sweeps[1].start"), None)
 
     def test_running_out_hides_the_badge(self):
         self.update()
         self.lua.execute("enchant = { false, 0, 0, 0 }; sweeps[1].scripts.OnCooldownDone()")
-        self.assertEqual(self.lua.eval("slot.enchantOverlay:IsShown()"), False)
+        self.assertFalse(self.lua.eval("slot.enchantOverlay:IsShown()"))
 
 
 class SlotRarity(unittest.TestCase):

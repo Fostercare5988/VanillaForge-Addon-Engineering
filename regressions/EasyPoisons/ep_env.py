@@ -1,4 +1,4 @@
-"""Shared Lua 5.1 environment for the EasyPoisons regressions.
+"""The EasyPoisons regressions on the shared game model (wowkit).
 
 Loads the files the selected addon's TOC lists, in order, with mocks shaped
 like the stock 1.12 merchant/bag/tradeskill API and the ClassicAPI calls
@@ -11,21 +11,14 @@ Lua 5.0's `for k, v in t do` form is rewritten to `pairs(t)` so the original
 """
 from pathlib import Path
 import os
-import re
-from wowlua import LuaRuntime
+import wowkit
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 
 MOCK = r'''
-math.mod = math.mod or math.fmod
-table.getn = table.getn or function(t) return #t end
-function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
-getglobal = function(n) return _G[n] end
 CLASSIC_API_VERSION = 11711
-messages, purchases, widgets, fonts, calls = {}, {}, {}, {}, {}
+messages, purchases, fonts, calls = chat, {}, {}, {}
 local function count(name) calls[name] = (calls[name] or 0) + 1 end
-DEFAULT_CHAT_FRAME = { AddMessage = function(_, m) table.insert(messages, m) end }
-SlashCmdList, UISpecialFrames = {}, {}
 GameTooltip = { SetOwner = function() end, SetText = function() end, Show = function() end, Hide = function() end }
 playerClass, money, playerName = "ROGUE", 1000000, "Claude"
 function UnitName() return playerName end
@@ -35,61 +28,13 @@ function GetMoney() return money end
 function GetAddOnMetadata(_, key) if key == "Version" then return "test" end if key == "Author" then return "Horyoshi" end end
 
 -- Widgets ----------------------------------------------------------------
-local Widget = {}
-local mt = { __index = function(_, k)
-    local m = Widget[k]; if m then return m end
-    if type(k) == "string" and string.find(k, "^[A-Z]") then return function() end end
-end }
-function newWidget(kind, name)
-    local w = setmetatable({ kind = kind, name = name, scripts = {}, events = {}, shown = true }, mt)
-    if name then _G[name] = w end
-    table.insert(widgets, w)
-    return w
-end
-function run(w, script)
-    local f = w.scripts[script]
-    if f then local old = this; this = w; f(w); this = old end
-end
-function Widget:SetScript(k, f) self.scripts[k] = f end
-function Widget:GetScript(k) return self.scripts[k] end
-function Widget:RegisterEvent(e) self.events[e] = true end
-function Widget:UnregisterEvent(e) self.events[e] = nil end
-function Widget:Show() if not self.shown then self.shown = true; run(self, "OnShow") end end
-function Widget:Hide() if self.shown then self.shown = false; run(self, "OnHide") end end
-function Widget:IsShown() return self.shown end
-function Widget:IsVisible() return self.shown end
-function Widget:GetName() return self.name end
-function Widget:Enable() self.disabled = false end
-function Widget:Disable() self.disabled = true end
-function Widget:IsEnabled() return not self.disabled end
-function Widget:SetChecked(v) self.checked = v and true or nil end
-function Widget:GetChecked() return self.checked end
-function Widget:GetText() return self.text end
-function Widget:SetText(v)
-    self.text = v
-    if self.font then self.font:SetText(v) end
-    if self.kind == "EditBox" then run(self, "OnTextChanged") end
-end
-function Widget:SetFontString(f) self.font = f end
-function Widget:GetFontString() return self.font end
-function Widget:CreateFontString() local f = newWidget("FontString"); table.insert(fonts, f); return f end
-function Widget:CreateTexture() return newWidget("Texture") end
--- ClassicAPI's AddOn Options list; entries are recorded in order.
-categories = {}
-function InterfaceOptions_AddCategory(panel) table.insert(categories, panel) end
-function CreateFrame(kind, name) return newWidget(kind, name) end
-UIParent = newWidget("Frame", "UIParent")
+local setText = Widget.SetText
+function Widget:SetText(v) setText(self, v); if self.kind == "EditBox" then run(self, "OnTextChanged") end end
+local createFontString = Widget.CreateFontString
+function Widget:CreateFontString(name) local f = createFontString(self, name); table.insert(fonts, f); return f end
 MerchantFrame = newWidget("Frame", "MerchantFrame")
 
-function fire(ev, a1)
-    for _, w in ipairs(widgets) do
-        if w.events[ev] and w.scripts.OnEvent then
-            event, arg1 = ev, a1
-            run(w, "OnEvent")
-        end
-    end
-end
-function click(button) if button and not button.disabled then run(button, "OnClick") end end
+function click(button) if button and button:IsEnabled() then run(button, "OnClick") end end
 function allText()
     local out = {}
     for _, f in ipairs(fonts) do if f.text then table.insert(out, f.text) end end
@@ -97,27 +42,8 @@ function allText()
 end
 
 -- Timers -----------------------------------------------------------------
-now, timers = 0, {}
--- ClassicAPI: coin icons in the real client; plain letters here.
-function GetCoinTextureString(copper)
-    local g, s, c = math.floor(copper / 10000), math.floor(copper % 10000 / 100), copper % 100
-    local t = {}
-    if g > 0 then t[#t + 1] = g .. "g" end
-    if s > 0 then t[#t + 1] = s .. "s" end
-    if c > 0 or #t == 0 then t[#t + 1] = c .. "c" end
-    return table.concat(t, " ")
-end
-C_Timer = { After = function(s, f) table.insert(timers, { at = now + s, fn = f }) end }
-function advance(dt)
-    now = now + (dt or 0)
-    local ran = true
-    while ran do
-        ran = false
-        for i, t in ipairs(timers) do
-            if t.at <= now then table.remove(timers, i); t.fn(); ran = true; break end
-        end
-    end
-end
+now = 0
+function advance(dt) now = now + (dt or 0); runTimers() end
 
 -- Items and bags -----------------------------------------------------------
 MAXSTACK = { [8924] = 20, [2931] = 20, [8925] = 20, [8923] = 20, [5173] = 20, [5140] = 20, [999] = 1 }
@@ -250,26 +176,13 @@ POISON = { Instant = 1, Dissolvent = 2, Crippling = 3, Mind = 4, Deadly = 5, Cor
 EasyPoisonsDB = { Recipes = { [8985] = { [5173] = 7, [8925] = 1 } } }
 '''
 
-LUA50_FOR = re.compile(r"(for\s+[\w\s,]+\s+in\s+)([A-Za-z_][\w.]*)(\s+do)")
-
-
-def _sources():
-    toc = (ROOT / "EasyPoisons.toc").read_text("utf-8-sig")
-    for line in toc.splitlines():
-        line = line.strip()
-        if line and not line.startswith("#"):
-            yield line, (ROOT / line).read_text("utf-8-sig")
-
 
 def load(setup="", login=True):
-    lua = LuaRuntime(unpack_returned_tuples=True)
+    lua = wowkit.runtime()
     lua.execute(MOCK)
     lua.execute(setup)
-    lua.execute("addonNS = {}")
-    chunk = lua.eval("function(src, name) return assert(loadstring(src, name)) end")
-    for name, src in _sources():
-        src = LUA50_FOR.sub(lambda m: m.group(1) + "pairs(" + m.group(2) + ")" + m.group(3), src)
-        chunk(src, "@" + name)("EasyPoisons", lua.eval("addonNS"))
+    lua.execute("addonNS = {}; __addon_ns = addonNS")
+    wowkit.load_files(lua, ROOT, wowkit.toc_files(ROOT), "EasyPoisons")
     if login:
         lua.execute('fire("ADDON_LOADED", "EasyPoisons"); fire("PLAYER_LOGIN"); advance(0)')
     return lua

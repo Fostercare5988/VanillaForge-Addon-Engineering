@@ -16,6 +16,9 @@ differences that change results are fixed here:
   number removes the match, `nil` and `false` included; stock 5.1 keeps it
   (API.md, "string.gsub replacements"). The global `gsub` and `s:gsub` are the
   same function.
+* `table.setn` and `table.getn`. 5.1 throws on `setn`; the game keeps it, and
+  `getn` answers an explicit numeric `t.n` first, then the `setn` size
+  (CLASSICAPI_MASTER_REFERENCE 4.6).
 * The short global aliases. Upstream does not list them (they come from an
   embedded chunk, BlizzardScriptAPI.md section 3), so only aliases FrameXML
   calls as globals are given, plus ClassicAPI's documented `wipe`, `strmatch`
@@ -52,6 +55,16 @@ end
 function table.wipe(t)
     for k in pairs(t) do t[k] = nil end
     return t
+end
+
+do
+    local sizes, length = setmetatable({}, { __mode = "k" }), table.getn
+    function table.setn(t, n) sizes[t] = n end
+    function table.getn(t)
+        local n = rawget(t, "n")
+        if type(n) == "number" then return n end
+        return sizes[t] or length(t)
+    end
 end
 
 function getglobal(name) return _G[name] end
