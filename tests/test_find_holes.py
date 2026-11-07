@@ -104,6 +104,17 @@ class FindHoles(unittest.TestCase):
         drift = HOLES.version_drift(self.owner)
         self.assertTrue(any(d["found"] == "11600" for d in drift))
 
+    def test_version_drift_for_every_dll(self):
+        write(self.root / "Pinned", {
+            "Pinned.toc": "## Title: Pinned\n## X-NamPower-Min-Version: 4.6.2\nPinned.lua\n",
+            "Pinned.lua": 'local s = string.find(tostring(SUPERWOW_VERSION or ""), "^(%d+)")\n'
+                          'local major = GetNampowerVersion()\n'
+                          'if SUPERWOW_VERSION and GetNampowerVersion then ok = true end\n',
+        })
+        drift = HOLES.version_drift(HOLES.Addon(self.root / "Pinned"))
+        self.assertEqual(len(drift), 3)
+        self.assertEqual(drift[0]["found"], "4.6.2")
+
     def test_settings_off_everywhere_and_stale(self):
         wtf = self.root / "WTF"
         for i, saved in enumerate(["Owner_Config = { Old = 1, ['Owner'] = 0 }",

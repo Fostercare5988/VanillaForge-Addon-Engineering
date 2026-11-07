@@ -7,8 +7,9 @@
 2. An item on a cooldown it has not started (enable == 0) is dimmed by
    BagnonItem_UpdateCooldown, and the very next call, SetItemButtonDesaturated, sets
    the icon colour back to white, so the dimming never shows.
-3. A quiver, soul bag or herb bag in the bank is never tinted: Bagnon_BagFamily asks
-   GetContainerNumFreeSlots, which answers (0, 0) for bank bags.
+3. A quiver, soul bag or herb bag in the bank is never tinted: Bagnon_BagFamily asked
+   GetContainerNumFreeSlots, which answered (0, 0) for bank bags. Since ClassicAPI
+   1.19.3 it answers the open bank's family, so a live bank bag asks it again.
 """
 import re
 import unittest
@@ -56,11 +57,16 @@ class CooldownDimming(unittest.TestCase):
 
 
 class BankBagFamily(unittest.TestCase):
-    def test_a_bank_herb_bag_reads_its_family_from_its_item(self):
-        # ClassicAPI answers (0, 0) for bank bags, so the family must come from the bag item.
+    def test_an_open_bank_herb_bag_reads_its_family_from_classicapi(self):
         lua = load("localization", "utility")
-        lua.execute("bagFamily[5] = nil; bagLinks[5] = bagLinks[3]")
+        lua.execute("bagFamily[5] = 32; C_Item.GetItemFamily = function() error('read the item') end")
         self.assertEqual(lua.eval("Bagnon_BagFamily(5)"), 32)
+
+    def test_a_bag_that_is_not_there_has_no_family(self):
+        # ClassicAPI 1.19.3 answers only 0 for a missing bag; the colour needs a number.
+        lua = load("localization", "utility")
+        lua.execute("C_Container.GetContainerNumFreeSlots = function() return 0 end")
+        self.assertEqual(lua.eval("Bagnon_BagFamily(5)"), 0)
 
 
 if __name__ == "__main__":

@@ -178,6 +178,13 @@
       "source": "ClassicAPI docs/API.md#c_containergetcontainernumfreeslotsbagid and #c_itemgetitemfamilyitem"
     },
     {
+      "id": "container-slot-walk",
+      "pattern": "\\bC_Container\\.HasContainerItem\\s*\\(|for\\s+\\w+\\s*=\\s*1\\s*,\\s*GetContainerNumSlots\\s*\\([^)]*\\)\\s*do\\s*\\n?\\s*if\\s+not\\s+(C_Container\\.)?(GetContainerItemInfo|HasContainerItem|GetContainerItemLink)\\b",
+      "finding": "Walks a bag slot by slot to find or count empty slots. C_Container.HasContainerItem answers bags 0 to 4 only, so in the bank every slot looks empty.",
+      "better": "C_Container.GetContainerNumFreeSlots(bag) (count and family) and C_Container.GetContainerFreeSlots(bag) (the empty slots): carried bags, and from 1.19.3 the main bank and bank bags while the bank is open.",
+      "source": "ClassicAPI docs/API.md#c_containergetcontainernumfreeslotsbagid, #c_containergetcontainerfreeslotsbagid; KNOWN_PATTERNS.md KP-61"
+    },
+    {
       "id": "handler-argument-sniffing",
       "pattern": "\\barg1_param\\b|type\\s*\\(\\s*arg1_param\\s*\\)",
       "finding": "A handler works out whether it got this/event/arg1 or positional arguments.",

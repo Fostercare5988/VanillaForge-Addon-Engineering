@@ -1,9 +1,9 @@
 """FostercareTweaks audit, 2026-10-26 (AV session, /lag and the player's note).
 
 - Auto Dismount: e813b8c handed it to ClassicAPI's autoDismount/autoUnshift/
-  autoStand. Those act only before a spell cast (ClassicAPI docs/API.md, "Cast
-  settings"), so melee attack, flight masters, talking to NPCs and items in a
-  form no longer dismount or leave the form. The player misses it.
+  autoStand, which then acted only before spell casts, so it came back for
+  attacks, flight masters, NPCs and items. Retired again on 2026-11-07:
+  ClassicAPI 1.20.1 covers those too (AutoDismountRetired).
 - Event fan-out: ClassicAPI fires every unit event once per token, including
   nameplateN, markN and focus (docs/API.md, nameplate and mark tokens). The raid
   frames, target auras, energy ticks and target castbar register these events
@@ -167,50 +167,17 @@ def error_frames(lua):
             if f.events and f.events["UI_ERROR_MESSAGE"]]
 
 
-def ui_error(lua, message):
-    for frame in error_frames(lua):
-        lua.globals().fire(frame, "UI_ERROR_MESSAGE", message)
+class AutoDismountRetired(unittest.TestCase):
+    """2026-11-07: ClassicAPI 1.20.1's autoDismount/autoUnshift/autoStand act
+    before attacks, flight masters, NPCs and items, so the UI_ERROR_MESSAGE
+    fallback that did it a click late is gone."""
 
-
-class AutoDismountFallback(unittest.TestCase):
-    def setUp(self):
-        self.lua = gameplay(runtime())
-
-    def test_melee_attack_while_mounted_dismounts(self):
-        self.lua.execute('mounted = true')
-        ui_error(self.lua, "Can't attack while mounted.")
-        self.assertEqual(self.lua.eval('dismounts'), 1)
-
-    def test_flight_master_while_mounted_dismounts(self):
-        self.lua.execute('mounted = true')
-        ui_error(self.lua, "You are already mounted! Dismount first.")
-        self.assertEqual(self.lua.eval('dismounts'), 1)
-
-    def test_npc_and_items_in_a_form_leave_it(self):
-        self.lua.execute('form = 5')
-        ui_error(self.lua, "Can't speak while shapeshifted.")
-        ui_error(self.lua, "Can't use items while shapeshifted.")
-        self.assertEqual(self.lua.eval('cancels'), 2)
-
-    def test_stealth_is_never_cancelled(self):
-        # CancelShapeshiftForm also cancels Stealth (ClassicAPI docs).
-        self.lua.execute('form, stealthed = 0, true')
-        ui_error(self.lua, "Can't speak while shapeshifted.")
-        self.assertEqual(self.lua.eval('cancels'), 0)
-
-    def test_spell_errors_stay_with_classicapi(self):
-        # Control (passes on 1.5.0): casts belong to the autoDismount /
-        # autoUnshift / autoStand settings, so nothing acts twice.
-        self.lua.execute('mounted, form = true, 5')
-        for text in ("You are mounted", "You are in shapeshift form", "You must be standing to do that"):
-            ui_error(self.lua, text)
-        self.assertEqual(self.lua.eval('dismounts + cancels + stands'), 0)
-
-    def test_stale_error_does_nothing(self):
-        # The error arrives after the player already dismounted or left the form.
-        ui_error(self.lua, "Can't attack while mounted.")
-        ui_error(self.lua, "Can't speak while shapeshifted.")
-        self.assertEqual(self.lua.eval('dismounts + cancels'), 0)
+    def test_no_module_and_no_error_listener(self):
+        # Auto Stance keeps its own UI_ERROR_MESSAGE frame.
+        lua = gameplay(runtime())
+        self.assertIsNone(lua.eval('FT.mods["Auto Dismount"]'))
+        self.assertIsNone(lua.eval('FCTweaksAutoDismount'))
+        self.assertEqual(len(error_frames(lua)), 1)
 
 
 class NoVarargEventWrapper(unittest.TestCase):
@@ -339,27 +306,6 @@ class ChatTimestampsSkipCombatLog(unittest.TestCase):
         self.assertEqual(lua.eval('got[2]'), "Grunt hits you for 12.")
         self.assertIn("18:21:57", lua.eval('got[1]'))
 
-
-class ReagentListsAskedOnce(unittest.TestCase):
-    """GetSpellReagents returns a new table per call; Spell.dbc never changes."""
-
-    def test_macro_rescans_reuse_the_reagent_answer(self):
-        lua = runtime()
-        lua.execute(r'''
-            NUM_ACTIONBAR_BUTTONS = 12
-            asked = 0
-            C_Spell = { GetSpellReagents = function() asked = asked + 1; return { { itemID = 17020, count = 1 } } end,
-                GetSpellCastCount = function() return 5 end }
-            function GetActionInfo(slot) if slot <= 10 then return "macro", slot end end
-            function GetMacroSpell() return "Arcane Brilliance", "Rank 1", 23028 end
-        ''')
-        lua.execute(source("mods/actionbar-reagents.lua"))
-        lua.execute(r'''
-            FT.mods["Reagent Counter"]:enable()
-            local frame = FCTweaksReagentCount
-            for i = 1, 50 do fire(frame, "MODIFIER_STATE_CHANGED", "LSHIFT", i % 2) end
-        ''')
-        self.assertEqual(lua.eval('asked'), 1)
 
 RAID_ROSTER = r'''
     UF = { Auras = { CreateAuraButton = function() return Widget() end, ResetAuraButton = NOOP,

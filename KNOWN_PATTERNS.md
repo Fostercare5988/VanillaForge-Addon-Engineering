@@ -1148,7 +1148,9 @@ keyring: `C_Container.HasContainerItem`, and before 1.19.3 also
 `GetContainerNumFreeSlots` (free count and bag family) and `GetContainerFreeSlots`,
 which now take the bank (`-1`, `5`..`10`) while it is open. A bag addon that loops over
 every container ID gets zeros for the bank, with no error. Bagnon's bank counted
-`0 / 122 Free` and showed no bag colours that way. Sort exclusion is the same kind of limit:
+`0 / 122 Free` and showed no bag colours that way; GearRack's free-slot walk with
+`HasContainerItem` saw every bank slot as empty, picked full ones and could not put a set
+in the bank (fixed 2026-11-07 with `GetContainerFreeSlots`). Sort exclusion is the same kind of limit:
 `SetBackpackAutosortDisabled` and `SetBankAutosortDisabled` exist, but nothing for the
 equipped bags or the bank bags.
 

@@ -100,20 +100,30 @@ class ReagentFanoutTests(unittest.TestCase):
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(BASE + r'''
             NUM_ACTIONBAR_BUTTONS = 12
+            local slot = 0
             for _, prefix in ipairs({"Action", "BonusAction", "MultiBarBottomLeft",
                 "MultiBarBottomRight", "MultiBarLeft", "MultiBarRight"}) do
-                for i = 1, 12 do CreateFrame("CheckButton", prefix .. "Button" .. i) end
+                for i = 1, 12 do slot = slot + 1; CreateFrame("CheckButton", prefix .. "Button" .. i).slot = slot end
             end
             updates, macroSpell = 0, 1
             function ActionButton_UpdateCount() updates = updates + 1 end
-            function ActionButton_GetPagedID() return 1 end
+            function hooksecurefunc(name, fn)
+                local original = _G[name]
+                _G[name] = function(b) original(b); fn(b) end
+            end
+            function ActionButton_GetPagedID(button) return button.slot end
             function GetActionInfo(slot)
                 if MACROS and slot == 5 then return "macro", 7 end
                 if slot == 1 then return "spell", 100 end
             end
-            function GetMacroSpell() return nil, nil, macroSpell end
-            C_Spell = { GetSpellReagents = function(id) return { 17020 } end,
-                        GetSpellCastCount = function() return 3 end }
+            function IsItemAction() end
+            function IsConsumableSpell() return true end
+            C_ActionBar = { GetSpell = function(slot)
+                if MACROS and slot == 5 then return macroSpell end
+                if slot == 1 then return 100 end
+                return 0
+            end }
+            C_Spell = { GetSpellCastCount = function() return 3 end }
         ''')
         lua.execute('MACROS = %s' % ('true' if macros else 'false'))
         lua.execute(REAGENTS)

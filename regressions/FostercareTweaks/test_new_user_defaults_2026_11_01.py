@@ -24,7 +24,7 @@ PRELUDE = r'''
 
 DEFAULTS = r'''
     FostercareTweaks_Defaults = {
-        ["Auto Dismount"] = 1,
+        ["Auto Stance"] = 1,
         ["Hide Gryphons"] = 1,
         overwrites = { minimap_scale = 1.35, uf_buff_size = 20 },
         unitframe_positions = {
@@ -52,7 +52,7 @@ def load(width, height, saved=None):
 class NewCharacter(unittest.TestCase):
     def test_switches_and_sizes_come_from_the_defaults(self):
         lua = load(1920, 1080)
-        self.assertEqual(lua.eval('FostercareTweaks_Config["Auto Dismount"]'), 1)
+        self.assertEqual(lua.eval('FostercareTweaks_Config["Auto Stance"]'), 1)
         self.assertEqual(lua.eval("FostercareTweaks_Config.overwrites.minimap_scale"), 1.35)
         self.assertEqual(lua.eval("FostercareTweaks_Config.actionbars.bars.extra.scale"), 0.9)
 
@@ -81,8 +81,8 @@ class NewCharacter(unittest.TestCase):
 
 class ExistingCharacter(unittest.TestCase):
     def test_saved_settings_are_never_replaced(self):
-        lua = load(1920, 1080, '{ ["Auto Dismount"] = 0, overwrites = { minimap_scale = 1 } }')
-        self.assertEqual(lua.eval('FostercareTweaks_Config["Auto Dismount"]'), 0)
+        lua = load(1920, 1080, '{ ["Auto Stance"] = 0, overwrites = { minimap_scale = 1 } }')
+        self.assertEqual(lua.eval('FostercareTweaks_Config["Auto Stance"]'), 0)
         self.assertEqual(lua.eval("FostercareTweaks_Config.overwrites.minimap_scale"), 1)
         self.assertIsNone(lua.eval('FostercareTweaks_Config["Hide Gryphons"]'))
         self.assertIsNone(lua.eval("FostercareTweaks_Config.unitframe_positions"))

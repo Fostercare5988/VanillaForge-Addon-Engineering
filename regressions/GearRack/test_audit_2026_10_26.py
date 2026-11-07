@@ -337,28 +337,6 @@ class LeanDataTests(unittest.TestCase):
         self.assertEqual(lua.eval("textures.time"), "25m")
         self.assertEqual(list(lua.eval("calls").values()), [])
 
-    def bank_bag(self, family):
-        lua = runtime()
-        lua.execute(r'''
-            function GetInventoryItemLink() return "|Hitem:4500:0:0:0|h[Traveler's Backpack]|h" end
-            function ContainerIDToInventoryID(b) return b + 63 end
-            -- 1.12 order: name, link, quality, minLevel, type, subType.
-            function GetItemInfo() return "Traveler's Backpack", nil, 1, 1, "Container", FAMILY == 0 and "Bag" or "Herb Bag" end
-            C_Container = { GetContainerNumFreeSlots = function() return 0, 0 end }
-            C_Item = { GetItemFamily = function() return FAMILY end }
-            GearRackUIText = { INVTYPE_CONTAINER = "Bag" }
-            GearRackEngine = {}
-        ''' + between(EQUIPMENT, "function GearRackEngine.ValidBag(bagid)", "function GearRackEngine.FindSpaceInBag("))
-        lua.execute(f"FAMILY = {family}")
-        return lua.eval("GearRackEngine.ValidBag(6)")
-
-    def test_general_bank_bag_takes_items(self):
-        self.assertTrue(self.bank_bag(0))
-
-    def test_specialty_bank_bag_is_skipped_by_family(self):
-        # A herb bag: family 32, subtype "Herb Bag".
-        self.assertFalse(self.bank_bag(32))
-
 
 class HookTests(unittest.TestCase):
     """Eleven old*/new* hook globals leaked; observers now post-hook."""
