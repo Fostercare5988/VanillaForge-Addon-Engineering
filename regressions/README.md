@@ -74,7 +74,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | GearRack | `regressions/GearRack` | 74 | Yes | [GearRack](#gearrack) |
 | FostercareBattleText | `regressions/FostercareBattleText` | 72 | Yes | [FostercareBattleText](#fostercarebattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
-| TWThreat | `regressions/TWThreat` | 32 | Yes | [TWThreat](#twthreat) |
+| TWThreat | `regressions/TWThreat` | 41 | Yes | [TWThreat](#twthreat) |
 | AutoLazy (older) | private `external-tests/AutoLazy` | 130 | No | private command below |
 | aux-addon | private `external-tests/aux-addon` | 5 | No | private command below |
 | BetterCharacterStats | private `external-tests/BetterCharacterStats` | 9 | No | private command below |
@@ -674,7 +674,7 @@ python -B tools/audit_addon.py "<AddOns>/GearRack" --run-tests --test-start regr
 `step(dt)` advances `GetTime()` and runs the visible OnUpdate scripts, `packet()`
 delivers a server answer, `startFight()` enters combat and sends the first query.
 
-`test_audit_2026_11_07.py` (24): bars glide over the measured time between answers,
+`test_audit_2026_11_07.py` (33): any NPC counts; one query in flight, the next on the answer, resent when lost, and an answer still due at a target change dropped; the title says when the server never answers; close players do not swap rows. Bars glide over the measured time between answers,
 belong to one player each, slide to a new rank and roll their numbers at 10 Hz;
 threat per second from real time; the animator sleeps and stops writing when
 settled. Bugs: bars set their own alpha on top of the window's, the full-screen

@@ -91,6 +91,37 @@ class SmoothBars(unittest.TestCase):
         self.assertAlmostEqual(float(tps), 200, delta=20)
 
 
+class Targets(unittest.TestCase):
+    def test_normal_npcs_show_threat(self):
+        lua = fight(setup='target.classification = "normal"; target.name = "Young Sawtooth Crocolisk"')
+        lua.execute('packet("Me:1:300:100:1;Parting:0:120:40:1"); step(0.01)')
+        self.assertIsNotNone(lua.eval('bars()["Parting"]'))
+        self.assertIn("Young Sawtooth", lua.eval("TWTMainTitle.text"))
+
+    def test_title_names_the_target_before_the_first_answer(self):
+        lua = fight()
+        self.assertEqual(lua.eval("TWTMainTitle.text"), "Boss")
+
+    def test_close_players_do_not_swap_rows_on_every_answer(self):
+        lua = fight()
+        lua.execute('packet("Tank:1:1000:100:1;A:0:500:50:1;B:0:510:51:1;Me:0:300:30:1"); run(0.2)')
+        idx = lua.eval('bars()["B"].frame.point[5]')
+        for perc_a, perc_b in ((51, 50), (50, 51), (51, 50)):
+            lua.execute('tick(); packet("Tank:1:1000:100:1;A:0:500:%d:1;B:0:510:%d:1;Me:0:300:30:1"); run(0.2)'
+                        % (perc_a, perc_b))
+            self.assertEqual(lua.eval('bars()["B"].frame.point[5]'), idx)
+        lua.execute('tick(); packet("Tank:1:1000:100:1;A:0:500:55:1;B:0:510:50:1;Me:0:300:30:1"); run(1)')
+        self.assertLess(lua.eval('bars()["B"].frame.point[5]'), idx, "a real lead still moves the row")
+
+    def test_answer_parsing_keeps_tank_part_apart(self):
+        lua = fight("{ tankMode = true }", 'playerClass = "WARRIOR"')
+        lua.execute('packet("Me:1:300:100:1;A:0:120:40:0#TMTv1=Ghoul:0xF1:Bob:78;Imp:0xF2:Al:20"); step(0.01)')
+        names = lua.eval('(function() local t = {} for n in pairs(bars()) do t[#t+1] = n end '
+                         'table.sort(t) return table.concat(t, ",") end)()')
+        self.assertEqual(names, "-Pull Aggro at-,A,Me")
+        self.assertEqual(lua.eval("TMEF1Target.text"), "Ghoul")
+
+
 class Bugs(unittest.TestCase):
     def test_bars_do_not_multiply_window_alpha(self):
         lua = fight("{ combatAlpha = 0.5 }")
@@ -117,6 +148,18 @@ class Bugs(unittest.TestCase):
         lua.execute('packet("Tank:1:1000:100:1;Me:0:770:77:1"); run(0.1)')
         self.assertIsNone(lua.eval('bars()["Me"]'), "the answer was for the old target")
         lua.execute('tick(); packet("Tank:1:1000:100:1;Me:0:400:40:1"); step(0.001)')
+        self.assertAlmostEqual(lua.eval('width("Me")'), BAR * 0.4, delta=0.6)
+
+    def test_answer_in_flight_at_target_change_is_dropped(self):
+        lua = fight()
+        lua.execute('packet("%s"); step(0.1); tick()' % FIGHT)          # a query for Boss is out
+        lua.execute('target.name = "Add"; event("PLAYER_TARGET_CHANGED"); step(0.1); tick()')
+        queries = lua.eval("#sent")
+        lua.execute('step(0.1); tick()')
+        self.assertEqual(lua.eval("#sent"), queries, "no query for Add until Boss's answer is in")
+        lua.execute('packet("Tank:1:1000:100:1;Me:0:770:77:1"); step(0.01)')   # Boss's answer
+        self.assertIsNone(lua.eval('bars()["Me"]'))
+        lua.execute('step(0.1); tick(); packet("Tank:1:1000:100:1;Me:0:400:40:1"); step(0.01)')
         self.assertAlmostEqual(lua.eval('width("Me")'), BAR * 0.4, delta=0.6)
 
     def test_messages_go_to_the_group_the_player_is_in(self):
@@ -197,6 +240,7 @@ class Query(unittest.TestCase):
 
     def test_query_needs_group_combat_and_target(self):
         lua = fight()
+        lua.execute('packet("Tank:1:1000:100:1;Me:0:300:30:1")')
         base = lua.eval("#sent")
         lua.execute("party = 0; tick()")
         self.assertEqual(lua.eval("#sent"), base)
@@ -205,6 +249,35 @@ class Query(unittest.TestCase):
         lua.execute("targetCombat = true; tick()")
         self.assertEqual(lua.eval("#sent"), base + 1)
         self.assertEqual(lua.eval("sent[#sent].prefix"), "TWT_UDTSv4")
+
+    def queries(self, lua):
+        return lua.eval('(function() local n = 0 for _, m in ipairs(sent) do '
+                        'if m.prefix == "TWT_UDTSv4" then n = n + 1 end end return n end)()')
+
+    def test_one_query_in_flight_next_on_answer(self):
+        lua = fight()
+        self.assertEqual(self.queries(lua), 1)
+        lua.execute("step(0.1); tick(); step(0.1); tick()")
+        self.assertEqual(self.queries(lua), 1, "no new query while the answer is out")
+        lua.execute('packet("Tank:1:1000:100:1;Me:0:300:30:1"); step(0.1); tick()')
+        self.assertEqual(self.queries(lua), 2, "the next query goes out right after the answer")
+
+    def test_lost_answer_is_asked_again(self):
+        lua = fight()
+        lua.execute("step(1.05); tick()")
+        self.assertEqual(self.queries(lua), 2)
+
+    def test_ticker_runs_at_ten_a_second(self):
+        lua = fight()
+        self.assertAlmostEqual(lua.eval("timers[#timers].interval"), 0.1)
+
+    def test_no_answer_says_so(self):
+        lua = fight()
+        for _ in range(35):
+            lua.execute("step(0.1); tick()")
+        self.assertIn("no threat data", lua.eval("TWTMainTitle.text"))
+        lua.execute('packet("Tank:1:1000:100:1;Me:0:300:30:1"); step(0.01)')
+        self.assertEqual(lua.eval("TWTMainTitle.text"), "Boss (30%)")
 
     def test_startup_guard(self):
         from lupa.lua51 import LuaRuntime
