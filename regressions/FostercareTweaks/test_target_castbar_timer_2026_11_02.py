@@ -6,7 +6,7 @@ is missed) ends it. DELAYED and CHANNEL_UPDATE never fire for other units, so
 the bar no longer listens for them. Native drawing stays an in-game check.
 """
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 from test_event_fanout import BASE, CASTBAR
 
 

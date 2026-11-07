@@ -16,7 +16,7 @@ from pathlib import Path
 import os
 import re
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 import test_carrier_health as tch
 from test_targets_guid_events import GROM, runtime

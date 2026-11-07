@@ -6,7 +6,7 @@ the getters these functions read; they do not prove native widget semantics.
 from pathlib import Path
 import os
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 RAID = (ROOT / "mods/unitframes/raid.lua").read_text("utf-8-sig")

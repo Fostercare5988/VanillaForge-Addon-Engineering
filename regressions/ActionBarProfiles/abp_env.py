@@ -6,7 +6,7 @@ native action-bar placement, item counts or cursor behavior.
 """
 from pathlib import Path
 import os
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 SOURCE = ROOT / "ActionBarProfiles.lua"

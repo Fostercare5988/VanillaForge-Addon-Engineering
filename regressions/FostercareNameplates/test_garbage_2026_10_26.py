@@ -10,7 +10,7 @@ per flush. Fails on 1.4.2. The real rate stays an in-game /lag check.
 """
 import re
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 import fnp_env
 
 # One shared no-op: an __index returning a fresh `function() end` is fake garbage.

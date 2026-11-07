@@ -7,7 +7,7 @@ in-game checks.
 from pathlib import Path
 import os
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 import addon_loader
 

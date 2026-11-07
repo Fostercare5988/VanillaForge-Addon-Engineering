@@ -44,7 +44,7 @@ function LeaveArenaQueue() arenaLeft = arenaLeft + 1 end
 
 
 def runtime():
-    from lupa.lua51 import LuaRuntime
+    from wowlua import LuaRuntime
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(core.BASE + CLIENT)
     lua.execute(core.CORE)
@@ -104,7 +104,7 @@ class ArenaQueueTests(unittest.TestCase):
 class QueueBarTests(unittest.TestCase):
     def test_the_queue_bar_names_the_row(self):
         import test_timer_bars as ttb
-        from lupa.lua51 import LuaRuntime
+        from wowlua import LuaRuntime
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(ttb.BASE + CLIENT + '''
             AutoBG_Settings.QueueTimers = true
@@ -118,7 +118,7 @@ class QueueBarTests(unittest.TestCase):
 
     def test_no_spirit_healer_bar_in_an_arena(self):
         import test_timer_bars as ttb
-        from lupa.lua51 import LuaRuntime
+        from wowlua import LuaRuntime
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(ttb.BASE + CLIENT + '''
             AutoBG_Settings.RessTimer = true
@@ -443,7 +443,7 @@ class ArenaExtrasTests(unittest.TestCase):
 class ShadowSightTests(unittest.TestCase):
     def runtime(self):
         import test_timer_bars as ttb
-        from lupa.lua51 import LuaRuntime
+        from wowlua import LuaRuntime
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(ttb.BASE + '''
             function GetRealZoneText() return "Blood Ring" end

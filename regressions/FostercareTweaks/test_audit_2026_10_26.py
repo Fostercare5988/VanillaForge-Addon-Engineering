@@ -23,8 +23,9 @@ in-game checks.
 from pathlib import Path
 import os
 import unittest
-from lupa.lua51 import LuaRuntime
-from lupa.lua54 import LuaRuntime as Lua54Runtime
+from wowlua import LuaRuntime
+# Instrumentation only, not the game's Lua: 5.4's debug.getinfo reports isvararg.
+from lupa.lua54 import LuaRuntime as Lua54Runtime  # noqa: wowlua
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 

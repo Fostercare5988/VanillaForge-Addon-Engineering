@@ -10,7 +10,7 @@ checks.
 """
 import unittest
 
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 from test_aura_delta_2026_10_27 import AURAS, between, rows, source
 from test_watched_auras_2026_11_02 import watched

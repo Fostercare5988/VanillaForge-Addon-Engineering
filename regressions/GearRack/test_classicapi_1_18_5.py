@@ -8,7 +8,7 @@ for a form that is not on the bar (index = bar size + 1).
 from pathlib import Path
 import os
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 SOURCE = (ROOT / "src/Equipment.lua").read_text("utf-8-sig")

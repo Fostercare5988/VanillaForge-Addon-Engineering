@@ -8,7 +8,7 @@ stays an in-game check.
 """
 import unittest
 
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 from test_audit_2026_10_25 import source
 

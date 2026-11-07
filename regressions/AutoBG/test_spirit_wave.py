@@ -7,7 +7,7 @@ an in-game check.
 from pathlib import Path
 import os
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 TIMERS = (ROOT / "AutoBG_Timers.lua").read_text("utf-8-sig")

@@ -2,7 +2,7 @@
 with strsplittable, which returns the array directly.
 """
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 from test_audit_2026_10_25 import source
 

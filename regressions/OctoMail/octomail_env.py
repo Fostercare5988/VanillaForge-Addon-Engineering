@@ -8,7 +8,7 @@ payloads and the server's mail handling remain in-game checks.
 from pathlib import Path
 import os
 import re
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 XML = (ROOT / "OctoMail.xml").read_text("utf-8-sig")
@@ -99,7 +99,6 @@ OPENMAIL, INBOX, EMPTY, NO_ATTACHMENTS, ERROR_CAPS = "Open All", "Inbox", "Empty
 
 now = 1760000000
 function time(t) return now end
-date = os.date
 function GetTime() return 100 end
 function GetLocale() return "enUS" end
 function GetCVar() return "OctoWoW" end

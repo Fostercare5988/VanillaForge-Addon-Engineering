@@ -17,6 +17,11 @@ run directly without that source selection. For direct unittest execution, set
 that environment variable explicitly. A test suite must actually use the supplied
 path; setting an environment variable alone cannot verify an unrelated harness.
 
+Every suite runs on the game's Lua: `from wowlua import LuaRuntime`, never lupa
+directly. `wowlua.py` removes the libraries the client does not open (`os`, `io`,
+`debug`, `require`...), applies ClassicAPI's `gsub` rule and gives the short
+aliases; `tests/test_wowlua.py` keeps every suite on it.
+
 Use `--compare <previous-audit.json>` to list changed, added, removed and identical
 loaded modules and load-graph changes. Preserve the previous report. Matching
 source supports selective reuse of earlier review; it does not transfer review

@@ -13,7 +13,7 @@ import os
 import unittest
 from pathlib import Path
 
-from lupa import LuaRuntime  # noqa: F401  (runtime() builds the interpreter)
+from wowlua import LuaRuntime  # noqa: F401  (runtime() builds the interpreter)
 
 from test_audit_2026_10_26 import runtime, source
 

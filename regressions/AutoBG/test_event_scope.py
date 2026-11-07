@@ -14,7 +14,7 @@ from pathlib import Path
 import os
 import re
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 import addon_loader
 import test_spy_nearby

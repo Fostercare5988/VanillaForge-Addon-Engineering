@@ -15,7 +15,7 @@ see stays silent remain in-game checks.
 from pathlib import Path
 import os
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 

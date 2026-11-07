@@ -9,7 +9,7 @@ talent swap.
 from pathlib import Path
 import os
 import re
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 

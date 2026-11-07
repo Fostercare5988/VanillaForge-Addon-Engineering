@@ -4,7 +4,7 @@ The complete AutoBG_Options.lua runs with ForgeUI under Lua 5.1 and the options
 widget mocks. Drawing, dragging and text fit stay in-game checks.
 """
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 import addon_loader
 from test_options_preview import BASE, OPTIONS

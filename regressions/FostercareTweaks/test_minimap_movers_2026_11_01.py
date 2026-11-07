@@ -19,7 +19,6 @@ SETUP = r'''
     function IsShiftKeyDown() return keys end
     function IsControlKeyDown() return keys end
     function SetEventHandler() end
-    date = os.date
     Minimap, MinimapCluster, MinimapZoneText = Widget(), Widget(), Widget()
     pendingMail = false
     function HasNewMail() return pendingMail end

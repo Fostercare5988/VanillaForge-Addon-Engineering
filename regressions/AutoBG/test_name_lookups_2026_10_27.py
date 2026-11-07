@@ -11,7 +11,7 @@ longer walks the raid and party itself.
   matched "X claims" or "X has assaulted", so this fallback did not work at all.
 """
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 import test_player_state as tps
 import test_timer_bars as ttb

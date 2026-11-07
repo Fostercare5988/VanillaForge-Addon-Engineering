@@ -6,7 +6,7 @@ Which units OctoWoW sends real health for remains an in-game check.
 from pathlib import Path
 import os
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 FC = (ROOT / "AutoBG_FC.lua").read_text("utf-8-sig")

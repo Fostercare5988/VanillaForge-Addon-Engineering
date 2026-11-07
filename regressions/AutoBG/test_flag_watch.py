@@ -10,7 +10,7 @@ alert stay in-game checks.
 from pathlib import Path
 import os
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 WATCH = (ROOT / "AutoBG_FlagWatch.lua").read_text("utf-8-sig")

@@ -10,7 +10,7 @@ against the full-file harness, twt_env.py).
 Clicking a bar in tank mode stays an in-game check.
 """
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 from twt_env import load, SOURCE, XML
 

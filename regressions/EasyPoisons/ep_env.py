@@ -12,7 +12,7 @@ Lua 5.0's `for k, v in t do` form is rewritten to `pairs(t)` so the original
 from pathlib import Path
 import os
 import re
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 

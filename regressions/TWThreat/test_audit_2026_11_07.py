@@ -291,7 +291,7 @@ class Query(unittest.TestCase):
         self.assertEqual(lua.eval("TWTMainTitle.text"), "Boss (30%)")
 
     def test_startup_guard(self):
-        from lupa.lua51 import LuaRuntime
+        from wowlua import LuaRuntime
         prefix = SOURCE[:SOURCE.index("\nlocal TWT = ")]
         for version, timer, expected in (("2.2", True, 0), ("2.1", True, 1), ("2.2", False, 1)):
             lua = LuaRuntime(unpack_returned_tuples=True)

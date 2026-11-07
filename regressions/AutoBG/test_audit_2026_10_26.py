@@ -18,7 +18,7 @@ are listed in the audit.
 from pathlib import Path
 import os
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 import addon_loader
 import test_flag_watch

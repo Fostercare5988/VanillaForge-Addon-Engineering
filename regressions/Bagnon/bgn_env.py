@@ -6,7 +6,7 @@ these tests prove Lua logic and call counts, not layout, drawing or input.
 """
 import os
 from pathlib import Path
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 

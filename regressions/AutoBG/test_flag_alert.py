@@ -6,7 +6,7 @@ spell ID. The card's look, its screen position and the chat line stay in-game
 checks.
 """
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 import addon_loader
 from test_spy_nearby import BASE, SPY

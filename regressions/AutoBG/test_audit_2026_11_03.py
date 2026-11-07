@@ -81,7 +81,7 @@ class MovedPathTests(unittest.TestCase):
     """Paths the 2026-11-03 cleanup moved; these pass on the old code too."""
 
     def test_match_end_lines_are_read_only_in_a_battleground(self):
-        from lupa.lua51 import LuaRuntime
+        from wowlua import LuaRuntime
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(core.BASE)
         lua.execute(core.CORE)
@@ -128,7 +128,7 @@ class CarrierEventTests(unittest.TestCase):
 
     def runtime(self):
         import test_carrier_health as tch
-        from lupa.lua51 import LuaRuntime
+        from wowlua import LuaRuntime
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(tch.BASE + '''
             hp, maxHp = 3690, 4500
@@ -166,7 +166,7 @@ class CarrierEventTests(unittest.TestCase):
 class TimerEventTests(unittest.TestCase):
     def runtime(self, zone, pvp):
         import test_timer_bars as ttb
-        from lupa.lua51 import LuaRuntime
+        from wowlua import LuaRuntime
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(ttb.BASE + '''
             function GetRealZoneText() return "%s" end
@@ -208,7 +208,7 @@ class EnemyFrameEventTests(unittest.TestCase):
     def test_unit_spellcast_succeeded_is_not_registered(self):
         # UNIT_CASTEVENT already reports every cast, instants included.
         import test_targets_guid_events as tge
-        from lupa.lua51 import LuaRuntime
+        from wowlua import LuaRuntime
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(tge.BASE + 'unitEvents = {}')
         lua.execute('''local w = getmetatable(CreateFrame("Frame")).__index
@@ -242,7 +242,7 @@ class EnemyFrameEventTests(unittest.TestCase):
 
 class SpyEventTests(unittest.TestCase):
     def test_unit_spellcast_succeeded_is_not_registered(self):
-        from lupa.lua51 import LuaRuntime
+        from wowlua import LuaRuntime
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(spy.BASE + 'unitEvents = {}')
         lua.execute('''local w = getmetatable(CreateFrame("Frame")).__index

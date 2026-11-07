@@ -23,7 +23,7 @@ import re
 import sys
 import unittest
 from pathlib import Path
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
 

@@ -8,7 +8,7 @@ compared nil with the limit.
 import os
 import unittest
 from pathlib import Path
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 SPY = (ROOT / "AutoBG_Spy.lua").read_text("utf-8-sig")

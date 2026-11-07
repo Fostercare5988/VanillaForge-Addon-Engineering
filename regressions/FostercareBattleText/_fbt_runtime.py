@@ -11,7 +11,7 @@ from pathlib import Path
 import os
 import re
 
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 ROOT = Path(os.environ.get("VANILLAFORGE_ADDON_ROOT", "")).resolve()
 TOC = "FostercareBattleText.toc"

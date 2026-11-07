@@ -20,7 +20,7 @@ Each test fails on e846905 unless marked as a control. Widget mocks count
 calls; they prove our writes, not the engine's drawing.
 """
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 from test_audit_2026_10_26 import runtime, source
 from test_audit_2026_11_01 import core

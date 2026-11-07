@@ -1,6 +1,6 @@
 """Ctrl+Shift moves the player's own cast bar (2026-11-02)."""
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 from test_event_fanout import BASE, ROOT
 
 SOURCE = (ROOT / "mods/player-castbar.lua").read_text("utf-8-sig")

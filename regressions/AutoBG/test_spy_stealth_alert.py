@@ -7,7 +7,7 @@ visibility, real distances, the alert's screen position and the audible sound
 stay in-game checks.
 """
 import unittest
-from lupa.lua51 import LuaRuntime
+from wowlua import LuaRuntime
 
 import addon_loader
 from test_spy_nearby import BASE, SPY, FLUSH, advance, fire
