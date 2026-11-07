@@ -137,6 +137,14 @@ measuring tool:
 A stutter with almost no addon time is the engine (model loading, shader
 compiles, drawing), not addon code. Fix measured problems first.
 
+**Game checks close the loop.** Every question only the game can answer is a
+check: an `-- UNVERIFIED:` note in the code or an item under an audit's "In-game
+checks". `python -B tools/game_checks.py` lists the open ones; `push` (game
+closed) hands them to `!ErrorLog`, where `/check` asks them one by one, runs a
+check's `/run` line and records the answer; `pull` reads the answers back.
+`find_holes.py` starts each audit with the addon's open and failed checks. A
+check answered bad is a bug to fix; one answered ok lets its note go.
+
 ## 4. Audit: find the holes, then close them
 
 Start every audit with the hole finder; it reads the addon next to all the

@@ -476,6 +476,19 @@ def stale_mocks(addon, everyone, game, docs, regressions=REGRESSIONS):
     return stale
 
 
+def game_checks(addon, addons_dir, **where):
+    """The addon's game checks nobody has answered yet, and those answered bad
+    (tools/game_checks.py; answered in game with /check)."""
+    import game_checks as gc
+    checks, ledger = gc.collect(addons_dir, **where), gc.load_ledger(where.get("private", gc.PRIVATE) / "game-checks.json")
+    name = addon.name.lstrip("!").lower()
+    mine = [c for c in checks if c["addon"].lstrip("!").lower() == name]
+    rows = [dict(c, verdict="open") for c in gc.open_checks(mine, ledger)]
+    rows += [dict(c, verdict="bad", note=ledger[c["id"]]["note"]) for c in mine
+             if ledger.get(c["id"], {}).get("verdict") == "bad"]
+    return rows
+
+
 def replacements(addon):
     entries = json.loads((ROOT / "tools" / "replacements.json").read_text("utf-8"))["entries"]
     findings = []
@@ -567,6 +580,9 @@ def report(results, out):
     section("Names a DLL version (only UPSTREAM_VERSIONS.json may)", results["version_drift"], lambda f: "%s: %s" % (f["where"], f["found"]))
     section("Mocks for names nothing has (its regression suite)", results["stale_mocks"],
             lambda f: "%s at %s" % (f["name"], ", ".join(f["where"])))
+    section("Game checks: answered bad, then still open (/check in game)", results["game_checks"],
+            lambda f: "[%s] %s%s (%s)" % (f["id"], "BAD: %s. " % f["note"] if f["verdict"] == "bad" else "",
+                                         f["text"], f["where"]))
 
 
 def main(argv=None):
@@ -608,6 +624,7 @@ def main(argv=None):
         "stale_notes": stale_notes(addon, doc_text()),
         "version_drift": version_drift(addon),
         "stale_mocks": stale_mocks(addon, everyone, game, docs),
+        "game_checks": sorted(game_checks(addon, addons_dir), key=lambda c: c["verdict"] != "bad"),
     }
     out = ["# Holes in %s" % addon.name,
            "Read against %d installed addons, the game's code and %d DLL doc files. Leads, not verdicts."

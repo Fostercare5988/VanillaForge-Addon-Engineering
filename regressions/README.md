@@ -80,7 +80,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | AutoLazy | `regressions/AutoLazy` | 32 | Yes | [AutoLazy](#autolazy) |
 | Bagnon | `regressions/Bagnon` | 39 | Yes | [Bagnon](#bagnon) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
-| !ErrorLog | `regressions/ErrorLog` | 18 | Yes | [!ErrorLog](#errorlog) |
+| !ErrorLog | `regressions/ErrorLog` | 26 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 90 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 250 | Yes | [FostercareTweaks](#fostercaretweaks) |
@@ -467,6 +467,10 @@ stays an in-game check.
 `test_error_locals_2026_11_07.py` (5, 1.4.0, ClassicAPI 1.20 `debuglocals`): the locals are read at the
 stack's level without functions and userdata, saved with the error and shown under Locals; a repeat and a
 direct call of the handler read none. All five fail on 1.3.1; real values stay an in-game check.
+`test_game_checks_2026_11_07.py` (8, 1.5.0, on wowkit): `/check` shows the open checks of
+`ErrorLog_DB.checks` in order, runs a check's `/run` line and keeps what it printed (print and chat lines,
+errors too) with `print` and the chat frame restored, records ok or bad (bad needs a note) with the date and
+character, skips and wraps, counts per addon, and says at login how many are open.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/!ErrorLog" --run-tests --test-start regressions/ErrorLog --output "%TEMP%\audit-ErrorLog.json"
