@@ -74,11 +74,10 @@ that folder's `verified-repositories.json` and `validation.json`.
 | GearRack | `regressions/GearRack` | 74 | Yes | [GearRack](#gearrack) |
 | FostercareBattleText | `regressions/FostercareBattleText` | 72 | Yes | [FostercareBattleText](#fostercarebattletext) |
 | OctoMail | `regressions/OctoMail` | 17 | Yes | [OctoMail](#octomail) |
-| TWThreat | `regressions/TWThreat` | 6 | Yes | [TWThreat](#twthreat) |
+| TWThreat | `regressions/TWThreat` | 32 | Yes | [TWThreat](#twthreat) |
 | AutoLazy (older) | private `external-tests/AutoLazy` | 130 | No | private command below |
 | aux-addon | private `external-tests/aux-addon` | 5 | No | private command below |
 | BetterCharacterStats | private `external-tests/BetterCharacterStats` | 9 | No | private command below |
-| TWThreat | private `external-tests/TWThreat` | 4 | No | private command below |
 | UnitXP_SP3_Addon | private `external-tests/UnitXP_SP3_Addon` | 4 | No | private command below |
 
 Private suites, from VanillaForge (replace `<Addon>` with the folder name):
@@ -671,10 +670,23 @@ python -B tools/audit_addon.py "<AddOns>/GearRack" --run-tests --test-start regr
 
 ### TWThreat
 
-`test_audit_2026_10_26.py`: tank-mode bars are ClassicAPI unit buttons (the
-creature's GUID as the unit, left click targets it; test rows have no unit),
-the hand-made targeting and its wrong-unit name fallbacks are gone, and the print
-helpers are local. Four fail on `333c45b`. Clicking a bar stays an in-game check.
+`twt_env.py` loads the real TWThreat.lua against widget stubs for every XML frame;
+`step(dt)` advances `GetTime()` and runs the visible OnUpdate scripts, `packet()`
+delivers a server answer, `startFight()` enters combat and sends the first query.
+
+`test_audit_2026_11_07.py` (24): bars glide over the measured time between answers,
+belong to one player each, slide to a new rank and roll their numbers at 10 Hz;
+threat per second from real time; the animator sleeps and stops writing when
+settled. Bugs: bars set their own alpha on top of the window's, the full-screen
+glow was shown on every update, an answer for the previous target showed under
+the new one, messages went to RAID in a party, tank mode erased the glow and sound
+settings. Retired features and generic global handlers are gone. 17 fail on
+`df65156` (with its Lua 5.0 `for ... in TWT.fonts` loop patched so the file runs).
+
+`test_audit_2026_10_26.py` (8, rewritten on the harness): tank-mode rows are
+ClassicAPI unit buttons (the creature's GUID as the unit), ordered by threat and
+gliding; test rows have no unit; no hand-made targeting; the print helper is local.
+Clicking a row and the look of the motion stay in-game checks.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/TWThreat" --run-tests --test-start regressions/TWThreat --output .private/twthreat-current.json
