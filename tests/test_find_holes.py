@@ -64,6 +64,24 @@ class FindHoles(unittest.TestCase):
         # A table key named like another addon's global is not a connection.
         self.assertFalse([l for l in links if l["name"] == "Owner"])
 
+    def test_stale_mocks(self):
+        mock = "\n".join([
+            "MOCK = r'''",
+            "function OwnerRemovedLongAgo() end",
+            "function TestHelperRun() end",
+            "C_Owner = {}",
+            "function C_Owner.GoneFunction() end",
+            "function GetTime() return 1 end",
+            "function OwnerFrameShow() end",
+            "'''",
+            "lua.execute('TestHelperRun()')",
+        ])
+        write(self.root / "regressions" / "Owner", {"test_owner.py": mock})
+        owner = HOLES.Addon(self.root / "Owner")
+        stale = HOLES.stale_mocks(owner, [owner], {"GetTime"}, set(), regressions=self.root / "regressions")
+        self.assertEqual([s["name"] for s in stale], ["C_Owner.GoneFunction", "OwnerFrameShow", "OwnerRemovedLongAgo"])
+        self.assertEqual(stale[-1]["where"], ["test_owner.py:2"])
+
     def test_ghost_names(self):
         names = [g["name"] for g in HOLES.ghosts(self.owner, self.everyone, set(), set(), set())]
         self.assertIn("Banzai", names)

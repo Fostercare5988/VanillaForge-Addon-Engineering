@@ -46,7 +46,6 @@ class ResetEventsTests(unittest.TestCase):
             GearRackUI_DefaultEvents = {}
             function GearRackUI_DisableAllEvents() end
             function GearRackUI_EnableAllEvents() end
-            function GearRackUI_MigrateDefaultEvents() end
             function GearRackUI_Build_eventList() end
             GearRackUI_Events_ScrollFrameScrollBar = { SetValue = function() end }
             local user = "Me of R"

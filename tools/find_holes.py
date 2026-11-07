@@ -21,6 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 UPSTREAM = ROOT / ".private" / "upstream"
 FRAMEXML = ROOT / ".private" / "framexml"
+REGRESSIONS = ROOT / "regressions"
 WOTLK_CATALOG = UPSTREAM / "classicapi" / "docs" / "BlizzardScriptAPI_3.3.5.md"
 MEDIA = {".tga", ".blp", ".ttf", ".mp3", ".wav", ".ogg"}
 IDENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
@@ -437,6 +438,44 @@ def saved_settings(addon, wtf):
     return {"characters": characters, "off_everywhere": off, "not_in_code": stale}
 
 
+MOCK_DEF = re.compile(r"^[ \t]*(?:function[ \t]+(C_\w+\.\w+|[A-Za-z_]\w*)[ \t]*\(|([A-Za-z_]\w*)[ \t]*=[ \t]*function\b)", re.M)
+
+
+def stale_mocks(addon, everyone, game, docs, regressions=REGRESSIONS):
+    """Global functions the addon's regression suite mocks that nothing has.
+
+    A mock for a name the game, the DLL docs and every installed addon lack,
+    and that the suite itself never calls, stands in for code that is gone
+    (a deleted function, a renamed API): the test then proves less than it says.
+    """
+    suite = regressions / addon.name.lstrip("!")
+    if not suite.is_dir():
+        return []
+    texts = {p.name: p.read_text("utf-8", "replace") for p in sorted(suite.glob("*.py"))}
+    shared = "\n".join(p.read_text("utf-8", "replace") for p in sorted(regressions.glob("*.py")))
+    known = game | docs
+    for other in everyone:
+        for text in other.files.values():
+            known |= set(IDENT.findall(text))
+    found = {}
+    for name, text in texts.items():
+        for m in MOCK_DEF.finditer(text):
+            full = m.group(1) or m.group(2)
+            key = full.split(".")[-1] if full.startswith("C_") else full
+            if key in known or not CAMEL.match(key):
+                continue
+            entry = found.setdefault(full, {"name": full, "where": [], "defs": 0})
+            entry["where"].append("%s:%d" % (name, text.count("\n", 0, m.start()) + 1))
+            entry["defs"] += 1
+    everything = "\n".join(texts.values()) + "\n" + shared
+    stale = []
+    for full, entry in sorted(found.items()):
+        uses = len(re.findall(r"(?<![\w.:])" + re.escape(full) + r"\b", everything))
+        if uses <= entry["defs"]:
+            stale.append({"name": full, "where": entry["where"]})
+    return stale
+
+
 def replacements(addon):
     entries = json.loads((ROOT / "tools" / "replacements.json").read_text("utf-8"))["entries"]
     findings = []
@@ -526,6 +565,8 @@ def report(results, out):
     section("Stale notes (the docs cover them)", results["stale_notes"],
             lambda f: "%s: %s" % (f["where"], ", ".join(f["covered"])))
     section("Names a DLL version (only UPSTREAM_VERSIONS.json may)", results["version_drift"], lambda f: "%s: %s" % (f["where"], f["found"]))
+    section("Mocks for names nothing has (its regression suite)", results["stale_mocks"],
+            lambda f: "%s at %s" % (f["name"], ", ".join(f["where"])))
 
 
 def main(argv=None):
@@ -566,6 +607,7 @@ def main(argv=None):
         "ghosts": ghosts(addon, everyone, game, docs, wotlk),
         "stale_notes": stale_notes(addon, doc_text()),
         "version_drift": version_drift(addon),
+        "stale_mocks": stale_mocks(addon, everyone, game, docs),
     }
     out = ["# Holes in %s" % addon.name,
            "Read against %d installed addons, the game's code and %d DLL doc files. Leads, not verdicts."
