@@ -67,7 +67,7 @@ that folder's `verified-repositories.json` and `validation.json`.
 | AutoLazy | `regressions/AutoLazy` | 32 | Yes | [AutoLazy](#autolazy) |
 | Bagnon | `regressions/Bagnon` | 38 | Yes | [Bagnon](#bagnon) |
 | BrainwasherPro | `regressions/BrainwasherPro` | 29 | Yes | [BrainwasherPro](#brainwasherpro) |
-| !ErrorLog | `regressions/ErrorLog` | 13 | Yes | [!ErrorLog](#errorlog) |
+| !ErrorLog | `regressions/ErrorLog` | 18 | Yes | [!ErrorLog](#errorlog) |
 | EasyPoisons | `regressions/EasyPoisons` | 34 | Yes | [EasyPoisons](#easypoisons) |
 | FostercareNameplates | `regressions/FostercareNameplates` | 90 | Yes | [FostercareNameplates](#fostercarenameplates) |
 | FostercareTweaks | `regressions/FostercareTweaks` | 251 | Yes | [FostercareTweaks](#fostercaretweaks) |
@@ -442,6 +442,11 @@ between ticks (not the engine's `elapsed`), each slow frame keeps its most frequ
 the profiler's own frames stay unwrapped, and a path the game shortened (`...dOns\Folder\file.lua`, or
 the folder cut) still names its addon (fails on 1.3.0). The first six fail on 1.2.0; the engine's real dispatch order
 stays an in-game check.
+
+`test_error_stack_2026_11_02.py` (4, 1.2.0): the saved stack starts at the code that raised the error.
+`test_error_locals_2026_11_07.py` (5, 1.4.0, ClassicAPI 1.20 `debuglocals`): the locals are read at the
+stack's level without functions and userdata, saved with the error and shown under Locals; a repeat and a
+direct call of the handler read none. All five fail on 1.3.1; real values stay an in-game check.
 
 ```text
 python -B tools/audit_addon.py "<AddOns>/!ErrorLog" --run-tests --test-start regressions/ErrorLog --output "%TEMP%\audit-ErrorLog.json"

@@ -1142,20 +1142,20 @@ doubled backslash and keeps each file's line endings.
 
 ### KP-61 --- Container Calls That Cover Only Some Containers
 
-**Problem:** Several ClassicAPI container calls answer for the backpack and the equipped
+**Problem:** Some ClassicAPI container calls answer for the backpack and the equipped
 bags (IDs 0 to 4) only, and return an empty answer for the bank, its bags and the
-keyring: `C_Container.GetContainerNumFreeSlots` (free count and bag family),
-`GetContainerFreeSlots` and `HasContainerItem`. A bag addon that loops over every
-container ID gets zeros for the bank, with no error. Bagnon's bank counted `0 / 122 Free`
-and showed no bag colours that way. Sort exclusion is the same kind of limit:
+keyring: `C_Container.HasContainerItem`, and before 1.19.3 also
+`GetContainerNumFreeSlots` (free count and bag family) and `GetContainerFreeSlots`,
+which now take the bank (`-1`, `5`..`10`) while it is open. A bag addon that loops over
+every container ID gets zeros for the bank, with no error. Bagnon's bank counted
+`0 / 122 Free` and showed no bag colours that way. Sort exclusion is the same kind of limit:
 `SetBackpackAutosortDisabled` and `SetBankAutosortDisabled` exist, but nothing for the
 equipped bags or the bank bags.
 
 **Preferred direction:** Read the container range in the call's section of `docs/API.md`
-before using it on a loop over bag IDs. For the bank count the empty slots with
-`GetContainerItemInfo` (the global form, or the table form with a shared buffer once the
-bank is open), and read a bank bag's family from its item (`C_Item.GetItemFamily` on
-`GetInventoryItemLink`). When the DLL cannot do a job for some containers, say so to the
+before using it on a loop over bag IDs. For the open bank use `GetContainerNumFreeSlots`
+(count and family, 1.19.3); for a closed or saved bank read the bag's family from its item
+(`C_Item.GetItemFamily` on the link). When the DLL cannot do a job for some containers, say so to the
 user and keep the control out of the UI instead of showing one that does nothing.
 
 ------------------------------------------------------------------------

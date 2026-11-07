@@ -54,6 +54,10 @@ def token() -> str | None:
 
 def doc_at(repo: str, path: str, ref: str, tok: str | None) -> str:
     data = github_api(f"/repos/{repo}/contents/{path}?ref={ref}", tok)
+    if data.get("encoding") != "base64":
+        # Over 1 MB the contents API sends no content (encoding "none"); the
+        # blob API serves files up to 100 MB. docs/API.md is past 1 MB.
+        data = github_api(f"/repos/{repo}/git/blobs/{data['sha']}", tok)
     return base64.b64decode(data["content"]).decode("utf-8", errors="replace")
 
 

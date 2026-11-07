@@ -6,7 +6,7 @@
 >
 > Source basis: `brues-code/ClassicAPI`, default branch `master`, official `README.md`, official `docs/API.md`, and selected implementation/source references.
 >
-> Pinned version: `classicapi.reference_version` in [UPSTREAM_VERSIONS.json](UPSTREAM_VERSIONS.json), always the latest release; VanillaForge supports nothing older. Release notes by version: [v1.17.0 to v1.17.3](#v1170-to-v1173-api-and-behavior-contracts), [v1.17.4 to v1.17.8](#v1174-to-v1178-api-and-behavior-contracts), [v1.17.9 to v1.17.10](#v1179-to-v11710-api-and-behavior-contracts), [v1.17.11](#v11711-api-and-behavior-contracts) and [v1.17.12 to v1.18.5](#v11712-to-v1185-api-and-behavior-contracts).
+> Pinned version: `classicapi.reference_version` in [UPSTREAM_VERSIONS.json](UPSTREAM_VERSIONS.json), always the latest release; VanillaForge supports nothing older. Release notes by version: [v1.17.0 to v1.17.3](#v1170-to-v1173-api-and-behavior-contracts), [v1.17.4 to v1.17.8](#v1174-to-v1178-api-and-behavior-contracts), [v1.17.9 to v1.17.10](#v1179-to-v11710-api-and-behavior-contracts), [v1.17.11](#v11711-api-and-behavior-contracts), [v1.17.12 to v1.18.5](#v11712-to-v1185-api-and-behavior-contracts) and [v1.19.3 to v1.20.4](#v1193-to-v1204-api-and-behavior-contracts) (1.19.0 to 1.19.2 are in the sections they touch).
 >
 > IMPORTANT: ClassicAPI is actively developed. This document is a local snapshot, not a claim that future versions cannot add or change functionality. If installed ClassicAPI is newer and a task depends on newly added behavior not present here, inspect the installed/current source and update this reference deliberately.
 
@@ -52,8 +52,8 @@ X*10000 + Y*100 + Z
 Therefore:
 
 ```text
-v1.17.11 -> 11711
 v1.18.5 -> 11805
+v1.20.4 -> 12004
 ```
 
 Older stamps, for reading old code:
@@ -83,6 +83,8 @@ v1.17.12 -> 11712
 v1.17.13 -> 11713
 v1.18.0 -> 11800
 v1.18.5 -> 11805
+v1.19.2 -> 11902
+v1.20.4 -> 12004
 ```
 
 The VanillaForge support baseline is the latest release, pinned in
@@ -250,9 +252,24 @@ math.modf
 string.gmatch
 string.match
 string.reverse
+
+-- 1.19.3 / 1.20.0
+gmatch                       -- global, as strmatch
+table.removemulti(t [, pos [, count]])
+string.byte(s, i, j)         -- a range; strbyte too
+string.format("%10$s", ...)  -- two-digit argument numbers
+string.gsub                  -- "%0" in a replacement string; tables
+math.cosh  math.sinh  math.tanh
+difftime  newproxy  scrub
+debugstack(thread, ...)      -- a coroutine's stack
+debuglocals([level [, skipFunctionsAndUserdata]])  -- error handlers only
 ```
 
 and other helpers documented under the official Lua section.
+
+`gsub` with a function replacement keeps Lua 5.0's rule: a `nil` or `false`
+return **removes** the match (5.1 keeps it). Return the match itself to keep
+it. A table value of `nil`/`false` keeps the match, as in 5.1.
 
 ### 4.6 Table lengths and weak values
 
@@ -818,6 +835,21 @@ Range and usable events (1.19.1), which replace per-frame polling of action slot
   whose action changes gets `ACTIONBAR_SLOT_CHANGED` instead: read
   `IsUsableAction` there.
 
+Slot queries (1.19.3), which replace slot loops and tooltip reads:
+
+- `C_ActionBar.FindSpellActionButtons(spell [, set])`: the slots (1 to 120)
+  that hold the spell itself, or nothing. `spell` is an ID, a link or a
+  spellbook name (the highest rank). A macro or item that casts it does not
+  count, and each rank is its own spell. `HasSpellActionButtons` answers
+  `true`/`false`; `IsOnBarOrSpecialBar` also looks at the shapeshift and pet
+  bars. `set` is `Enum.ActionBarSet` (`All` by default; only `Mkb` has slots).
+- `C_ActionBar.GetSpell(slot)`: the spell a slot casts: its own spell, the
+  spell a macro button shows, or the spell an item casts. `0` for none, and for
+  an item whose data is not cached yet.
+- `C_ActionBar.GetItemActionOnEquipSpellID(slot)` (equip effect, or nil),
+  `IsStackableAction(slot)` (1/nil) and `C_ActionBar.IsStackableAction`
+  (`true`/`false`), `C_ActionBar.IsMacroActionWithShowTooltip(slot)`.
+
 StatusBar (1.19.1): the standard fill moves the bar texture's rect, so a region
 anchored to `GetStatusBarTexture()` (a spark) follows the fill, also under
 `SetTimerDuration`. `GetAddOnMemoryUsage` (1.19.1) counts the live objects.
@@ -1054,7 +1086,15 @@ target-client testing before claiming [EMPIRICALLY VERIFIED].
 
 ```lua
 GetCursorInfo
+CursorHasMacro
 ```
+
+CVar `expandedCursors` (1.20.0, default `0`; ClassicAPI options, Interface
+page): the cursor over an NPC shows its first service (quest `!`/`?`, anvil
+for repairs, hearthstone for an inn, horseshoe for a stable, then the usual
+icons), grey when out of reach, and a fish hook over your bobber. The
+soft-interact icon and `SetUnitCursorTexture` follow it; a quest has no image
+there.
 
 ---
 
@@ -1089,6 +1129,13 @@ C_Container.SwapItems
 C_Container.UseHearthstone
 GetItemCooldown
 ```
+
+Free slots (1.19.3): `GetContainerNumFreeSlots(bag)` and
+`GetContainerFreeSlots(bag)` also take the main bank (`-1`) and the bank bags
+(`5`..`10`) while the bank window is open. A bag that is not there (keyring,
+empty slot, closed bank) gives only `0`, with `bagFamily` nil (before: `0, 0`).
+`bagFamily` is the same bitmask as `C_Item.GetItemFamily`, for bank bags too,
+and `C_Item.GetItemData`'s `bagFamily` now agrees with it.
 
 Modernization use cases:
 
@@ -2014,12 +2061,22 @@ CopyToClipboard
 GetCallstackHeight             -- 1.19.0, for error handlers
 GetErrorCallstackHeight
 SetErrorCallstackHeight
+debuglocals                    -- 1.20.0, only while an error handler runs
+SetPortraitTextureFromCreatureDisplayID  -- 1.20.0, a portrait without a unit
 ```
+
+In an error handler, `GetCallstackHeight() - GetErrorCallstackHeight() + 1` is
+the level of the code that raised the error, for both `debugstack(level)` and
+`debuglocals(level, true)`. `debuglocals` gives one `name=value` line per local
+and upvalue (frames by name, tables one level deep, at most 4095 bytes; `true`
+leaves out functions and userdata) and returns nothing outside a handler.
+`!ErrorLog` saves both with each error.
 
 Event `UI_SCALE_CHANGED` (1.19.0, no payload) fires when the game applies the
 interface scale to `UIParent`: scale or `useUiScale` changed, or the window
 resized. ClassicAPI also replaces the stock Lua error box with a Lua error
-window (`/luaerrors`, `/luaerrors clear`); it stays closed when `!BugGrabber`
+window (`/luaerrors`, `/luaerrors clear`; from 1.20.0 it shows each error's
+locals); it stays closed when `!BugGrabber`
 or an addon's own error handler takes the errors.
 
 ---
@@ -2465,6 +2522,7 @@ PLAYER_SWING_RANGE_UPDATE
   - **Parry Haste:** Cuts delay to 20% of unhasted delay if remaining time was between 20% and 60%, or subtracts 40% if > 60%. Left alone if < 20%.
   - **Range Gating:** Does not fire on attack-start if declared while out of melee range; fires only once in reach.
   - **Only while attacking (1.17.0):** a cast reset fires the event only while auto-attack is on. A buff cast out of melee no longer reports a swing.
+  - **Target switch (1.20.4):** a mid-attack target switch (another `SMSG_ATTACKSTART`) no longer re-fires `MainHand` with the time left in the running swing; only a cast reset held back before the attack is reported there. Before, a nearly finished swing read as a fresh short one.
   - **Turtle WoW Slam Override:** Registers 11 player-castable Slam ranks (`1464`, `8820`, `11430`, `11604`, `11605`, `45599`, `45960`, `45961`, `45963`, `45964`, `53214`) because Turtle WoW's server resets swing timers on Slam despite client `Spell.dbc` attributes.
 
 ### `PLAYER_SWING_RANGE_UPDATE` event
@@ -3265,7 +3323,8 @@ for fades, slides, pulses and spins.
 `InterfaceOptionsFrame_OpenToCategory(panelOrName)`. The window opens from the
 **AddOn Options** button in the game menu. Okay and Cancel call every panel's
 `okay` / `cancel`, and Escape counts as Cancel. ClassicAPI lists its own
-settings there (soft targeting, cast settings, player cache).
+settings there (soft targeting, stand/dismount/form settings, expanded
+cursors, its key bindings, player cache).
 
 ### Spellcast events
 
@@ -3757,3 +3816,67 @@ server profile.
   `region:GetDebugName`, `region:GetSourceLocation`.
 - `securecall`, `securecallfunction`, `secureexecuterange`.
 - Edit boxes: caret, selection and clicks follow tall inline icons (1.18.4).
+
+## v1.19.3 to v1.20.4 API and behavior contracts
+
+Source: the pinned
+[v1.20.4 API reference](https://github.com/brues-code/ClassicAPI/blob/24404b5a239da55cac0c69f492d651c51d9f5e73/docs/API.md)
+and the `v1.19.2...v1.20.4` commit messages (six releases, 2026-11-03 to
+2026-11-06). Search the pinned docs for a name before using it; this section
+lists only what changes how VanillaForge addons are written. New functions
+are in the sections they belong to: Lua (4.5), Action (15), Cursor (29),
+Containers (30), System (59), `PLAYER_SWING` (74).
+
+### Settings that retire addon code
+
+- **Stand, dismount and form beyond casts** (1.20.1, 1.20.3). `autoStand`,
+  `autoDismount` and `autoUnshift` now also act when you talk to an NPC
+  (unshift), use an object (dismount, except at a mailbox; unshift), loot a
+  creature (stand, dismount) or a corpse (stand), use an item (unshift),
+  attack (dismount, only in melee range) and open the flight map (all three).
+  They act when the cast is sent, so a cast with no target, or a cancelled
+  targeting cursor, no longer dismounts. A form that can talk and use objects
+  (Shadowform) stays. An addon that dismounts or unshifts on
+  `UI_ERROR_MESSAGE` (`ERR_ATTACK_MOUNTED`, `ERR_TAXIPLAYERALREADYMOUNTED`,
+  `ERR_TAXIPLAYERSHAPESHIFTED`, `ERR_CANT_INTERACT_SHAPESHIFTED`,
+  `ERR_NO_ITEMS_WHILE_SHAPESHIFTED`) does it a click late and twice over:
+  retire it and point the player at the settings (AddOn Options >
+  ClassicAPI). The settings default to `0`.
+- **Key bindings in AddOn Options** (1.19.3): Interact With Target, Interact
+  With Mouseover and AoE Loot have binding rows on ClassicAPI's pages.
+
+### Changed returns and behavior
+
+- **`UnitClassBase` / `UnitRaceBase`** (1.20.3) follow `UnitClass` /
+  `UnitRace` exactly: creatures get a class and race too (the old docs said
+  `nil`), `"player"` answers during addon load, and out-of-range group members
+  answer from the name cache. `UnitClassBase(unit) == nil` is **not** a
+  player test; use `UnitIsPlayer`.
+- **`IsLoggedIn`** (1.20.0) is false on the login screen and while addon files
+  run, also on `/reload`, and true from the `PLAYER_LOGIN` handlers on. Before,
+  it was true during a `/reload`'s load, so `EventUtil.ContinueOnPlayerLogin`
+  ran at once. Code that used it to tell a `/reload` from a login no longer
+  can.
+- **`C_Spell.GetSpellPowerCost`** (1.20.2) reports rage in whole points (was
+  tenths: Shield Slam 200). Remove any `/ 10`.
+- **Free slots** (1.19.3): bank while open; a missing bag gives one `0`
+  (Containers, 30).
+- **`"anyinteract"`** (1.19.3) is the soft-interact pick when the target is
+  out of reach (the target only when nothing is picked).
+  `C_PlayerInteractionManager.InteractUnit`'s `looseTargeting` now works and
+  defaults to `true`: with a target, the interaction keeps it.
+- **`string.gsub`** (1.19.3): `%0` and string/number replacements as in 5.1;
+  the old residual (a back-reference pattern removing a missing table key) is
+  gone. The function rule stays 5.0's (4.5).
+- **`C_Loot.LootAllCorpses`** (1.20.2) keeps walking past refused and stale
+  corpses.
+
+### Models and portraits (1.20.0)
+
+`PlayerModel`: `SetItem`, `SetUnit` (returns a result), `CanSetUnit`,
+`GetDisplayInfo`, `SetAnimation` / `FreezeAnimation` / `HasAnimation`,
+`SetDoBlend`, `SetKeepModelOnHide`, `ApplySpellVisualKit`,
+`SetCreature(creatureID [, displayID])`. `DressUpModel`: `TryOn(item [, hand,
+enchant])` with a result, `IsGeoReady`, `SetSheathed`, `SetAutoDress`.
+`SetPortraitTextureFromCreatureDisplayID(texture, displayID)` draws a round
+portrait without a unit, once per display, kept until logout.
