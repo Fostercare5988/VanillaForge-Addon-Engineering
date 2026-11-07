@@ -9,6 +9,13 @@
       "source": "ClassicAPI docs/API.md#c_actionbarenableactionrangecheckslot-enable, #action_usable_changed-event (1.19.1+)"
     },
     {
+      "id": "action-slot-loop",
+      "pattern": "\\bfor\\s+\\w+\\s*=\\s*1\\s*,\\s*(120|NUM_ACTIONBAR_BUTTONS\\s*\\*\\s*\\w+)\\b",
+      "finding": "Walks all 120 action slots, usually to find where a spell sits or what a slot casts.",
+      "better": "C_ActionBar.FindSpellActionButtons(spell) / HasSpellActionButtons / IsOnBarOrSpecialBar for where a spell is; C_ActionBar.GetSpell(slot) for what a spell, macro or item slot casts.",
+      "source": "ClassicAPI docs/API.md#c_actionbarfindspellactionbuttonsspell--settosearch, #c_actionbargetspellactionid (1.19.3+)"
+    },
+    {
       "id": "player-class-scanners",
       "pattern": "\\b(GetFriendInfo|GetGuildRosterInfo|GetWhoInfo)\\s*\\(",
       "finding": "Scans friends, guild or /who, often to remember players' classes. (The battleground scoreboard stays the source for enemies never seen, so it is not reported.)",
@@ -17,10 +24,10 @@
     },
     {
       "id": "dismount-on-error",
-      "pattern": "\\bSPELL_FAILED_NOT_(MOUNTED|SHAPESHIFT|STANDING)\\b",
-      "finding": "Dismounts, leaves a form or stands up when a spell fails for it.",
-      "better": "ClassicAPI cast settings autoDismount, autoUnshift and autoStand (AddOn Options > ClassicAPI). They act before spell casts only: melee attack, flight masters, NPCs and items in a form still need the error (ERR_ATTACK_MOUNTED and the like; FostercareTweaks Auto Dismount).",
-      "source": "ClassicAPI docs/API.md#cast-settings-autostand-autodismount-autounshift"
+      "pattern": "\\bSPELL_FAILED_NOT_(MOUNTED|SHAPESHIFT|STANDING)\\b|\\bERR_(ATTACK_MOUNTED|TAXIPLAYERALREADYMOUNTED|TAXIPLAYERSHAPESHIFTED|CANT_INTERACT_SHAPESHIFTED|NO_ITEMS_WHILE_SHAPESHIFTED)\\b",
+      "finding": "Dismounts, leaves a form or stands up when a spell, an attack, a flight master, an NPC or an item fails for it.",
+      "better": "ClassicAPI's autoDismount, autoUnshift and autoStand (AddOn Options > ClassicAPI). Since 1.20.1 they act before casts, NPC talk, object use, looting, item use, melee attack and the flight map, when the action is sent; retire the error handler.",
+      "source": "ClassicAPI docs/API.md#stand-dismount-and-form-settings-autostand-autodismount-autounshift (1.20.1+)"
     },
     {
       "id": "unfiltered-unit-events",
@@ -167,7 +174,7 @@
       "id": "bag-type-by-text",
       "pattern": "GetItemInfo\\s*\\([^)]*\\)[^\n]*\n?[^\n]*(ITEMTYPE|SUBTYPE|\"Quiver\"|\"Soul Bag\"|\"Container\")|\\bITEMTYPE_\\w+|\\bSUBTYPE_\\w+",
       "finding": "Decides a bag's kind from English item-type text, one GetItemInfo call per slot.",
-      "better": "C_Container.GetContainerNumFreeSlots(bag) second return (family bitmask, equipped bags), C_Item.GetItemFamily(item) for saved links. Read once per bag.",
+      "better": "C_Container.GetContainerNumFreeSlots(bag) second return (family bitmask; equipped bags, and from 1.19.3 the bank bags while the bank is open), C_Item.GetItemFamily(item) for saved links. Read once per bag.",
       "source": "ClassicAPI docs/API.md#c_containergetcontainernumfreeslotsbagid and #c_itemgetitemfamilyitem"
     },
     {

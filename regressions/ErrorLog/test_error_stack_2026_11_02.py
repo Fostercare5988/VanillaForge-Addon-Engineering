@@ -35,6 +35,7 @@ callHeight, errorHeight = 6, 4
 function GetCallstackHeight() return callHeight end
 function GetErrorCallstackHeight() return errorHeight end
 function debugstack(start) table.insert(asked, start); return "Interface\AddOns\Foo\Bar.lua:1: in function" end
+function debuglocals() end
 function geterrorhandler() return function(msg) shown = shown + 1 end end
 function seterrorhandler(fn) reported = fn end
 '''
