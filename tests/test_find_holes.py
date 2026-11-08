@@ -207,5 +207,26 @@ class XmlScriptGhosts(unittest.TestCase):
         self.assertIn("(script)", ghosts[0]["where"][0])
 
 
+class FrameNamesFromHelpersAndParents(unittest.TestCase):
+    """GearRack 2026-11-08: names made through a helper (a panel maker that passes its
+    name on to UI.Button, then CreateFrame) and $parent under parent="X" were ghosts."""
+
+    def test_helper_names_and_explicit_parents_are_defined(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "Probe", {
+                "Probe.toc": "## Title: Probe\nProbe.xml\nUI.lua\nProbe.lua\n",
+                "UI.lua": "local UI = {}\nfunction UI.Button(name, parent)\n    return CreateFrame(\"Button\", name, parent)\nend\n",
+                "Probe.lua": ("function Probe.Pill(frame, name, label)\n    return UI.Button(name, frame)\nend\n"
+                              "Probe.Pill(UIParent, \"ProbeNext\", \"Next\")\n"
+                              "ProbeNext:Show() ProbeOwnerCD:Show() ProbeMissing:Show()\n"),
+                "Probe.xml": ('<Ui><Frame name="ProbeHolder"><Frames><Button name="ProbeOwner"/>'
+                              '<Cooldown name="$parentCD" parent="ProbeOwner"/></Frames></Frame></Ui>'),
+            })
+            probe = HOLES.Addon(root / "Probe")
+            ghosts = HOLES.ghosts(probe, [probe], {"CreateFrame", "UIParent"}, set(), set())
+        self.assertEqual([g["name"] for g in ghosts], ["ProbeMissing"])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -165,13 +165,70 @@ def xml_names(text):
         name = name.group(1) if name else None
         if name and re.match(r"^\$parent[A-Za-z]\w{2,}$", name):
             TEMPLATE_SUFFIXES.add(name[7:])
+        # $parent is the frame named in parent="X" when there is one, as in the client.
+        explicit = re.search(r'\bparent="([^"]+)"', attrs)
+        explicit = explicit.group(1) if explicit else None
         if name and "$parent" in name:
-            parent = next((p for p in reversed(stack) if p), None)
+            parent = explicit or next((p for p in reversed(stack) if p), None)
             name = name.replace("$parent", parent) if parent else None
         if name:
             names.add(name)
         if not selfclosing:
-            stack.append(name)
+            stack.append(name or explicit)
+    return names
+
+
+def call_args(code, start):
+    """The top-level argument texts of a call whose '(' ends just before start."""
+    args, depth, begin = [], 0, start
+    for i in range(start, len(code)):
+        c = code[i]
+        if c in "([{":
+            depth += 1
+        elif c in ")]}":
+            if depth == 0:
+                args.append(code[begin:i].strip())
+                return args
+            depth -= 1
+        elif c == "," and depth == 0:
+            args.append(code[begin:i].strip())
+            begin = i + 1
+    return args
+
+
+def helper_frame_names(codes):
+    """Names that reach CreateFrame through the addon's own helpers, such as
+    UI.Button("MyAddonClose", ...) or a panel maker that passes its first argument
+    on as the frame's name. A helper is followed through further helpers."""
+    funcs = []
+    for code in codes:
+        heads = list(re.finditer(r"^[ \t]*(?:local[ \t]+)?function[ \t]+([A-Za-z_][\w.]*)[ \t]*\(([^)]*)\)", code, re.M))
+        for i, m in enumerate(heads):
+            end = heads[i + 1].start() if i + 1 < len(heads) else len(code)
+            funcs.append((m.group(1), [p.strip() for p in m.group(2).split(",")], code[m.end():end]))
+
+    def calls(code, fname):
+        for m in re.finditer(r"(?<![\w.:])" + re.escape(fname) + r"[ \t]*\(", code):
+            yield call_args(code, m.end())
+
+    namers, changed = {"CreateFrame": 1}, True
+    while changed:
+        changed = False
+        for name, params, body in funcs:
+            if name in namers:
+                continue
+            for fname, index in list(namers.items()):
+                hit = next((a[index] for a in calls(body, fname) if index < len(a) and a[index] in params), None)
+                if hit:
+                    namers[name], changed = params.index(hit), True
+                    break
+    names = set()
+    for code in codes:
+        for fname, index in namers.items():
+            for a in calls(code, fname):
+                m = index < len(a) and re.fullmatch(r"[\"']([A-Za-z_]\w*)[\"']", a[index])
+                if m:
+                    names.add(m.group(1))
     return names
 
 
@@ -203,6 +260,8 @@ class Addon:
                 self.defs |= xml_names(text)
                 for script in re.findall(r"<(On\w+)>(.*?)</\1>", text, re.S):
                     self.defs |= global_defs(strip_lua(script[1], True))
+        self.defs |= helper_frame_names([strip_lua(t, True) for r, t in self.files.items()
+                                         if r.lower().endswith(".lua")])
         self.saved = set(re.split(r"[,\s]+", self.meta.get("savedvariables", "")) +
                          re.split(r"[,\s]+", self.meta.get("savedvariablespercharacter", ""))) - {""}
         self.defs |= self.saved
