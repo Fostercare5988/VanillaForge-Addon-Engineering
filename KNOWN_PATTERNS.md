@@ -1175,6 +1175,21 @@ anchors under every combination of the options.
 
 ------------------------------------------------------------------------
 
+### KP-63 --- Errors Caught Before the Error Handler
+
+**Problem:** A callback run in `pcall` whose error is printed to chat, or caught and raised
+again with `error(err)`, never reaches the error handler with its stack. `!ErrorLog` shows
+nothing, or a line in the catching file instead of the failing one. GearRack's timer owner
+printed every timer error to chat (2026-11-08); FostercareTweaks' `WithButton` and
+FostercareNameplates' module start do the same kind.
+
+**Preferred direction:** `xpcall(func, geterrorhandler())` (ClassicAPI API.md): the handler
+gets the error inside the failing call, with its stack, and the caller still restores its
+state or stops the failing timer from `xpcall`'s first return. Keep `pcall` with a chat
+line only for player-written code (macro-like scripts), where the message is the point.
+
+------------------------------------------------------------------------
+
 ## 11. Pattern Governance
 
 This file should remain useful rather than becoming a landfill.
