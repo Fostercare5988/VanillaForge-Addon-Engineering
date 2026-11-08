@@ -69,7 +69,7 @@ function SetItemButtonDesaturated() end
 SPELL = nil
 '''
 
-FILES = {"utility": "core/Utility.lua", "localization": "localization.lua", "database": "database/database.lua",
+FILES = {"utility": "core/Utility.lua", "database": "database/database.lua",
          "frame": "core/Frame.lua", "item": "core/Item.lua"}
 
 
@@ -77,7 +77,7 @@ def load(*names):
     lua = wowkit.runtime()
     lua.execute(MOCK)
     lua.execute("BagnonSets = { showFreeSlots = 1, qualityBorders = 1, Bagnon = { bags = {-2, 0, 1, 2, 3, 4} } }")
-    for name in names or ("localization", "utility", "frame", "item"):
+    for name in names or ("utility", "frame", "item"):
         source = (ROOT / FILES[name]).read_text("utf-8-sig")
         lua.execute(source, name)
     return lua

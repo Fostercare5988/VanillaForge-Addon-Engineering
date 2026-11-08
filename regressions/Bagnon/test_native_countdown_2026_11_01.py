@@ -44,7 +44,7 @@ SETUP = r'''
 
 class EnchantBadge(unittest.TestCase):
     def setUp(self):
-        self.lua = load("localization", "utility", "frame", "item")
+        self.lua = load("utility", "frame", "item")
         self.lua.execute(SETUP)
 
     def update(self):
@@ -90,7 +90,7 @@ class EnchantBadge(unittest.TestCase):
 
 class SlotRarity(unittest.TestCase):
     def test_native_minus_one_is_resolved_from_the_item_id(self):
-        lua = load("localization", "utility", "frame", "item")
+        lua = load("utility", "frame", "item")
         lua.execute(SETUP)
         lua.execute(r'''
             calls = {}
@@ -103,7 +103,7 @@ class SlotRarity(unittest.TestCase):
         self.assertEqual(lua.eval("calls.GetItemInfo or 0"), 0)
 
     def test_native_rarity_needs_no_lookup(self):
-        lua = load("localization", "utility", "frame", "item")
+        lua = load("utility", "frame", "item")
         lua.execute(SETUP)
         lua.execute(r'''
             calls = {}

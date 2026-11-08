@@ -63,7 +63,7 @@ def build(lua):
 
 class Settings(unittest.TestCase):
     def test_both_tabs_show_the_saved_values(self):
-        lua = load("localization", "utility")
+        lua = load("utility")
         build(lua)
         lua.execute("BagnonOptions_Open()")
         self.assertTrue(lua.eval("Bagnon_Options.shown"))
@@ -80,7 +80,7 @@ class Settings(unittest.TestCase):
         self.assertFalse(lua.eval("Bagnon_StayOnScreen.checked"))
 
     def test_switches_write_the_saved_keys(self):
-        lua = load("localization", "utility")
+        lua = load("utility")
         build(lua)
         lua.execute("BagnonOptions_Open()")
         lua.execute("Bagnon_AtAH:SetChecked(true); Bagnon_AtAH.scripts.OnClick(Bagnon_AtAH)")
@@ -91,13 +91,13 @@ class Settings(unittest.TestCase):
         self.assertEqual(lua.eval("BagnonSets.showSortButton"), 0)
 
     def test_a_window_slider_lays_out_that_window(self):
-        lua = load("localization", "utility")
+        lua = load("utility")
         build(lua)
         lua.execute('BagnonOptions_Open("Banknon"); Bagnon_Columns:SetValue(6)')
         self.assertEqual(list(lua.eval("layoutCalls[#layoutCalls]").values())[:2], ["Banknon", 6])
 
     def test_the_removed_switches_are_gone(self):
-        lua = load("localization", "utility")
+        lua = load("utility")
         build(lua)
         lua.execute("BagnonOptions_Open()")
         for name in ("Bagnon_Quality", "Bagnon_Tooltips", "Bagnon_ForeverTooltips"):
@@ -106,7 +106,7 @@ class Settings(unittest.TestCase):
 
 class Header(unittest.TestCase):
     def test_the_sort_button_can_be_hidden(self):
-        lua = load("localization", "utility", "frame")
+        lua = load("utility", "frame")
         lua.execute('''
             frame = widget("Bagnon"); frame.size = 4; frame.player = "Tester"
             for _, n in ipairs({ "FreeSlots", "Title", "SortButton", "CloseButton", "DropDown" }) do widget("Bagnon" .. n) end
@@ -122,7 +122,7 @@ class Header(unittest.TestCase):
 
 class TitleStays(unittest.TestCase):
     def test_title_anchors_do_not_depend_on_the_free_space_or_sort_options(self):
-        lua = load("localization", "utility", "frame")
+        lua = load("utility", "frame")
         lua.execute('''
             frame = widget("Bagnon"); frame.size = 4; frame.player = "Tester"
             for _, n in ipairs({ "FreeSlots", "Title", "SortButton", "CloseButton", "DropDown" }) do widget("Bagnon" .. n) end
@@ -157,7 +157,7 @@ class Search(unittest.TestCase):
     '''
 
     def search(self):
-        lua = load("localization", "utility")
+        lua = load("utility")
         lua.execute(self.SETUP)
         lua.globals().loadstring((ROOT / "core/Search.lua").read_text("utf-8-sig"), "search")()
         return lua
@@ -192,7 +192,7 @@ class Search(unittest.TestCase):
         self.assertEqual(lua.eval("searchText"), "")
 
     def test_a_slot_that_does_not_match_is_dimmed(self):
-        lua = load("localization", "utility", "frame", "item")
+        lua = load("utility", "frame", "item")
         lua.execute('''
             shade = {}
             function SetItemButtonDesaturated(b, d, r) shade.d, shade.r = d, r end
@@ -212,7 +212,7 @@ class Search(unittest.TestCase):
 class Retired(unittest.TestCase):
     def test_old_switch_settings_are_cleared(self):
         from test_cleanup_2026_11_02 import Events as CleanupEvents
-        lua = load("localization", "utility")
+        lua = load("utility")
         lua.execute(CleanupEvents.SETUP + '''
             BagnonSets.showTooltips = 1; BagnonSets.qualityBorders = 0; BagnonSets.showForeverTooltips = 1
         ''')

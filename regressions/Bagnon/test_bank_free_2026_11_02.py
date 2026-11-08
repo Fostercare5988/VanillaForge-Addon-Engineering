@@ -28,14 +28,14 @@ FRAME = '''
 
 class BankFree(unittest.TestCase):
     def test_header_counts_empty_bank_slots(self):
-        lua = load("localization", "utility", "frame")
+        lua = load("utility", "frame")
         lua.execute(FRAME + "BagnonFrame_UpdateFreeSlots(frame)")
         # 4 + 13 + 0 free of 24 + 16 + 16
         self.assertEqual(lua.eval("BanknonFreeSlots.text"), "17 / 56 Free")
         self.assertEqual(lua.eval("slotReads"), 0)
 
     def test_a_full_bank_reads_zero(self):
-        lua = load("localization", "utility", "frame")
+        lua = load("utility", "frame")
         lua.execute(FRAME + "bagFree[-1], bagFree[5] = 0, 0; BagnonFrame_UpdateFreeSlots(frame)")
         self.assertEqual(lua.eval("BanknonFreeSlots.text"), "0 / 56 Free")
 

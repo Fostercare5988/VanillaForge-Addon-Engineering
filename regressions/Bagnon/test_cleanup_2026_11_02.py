@@ -28,20 +28,20 @@ def run_file(lua, name):
 
 class Layout(unittest.TestCase):
     def test_same_layout_is_not_laid_out_twice(self):
-        lua = load("localization", "utility", "frame")
+        lua = load("utility", "frame")
         lua.execute(PLAIN + "BagnonFrame_Layout(frame, 4, 2); first = pointCalls; BagnonFrame_Layout(frame, 4, 2)")
         self.assertEqual(lua.eval("first"), 12)
         self.assertEqual(lua.eval("pointCalls"), 12)
 
     def test_other_columns_lay_out_again(self):
-        lua = load("localization", "utility", "frame")
+        lua = load("utility", "frame")
         lua.execute(PLAIN + "BagnonFrame_Layout(frame, 4, 2); BagnonFrame_Layout(frame, 5, 2)")
         self.assertEqual(lua.eval("pointCalls"), 24)
 
 
 class Tooltip(unittest.TestCase):
     def test_the_item_script_adds_other_characters(self):
-        lua = load("localization", "utility")
+        lua = load("utility")
         lua.execute('''
             hooks = {}
             local function tip(name)
@@ -91,7 +91,7 @@ class Events(unittest.TestCase):
     '''
 
     def test_cooldown_refresh_skips_empty_slots(self):
-        lua = load("localization", "utility")
+        lua = load("utility")
         lua.execute(self.SETUP)
         run_file(lua, "Events.lua")
         lua.execute('''
@@ -102,7 +102,7 @@ class Events(unittest.TestCase):
         self.assertEqual(list(lua.eval("updated").values()), [1, 3])
 
     def test_retired_settings_are_cleared_on_load(self):
-        lua = load("localization", "utility")
+        lua = load("utility")
         lua.execute(self.SETUP + '''
             BagnonSets.showBankAtTrade = 1; BagnonSets.showBagsAtCraft = 1; BagnonSets.version = "1.0.0"
             BagnonSets.showBagsAtAH = 1
@@ -117,7 +117,7 @@ class Events(unittest.TestCase):
 
 class Sort(unittest.TestCase):
     def test_sort_runs_with_the_backpack_left_out(self):
-        lua = load("localization", "utility", "frame")
+        lua = load("utility", "frame")
         lua.execute('''
             sorted = 0
             C_Container.GetBackpackAutosortDisabled = function() return true end

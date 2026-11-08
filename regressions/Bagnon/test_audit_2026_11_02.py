@@ -35,7 +35,7 @@ class StringEscapes(unittest.TestCase):
 
 class CooldownDimming(unittest.TestCase):
     def test_item_waiting_for_its_cooldown_stays_dimmed(self):
-        lua = load("localization", "utility", "frame", "item")
+        lua = load("utility", "frame", "item")
         lua.execute('''
             icon = { r = 1 }
             function SetItemButtonDesaturated(b, d) icon.r = 1 end
@@ -58,13 +58,13 @@ class CooldownDimming(unittest.TestCase):
 
 class BankBagFamily(unittest.TestCase):
     def test_an_open_bank_herb_bag_reads_its_family_from_classicapi(self):
-        lua = load("localization", "utility")
+        lua = load("utility")
         lua.execute("bagFamily[5] = 32; C_Item.GetItemFamily = function() error('read the item') end")
         self.assertEqual(lua.eval("Bagnon_BagFamily(5)"), 32)
 
     def test_a_bag_that_is_not_there_has_no_family(self):
         # ClassicAPI 1.19.3 answers only 0 for a missing bag; the colour needs a number.
-        lua = load("localization", "utility")
+        lua = load("utility")
         lua.execute("C_Container.GetContainerNumFreeSlots = function() return 0 end")
         self.assertEqual(lua.eval("Bagnon_BagFamily(5)"), 0)
 

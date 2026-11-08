@@ -19,13 +19,13 @@ FRAME = '''
 
 class FreeSlots(unittest.TestCase):
     def test_header_counts_the_free_slots_of_every_bag(self):
-        lua = load("localization", "utility", "frame")
+        lua = load("utility", "frame")
         lua.execute(FRAME + "BagnonFrame_UpdateFreeSlots(frame)")
         # bag 0: 3 free of 16, bag 1: 0 of 16, soul bag 5 of 8, herb bag 2 of 6
         self.assertEqual(lua.eval("BagnonFreeSlots.text"), "10 / 46 Free")
 
     def test_header_agrees_with_the_tooltip_rows(self):
-        lua = load("localization", "utility", "frame")
+        lua = load("utility", "frame")
         lua.execute(FRAME + """
             rows = 0
             GameTooltip = widget("GameTooltip")
@@ -48,7 +48,7 @@ class BorderColour(unittest.TestCase):
     '''
 
     def colours(self, bag, slots=16):
-        lua = load("localization", "utility", "frame", "item")
+        lua = load("utility", "frame", "item")
         lua.execute(self.ITEM)
         lua.execute("calls = {}; b = {}; for s = 1, %d do b[s] = item(%d, s); BagnonItem_UpdateBorder(b[s], 1) end" % (slots, bag))
         return lua
@@ -74,14 +74,14 @@ class CachedViews(unittest.TestCase):
     """Another character's saved bags: free slots and bag families read the saved strings only."""
 
     def test_saved_free_slots(self):
-        lua = load("localization", "database", "utility")
+        lua = load("database", "utility")
         self.assertEqual(list(lua.eval('{BagnonDB.GetFreeSlots("Alt", 0)}').values()), [14, 16])
         self.assertEqual(list(lua.eval('{BagnonDB.GetFreeSlots("Alt", 2)}').values()), [7, 8])
         self.assertEqual(list(lua.eval('{BagnonDB.GetFreeSlots("Alt", 4)}').values()), [0, 0])
         self.assertEqual(lua.eval("calls.GetItemInfo or 0"), 0)
 
     def test_saved_bag_family_comes_from_the_saved_link(self):
-        lua = load("localization", "database", "utility")
+        lua = load("database", "utility")
         self.assertEqual(lua.eval('Bagnon_BagFamily(2, "Alt")'), 4)
         self.assertEqual(lua.eval('Bagnon_BagFamily(0, "Alt")'), 0)
         self.assertEqual(lua.eval('Bagnon_BagFamily(1, "Alt")'), 0)
