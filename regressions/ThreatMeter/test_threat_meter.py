@@ -323,13 +323,10 @@ class Preview(unittest.TestCase):
         lua.execute("combat = true; ns().SetPreview(true)")
         self.assertFalse(lua.eval("ns().previewing"))
 
-    def test_the_window_shows_in_preview_even_when_hidden(self):
-        lua = load("{shown = false}")
-        self.assertFalse(lua.eval("ThreatMeter_Window.shown"))
+    def test_no_preview_while_off(self):
+        lua = load("{enabled = false}")
         lua.execute("ns().SetPreview(true)")
-        self.assertTrue(lua.eval("ThreatMeter_Window.shown"))
-        lua.execute("ns().SetPreview(false)")
-        self.assertFalse(lua.eval("ThreatMeter_Window.shown"))
+        self.assertFalse(lua.eval("ns().previewing"))
 
 
 class Window(unittest.TestCase):
@@ -366,13 +363,32 @@ class Window(unittest.TestCase):
         self.assertEqual(lua.eval("ThreatMeterDB.window[2]"), "BOTTOMLEFT")
         self.assertEqual(lua.eval("ThreatMeterDB.window[3]"), 300)
 
-    def test_close_hides_the_window_for_good(self):
-        lua = load()
+    def test_close_turns_it_off_and_on_turns_it_back_on(self):
+        lua = fight()
+        lua.execute('answer("%s")' % FIGHT)
         lua.execute("local b = ThreatMeter_Close; b.scripts.OnClick(b)")
         self.assertFalse(lua.eval("ThreatMeter_Window.shown"))
-        self.assertFalse(lua.eval("ThreatMeterDB.shown"))
-        lua.execute('SlashCmdList.THREATMETER("show")')
+        self.assertFalse(lua.eval("ThreatMeterDB.enabled"))
+        self.assertFalse(lua.eval("badge().shown"))
+        lua.execute("step(5); endFight(); startFight()")
+        self.assertEqual(lua.eval("#sent"), 1, "off: nothing is asked of the server")
+        lua.execute('SlashCmdList.THREATMETER("on")')
         self.assertTrue(lua.eval("ThreatMeter_Window.shown"))
+        self.assertEqual(lua.eval("#sent"), 2, "on in a fight starts asking at once")
+
+    def test_off_registers_no_events(self):
+        lua = load("{enabled = false}")
+        self.assertFalse(lua.eval("ThreatMeter_Window.shown"))
+        lua.execute("startFight()")
+        self.assertEqual(lua.eval("#sent"), 0)
+        lua.execute("local s = ThreatMeter_enabled; s:SetChecked(true); s.scripts.OnClick(s)")
+        self.assertEqual(lua.eval("#sent"), 1)
+
+    def test_the_old_hidden_window_setting_becomes_off(self):
+        lua = load("{shown = false}")
+        self.assertFalse(lua.eval("ThreatMeterDB.enabled"))
+        self.assertIsNone(lua.eval("ThreatMeterDB.shown"))
+        self.assertIsNone(lua.eval("ThreatMeterDB.shown"))
 
 
 class Settings(unittest.TestCase):
