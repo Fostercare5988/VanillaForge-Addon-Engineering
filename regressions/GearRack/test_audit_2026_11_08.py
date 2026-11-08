@@ -166,5 +166,39 @@ class EventScripts(unittest.TestCase):
         self.assertIn('GearRack event "Syntax"', self.e.eval("chat[1]"))
 
 
+class MovedPaths(unittest.TestCase):
+    """Paths batch 2 rewrote: the queued-item badges (one helper for four copies),
+    the bar's cooldown frames looked up once, one pattern per item link."""
+
+    def test_a_deferred_item_badges_both_views_and_clears_them(self):
+        e = gr_env.logged_in('function GetItemInfo(id) if tostring(id) == "1234" then return "Probe Cloak", nil, 2, 1, "Armor", "Cloth", 1, "INVTYPE_CLOAK", "ProbeIcon" end end')
+        e.run('GearRackEngine.AddToCombatQueue(15, "1234:0:0")')
+        for name in ("GearRackUIInv15Queue", "CharacterBackSlotQueue"):
+            self.assertTrue(e.eval(name + ":IsShown()"), name)
+            self.assertEqual(e.eval(name + ".texture"), "ProbeIcon", name)
+        e.run('GearRackEngine.AddToCombatQueue(15, "1234:0:0")')  # the same choice again takes it back
+        for name in ("GearRackUIInv15Queue", "CharacterBackSlotQueue"):
+            self.assertFalse(e.eval(name + ":IsShown()"), name)
+
+    def test_the_cooldown_tick_reaches_the_bar_cooldowns(self):
+        e = gr_env.logged_in('drawn = {} function CooldownFrame_SetTimer(f) drawn[f:GetName()] = true end')
+        e.run('errors = {}; drawn = {}; GearRackUI.CooldownsNeedUpdating = true; step(1); step(1)')
+        self.assertEqual(list(e.eval("errors").values()), [])
+        for slot in (16, 17, 18):
+            self.assertTrue(e.eval('drawn["GearRackUIInv%dCD"]' % slot), slot)
+        e.run('GearRackUI_MenuFrame_OnHide()')
+        self.assertEqual(list(e.eval("errors").values()), [])
+
+    def test_an_item_link_gives_the_variant_and_the_full_id(self):
+        e = gr_env.logged_in('''
+            C_Container.GetContainerItemID = function() return 1234 end
+            function GetContainerItemLink() return "|cff1eff00|Hitem:1234:1897:7:0|h[Probe]|h|r" end
+            function GetItemInfo(id) asked = id return "Probe", nil, 2, 1, "Weapon", "Dagger", 1, "INVTYPE_WEAPON", "ProbeIcon" end
+        ''')
+        texture, variant, name = e.eval('GearRackEngine.GetItemInfo(0, 1)')[:3]
+        self.assertEqual((texture, variant, name), ("ProbeIcon", "1234:1897:7", "Probe"))
+        self.assertEqual(e.eval("asked"), "item:1234:1897:7:0")
+
+
 if __name__ == "__main__":
     unittest.main()
