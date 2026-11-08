@@ -227,6 +227,30 @@ class Drawing(unittest.TestCase):
         self.assertIsNone(lua.eval("footRow()"))
 
 
+class Size(unittest.TestCase):
+    def test_a_full_raid_fits_in_the_window(self):
+        lua = fight("{rows = 40}")
+        self.assertEqual(lua.eval("sent[1].msg"), "limit=40")
+        body = ";".join("P%d:%d:%d:%d:1" % (i, i == 1, 4000 - i * 50, 100 - i) for i in range(1, 41))
+        lua.execute('answer("%s")' % body)
+        self.assertEqual(lua.eval("#barRows()"), 40)
+        self.assertEqual(lua.eval("barRows()[40].name"), "P40")
+
+    def test_a_wide_window_shows_every_column(self):
+        lua = fight("{width = 300}")
+        lua.execute('answer("%s")' % FIGHT)
+        self.assertTrue(lua.eval("barRows()[1].tpsShown"))
+        self.assertTrue(lua.eval("barRows()[1].threatShown"))
+
+    def test_a_narrow_window_drops_columns_before_names(self):
+        lua = fight("{width = 150}")
+        lua.execute('answer("%s")' % FIGHT)
+        self.assertFalse(lua.eval("barRows()[1].tpsShown"))
+        lua = fight("{width = 200}")
+        lua.execute('answer("%s")' % FIGHT)
+        self.assertTrue(lua.eval("barRows()[1].threatShown"))
+
+
 class Badge(unittest.TestCase):
     def test_the_badge_shows_our_share_and_hides_after_the_fight(self):
         lua = fight()

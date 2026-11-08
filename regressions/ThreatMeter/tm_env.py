@@ -111,7 +111,7 @@ local function describe(bar)
     return { name = t[1].text, tps = t[2].text, threat = t[3].text, perc = t[4].text, nameColor = t[1].color,
              value = bar.value, interpolation = bar.interpolation, color = bar.barColor, y = y and y[5],
              writes = (t[1].textWrites or 0) + (t[2].textWrites or 0) + (t[3].textWrites or 0) + (t[4].textWrites or 0),
-             bar = bar }
+             tpsShown = t[2].shown, threatShown = t[3].shown, bar = bar }
 end
 function barRows()
     local out = {}
