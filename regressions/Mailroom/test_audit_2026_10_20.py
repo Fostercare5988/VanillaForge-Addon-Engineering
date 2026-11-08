@@ -1,11 +1,11 @@
-"""Reproductions for the 2026-10-20 OctoMail audit (.private/audit-OctoMail-2026-10-20.md).
+"""Reproductions for the 2026-10-20 Mailroom audit (.private/audit-Mailroom-2026-10-20.md).
 
-Each test fails on OctoMail 1.5.0 (0abd851) for the reason in its docstring.
+Each test fails on Mailroom 1.5.0 (0abd851) for the reason in its docstring.
 The selected Script files run under Lua 5.1 with generic widget mocks; they do
 not prove native widget behavior, event order or how the server handles mail.
 """
 import unittest
-from octomail_env import ROOT, SCRIPTS, load
+from mailroom_env import ROOT, SCRIPTS, load
 
 
 class AuditReproductions(unittest.TestCase):
@@ -15,11 +15,11 @@ class AuditReproductions(unittest.TestCase):
         version lives in VanillaForge's UPSTREAM_VERSIONS.json."""
         for version in ("nil",):
             lua = load("CLASSIC_API_VERSION = %s" % version)
-            self.assertIsNone(lua.eval('rawget(_G, "OctoMailFrame")'), version)
+            self.assertIsNone(lua.eval('rawget(_G, "MailroomFrame")'), version)
             self.assertTrue(lua.eval('string.find(table.concat(messages, " "), "ClassicAPI") ~= nil'), version)
 
     def test_p2_global_L_is_not_overwritten(self):
-        """P2-1: OctoMail.lua assigns the global L, clobbering other addons (and theirs clobbers it)."""
+        """P2-1: Mailroom.lua assigns the global L, clobbering other addons (and theirs clobbers it)."""
         lua = load('L = "foreign"')
         self.assertEqual(lua.eval("L"), "foreign")
 
@@ -28,7 +28,7 @@ class AuditReproductions(unittest.TestCase):
         Since 2026-11-08 senders are read on the inbox update, not by a hook."""
         lua = load()
         lua.execute('inbox = { { sender = "Alice", canReply = 1 } }; fire("MAIL_INBOX_UPDATE")')
-        self.assertIsNotNone(lua.eval('OctoMail_AutoCompleteNames["OctoWoW|Horde"].Alice'))
+        self.assertIsNotNone(lua.eval('Mailroom_AutoCompleteNames["OctoWoW|Horde"].Alice'))
 
     def test_p2_auction_icon_follows_inbox_page(self):
         """P2-4: icons are set only on MAIL_INBOX_UPDATE; InboxNextPage only calls InboxFrame_Update."""
@@ -39,9 +39,9 @@ class AuditReproductions(unittest.TestCase):
             InboxFrame.pageNum = 1
             fire("MAIL_INBOX_UPDATE"); InboxFrame_Update()
         ''')
-        self.assertTrue(lua.eval("OctoMailAuctionIcon1.shown"))
+        self.assertTrue(lua.eval("MailroomAuctionIcon1.shown"))
         lua.execute("InboxFrame.pageNum = 2; InboxFrame_Update()")
-        self.assertFalse(lua.eval("OctoMailAuctionIcon1.shown"))
+        self.assertFalse(lua.eval("MailroomAuctionIcon1.shown"))
 
     def test_p2_mail_failed_releases_the_send_queue(self):
         """P2-5: MAIL_FAILED is not handled, so the queue and Send button stay locked until the mailbox closes."""
@@ -52,9 +52,9 @@ class AuditReproductions(unittest.TestCase):
             SendMailNameEditBox:SetText("Bob")
             SendMailMailButton_OnClick()
         ''')
-        self.assertTrue(lua.eval("OctoMail.sendmail_sending"))
+        self.assertTrue(lua.eval("Mailroom.sendmail_sending"))
         lua.execute('fire("MAIL_FAILED")')
-        self.assertFalse(lua.eval("OctoMail.sendmail_sending"))
+        self.assertFalse(lua.eval("Mailroom.sendmail_sending"))
 
     def test_p2_mail_failed_between_mails_keeps_the_queue(self):
         """Regression of P2-5: a MAIL_FAILED with no mail in flight (an empty send slot click) cancelled every mail after the first."""
@@ -73,7 +73,7 @@ class AuditReproductions(unittest.TestCase):
             fire("MAIL_SEND_SUCCESS"); frame(); fire("MAIL_SEND_SUCCESS"); frame()
         ''')
         self.assertEqual(lua.eval("table.getn(sent)"), 3)
-        self.assertFalse(lua.eval("OctoMail.sendmail_sending"))
+        self.assertFalse(lua.eval("Mailroom.sendmail_sending"))
 
     def test_p2_cod_is_on_the_first_mail_only(self):
         """P2-6: with "All mails" unchecked only mail 1 is C.O.D."""
@@ -104,7 +104,7 @@ class AuditReproductions(unittest.TestCase):
             SendMailMailButton_OnClick()
         ''')
         self.assertEqual(lua.eval("table.getn(sent)"), 0)
-        self.assertEqual(lua.eval("popups[1]"), "OCTOMAIL_SEND_MONEY")
+        self.assertEqual(lua.eval("popups[1]"), "MAILROOM_SEND_MONEY")
         lua.execute('StaticPopupDialogs[popups[1]].OnAccept()')
         self.assertEqual(lua.eval("table.getn(sent)"), 1)
         self.assertEqual(lua.eval("sent[1].money"), 50000)

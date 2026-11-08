@@ -1,6 +1,6 @@
-"""The OctoMail regressions on the shared game model (wowkit).
+"""The Mailroom regressions on the shared game model (wowkit).
 
-Loads the Script files named in the selected OctoMail.xml, in order. Frames
+Loads the Script files named in the selected Mailroom.xml, in order. Frames
 start hidden here (MailFrame is shown on load, as opening a mailbox does), and
 XML frames are made on first use. Native widget behaviour, real event payloads
 and the server's mail handling remain in-game checks.
@@ -11,14 +11,14 @@ import os
 import wowkit
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
-SCRIPTS = wowkit.xml_scripts(ROOT, "OctoMail.xml")
+SCRIPTS = wowkit.xml_scripts(ROOT, "Mailroom.xml")
 
 BASE = r'''
 CLASSIC_API_VERSION, SUPERWOW_VERSION = 11711, "2.2"
 messages, tickers = chat, timers
 local function widget(name) local w = newWidget("Frame", name); w.shown = false; return w end
 
--- Edit boxes answer "" when empty; the sizes are what OctoMail's layout reads.
+-- Edit boxes answer "" when empty; the sizes are what Mailroom's layout reads.
 function Widget:GetText() return self.text or "" end
 function Widget:GetHeight() return 14 end
 function Widget:GetWidth() return 37 end
@@ -28,7 +28,7 @@ function Widget:GetFontString() self.fontString = self.fontString or widget(); r
 function Widget:GetRegions() local r = {} for i = 1, 10 do r[i] = widget() end return unpack(r) end
 function CreateFrame(_, name) return widget(name) end
 
-local AUTO = { "^Mail", "^OctoMail%u", "^SendMail", "^Inbox", "^OpenMail", "^Stationery", "^MoneyReceived" }
+local AUTO = { "^Mail", "^Mailroom%u", "^SendMail", "^Inbox", "^OpenMail", "^Stationery", "^MoneyReceived" }
 setmetatable(_G, { __index = function(_, k)
     if type(k) ~= "string" or string.find(k, "_") then return nil end
     for _, p in ipairs(AUTO) do
@@ -150,21 +150,21 @@ end
 function SetSendMailCOD(a) codAmount = a end
 function SetSendMailMoney(a) moneyAmount = a end
 
-function frame() run(OctoMailFrame, "OnUpdate") end
+function frame() run(MailroomFrame, "OnUpdate") end
 '''
 
 
 def load(prelude="", saved=""):
-    """Return a runtime with OctoMail loaded and ADDON_LOADED/PLAYER_LOGIN fired.
+    """Return a runtime with Mailroom loaded and ADDON_LOADED/PLAYER_LOGIN fired.
     `saved` runs after the files and before ADDON_LOADED, where the client
     puts the SavedVariables."""
     lua = wowkit.runtime()
     lua.execute(BASE)
     if prelude:
         lua.execute(prelude)
-    wowkit.load_files(lua, ROOT, SCRIPTS, "OctoMail")
+    wowkit.load_files(lua, ROOT, SCRIPTS, "Mailroom")
     if saved:
         lua.execute(saved)
-    if lua.eval('rawget(_G, "OctoMailFrame") ~= nil'):
-        lua.execute('fire("ADDON_LOADED", "OctoMail"); fire("PLAYER_LOGIN"); MailFrame:Show()')
+    if lua.eval('rawget(_G, "MailroomFrame") ~= nil'):
+        lua.execute('fire("ADDON_LOADED", "Mailroom"); fire("PLAYER_LOGIN"); MailFrame:Show()')
     return lua

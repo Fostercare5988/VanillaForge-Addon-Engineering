@@ -57,7 +57,7 @@ The kit builds no garbage of its own, so a garbage test measures the addon.
 | FostercareNameplates | `regressions/FostercareNameplates` | fnp_env.py |
 | FostercareTweaks | `regressions/FostercareTweaks` | inline (`BASE` in test_audit_2026_10_26.py) |
 | GearRack | `regressions/GearRack` | gr_env.py |
-| OctoMail | `regressions/OctoMail` | octomail_env.py |
+| Mailroom | `regressions/Mailroom` | mailroom_env.py |
 | TWThreat | `regressions/TWThreat` | twt_env.py |
 
 `tools/find_holes.py` reads each suite too: a mock for a name that no longer

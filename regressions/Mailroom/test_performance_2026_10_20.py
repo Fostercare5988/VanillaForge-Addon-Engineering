@@ -1,10 +1,10 @@
-"""Operation counts for the P3 repairs of the 2026-10-20 OctoMail audit.
+"""Operation counts for the P3 repairs of the 2026-10-20 Mailroom audit.
 
-Each test fails on OctoMail 1.5.0 (0abd851). Counts are Lua-level work under
+Each test fails on Mailroom 1.5.0 (0abd851). Counts are Lua-level work under
 mocks; they say nothing about frame times in the client.
 """
 import unittest
-from octomail_env import load
+from mailroom_env import load
 
 
 class PerformanceReproductions(unittest.TestCase):
@@ -13,11 +13,11 @@ class PerformanceReproductions(unittest.TestCase):
         refresh runs while idle; a retry for a waiting delete stops on close."""
         lua = load()
         lua.execute('fire("MAIL_SHOW")')
-        self.assertIsNone(lua.eval("OctoMailFrame.scripts.OnUpdate"))
+        self.assertIsNone(lua.eval("MailroomFrame.scripts.OnUpdate"))
         self.assertEqual(lua.eval("table.getn(tickers)"), 0)
         lua.execute('''
             inbox = { { sender = "Bob", subject = "Ore", item = 1, read = 1 } }
-            OctoMail.inbox_open(1, true)
+            Mailroom.inbox_open(1, true)
         ''')
         self.assertEqual(lua.eval("table.getn(tickers)"), 1)
         lua.execute('fire("MAIL_CLOSED")')
@@ -34,7 +34,7 @@ class PerformanceReproductions(unittest.TestCase):
             fire("MAIL_SEND_SUCCESS"); frame(); fire("MAIL_SEND_SUCCESS"); frame()
         ''')
         self.assertEqual(lua.eval("table.getn(sent)"), 2)
-        self.assertIsNone(lua.eval("OctoMailFrame.scripts.OnUpdate"))
+        self.assertIsNone(lua.eval("MailroomFrame.scripts.OnUpdate"))
 
     def test_p3_2_closed_mailbox_container_info_allocates_nothing(self):
         """P3-2: the global GetContainerItemInfo replacement built a table per call for every addon."""
