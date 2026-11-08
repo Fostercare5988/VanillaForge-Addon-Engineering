@@ -136,14 +136,15 @@ class SetBuilderTests(unittest.TestCase):
 
 
 class VersionTests(unittest.TestCase):
-    """GearRack stays at 1.0.0 until the owner names a new version."""
+    """GearRack stays at 1.0.0 until the owner names a new version. The TOC holds
+    it; the code reads it from there (2026-11-08), so it lives in one place."""
 
     def test_version_is_1_0_0(self):
         toc = (ROOT / "GearRack.toc").read_text("utf-8")
         bootstrap = (ROOT / "src/Bootstrap.lua").read_text("utf-8")
         readme = (ROOT / "README.md").read_text("utf-8")
         self.assertIn("## Version: 1.0.0", toc)
-        self.assertIn('version="1.0.0"', bootstrap)
+        self.assertIn('version=GetAddOnMetadata("GearRack","Version")', bootstrap)
         self.assertNotIn("1.1.0", readme)
 
 

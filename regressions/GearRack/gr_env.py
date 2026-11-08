@@ -17,6 +17,7 @@ SRC = ROOT / "src"
 
 MOCK = r'''
 messages = chat
+function GetAddOnMetadata(addon, field) if field == "Version" then return "test" end end
 CLASSIC_API_VERSION, SUPERWOW_VERSION = 11805, "2.2"
 function GetNampowerVersion() return 4, 6, 2 end
 function GetCastInfo() end
