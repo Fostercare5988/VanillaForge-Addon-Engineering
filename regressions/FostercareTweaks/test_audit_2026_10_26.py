@@ -1,9 +1,7 @@
 """FostercareTweaks audit, 2026-10-26 (AV session, /lag and the player's note).
 
-- Auto Dismount: e813b8c handed it to ClassicAPI's autoDismount/autoUnshift/
-  autoStand, which then acted only before spell casts, so it came back for
-  attacks, flight masters, NPCs and items. Retired again on 2026-11-07:
-  ClassicAPI 1.20.1 covers those too (AutoDismountRetired).
+- Auto Dismount: ClassicAPI's autoDismount/autoUnshift/autoStand do it
+  (AutoDismountRetired keeps it from coming back).
 - Event fan-out: ClassicAPI fires every unit event once per token, including
   nameplateN, markN and focus (docs/API.md, nameplate and mark tokens). The raid
   frames, target auras, energy ticks and target castbar register these events
@@ -131,30 +129,11 @@ def runtime():
 
 def gameplay(lua):
     lua.execute(r'''
-        mounted, form, stealthed = false, 0, false
-        dismounts, cancels, stands = 0, 0, 0
-        function IsMounted() return mounted end
-        function Dismount() dismounts = dismounts + 1 end
-        function GetShapeshiftFormID() return form end
-        function IsStealthed() return stealthed end
-        function CancelShapeshiftForm() cancels = cancels + 1 end
-        function SitOrStand() stands = stands + 1 end
         function UnitClass() return "Druid", "DRUID" end
         function FT.cmatch() end
-        CastingBarFrame, ShapeshiftBarFrame = Widget(), Widget()
+        ShapeshiftBarFrame = Widget()
+        SPELL_FAILED_ONLY_SHAPESHIFT = "Must be in %s" -- the client's GlobalStrings.lua
     ''')
-    for key, text in (
-        ("SPELL_FAILED_NOT_MOUNTED", "You are mounted"),
-        ("SPELL_FAILED_NOT_SHAPESHIFT", "You are in shapeshift form"),
-        ("SPELL_FAILED_NOT_STANDING", "You must be standing to do that"),
-        ("ERR_ATTACK_MOUNTED", "Can't attack while mounted."),
-        ("ERR_TAXIPLAYERALREADYMOUNTED", "You are already mounted! Dismount first."),
-        ("ERR_TAXIPLAYERSHAPESHIFTED", "You can't take a taxi while shapeshifted!"),
-        ("ERR_CANT_INTERACT_SHAPESHIFTED", "Can't speak while shapeshifted."),
-        ("ERR_NO_ITEMS_WHILE_SHAPESHIFTED", "Can't use items while shapeshifted."),
-        ("SPELL_FAILED_ONLY_SHAPESHIFT", "Must be in %s"),
-    ):  # texts from the client's GlobalStrings.lua
-        lua.execute('%s = "%s"' % (key, text))
     lua.execute(source("mods/gameplay.lua"))
     for title, mod in list(lua.eval("FT.mods").items()):
         lua.globals().FostercareTweaks_Config[title] = 1 if mod.enabled else 0

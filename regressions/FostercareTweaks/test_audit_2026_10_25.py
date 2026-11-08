@@ -155,16 +155,6 @@ class RetiredSettings(unittest.TestCase):
         lua.execute(source("Core.lua") + "\nif FostercareTweaks then FostercareTweaks.ActionBars = { Initialize = function() end } end")
         return lua
 
-    def test_auto_dismount_switch_is_cleared(self):
-        # 2026-11-07: Auto Dismount retired for ClassicAPI 1.20.1's settings,
-        # which now cover attacks, flights, NPCs and items. Its saved switch
-        # goes; the CVars stay the player's own (the 2026-10-25 retirement
-        # already turned them on for characters that had ours on).
-        lua = self.load('{ ["Auto Dismount"] = 1 }')
-        lua.execute('FostercareTweaks:Initialize()')
-        self.assertIsNone(lua.eval('FostercareTweaks_Config["Auto Dismount"]'))
-        self.assertIsNone(lua.eval('next(cvars)'))
-
     def test_permanent_module_runs_and_keeps_no_switch(self):
         # Cooldown Numbers and Ctrl+Shift moving are `always` modules: an old
         # "off" does not stop them, and their saved key goes.
