@@ -119,12 +119,13 @@ function ClearCursor() if cursor then locks[key(cursor[1], cursor[2])] = nil; cu
 function CursorHasItem() return cursor and 1 or nil end
 function SplitContainerItem() end
 function UseContainerItem() end
-function ClickSendMailItemButton() if cursor then attached, cursor = cursor, nil elseif attached then locks[key(attached[1], attached[2])] = nil; attached = nil end end
+function ClickSendMailItemButton() if cursor then attached, cursor = cursor, nil elseif attached then cursor, attached = attached, nil end end
 function GetSendMailItem() if attached then return "Linen Cloth", "tex", 1 end end
 -- ClassicAPI's client-side lock (API.md, C_Item.LockItem / UnlockItem).
 C_Item = {
     LockItem = function(loc) locks[key(loc.bagID, loc.slotIndex)] = true end,
     UnlockItem = function(loc) locks[key(loc.bagID, loc.slotIndex)] = nil end,
+    IsLocked = function(loc) return locks[key(loc.bagID, loc.slotIndex)] and true or false end,
 }
 -- ClassicAPI's name completion (API.md, AutoComplete): the names in `known`
 -- that start with the text, case ignored.

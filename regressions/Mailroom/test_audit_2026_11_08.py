@@ -93,6 +93,20 @@ class ClassicAPIDoesIt(unittest.TestCase):
         self.assertEqual(lua.eval("table.getn(sent)"), 2)
         self.assertIsNone(lua.eval('next(locks)'))
 
+    def test_queued_items_stay_grey_after_a_server_update(self):
+        """The attach flow put the item back on the cursor after locking it, so
+        it never showed grey; a server update for the item also clears the lock.
+        The lock is set after the cursor is cleared and set again after a bag change."""
+        lua = load(NATIVE)
+        lua.execute('''
+            for i = 1, 2 do bag["0:" .. i] = { texture = "t" } end
+            UseContainerItem(0, 1); UseContainerItem(0, 2)
+        ''')
+        self.assertTrue(lua.eval('locks["0:1"]'))
+        lua.execute('locks["0:1"] = nil; fire("BAG_UPDATE_DELAYED")')
+        self.assertTrue(lua.eval('locks["0:1"]'))
+        self.assertTrue(lua.eval('locks["0:2"]'))
+
     def test_closing_the_mailbox_lets_every_lock_go(self):
         lua = load()
         lua.execute('''
