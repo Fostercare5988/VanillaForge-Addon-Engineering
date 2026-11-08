@@ -75,3 +75,76 @@ class Env:
 
 def text(name):
     return (SRC / name).read_text(encoding="utf-8")
+
+
+# Every Lua file in TOC order, for a whole-addon login.
+ALL = ["Bootstrap.lua", "ForgeUI.lua", "Core.lua", "Constants.lua", "Events.lua", "Equipment.lua",
+       "PoisonSwap.lua", "Trinkets.lua", "TrinketOptions.lua", "TrinketQueues.lua", "Skin.lua",
+       "Navigation.lua", "Settings.lua", "BarLayout.lua", "SetMacros.lua", "Minimap.lua"]
+
+# The client a logged-in Rogue with empty bags sees. Errors that reach the error
+# handler are kept in `errors`. After the files load, any other capitalised global
+# is inert: it can be called or indexed and answers nil (missing[name] records it).
+CLIENT = r'''
+errors, missing = {}, {}
+function geterrorhandler() return function(e) errors[#errors + 1] = tostring(e) end end
+function UnitName() return "Claude" end
+function GetRealmName() return "Y'Shaarj" end
+function UnitClass() return "Rogue", "ROGUE" end
+function GetInventorySlotInfo() return 1, "Interface\\PaperDoll\\Empty" end
+function GetInventoryItemCooldown() return 0, 0, 0 end
+function GetContainerItemCooldown() return 0, 0, 0 end
+function GetContainerNumSlots() return 0 end
+function GetBindingText(k) return k end
+function GetBindingAction() return "" end
+function SetBinding() return 1 end
+function GetCurrentBindingSet() return 1 end
+function GetNumMacroIcons() return 0 end
+function GetShapeshiftForm() return 0 end
+function GetNumShapeshiftForms() return 0 end
+function GetNetStats() return 0, 0, 50 end
+function FauxScrollFrame_GetOffset() return 0 end
+function SecondsToTimeAbbrev(s) return s .. "s" end
+function cos(d) return math.cos(math.rad(d)) end
+function sin(d) return math.sin(math.rad(d)) end
+C_PlayerInfo = { CanUseItem = function() return true end }
+SHOW_COMBAT_TEXT = "0"
+function Widget:GetNormalTexture() self.nt = self.nt or newWidget("Texture") return self.nt end
+function Widget:GetPushedTexture() self.pt = self.pt or newWidget("Texture") return self.pt end
+function Widget:GetCountdownFontString() self.cf = self.cf or newWidget("FontString") return self.cf end
+for _, n in ipairs({ "Minimap", "PaperDollFrame", "CharacterAmmoSlotCount", "GameTooltip", "UIErrorsFrame",
+        "MerchantFrame", "ChatFrameEditBox", "GossipFrameNpcNameText" }) do
+    _G[n] = newWidget("Frame", n)
+end
+for _, n in ipairs({ "Ammo", "Head", "Neck", "Shoulder", "Shirt", "Chest", "Waist", "Legs", "Feet", "Wrist",
+        "Hands", "Finger0", "Finger1", "Trinket0", "Trinket1", "Back", "MainHand", "SecondaryHand", "Ranged", "Tabard" }) do
+    _G["Character" .. n .. "Slot"] = newWidget("Button", "Character" .. n .. "Slot")
+end
+local function inertTable() return setmetatable({}, { __index = function() return function() end end }) end
+C_Item, C_Container, C_Spell = inertTable(), inertTable(), inertTable()
+'''
+
+# Installed after the files load, so `X = X or {}` still makes the addon's own tables.
+INERT = r'''
+local inert = setmetatable({}, { __call = function() end, __index = function() return function() end end })
+setmetatable(_G, { __index = function(_, k)
+    if type(k) == "string" and string.find(k, "^%u") then missing[k] = true return inert end
+end })
+'''
+
+
+def logged_in(client=""):
+    """The whole addon after PLAYER_LOGIN; `client` (Lua) adds to or replaces CLIENT first."""
+    env = Env([])
+    env.run(CLIENT + client)
+    loader = env.lua.eval('function(src, name, ns) local f = assert(loadstring(src, name)); return f("GearRack", ns) end')
+    for f in ALL:
+        loader(text(f), f, env.ns)
+    env.run(INERT)
+    # The OnEvent scripts of GearRack's three event frames (Equipment.xml, Sets.xml).
+    env.run('''
+        GearRackUIFrame:SetScript("OnEvent", function() GearRackUI_OnEvent(event) end)
+        GearRackEngineFrame:SetScript("OnEvent", function() GearRackEngine.OnEvent() end)
+        GearRackUI_RegisterFrame:SetScript("OnEvent", function() GearRackUI_RegisterFrame_OnEvent(event) end)
+        this = GearRackUIFrame; GearRackUI_OnLoad(); fire("PLAYER_LOGIN")''')
+    return env

@@ -157,6 +157,9 @@ TIMER_MOCK = r'''
     GearRackEngine = { TimerPool = {} }
     GearRackEngineFrame = { Show = function() end, Hide = function() end }
     DEFAULT_CHAT_FRAME = { AddMessage = function() end }
+    -- Timer errors go to the error handler (2026-11-08); it records them.
+    reported = {}
+    function geterrorhandler() return function(e) table.insert(reported, e) end end
 '''
 
 
@@ -224,6 +227,7 @@ class TimerOwnerTests(unittest.TestCase):
             Advance(5)
         ''')
         self.assertEqual(len(lua.eval("fired")), 1)
+        self.assertEqual(len(lua.eval("reported")), 1)
 
     def test_control_frame_check_stops_on_an_unlocked_bar(self):
         lua = self.lua()
