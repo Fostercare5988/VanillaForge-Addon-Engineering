@@ -59,6 +59,7 @@ The kit builds no garbage of its own, so a garbage test measures the addon.
 | GearRack | `regressions/GearRack` | gr_env.py |
 | Mailroom | `regressions/Mailroom` | mailroom_env.py |
 | TWThreat | `regressions/TWThreat` | twt_env.py |
+| ThreatMeter | `regressions/ThreatMeter` | tm_env.py |
 
 `tools/find_holes.py` reads each suite too: a mock for a name that no longer
 exists anywhere is listed as a hole.
