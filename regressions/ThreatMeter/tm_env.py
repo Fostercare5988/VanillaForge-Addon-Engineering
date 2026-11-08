@@ -60,7 +60,15 @@ end }
 
 -- The kit's widgets, with the writes these tests read.
 function Widget:SetValue(v, interpolation) self.value, self.interpolation = v, interpolation end
-function Widget:SetText(t) self.text = t; self.textWrites = (self.textWrites or 0) + 1 end
+function Widget:CreateFontString(name, layer, template)
+    local w = newWidget("FontString", name, self)
+    w.template = template
+    return w
+end
+-- The client refuses text on a font string that has no font.
+function Widget:SetText(t)
+    if self.kind == "FontString" and not self.font and not self.template then error("SetText(): Font not set") end
+    self.text = t; self.textWrites = (self.textWrites or 0) + 1 end
 function Widget:SetStatusBarColor(r, g, b, a) self.barColor = { r, g, b, a } end
 function Widget:SetFont(f, s, o) self.font, self.fontSize = f, s end
 function Widget:StartMoving() self.moving = true end
