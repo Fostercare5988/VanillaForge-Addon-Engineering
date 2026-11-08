@@ -72,20 +72,14 @@ function UIDropDownMenu_SetWidth() end
 function UIDropDownMenu_AddButton() end
 function CloseDropDownMenus() end
 function PlaySound() end
-function ClearCursor() end
-function CheckInbox() end
+function IsShiftKeyDown() end
+function IsControlKeyDown() end
+function IsAltKeyDown() end
+checks = 0
+function CheckInbox() checks = checks + 1 end
 MAX_COD_AMOUNT, COPPER_PER_GOLD = 10000, 10000
 SEND_MONEY_CONFIRMATION, ACCEPT, CANCEL = "Send money to %s?", "Accept", "Cancel"
 StaticPopupDialogs, popups = {}, {}
--- ClassicAPI: coin icons in the real client; plain letters here.
-function GetCoinTextureString(copper)
-    local g, s, c = math.floor(copper / 10000), math.floor(copper % 10000 / 100), copper % 100
-    local t = {}
-    if g > 0 then t[#t + 1] = g .. "g" end
-    if s > 0 then t[#t + 1] = s .. "s" end
-    if c > 0 or #t == 0 then t[#t + 1] = c .. "c" end
-    return table.concat(t, " ")
-end
 function StaticPopup_Show(which, text) table.insert(popups, which) end
 function StaticPopup_Hide() end
 function GetNumFriends() return 0 end
@@ -114,16 +108,45 @@ function SendMailFrame_CanSend() end
 function SendMailRadioButton_OnClick() end
 function SendMailMailButton_OnClick() end
 
-attached = nil
-bag = {}
-function GetContainerItemInfo(b, s) local it = bag[b .. ":" .. s]; if it then return it.texture, it.count or 1, nil, 1, nil end end
-function PickupContainerItem(b, s) cursor = { b, s } end
+-- Bags, cursor and the send slot. An item on the cursor or in the send slot
+-- is locked, as the client locks it; a locked item cannot be picked up.
+attached, cursor = nil, nil
+bag, locks = {}, {}
+local function key(b, s) return b .. ":" .. s end
+function GetContainerItemInfo(b, s) local it = bag[key(b, s)]; if it then return it.texture, it.count or 1, locks[key(b, s)] and 1 or nil, 1, nil end end
+function PickupContainerItem(b, s) if locks[key(b, s)] then return end cursor = { b, s }; locks[key(b, s)] = true end
+function ClearCursor() if cursor then locks[key(cursor[1], cursor[2])] = nil; cursor = nil end end
+function CursorHasItem() return cursor and 1 or nil end
 function SplitContainerItem() end
 function UseContainerItem() end
-function ClickSendMailItemButton() if cursor then attached, cursor = cursor, nil elseif attached then attached = nil end end
+function ClickSendMailItemButton() if cursor then attached, cursor = cursor, nil elseif attached then locks[key(attached[1], attached[2])] = nil; attached = nil end end
 function GetSendMailItem() if attached then return "Linen Cloth", "tex", 1 end end
+-- ClassicAPI's client-side lock (API.md, C_Item.LockItem / UnlockItem).
+C_Item = {
+    LockItem = function(loc) locks[key(loc.bagID, loc.slotIndex)] = true end,
+    UnlockItem = function(loc) locks[key(loc.bagID, loc.slotIndex)] = nil end,
+}
+-- ClassicAPI's name completion (API.md, AutoComplete): the names in `known`
+-- that start with the text, case ignored.
+Enum = { AutoCompleteEntryFlag = { InGroup = 1, InGuild = 2, Friend = 4, Bnet = 8, InteractedWith = 16, Online = 32 } }
+known = {}
+C_AutoComplete = { GetAutoCompleteResults = function(text, n, cursorPosition, allowFullMatch, include, exclude)
+    autocompleteInclude = include
+    local r = {}
+    for _, name in ipairs(known) do
+        local up, typed = string.upper(name), string.upper(text)
+        if string.find(up, typed, 1, true) == 1 and (allowFullMatch or up ~= typed) and (n <= 0 or #r < n) then
+            r[#r + 1] = { name = name, priority = 0, bnetID = 0 }
+        end
+    end
+    return r
+end }
 sent = {}
-function SendMail(to, subject, body) table.insert(sent, { to = to, subject = subject, cod = codAmount, money = moneyAmount }); attached, codAmount, moneyAmount = nil, nil, nil end
+function SendMail(to, subject, body)
+    table.insert(sent, { to = to, subject = subject, cod = codAmount, money = moneyAmount })
+    if attached then locks[key(attached[1], attached[2])] = nil end
+    attached, codAmount, moneyAmount = nil, nil, nil
+end
 function SetSendMailCOD(a) codAmount = a end
 function SetSendMailMoney(a) moneyAmount = a end
 

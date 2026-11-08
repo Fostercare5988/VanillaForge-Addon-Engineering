@@ -2,6 +2,22 @@
   "about": "Old ways a DLL now does better. find_holes.py reports a match as a lead, not a verdict: read the code first. Add an entry whenever an audit finds a new one; cite where the better way is documented.",
   "entries": [
     {
+      "id": "bag-update-burst",
+      "pattern": "\"BAG_UPDATE\"",
+      "unless": "\"BAG_UPDATE_DELAYED\"",
+      "finding": "Listens to BAG_UPDATE (one per bag, many per loot or trade) and rescans or coalesces the burst by hand.",
+      "better": "BAG_UPDATE_DELAYED: no payload, once per frame after any BAG_UPDATE (the keyring is not covered). Keep BAG_UPDATE only where the bag number matters.",
+      "source": "ClassicAPI docs/API.md#bag_update_delayed-event"
+    },
+    {
+      "id": "fake-item-lock",
+      "pattern": "function\\s+[\\w.:]*\\.GetContainerItemInfo\\s*\\(|\\bGetContainerItemInfo\\s*=\\s*function\\b",
+      "unless": "\\bC_Item\\.LockItem\\b",
+      "finding": "Replaces GetContainerItemInfo for every addon to show items it holds (queued, reserved) as locked.",
+      "better": "C_Item.LockItem / C_Item.UnlockItem({bagID, slotIndex}): the client's own lock bit, so every bag addon greys the item and gets ITEM_LOCK_CHANGED. Client-side only; a server update for the item clears it, so keep the addon's own guard on the item.",
+      "source": "ClassicAPI docs/API.md#c_itemlockitemitemlocation, #c_itemunlockitemitemlocation"
+    },
+    {
       "id": "action-range-usable-polling",
       "pattern": "\\bIsActionInRange\\s*\\(|\\brangeTimer\\b|\\bActionButton_OnUpdate\\s*\\(|\"ACTIONBAR_UPDATE_USABLE\"",
       "finding": "Polls action slots for range every frame, or re-reads every button's usable state on each ACTIONBAR_UPDATE_USABLE.",
@@ -295,7 +311,8 @@
     },
     {
       "id": "name-completion-lists",
-      "pattern": "\\b(MailAutoCompleteBox|AutoCompleteEditBox|GetAutoCompleteResults)\\b",
+      "pattern": "\\b(MailAutoCompleteBox|AutoCompleteEditBox)\\b",
+      "unless": "\\bC_AutoComplete\\.GetAutoCompleteResults\\b",
       "finding": "Builds its own list of known names (group, guild, friends, whispers) for an edit box.",
       "better": "C_AutoComplete.GetAutoCompleteResults(name, numResults, cursorPosition, allowFullMatch, includeFlags, excludeFlags) and IsRecognizedName. Alts saved across sessions are not covered.",
       "source": "ClassicAPI docs/API.md#autocomplete (1.19.0)"

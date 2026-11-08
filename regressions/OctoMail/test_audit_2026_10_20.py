@@ -33,9 +33,10 @@ class AuditReproductions(unittest.TestCase):
         self.assertEqual(lua.eval("OctoMail_Log.Sent[1].money"), 50000)
 
     def test_p2_inbox_sender_reaches_autocomplete(self):
-        """P2-3: the GetInboxHeaderInfo hook reads its arguments, not the returned sender."""
+        """P2-3: the GetInboxHeaderInfo hook reads its arguments, not the returned sender.
+        Since 2026-11-08 senders are read on the inbox update, not by a hook."""
         lua = load()
-        lua.execute('inbox = { { sender = "Alice", canReply = 1 } }; GetInboxHeaderInfo(1)')
+        lua.execute('inbox = { { sender = "Alice", canReply = 1 } }; fire("MAIL_INBOX_UPDATE")')
         self.assertIsNotNone(lua.eval('OctoMail_AutoCompleteNames["OctoWoW|Horde"].Alice'))
 
     def test_p2_auction_icon_follows_inbox_page(self):

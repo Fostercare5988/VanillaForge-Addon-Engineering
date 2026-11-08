@@ -9,10 +9,16 @@ from octomail_env import load
 
 class PerformanceReproductions(unittest.TestCase):
     def test_p3_1_no_per_frame_work_while_idle(self):
-        """P3-1: no OnUpdate while nothing is pending; the inbox refresh is a timer stopped on close."""
+        """P3-1: no OnUpdate while nothing is pending. Since 2026-11-08 no inbox
+        refresh runs while idle; a retry for a waiting delete stops on close."""
         lua = load()
         lua.execute('fire("MAIL_SHOW")')
         self.assertIsNone(lua.eval("OctoMailFrame.scripts.OnUpdate"))
+        self.assertEqual(lua.eval("table.getn(tickers)"), 0)
+        lua.execute('''
+            inbox = { { sender = "Bob", subject = "Ore", item = 1, read = 1 } }
+            OctoMail.inbox_open(1, true)
+        ''')
         self.assertEqual(lua.eval("table.getn(tickers)"), 1)
         lua.execute('fire("MAIL_CLOSED")')
         self.assertTrue(lua.eval("tickers[1].cancelled"))
@@ -46,20 +52,19 @@ class PerformanceReproductions(unittest.TestCase):
         self.assertEqual(lua.eval("(select(2, GetContainerItemInfo(0, 1)))"), 3)
 
     def test_p3_3_bag_burst_refreshes_send_page_once(self):
-        """P3-3: every BAG_UPDATE redrew the whole Send Mail page, even on the Inbox tab."""
+        """P3-3: every BAG_UPDATE redrew the whole Send Mail page, even on the Inbox tab.
+        Since 2026-11-08 ClassicAPI's BAG_UPDATE_DELAYED comes once per frame."""
         lua = load()
         lua.execute('''
             calls = 0
             SendMailFrame_Update = function() calls = calls + 1 end
             SendMailFrame:Hide()
-            for i = 1, 5 do fire("BAG_UPDATE", i - 1) end
-            frame()
+            fire("BAG_UPDATE_DELAYED")
         ''')
         self.assertEqual(lua.eval("calls"), 0)
         lua.execute('''
             SendMailFrame:Show()
-            for i = 1, 5 do fire("BAG_UPDATE", i - 1) end
-            frame(); frame()
+            fire("BAG_UPDATE_DELAYED")
         ''')
         self.assertEqual(lua.eval("calls"), 1)
 
