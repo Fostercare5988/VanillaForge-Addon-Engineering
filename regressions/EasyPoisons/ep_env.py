@@ -33,6 +33,9 @@ function Widget:SetText(v) setText(self, v); if self.kind == "EditBox" then run(
 local createFontString = Widget.CreateFontString
 function Widget:CreateFontString(name) local f = createFontString(self, name); table.insert(fonts, f); return f end
 MerchantFrame = newWidget("Frame", "MerchantFrame")
+function Widget:SetFocus() focused = self end
+function Widget:ClearFocus() if focused == self then focused = nil end end
+function IsShiftKeyDown() return shiftDown end
 
 function click(button) if button and button:IsEnabled() then run(button, "OnClick") end end
 function allText()
@@ -110,6 +113,7 @@ function GetMerchantItemLink(i) local e = entry(i); return e and link(e.id) end
 function GetMerchantItemInfo(i) local e = entry(i); if e then return NAMES[e.id], "Icon", e.price, e.count, e.stock, 1 end end
 function GetMerchantItemMaxStack(i) local e = entry(i); return e and MAXSTACK[e.id] or 1 end
 C_MerchantFrame = { GetItemInfo = function(i)
+    count("merchantRead")
     local e = entry(i); if e then return { itemID = e.id, price = e.price, stackCount = e.count, numAvailable = e.stock } end
 end }
 function BuyMerchantItem(i, n)
@@ -128,10 +132,12 @@ function largestPurchase(id)
     return n
 end
 delivered = 0
+-- One bag change: BAG_UPDATE, then ClassicAPI's BAG_UPDATE_DELAYED at the end of the frame.
+function bagUpdate() fire("BAG_UPDATE", 0); fire("BAG_UPDATE_DELAYED") end
 function deliver()
     for i = delivered + 1, #purchases do addItem(purchases[i].id, purchases[i].items) end
     delivered = #purchases
-    fire("BAG_UPDATE", 0); advance(0)
+    bagUpdate(); advance(0)
 end
 -- Delivers purchases as they are made, like the server answering each one.
 -- drop = { [n] = true } loses the nth purchase, as a burst did on OctoWoW.
@@ -143,7 +149,7 @@ function settle(seconds)
                 if not drop[i] then addItem(purchases[i].id, purchases[i].items) end
             end
             delivered = #purchases
-            fire("BAG_UPDATE", 0)
+            bagUpdate()
         end
         advance(0.1)
         seconds = (seconds or 10) - 0.1
@@ -155,8 +161,10 @@ function closeVendor() merchant.open = false; MerchantFrame.shown = false; fire(
 
 -- Tradeskill window -----------------------------------------------------------
 tradeskills = {}   -- { { item = id, name = "Deadly Poison IV", reagents = { { id, count }, ... } } }
+tradeskillLine = "Poisons"
+function GetTradeSkillLine() return tradeskillLine, 300, 300 end
 function GetNumTradeSkills() return #tradeskills end
-function GetTradeSkillInfo(i) local t = tradeskills[i]; return t.name, t.kind or "optimal" end
+function GetTradeSkillInfo(i) count("recipeName"); local t = tradeskills[i]; return t.name, t.kind or "optimal" end
 function GetTradeSkillItemID(i) return tradeskills[i] and tradeskills[i].item end
 function GetTradeSkillNumReagents(i) return #tradeskills[i].reagents end
 function GetTradeSkillReagentItemID(i, r) return tradeskills[i].reagents[r][1] end

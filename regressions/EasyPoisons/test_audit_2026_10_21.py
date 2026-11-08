@@ -143,7 +143,7 @@ class Audit2(unittest.TestCase):
     def test_waiting_for_a_purchase_skips_bag_work(self):
         """While a purchase is on its way, bag events do not plan the order again."""
         lua = load("poisonVendor()")
-        lua.execute('openVendor(); setQty(POISON.Deadly, 10); buy(); calls = {}; fire("BAG_UPDATE", 0); advance(0)')
+        lua.execute('openVendor(); setQty(POISON.Deadly, 10); buy(); calls = {}; bagUpdate(); advance(0)')
         self.assertEqual(lua.eval("calls.bagRead or 0"), 0)
 
 
@@ -252,7 +252,8 @@ class FlashPowder(unittest.TestCase):
 
 class Behaviour(unittest.TestCase):
     def test_opens_only_at_a_poison_vendor(self):
-        """The window opens for Crystal Vials plus another reagent, not for one stray reagent."""
+        """The window opens where every reagent of one poison is sold (vials and Deathweed
+        make Deadly Poison), not for one stray reagent."""
         for stock, opens in (("sells(5173, 25)", False), ("sells(8925, 25)", False),
                              ("sells(8925, 25); sells(5173, 25)", True)):
             lua = load(stock)
@@ -282,7 +283,7 @@ class Behaviour(unittest.TestCase):
     def test_d_hidden_window_skips_bag_work(self):
         """D: bag events while the window is closed must not walk the bags."""
         lua = load("poisonVendor()")
-        lua.execute('openVendor(); closeVendor(); calls = {}; fire("BAG_UPDATE", 0); advance(0)')
+        lua.execute('openVendor(); closeVendor(); calls = {}; bagUpdate(); advance(0)')
         self.assertEqual(lua.eval("calls.bagRead or 0"), 0)
 
 
