@@ -68,24 +68,6 @@ class PerformanceReproductions(unittest.TestCase):
         ''')
         self.assertEqual(lua.eval("calls"), 1)
 
-    def test_p3_6_log_scroll_reuses_the_filtered_list(self):
-        """P3-6: each scroll step re-filtered the whole log."""
-        lua = load()
-        lua.execute('''
-            for i = 1, 100 do
-                table.insert(OctoMail_Log.Received, { timestamp = now, subject = "Hi", participant = "Bob" })
-            end
-            filters = 0
-            local f = OctoMail.filter
-            OctoMail.filter = function(a, b, c) filters = filters + 1; return f(a, b, c) end
-            OctoMail.log.populate("Received")
-            for i = 1, 10 do
-                OctoMailLogScrollFrameScrollBar:SetValue(i)
-                OctoMail.log.on_scroll_value_changed()
-            end
-        ''')
-        self.assertEqual(lua.eval("filters"), 1)
-        self.assertEqual(lua.eval("OctoMailLogItem1Subject.text"), "Hi")
 
 
 if __name__ == "__main__":

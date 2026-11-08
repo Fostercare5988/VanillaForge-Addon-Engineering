@@ -23,15 +23,6 @@ class AuditReproductions(unittest.TestCase):
         lua = load('L = "foreign"')
         self.assertEqual(lua.eval("L"), "foreign")
 
-    def test_p2_sent_money_is_logged(self):
-        """P2-2: log.add tests state.send_money (typo), so sent gold is never logged."""
-        lua = load()
-        lua.execute('''
-            OctoMail.log_enabled = true
-            OctoMail.log.add("Sent", { to = "Bob", sent_subject = "Gold", sent_money = 50000 })
-        ''')
-        self.assertEqual(lua.eval("OctoMail_Log.Sent[1].money"), 50000)
-
     def test_p2_inbox_sender_reaches_autocomplete(self):
         """P2-3: the GetInboxHeaderInfo hook reads its arguments, not the returned sender.
         Since 2026-11-08 senders are read on the inbox update, not by a hook."""
@@ -84,11 +75,10 @@ class AuditReproductions(unittest.TestCase):
         self.assertEqual(lua.eval("table.getn(sent)"), 3)
         self.assertFalse(lua.eval("OctoMail.sendmail_sending"))
 
-    def test_p2_cod_is_logged_only_on_mails_that_carry_it(self):
-        """P2-6: with "All mails" unchecked only mail 1 is C.O.D., but every later entry logs the C.O.D."""
+    def test_p2_cod_is_on_the_first_mail_only(self):
+        """P2-6: with "All mails" unchecked only mail 1 is C.O.D."""
         lua = load()
         lua.execute('''
-            OctoMail.log_enabled = true
             bag["0:1"] = { texture = "t" }; bag["0:2"] = { texture = "t" }
             MailAttachment1.item = { 0, 1 }; MailAttachment2.item = { 0, 2 }
             SendMailCODButton:SetChecked(1); SendMailMoney.copper = 10000
@@ -98,18 +88,6 @@ class AuditReproductions(unittest.TestCase):
         ''')
         self.assertEqual(lua.eval("sent[1].cod"), 10000)
         self.assertIsNone(lua.eval("sent[2].cod"))
-        self.assertEqual(lua.eval("OctoMail_Log.Sent[1].cod"), 10000)
-        self.assertIsNone(lua.eval("OctoMail_Log.Sent[2].cod"))
-
-    def test_p2_calendar_disabled_day_tooltip(self):
-        """P2-7: a day with no mail has mails == nil and its OnEnter concatenates nil."""
-        lua = load()
-        ok = lua.eval('''(pcall(function()
-            local cal = OctoMail.Calendar.new()
-            cal.show({}, now, newWidget(), function() end)
-            OctoMailCalendarDay10Button.scripts.OnEnter()
-        end))''')
-        self.assertTrue(ok)
 
     def test_p2_locale_layer_is_gone(self):
         """P2-9: the client is English only; no locale files or GetLocale() branches load."""

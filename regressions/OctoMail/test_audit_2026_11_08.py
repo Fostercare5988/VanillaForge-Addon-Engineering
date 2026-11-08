@@ -9,15 +9,6 @@ from octomail_env import load
 
 
 class Bugs(unittest.TestCase):
-    def test_options_button_says_what_it_does(self):
-        """P2: the AddOn Options button read "Mail log", but it turned logging on
-        or off without saying so, and closed the menus."""
-        lua = load()
-        lua.execute('run(OctoMailOptionsEntry, "OnShow")')
-        self.assertEqual(lua.eval("OctoMailOptionsEntryOpen.text"), "Turn mail log on")
-        lua.execute('run(OctoMailOptionsEntryOpen, "OnClick")')
-        self.assertTrue(lua.eval("OctoMail_Log.Settings.Enabled"))
-        self.assertEqual(lua.eval("OctoMailOptionsEntryOpen.text"), "Turn mail log off")
 
     def test_one_delete_per_mail(self):
         """P3: Open All takes from a mail again on each inbox update, and each
@@ -30,10 +21,10 @@ class Bugs(unittest.TestCase):
         self.assertEqual(lua.eval("#OctoMail.delete_queue"), 1)
 
     def test_commands_ignore_case(self):
-        """P3: "/om LOG" showed the command list instead of turning the log on."""
+        """P3: \"/om CLEAR NAMES\" showed the command list instead of clearing the names."""
         lua = load()
-        lua.execute('OctoMail.slash_command("LOG")')
-        self.assertTrue(lua.eval("OctoMail_Log.Settings.Enabled"))
+        lua.execute('OctoMail.slash_command("CLEAR NAMES")')
+        self.assertEqual(lua.eval('next(OctoMail_AutoCompleteNames[OctoMail.names_key])'), None)
 
 
 NATIVE = '''
@@ -163,8 +154,6 @@ class ClassicAPIDoesIt(unittest.TestCase):
 
 
 SAVED = '''
-OctoMail_Log = { Sent = {}, Received = {}, Settings = { Enabled = false, first_run = "1.5.0", migrated = true,
-    SentFilters = { Money = 1, COD = 1, Other = 1 }, ReceivedFilters = { Money = 1, COD = 1, Other = 1 } } }
 OctoMail_AutoCompleteNames = { ["OctoWoW|Horde"] = { Old = 4000, Recent = now - 60 } }
 '''
 
@@ -175,11 +164,10 @@ class OldCode(unittest.TestCase):
         lua = load(saved=SAVED)
         self.assertFalse(lua.eval('string.find(table.concat(chat, " "), "Loaded") ~= nil'))
 
-    def test_retired_saved_keys_are_cleared(self):
-        """P3: Settings.migrated (9 characters) is read by nothing; a name stamped
-        by a pre-2026 build (GetTime, not time) is now dropped like any old one."""
+    def test_old_names_are_dropped(self):
+        """P3: a name stamped by a pre-2026 build (GetTime, not time) is now
+        dropped like any old one."""
         lua = load(saved=SAVED)
-        self.assertIsNone(lua.eval("OctoMail_Log.Settings.migrated"))
         self.assertIsNone(lua.eval('OctoMail_AutoCompleteNames["OctoWoW|Horde"].Old'))
         self.assertIsNotNone(lua.eval('OctoMail_AutoCompleteNames["OctoWoW|Horde"].Recent'))
 
@@ -224,15 +212,19 @@ class OldCode(unittest.TestCase):
         ''')
         self.assertEqual(lua.eval("#MailAttachment1.points"), lua.eval("before"))
 
-    def test_log_icon_names_its_item(self):
-        """P3: each log row kept its item's name on the icon and never showed it."""
+
+
+class NoLog(unittest.TestCase):
+    def test_mail_log_is_gone(self):
+        """OctoMail only opens, sends and completes: no log tab, frame, saved
+        table or command, and mail sent or received writes nothing down."""
         lua = load()
-        lua.execute('''
-            OctoMail_Log.Received = { { timestamp = now, subject = "Ore", participant = "Bob", item = "Copper Ore" } }
-            OctoMail.log.populate("Received")
-            run(OctoMailLogItem1Icon, "OnEnter")
-        ''')
-        self.assertEqual(lua.eval("GameTooltip.text"), "Copper Ore")
+        self.assertIsNone(lua.eval('rawget(_G, "OctoMail_Log")'))
+        self.assertIsNone(lua.eval('rawget(_G, "MailFrameTab3")'))
+        self.assertIsNone(lua.eval('rawget(_G, "OctoMailLogFrame")'))
+        self.assertIsNone(lua.eval("OctoMail.log"))
+        lua.execute('OctoMail.slash_command("log")')
+        self.assertFalse(lua.eval('string.find(table.concat(chat, " "), "enabled") ~= nil'))
 
 
 if __name__ == "__main__":
