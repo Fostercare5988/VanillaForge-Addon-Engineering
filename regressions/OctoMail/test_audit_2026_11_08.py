@@ -162,5 +162,78 @@ class ClassicAPIDoesIt(unittest.TestCase):
         self.assertEqual(lua.eval("checks"), 1)
 
 
+SAVED = '''
+OctoMail_Log = { Sent = {}, Received = {}, Settings = { Enabled = false, first_run = "1.5.0", migrated = true,
+    SentFilters = { Money = 1, COD = 1, Other = 1 }, ReceivedFilters = { Money = 1, COD = 1, Other = 1 } } }
+OctoMail_AutoCompleteNames = { ["OctoWoW|Horde"] = { Old = 4000, Recent = now - 60 } }
+'''
+
+
+class OldCode(unittest.TestCase):
+    def test_no_chat_line_at_login(self):
+        """P3: every login printed "OctoMail: Loaded (v1.6.0)."."""
+        lua = load(saved=SAVED)
+        self.assertFalse(lua.eval('string.find(table.concat(chat, " "), "Loaded") ~= nil'))
+
+    def test_retired_saved_keys_are_cleared(self):
+        """P3: Settings.migrated (9 characters) is read by nothing; a name stamped
+        by a pre-2026 build (GetTime, not time) is now dropped like any old one."""
+        lua = load(saved=SAVED)
+        self.assertIsNone(lua.eval("OctoMail_Log.Settings.migrated"))
+        self.assertIsNone(lua.eval('OctoMail_AutoCompleteNames["OctoWoW|Horde"].Old'))
+        self.assertIsNotNone(lua.eval('OctoMail_AutoCompleteNames["OctoWoW|Horde"].Recent'))
+
+    def test_any_auction_house_is_marked(self):
+        """P3: Auction House senders came from a hand list of eight names (one
+        with a doubled space); any "... Auction House" sender is one."""
+        lua = load()
+        lua.execute('''
+            inbox = { { sender = "Gadgetzan Auction House", subject = "Hello" }, { sender = "Bob", subject = "Hello", canReply = 1 } }
+            InboxFrame.pageNum = 1; InboxFrame_Update()
+        ''')
+        self.assertTrue(lua.eval("OctoMailAuctionIcon1.shown"))
+        self.assertFalse(lua.eval("OctoMailAuctionIcon2.shown"))
+
+    def test_inbox_rows_are_not_hidden_and_shown(self):
+        """P3: each inbox update hid and showed all seven rows to refresh one
+        tooltip. Only a row whose tooltip is up refreshes it."""
+        lua = load()
+        lua.execute('''
+            shows, enters = 0, 0
+            for i = 1, 7 do _G["MailItem" .. i].scripts.OnShow = function() shows = shows + 1 end end
+            owner = MailItem2Button
+            function GameTooltip:IsOwned(f) return f == owner end
+            local enter = OctoMail.orig.InboxFrameItem_OnEnter
+            OctoMail.orig.InboxFrameItem_OnEnter = function() if this == owner then enters = enters + 1 end end
+            inbox = { { sender = "Bob" }, { sender = "Ann" } }
+            InboxFrame.pageNum = 1; InboxFrame_Update()
+        ''')
+        self.assertEqual(lua.eval("shows"), 0)
+        self.assertEqual(lua.eval("enters"), 1)
+
+    def test_send_page_layout_only_when_rows_change(self):
+        """P3: every Send Mail refresh re-anchored all 21 slots and re-sized the
+        letter, though the number of rows had not changed."""
+        lua = load()
+        lua.execute('''
+            bag["0:1"] = { texture = "t" }
+            MailAttachment1.item = { 0, 1 }
+            SendMailFrame_Update()
+            before = #MailAttachment1.points
+            SendMailFrame_Update(); SendMailFrame_Update()
+        ''')
+        self.assertEqual(lua.eval("#MailAttachment1.points"), lua.eval("before"))
+
+    def test_log_icon_names_its_item(self):
+        """P3: each log row kept its item's name on the icon and never showed it."""
+        lua = load()
+        lua.execute('''
+            OctoMail_Log.Received = { { timestamp = now, subject = "Ore", participant = "Bob", item = "Copper Ore" } }
+            OctoMail.log.populate("Received")
+            run(OctoMailLogItem1Icon, "OnEnter")
+        ''')
+        self.assertEqual(lua.eval("GameTooltip.text"), "Copper Ore")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -123,6 +123,9 @@ def global_defs(code):
     # Named frames: CreateFrame("Type", "Name", ...) makes a global.
     for m in re.finditer(r"CreateFrame\s*\(\s*[\"']\w+[\"']\s*,\s*[\"']([A-Za-z_]\w*)[\"']", code):
         names.add(m.group(1))
+    # Named regions: frame:CreateTexture("Name") and CreateFontString("Name") make globals too.
+    for m in re.finditer(r":\s*Create(?:Texture|FontString)\s*\(\s*[\"']([A-Za-z_]\w*)[\"']", code):
+        names.add(m.group(1))
     # Numbered names built from a prefix ("AlwaysUpFrame" .. n): "Prefix*".
     for m in re.finditer(r"[\"']([A-Za-z_]\w*)[\"']\s*\.\.", code):
         names.add(m.group(1) + "*")
@@ -139,7 +142,14 @@ TEMPLATE_SUFFIXES = set()
 
 
 def from_template(name, defined):
-    return any(name.endswith(s) and name[:-len(s)] in defined for s in TEMPLATE_SUFFIXES if len(s) < len(name))
+    """A template child of a defined frame, or of such a child (a scroll frame's
+    ScrollBar, then the ScrollBar's ScrollUpButton)."""
+    for s in TEMPLATE_SUFFIXES:
+        if len(s) < len(name) and name.endswith(s):
+            parent = name[:-len(s)]
+            if parent in defined or from_template(parent, defined):
+                return True
+    return False
 
 
 def xml_names(text):

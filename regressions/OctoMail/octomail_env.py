@@ -37,11 +37,11 @@ setmetatable(_G, { __index = function(_, k)
 end })
 
 WorldFrame, GameTooltip, TradeFrame = widget("WorldFrame"), widget("GameTooltip"), widget("TradeFrame")
-UIPanelWindows = { MailFrame = { area = "left", pushable = 0 } }
+-- as UIParent.lua has them
+UIPanelWindows = { MailFrame = { area = "left", pushable = 0 }, FriendsFrame = { area = "left", pushable = 1, whileDead = 1 } }
 NORMAL_FONT_COLOR = { r = 1, g = 0.82, b = 0 }
 GRAY_FONT_COLOR = { r = 0.5, g = 0.5, b = 0.5 }
 TOOLTIP_DEFAULT_COLOR, TOOLTIP_DEFAULT_BACKGROUND_COLOR = NORMAL_FONT_COLOR, NORMAL_FONT_COLOR
-MAIL_AUTOCOMPLETE_MAX_BUTTONS = 5
 INBOXITEMS_TO_DISPLAY = 7
 COD_AMOUNT, AMOUNT_TO_SEND = "C.O.D. Amount:", "Amount to Send:"
 AUCTION_SOLD_MAIL_SUBJECT = "Auction successful: %s"
@@ -154,13 +154,17 @@ function frame() run(OctoMailFrame, "OnUpdate") end
 '''
 
 
-def load(prelude=""):
-    """Return a runtime with OctoMail loaded and ADDON_LOADED/PLAYER_LOGIN fired."""
+def load(prelude="", saved=""):
+    """Return a runtime with OctoMail loaded and ADDON_LOADED/PLAYER_LOGIN fired.
+    `saved` runs after the files and before ADDON_LOADED, where the client
+    puts the SavedVariables."""
     lua = wowkit.runtime()
     lua.execute(BASE)
     if prelude:
         lua.execute(prelude)
     wowkit.load_files(lua, ROOT, SCRIPTS, "OctoMail")
+    if saved:
+        lua.execute(saved)
     if lua.eval('rawget(_G, "OctoMailFrame") ~= nil'):
         lua.execute('fire("ADDON_LOADED", "OctoMail"); fire("PLAYER_LOGIN"); MailFrame:Show()')
     return lua
