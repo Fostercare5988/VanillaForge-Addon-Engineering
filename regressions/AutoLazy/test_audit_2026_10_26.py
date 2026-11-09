@@ -245,8 +245,8 @@ class TrayDiscovery(unittest.TestCase):
         """Control: a named launcher from before login and one created later both join the tray."""
         lua = tray()
         lua.execute('''
-            local art = { GetTexture = function() return "Interface\Icons\X" end }
-            local border = { GetTexture = function() return "Interface\Minimap\MiniMap-TrackingBorder" end }
+            local art = { GetTexture = function() return "Interface\\Icons\\X" end }
+            local border = { GetTexture = function() return "Interface\\Minimap\\MiniMap-TrackingBorder" end }
             local function Launcher(name)
                 local b = CreateFrame("Button", name, Minimap)
                 b.w, b.h = 32, 32
@@ -266,7 +266,7 @@ class TrayDiscovery(unittest.TestCase):
         """AtlasLoot and ActionBarProfiles: not movable, own art, dragged by an OnDragStart script."""
         lua = tray()
         lua.execute('''
-            local art = { GetTexture = function() return "Interface\AddOns\AtlasLoot\Images\AtlasLootMinimap" end }
+            local art = { GetTexture = function() return "Interface\\AddOns\\AtlasLoot\\Images\\AtlasLootMinimap" end }
             local b = CreateFrame("Button", "AtlasLootMinimapButton", Minimap)
             b.w, b.h = 33, 33
             b:SetScript("OnClick", function() end)
@@ -283,7 +283,7 @@ class TrayDiscovery(unittest.TestCase):
             b.w, b.h = 32, 32
             b:SetScript("OnClick", function() end)
             b:SetScript("OnDragStart", function() end)
-            b.GetNormalTexture = function() return { GetTexture = function() return "Interface\Icons\X" end } end
+            b.GetNormalTexture = function() return { GetTexture = function() return "Interface\\Icons\\X" end } end
         ''')
         lua.execute('fire("PLAYER_ENTERING_WORLD"); settle()')
         self.assertEqual(lua.eval("#AutoLazy.Tray.GetEntries()"), 1)
@@ -292,7 +292,7 @@ class TrayDiscovery(unittest.TestCase):
         """A quest or node pin is a clickable minimap button too, but neither movable nor bordered."""
         lua = tray()
         lua.execute('''
-            local art = { GetTexture = function() return "Interface\Icons\Quest" end }
+            local art = { GetTexture = function() return "Interface\\Icons\\Quest" end }
             for i = 1, 3 do
                 local pin = CreateFrame("Button", "SomeMapPin" .. i, Minimap)
                 pin.w, pin.h = 16, 16

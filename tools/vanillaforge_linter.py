@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 """
-VanillaForge Addon Linter & Heuristic Static Analysis Scanner (v3.1)
-Part of the VanillaForge Enhanced WoW 1.12.1 Addon Engineering Framework.
-Targets World of Warcraft 1.12.1 Build 5875 / Interface 11200 with an enhanced-client baseline:
-ClassicAPI v1.17.7+, SuperWoW v2.2+, NamPower v4.6.2+, UnitXP SP3 v89+, and DXVK runtime.
-The full environment is required. All maintained addons require ClassicAPI v1.17.7+ by policy;
-other component dependencies are declared only where an addon actually consumes them.
+VanillaForge addon linter: a fast lexical scan of an addon's Lua, XML and TOC files
+for World of Warcraft 1.12.1 (build 5875, Interface 11200) with the extension DLLs.
+Findings are hints, not orders (VANILLAFORGE.md section 5). DLL versions are named
+only in UPSTREAM_VERSIONS.json.
 """
 
 import os
@@ -13,8 +11,6 @@ import sys
 import re
 import argparse
 from pathlib import Path
-
-LINTER_VERSION = "3.1"
 
 
 # Ensure standard output can print utf-8 characters on Windows consoles
@@ -30,7 +26,6 @@ RED = "\033[91m"
 YELLOW = "\033[93m"
 CYAN = "\033[96m"
 BOLD = "\033[1m"
-DIM = "\033[2m"
 RESET = "\033[0m"
 
 PASS_BADGE = f"{GREEN}[PASS]{RESET}"
@@ -312,9 +307,9 @@ class VanillaForgeAuditor:
     """
     Audits enhanced WoW 1.12.1 addon files against VanillaForge v3 standards.
     ERROR is reserved for high-confidence structural/correctness failures.
-    WARNING marks strong modernization hazards; INFO marks contextual design smells.
+    WARNING marks modernization hazards. The third list (infos) is kept for the
+    callers' sake and is always empty: its rules were never shown and are gone.
     Supports inline suppressions: -- vanillaforge-ignore: <RULE_ID> or all.
-    Legacy octowow-ignore/linter-ignore/engine-ignore forms remain accepted.
     """
     def __init__(self, global_ignores=None):
         self.global_ignores = set(r.upper() for r in (global_ignores or []))
@@ -322,9 +317,9 @@ class VanillaForgeAuditor:
     def _is_suppressed(self, line, rule_id):
         if 'ALL' in self.global_ignores or rule_id.upper() in self.global_ignores:
             return True
-        ignore_match = re.search(r'--\s*(?:vanillaforge|octowow|linter|engine)-ignore:\s*([a-zA-Z0-9_\-,\s]+)', line, re.IGNORECASE)
+        ignore_match = re.search(r'--\s*vanillaforge-ignore:\s*([a-zA-Z0-9_\-,\s]+)', line, re.IGNORECASE)
         if not ignore_match:
-            ignore_match = re.search(r'<!--\s*(?:vanillaforge|octowow|linter|engine)-ignore:\s*([a-zA-Z0-9_\-,\s]+)\s*-->', line, re.IGNORECASE)
+            ignore_match = re.search(r'<!--\s*vanillaforge-ignore:\s*([a-zA-Z0-9_\-,\s]+)\s*-->', line, re.IGNORECASE)
         if ignore_match:
             rules = [r.strip().upper() for r in ignore_match.group(1).split(',')]
             if 'ALL' in rules or rule_id.upper() in rules:
@@ -414,17 +409,9 @@ class VanillaForgeAuditor:
                         warnings.append(f"[Rule D2 - Table Per Call] Line {idx}: '{name}' builds a table each call. Reuse one (table.wipe) or build it once outside; '-- vanillaforge-ignore: D2' if this path is rare.")
                         break
 
-        current_button_name = ""
         for idx, raw_line in enumerate(raw_lines, 1):
             code_line = code_lines[idx - 1]
             no_comment_line = no_comment_lines[idx - 1]
-
-            if filepath.endswith('.xml'):
-                btn_match = re.search(r'<(?:Button|CheckButton)\b[^>]*\bname\s*=\s*["\']([^"\']+)["\']', no_comment_line)
-                if btn_match:
-                    current_button_name = btn_match.group(1)
-                elif '</Button>' in no_comment_line or '</CheckButton>' in no_comment_line:
-                    current_button_name = ""
 
             # 2. Rule A1: Bare colon method lookup (f:GetScript ...)
             if not self._is_suppressed(raw_line, "A1"):
@@ -452,11 +439,6 @@ class VanillaForgeAuditor:
                     warnings.append(f"[Rule D1 - Hierarchy Table Churn] Line {idx}: '{{ parent:GetChildren() }}' allocates a temporary table; review repeated scans. Cold-path allocation may be acceptable; preserve traversal safety.")
                 if re.search(r'\{\s*(?:[a-zA-Z0-9_]+:)?GetRegions\(\)\s*\}', code_line):
                     warnings.append(f"[Rule D1 - Hierarchy Table Churn] Line {idx}: '{{ f:GetRegions() }}' allocates a temporary table; review repeated scans. Cold-path allocation may be acceptable; preserve traversal safety.")
-
-            # 6. Style - Redundant 144Hz notation
-            if not self._is_suppressed(raw_line, "STYLE"):
-                if '144Hz+' in no_comment_line or '144Hz/240Hz+' in no_comment_line:
-                    infos.append(f"[Style - Marketing Phrase] Line {idx}: '144Hz+' notation detected. Use clean 'DXVK' or 'DXVK Vulkan'.")
 
             # 7. Rule L1: English only (CORE "Language"). Locale lookups and locale
             # libraries are removed when an addon is modernized; strings stay inline.
@@ -498,30 +480,12 @@ class VanillaForgeAuditor:
                     if lib in code_line:
                         warnings.append(f"[Rule B0 - Obsolete Library Bloat] Line {idx}: Legacy 2006 library '{lib}' detected. Modernize with ClassicAPI / NamPower.")
 
-            # 10. AP-09 / Rule C11: Same-Layer Background/Icon Occlusion Risk & Child Mouse Interception
-            if not self._is_suppressed(raw_line, "C11"):
-                if re.search(r'CreateTexture\s*\(\s*nil\s*,\s*["\']OVERLAY["\']\s*\)', no_comment_line) and re.search(r'(?:[Bb]g|[Bb]ackground)\b', no_comment_line):
-                    infos.append(f"[Rule C11 - Same-Layer Occlusion Risk] Line {idx}: Background texture created on 'OVERLAY' layer. Place in 'BACKGROUND' or 'BORDER'.")
-            if not self._is_suppressed(raw_line, "AP-09"):
-                if re.search(r'\b(?:bar|statusbar|icon|cooldown)\w*:EnableMouse\s*\(\s*true\s*\)', code_line, re.IGNORECASE):
-                    infos.append(f"[Rule C3 / AP-09 - Child Mouse Interception] Line {idx}: Child element explicitly enabled mouse. Only parent Button should receive clicks to prevent dead zones.")
-
             # 11. AP-24: Verbose Time Strings in Compact Rows
             if not self._is_suppressed(raw_line, "AP-24"):
                 if '"Just now"' in no_comment_line or "'Just now'" in no_comment_line:
                     warnings.append(f"[Anti-Pattern 24 - Verbose Time String] Line {idx}: 'Just now' string detected in row formatter. Use compact '0s' / 'now'.")
 
-            # 12. AP-16: Naive table.sort on fixed buffer
-            if not self._is_suppressed(raw_line, "AP-16"):
-                if re.search(r'\btable\.sort\s*\(\s*(?:roster|buffer|enemies|units)\s*[,|\)]', code_line) and not 'active' in code_line.lower():
-                    infos.append(f"[Anti-Pattern 16 - Unbounded Buffer Sort] Line {idx}: 'table.sort' detected on entity buffer. Use bounded active sort.")
-
-            # 13. AP-22: Inline Closures in High-Frequency Tickers
-            if not self._is_suppressed(raw_line, "AP-22"):
-                if re.search(r'C_Timer\.NewTicker\s*\([^,]+,\s*function\b', code_line):
-                    infos.append(f"[Anti-Pattern 22 - Inline Ticker Closure] Line {idx}: Inline closure passed to C_Timer.NewTicker. Bind a static function or method to avoid GC churn.")
-
-            # 14. Event callback signatures
+            # Event callback signatures
             # VanillaForge v3 intentionally does not lint `(self, event, ...)` as an
             # error. ClassicAPI supports modern positional frame-script arguments.
             # XML bodies, direct calls, and custom dispatchers remain context-sensitive.
@@ -530,22 +494,6 @@ class VanillaForgeAuditor:
             if not self._is_suppressed(raw_line, "AP-27"):
                 if re.search(r'PickupContainerItem\s*\(', code_line) and re.search(r'for\s+\w+\s*=', code_line):
                     warnings.append(f"[Anti-Pattern 27 - Legacy Manual Bag Sort Loop] Line {idx}: Manual item pickup loop detected. Use native C_Container.SortBags() / SortBankBags() coroutine.")
-
-            # 16. Rule C13 / AP-28: Title-Bar Action Button Standards & Highlight Trap
-            if not self._is_suppressed(raw_line, "C13") and not self._is_suppressed(raw_line, "AP-28"):
-                # Detect ButtonHilight-Square on window chrome / title bar action buttons
-                if 'ButtonHilight-Square' in no_comment_line:
-                    if re.search(r'(?:Sort|Title|Header|Close|Settings|Options)', current_button_name, re.IGNORECASE) or 'Frame.xml' in filepath:
-                        infos.append(f"[Rule C13 / AP-28 - Chrome Highlight Mismatch] Line {idx}: 'ButtonHilight-Square' detected on '{current_button_name or 'window chrome'}'. Window chrome buttons must use soft circular highlights ('UI-Panel-MinimizeButton-Highlight' or 'UI-Common-MouseHilight').")
-
-                # In XML, detect custom button textures defined without setAllPoints="true"
-                if filepath.endswith('.xml') and re.search(r'<(?:Normal|Pushed|Highlight)Texture\b[^>]*file\s*=\s*["\'][^"\']*(?:assets|AddOns)[^"\']*["\']', no_comment_line):
-                    if 'setAllPoints="true"' not in no_comment_line and "setAllPoints='true'" not in no_comment_line:
-                        infos.append(f"[Rule C13 / AP-28 - Unscaled Texture Crop Risk] Line {idx}: Custom texture file defined without 'setAllPoints=\"true\"'. In WoW 1.12.1 FrameXML, omitting setAllPoints causes unscaled top-left pixel crops.")
-
-                # In XML, detect static TOPRIGHT offset guessing relative to CloseButton
-                if re.search(r'relativeTo\s*=\s*["\']\$parentCloseButton["\']', no_comment_line) and re.search(r'relativePoint\s*=\s*["\']TOPRIGHT["\']', no_comment_line):
-                    infos.append(f"[Rule C13 / AP-28 - Title-Bar Offset Guessing] Line {idx}: Static TOPRIGHT offset guessing detected for close button sibling. Anchor using 'point=\"CENTER\" relativeTo=\"$parentCloseButton\" relativePoint=\"CENTER\"' with y=\"0\" per Rule C13.")
 
             # 17. Rule C14 / AP-29: In-Game Notification Tone & Developer Meta-Jargon
             if not self._is_suppressed(raw_line, "C14") and not self._is_suppressed(raw_line, "AP-29"):
@@ -559,11 +507,6 @@ class VanillaForgeAuditor:
                 marketing_buzz = re.search(r'["\'][^"\']*\b(enterprise-grade|zero-latency|zero-bloat|ultra-optimized|military-grade|best-in-class)\b', no_comment_line, re.IGNORECASE)
                 if marketing_buzz:
                     warnings.append(f"[Rule C14 - Marketing Superlative in UI] Line {idx}: Unsubstantiated marketing phrase '{marketing_buzz.group(1)}' detected in UI string. Use neutral technical language per the contract's Performance and UI section.")
-
-            # 18. Rule C15 / AP-31: Zero-Thrash Event-Driven Modernization (Layout & Render Thrashing)
-            if not self._is_suppressed(raw_line, "C15") and not self._is_suppressed(raw_line, "AP-31"):
-                if re.search(r':ClearAllPoints\s*\(\s*\)', code_line) and re.search(r':SetPoint\s*\(', code_line):
-                    infos.append(f"[Rule C15 / AP-31 - Layout Thrashing] Line {idx}: Inline ClearAllPoints + SetPoint detected. Cache anchor offsets and mutate points only on state diffs to avoid C++ UI frame tree recalculations.")
 
         return errors, warnings, infos
 
@@ -795,10 +738,10 @@ class VanillaForgeAuditor:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="VanillaForge Addon Linter & Heuristic Static Analysis Scanner (v3.1)")
+    parser = argparse.ArgumentParser(description="VanillaForge addon linter")
     parser.add_argument("target", help="Path to Lua, XML or selected TOC file, or AddOn directory")
     parser.add_argument("--strict", action="store_true", help="Treat warnings as errors (exit code 1 on warnings)")
-    parser.add_argument("--ignore", nargs="*", default=[], help="Global rules to suppress (e.g. --ignore A3 D1)")
+    parser.add_argument("--ignore", nargs="*", default=[], help="Global rules to suppress (e.g. --ignore A4 D1)")
     args = parser.parse_args()
 
     target = os.path.abspath(args.target)
@@ -832,11 +775,6 @@ def main():
     elif os.path.isdir(target):
         print(f"\n{BOLD}{CYAN}=== Auditing Addon: {os.path.basename(target)} ==={RESET}\n")
         results, has_guard, readme_warnings, structure_warnings, total_errors, total_warnings, total_infos = auditor.audit_addon_dir(target)
-
-        if has_guard:
-            print(f"  {INFO_BADGE} Dependency Guard: ClassicAPI guard detected; verify the 1.17.7+ support floor")
-        else:
-            print(f"  {INFO_BADGE} Dependency Guard: None detected (optional; dependencies are capability-driven)")
 
         if readme_warnings:
             for rw in readme_warnings:

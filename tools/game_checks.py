@@ -35,8 +35,12 @@ ROOT = Path(__file__).resolve().parents[1]
 PRIVATE = ROOT / ".private"
 LEDGER = PRIVATE / "game-checks.json"
 REGRESSIONS = ROOT / "regressions"
-CLIENT = Path(r"C:\Users\Fostercare\Desktop\OctoWoW")
-RENAMED = {"MikScrollingBattleText": "FostercareBattleText"}
+# An audit written under an addon's old name: (the addon now, the name its check ids
+# were made from). Answers are kept by id, in the ledger and in the game, so a
+# rename must never change an id.
+RENAMED = {"MikScrollingBattleText": ("FostercareBattleText", "FostercareBattleText"),
+           "OctoMail": ("Mailroom", "OctoMail"),
+           "TWThreat": ("ThreatMeter", "TWThreat")}
 BEGIN = "-- VanillaForge game checks: begin"
 END = "-- VanillaForge game checks: end"
 RUN = re.compile(r"`(/(?:run|script) [^`]+)`|(/(?:run|script) .+)$")
@@ -51,13 +55,13 @@ PLAIN = str.maketrans({"→": "->", "←": "<-", "—": "-", "–": "-", "‘": 
                        "“": '"', "”": '"', "…": "...", "×": "x", "≥": ">=", "≤": "<="})
 
 
-def make(addon, where, text):
+def make(addon, where, text, id_name=None):
     text = " ".join(text.translate(PLAIN).split()).encode("ascii", "replace").decode("ascii")
     m = RUN.search(text)
     run = m and (m.group(1) or m.group(2).rstrip(". ")).strip()
     if run and "<" in run:  # a placeholder such as <id>: the player fills it in
         run = None
-    return {"id": check_id(addon, text), "addon": addon, "where": where, "text": text, "run": run}
+    return {"id": check_id(id_name or addon, text), "addon": addon, "where": where, "text": text, "run": run}
 
 
 def maintained(addons_dir, regressions=REGRESSIONS):
@@ -95,7 +99,7 @@ def audit_checks(private=PRIVATE):
         m = re.match(r"audit-(.+?)-\d{4}-\d{2}-\d{2}", path.stem)
         if not m:
             continue
-        addon = RENAMED.get(m.group(1), m.group(1))
+        addon = RENAMED.get(m.group(1), (m.group(1), m.group(1)))
         section = None
         for n, line in enumerate(path.read_text("utf-8", "replace").splitlines(), 1):
             if line.startswith("#"):
@@ -111,7 +115,7 @@ def audit_checks(private=PRIVATE):
                 found[-1].append((addon, path.name))
             elif line.startswith(" ") and line.strip() and section:
                 section[-1][1] += " " + line.strip()
-    return [make(addon, "%s:%d" % (name, n), text) for n, text, (addon, name) in found]
+    return [make(addon, "%s:%d" % (name, n), text, id_name) for n, text, ((addon, id_name), name) in found]
 
 
 def collect(addons_dir, private=PRIVATE, regressions=REGRESSIONS):
@@ -122,6 +126,13 @@ def collect(addons_dir, private=PRIVATE, regressions=REGRESSIONS):
     for c in checks:
         unique.setdefault(c["id"], c)
     return list(unique.values())
+
+
+def client():
+    """The client folder: two levels above the AddOns folder in .private/workspace.json."""
+    workspace = PRIVATE / "workspace.json"
+    addons = json.loads(workspace.read_text("utf-8")).get("addons") if workspace.is_file() else None
+    return Path(addons).parents[1] if addons else None
 
 
 def load_ledger(path=LEDGER):
@@ -242,8 +253,11 @@ def main(argv=None):
     parser.add_argument("command", nargs="?", default="list", choices=("list", "push", "pull", "close"))
     parser.add_argument("args", nargs="*")
     parser.add_argument("--addon")
-    parser.add_argument("--client", type=Path, default=CLIENT)
+    parser.add_argument("--client", type=Path, default=client(),
+                        help="The client folder; default from .private/workspace.json")
     args = parser.parse_args(argv)
+    if not args.client:
+        parser.error('no client folder: pass --client or set "addons" in .private/workspace.json')
     addons_dir, wtf = args.client / "Interface" / "AddOns", args.client / "WTF"
     checks, ledger = collect(addons_dir), load_ledger()
     if args.command == "close":

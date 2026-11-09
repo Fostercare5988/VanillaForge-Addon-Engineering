@@ -2878,7 +2878,7 @@ when appropriate.
 
 ClassicAPI v1.15.13 adds equipment-slot grouping to its existing native sorter.
 Use it when that ordering meets the addon's requirements; consult
-[the container contract](#equipment-slot-grouping-in-sortbags-v11513) for the exact
+[the container contract](#equipment-slot-grouping-in-sortbags) for the exact
 ordering, asynchronous behavior and bank/data constraints. `BAG_UPDATE_DELAYED`
 can refresh the view but does not certify completion of a sort.
 

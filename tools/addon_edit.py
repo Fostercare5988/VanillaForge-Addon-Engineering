@@ -29,7 +29,8 @@ MIXED = "mixed"
 def read(path):
     """(text, endings): LF text and True/False for CRLF/LF, or the raw text and
     MIXED for a file with both endings."""
-    raw = open(path, "rb").read().decode("utf-8")
+    with open(path, "rb") as handle:
+        raw = handle.read().decode("utf-8")
     crlf = raw.count("\r\n")
     if crlf and crlf != raw.count("\n"):
         return raw, MIXED

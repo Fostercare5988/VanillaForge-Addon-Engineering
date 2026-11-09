@@ -674,7 +674,7 @@ C_Container.SortBankBags()
 
 prefer it when its ordering meets the addon's requirements. In ClassicAPI
 v1.15.13+, equipment-slot grouping is part of that ordering; see the
-[canonical container contract](CLASSICAPI_MASTER_REFERENCE.md#equipment-slot-grouping-in-sortbags-v11513)
+[canonical container contract](CLASSICAPI_MASTER_REFERENCE.md#equipment-slot-grouping-in-sortbags)
 for its semantics and constraints. Different ordering requirements can still
 justify addon logic using verified native movement APIs.
 

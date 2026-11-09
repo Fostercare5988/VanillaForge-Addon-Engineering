@@ -57,6 +57,14 @@ class GameChecks(unittest.TestCase):
     def by_text(self, start):
         return next(c for c in self.checks if c["text"].startswith(start))
 
+    def test_a_renamed_addon_gets_its_old_audits_checks_under_the_id_they_had(self):
+        # OctoMail became Mailroom after its audit was written: the check is Mailroom's
+        # now, and its id is the one already in the ledger and in the game.
+        (self.private / "audit-OctoMail-2026-11-08.md").write_text("## In-game checks\n1. Renamed later.\n", "utf-8")
+        check = next(c for c in GC.collect(self.addons, self.private, self.regressions) if c["text"] == "Renamed later.")
+        self.assertEqual(check["addon"], "Mailroom")
+        self.assertEqual(check["id"], GC.check_id("OctoMail", "Renamed later."))
+
     def test_audit_items_and_code_notes(self):
         texts = sorted(c["text"] for c in self.checks)
         self.assertEqual(len(texts), 5, texts)

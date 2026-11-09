@@ -7,7 +7,7 @@ framework's own tests are in `tests/` and need no game. Python and `lupa`.
 Run one suite from VanillaForge; the runner reports the count and the result:
 
 ```text
-python -B tools/audit_addon.py "<AddOns>/<Addon>" --run-tests --test-start regressions/<Addon> --output "%TEMP%udit-<Addon>.json"
+python -B tools/audit_addon.py "<AddOns>/<Addon>" --run-tests --test-start regressions/<Addon> --output "%TEMP%\audit-<Addon>.json"
 ```
 
 The runner sets `VANILLAFORGE_ADDON_ROOT` to the addon folder and runs the tests
@@ -58,7 +58,6 @@ The kit builds no garbage of its own, so a garbage test measures the addon.
 | FostercareTweaks | `regressions/FostercareTweaks` | inline (`BASE` in test_audit_2026_10_26.py) |
 | GearRack | `regressions/GearRack` | gr_env.py |
 | Mailroom | `regressions/Mailroom` | mailroom_env.py |
-| TWThreat | `regressions/TWThreat` | twt_env.py |
 | ThreatMeter | `regressions/ThreatMeter` | tm_env.py |
 
 `tools/find_holes.py` reads each suite too: a mock for a name that no longer

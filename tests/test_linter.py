@@ -214,11 +214,15 @@ table.insert(args, nil)
         )
         self.assertFalse(any("Rule A4" in warning for warning in warnings))
 
-    def test_legacy_octowow_suppression_remains_compatible(self):
-        _, warnings, _ = self.audit(
-            "local remainder = math.mod(5, 2) -- octowow-ignore: A4\n"
+    def test_rules_nobody_was_shown_are_gone(self):
+        # "Info" findings were never printed for an addon folder: 57 hits in 14
+        # addons that no one saw (audit 2026-11-09). The rules were removed.
+        _, warnings, infos = self.audit(
+            "f:ClearAllPoints(); f:SetPoint('TOP')\n"
+            "C_Timer.NewTicker(1, function() end)\n"
+            "table.sort(roster)\n"
         )
-        self.assertFalse(any("Rule A4" in warning for warning in warnings))
+        self.assertEqual((warnings, infos), ([], []))
 
     def test_unsuppressed_math_mod_is_still_reported(self):
         _, warnings, _ = self.audit("local remainder = math.mod(5, 2)\n")
