@@ -95,6 +95,15 @@ class GameChecks(unittest.TestCase):
         self.assertEqual(len(GC.open_checks(self.checks, ledger)), 4)
         self.assertIn("4 open game checks", GC.show(self.checks, ledger))
 
+    def test_dropped_checks_are_not_open_and_not_bad(self):
+        ledger = {}
+        for c in self.checks:
+            GC.record(ledger, c["id"], "dropped", "backlog given up")
+        self.assertEqual(GC.open_checks(self.checks, ledger), [])
+        shown = GC.show(self.checks, ledger)
+        self.assertIn("0 open game checks", shown)
+        self.assertNotIn("Answered bad", shown)
+
     def test_push_replaces_its_block_and_keeps_the_rest(self):
         saved = self.private / "ErrorLog.lua"
         saved.write_bytes(b'ErrorLog_DB = {\r\n\t["errors"] = {\r\n\t},\r\n}\r\n')

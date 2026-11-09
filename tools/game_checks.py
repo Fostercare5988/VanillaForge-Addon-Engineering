@@ -18,6 +18,10 @@ note, and `pull` reads the answers back. `close` records an answer given here.
   python -B tools/game_checks.py push              pull, then send the open ones
   python -B tools/game_checks.py pull              read the answers from the game
   python -B tools/game_checks.py close ID ok|bad [note]
+  python -B tools/game_checks.py drop [--addon NAME] [note]   give up the open ones
+
+A dropped check is neither ok nor bad: nobody will answer it. Its note in the
+code or the audit stays as it is; the check just stops being asked.
 """
 from __future__ import annotations
 
@@ -250,7 +254,7 @@ def show(checks, ledger, addon=None):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("command", nargs="?", default="list", choices=("list", "push", "pull", "close"))
+    parser.add_argument("command", nargs="?", default="list", choices=("list", "push", "pull", "close", "drop"))
     parser.add_argument("args", nargs="*")
     parser.add_argument("--addon")
     parser.add_argument("--client", type=Path, default=client(),
@@ -268,6 +272,13 @@ def main(argv=None):
         record(ledger, args.args[0], args.args[1], " ".join(args.args[2:]), who="terminal")
         save_ledger(ledger)
         print("Recorded %s: %s." % (args.args[0], args.args[1]))
+        return 0
+    if args.command == "drop":
+        rows = [c for c in open_checks(checks, ledger) if not args.addon or c["addon"].lower() == args.addon.lower()]
+        for c in rows:
+            record(ledger, c["id"], "dropped", " ".join(args.args), who="terminal")
+        save_ledger(ledger)
+        print("Dropped %d open check(s)%s." % (len(rows), " for " + args.addon if args.addon else ""))
         return 0
     if args.command in ("pull", "push"):
         got = pull(wtf, ledger)

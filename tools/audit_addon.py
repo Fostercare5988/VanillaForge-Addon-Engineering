@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Read-only source inventory. Sites are review candidates, never performance proof."""
+"""Lint an addon's loaded files, list what they call, and run its regression tests.
+
+Reads the files the TOC and XML load, and nothing else. The report (JSON) holds each
+file's hash, lint findings and call sites; one line on the terminal sums it up.
+Status is "ok" unless a file is missing or a lint error was found. Sites and lint
+are leads, not proof; DLLs and client files are never inspected."""
 from __future__ import annotations
 
 import sys
@@ -19,9 +24,6 @@ from vanillaforge_linter import HeuristicStructuralScanner as Scanner, VanillaFo
 
 LIMITS = {"files": 1024, "edges": 8192, "file_bytes": 2_000_000, "total_bytes": 32_000_000,
           "depth": 64, "sites_per_module": 500, "lint_records_per_kind": 100}
-SCENARIOS = ["login/reload and persistence", "combat enter/leave and mob deaths",
-             "loot and inventory/equipment bursts", "aura and roster changes",
-             "inspect/target/nameplate changes", "hidden/reopened UI and optional integrations"]
 CALLS = {
     "events": r"RegisterEvent|UnregisterEvent|RegisterAllEvents|UnregisterAllEvents",
     "callbacks": r"SetScript|HookScript",
@@ -77,7 +79,7 @@ def source_sites(text, suffix):
 
 
 def audit(addon, toc_name=None, *, source_only=False):
-    """Collect loaded source; source_only skips repeated lint and review-site scans."""
+    """Collect loaded source; source_only skips the lint and call-site scans."""
     addon = Path(addon).resolve()
     if not addon.is_dir():
         raise ValueError("Addon directory does not exist")
@@ -85,15 +87,7 @@ def audit(addon, toc_name=None, *, source_only=False):
     if not tocs:
         raise ValueError("No root TOC found; use --toc for an explicit manifest")
     report = {"format": 1, "addon": str(addon), "limits": LIMITS, "graph": [], "modules": [],
-              "graph_errors": [], "tests": {"status": "not_run"},
-              "review": {"status": "pending", "scenarios": SCENARIOS,
-                         "api_provider_semantics_and_cost": "pending", "measured_baseline_and_after": "pending"},
-              "limitations": ["Lexical sites and lint are candidates, not defect or performance proof.",
-                              "No Lua compilation, dynamic load discovery, API equivalence or native gameplay verification.",
-                              "TOC/XML source closure only; referenced media and dependencies need separate review.",
-                              "Unittest runner success and counts include skipped tests; inspect test output and coverage before relying on them.",
-                              "Audit collection is read-only; explicitly requested Python tests may have side effects.",
-                              "Source-only: DLLs and client files are never inspected; CORE assumes the required environment."]}
+              "graph_errors": [], "tests": {"status": "not_run"}}
     visited, active, total = set(), set(), 0
     auditor = VanillaForgeAuditor()
 
@@ -129,9 +123,7 @@ def audit(addon, toc_name=None, *, source_only=False):
         visited.add(path)
         active.add(path)
         text, suffix = data.decode("utf-8-sig", errors="replace"), path.suffix.lower()
-        module = {"path": relative, "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data),
-                  "review_status": "pending", "review_fields": ["ownership/lifecycle", "frequency/fanout",
-                  "identity/invalidation", "API capability alternatives", "UI delta writes", "cleanup/integration"]}
+        module = {"path": relative, "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data)}
         if not source_only and suffix in {".lua", ".xml", ".toc"}:
             target_tocs = {addon.name.casefold() + ending for ending in ('.toc', '_classicapi.toc', '_turtle.toc')}
             lint = (auditor.audit_toc_file(str(path), str(addon),
@@ -168,14 +160,13 @@ def audit(addon, toc_name=None, *, source_only=False):
     if bindings.is_file():
         walk(addon, bindings.name, "client-managed bindings")
     report["module_count"] = len(report["modules"])
-    report["review"]["pending_modules"] = len(report["modules"])
     report["status"] = "source_checks_failed" if report["graph_errors"] or any(
-        module.get("lint", {}).get("errors", {}).get("count") for module in report["modules"]) else "human_review_pending"
+        module.get("lint", {}).get("errors", {}).get("count") for module in report["modules"]) else "ok"
     return report
 
 
 def compare_reports(current, previous):
-    """Compare evidence inputs without carrying forward a human-review verdict."""
+    """Which loaded files changed between two reports."""
     def module_hashes(report):
         if not isinstance(report, dict) or report.get("format") != 1:
             raise ValueError("Comparison requires a format 1 addon audit")
@@ -203,7 +194,6 @@ def compare_reports(current, previous):
         "removed_modules": sorted(before.keys() - after.keys()),
         "load_graph_changed": previous["graph"] != current["graph"],
         "graph_errors_changed": previous.get("graph_errors") != current.get("graph_errors"),
-        "limitations": "Source equality does not verify APIs, settings, test coverage or native runtime; human review remains pending.",
     }
     result["status"] = "changed" if any(result[key] for key in (
         "changed_modules", "added_modules", "removed_modules", "load_graph_changed", "graph_errors_changed")) else "unchanged"
@@ -264,7 +254,7 @@ def main(argv=None):
     parser.add_argument("addon", type=Path)
     parser.add_argument("--toc", help="Explicit root TOC filename; otherwise inspect all root *.toc files")
     parser.add_argument("--output", type=Path, help="JSON destination outside addon; default stdout")
-    parser.add_argument("--compare", type=Path, help="Previous audit JSON; report source/load-graph changes without transferring review approval")
+    parser.add_argument("--compare", type=Path, help="An earlier report (JSON): list the files that changed since")
     parser.add_argument("--run-tests", action="store_true", help="Execute local Python unittest discovery explicitly")
     parser.add_argument("--test-start", type=Path, help="Test directory; default <addon>/tests")
     parser.add_argument("--test-pattern", default="test*.py")

@@ -46,7 +46,6 @@ class AddonAuditTests(unittest.TestCase):
         self.assertEqual(difference["removed_modules"], ["old.lua"])
         self.assertTrue(difference["load_graph_changed"])
         self.assertEqual(difference["status"], "changed")
-        self.assertEqual(current["review"]["status"], "pending")
 
     def test_byte_change_invalidates_reuse_even_when_load_graph_is_unchanged(self):
         previous = AUDIT.audit(self.addon)
@@ -55,15 +54,18 @@ class AddonAuditTests(unittest.TestCase):
         self.assertEqual(difference["changed_modules"], ["core.lua"])
         self.assertFalse(difference["load_graph_changed"])
 
-    def test_matching_source_does_not_promote_previous_review_or_runtime_claims(self):
+    def test_matching_source_from_another_folder_is_unchanged(self):
         previous = AUDIT.audit(self.addon)
-        previous["review"]["status"] = "complete"
         previous["addon"] = "retired-client/Addon"
-        current = AUDIT.audit(self.addon)
-        difference = AUDIT.compare_reports(current, previous)
+        difference = AUDIT.compare_reports(AUDIT.audit(self.addon), previous)
         self.assertEqual(difference["status"], "unchanged")
-        self.assertEqual(current["review"]["status"], "pending")
-        self.assertIn("native runtime", difference["limitations"])
+
+    def test_report_holds_no_review_ceremony(self):
+        # The old framework's pending-review fields were written on every run and read by nothing.
+        report = AUDIT.audit(self.addon)
+        self.assertEqual(report["status"], "ok")
+        self.assertFalse({"review", "limitations"} & set(report))
+        self.assertFalse({"review_status", "review_fields"} & set(report["modules"][0]))
 
     def test_comparison_rejects_missing_hash_and_duplicate_module(self):
         current = AUDIT.audit(self.addon)
@@ -108,8 +110,7 @@ class AddonAuditTests(unittest.TestCase):
         self.assertEqual(report["graph_errors"], [])
         self.assertEqual({m["path"] for m in report["modules"]},
                          {"Addon.toc", "ui/main.xml", "ui/nested/child.xml", "core.lua", "Bindings.xml"})
-        self.assertEqual(report["review"]["pending_modules"], 5)
-        self.assertTrue(all(len(m["sha256"]) == 64 and m["review_status"] == "pending" for m in report["modules"]))
+        self.assertTrue(all(len(m["sha256"]) == 64 for m in report["modules"]))
         self.assertEqual(report, AUDIT.audit(self.addon))
 
     def test_cycle_duplicate_and_missing_reference(self):
@@ -213,7 +214,7 @@ class AddonAuditTests(unittest.TestCase):
         lines = output.getvalue().splitlines()
         self.assertEqual(len(lines), 1)
         self.assertEqual(lines[0], "Addon: 2 modules, 0 graph errors, 0 lint errors, 0 warnings, tests not_run, "
-                         "compare unchanged (0 modules); status human_review_pending -> " + str(destination.resolve()))
+                         "compare unchanged (0 modules); status ok -> " + str(destination.resolve()))
 
     def test_summary_goes_to_stderr_when_json_uses_stdout(self):
         with contextlib.redirect_stdout(io.StringIO()) as output, \
@@ -287,7 +288,7 @@ class AddonAuditTests(unittest.TestCase):
             with contextlib.redirect_stdout(io.StringIO()) as output, contextlib.redirect_stderr(io.StringIO()):
                 self.assertEqual(AUDIT.main([str(self.addon), "--run-tests", "--test-start", str(start)]), code)
             report = json.loads(output.getvalue())
-            self.assertEqual(report["status"], "human_review_pending")
+            self.assertEqual(report["status"], "ok")
             self.assertEqual(report["tests"]["status"], status)
             self.assertEqual(report["tests"]["tests_run"], 1)
             self.assertEqual(report["tests"]["source_verification"]["status"], "unchanged")
@@ -314,7 +315,6 @@ class AddonAuditTests(unittest.TestCase):
         self.assertEqual(report["tests"]["runner_status"], "passed")
         self.assertEqual(report["tests"]["tests_run"], 1)
         self.assertEqual(report["modules"], before["modules"])
-        self.assertEqual(report["review"]["status"], "pending")
         difference = report["tests"]["source_verification"]
         self.assertEqual(difference["changed_modules"], ["core.lua"])
         self.assertFalse(difference["load_graph_changed"])

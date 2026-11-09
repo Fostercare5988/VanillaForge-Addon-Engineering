@@ -15,9 +15,10 @@ the DLL is loaded), so nothing else needs a version edit. What remains is the
 real work: the release-notes section in the reference, new rules in
 tools/replacements.json and the refactors the leads point to.
 
-Maintained addons are the folders in the AddOns folder that are git clones of
-the owner's repositories. The AddOns folder comes from --addons or from
-.private/workspace.json ({"addons": "<client>/Interface/AddOns", "owner": "<GitHub user>"}).
+Maintained addons are the installed addons that have a regression suite in
+regressions/ (the same meaning as in game_checks.py), so addons we only keep a
+copy of, such as BigWigs, are left out. The AddOns folder comes from --addons
+or from .private/workspace.json ({"addons": "<client>/Interface/AddOns"}).
 
 Environment: GITHUB_TOKEN (or a logged-in `gh`) avoids GitHub's anonymous
 rate limit.
@@ -83,20 +84,6 @@ def release_identity(repo: str, release: dict, tok: str | None) -> dict:
         if (dll.get("digest") or "").startswith("sha256:"):
             ident["dll_sha256"] = dll["digest"][7:]
     return ident
-
-
-def maintained_addons(addons: Path, owner: str | None) -> list[Path]:
-    found = []
-    for folder in sorted(addons.iterdir()):
-        if not (folder / ".git").exists():
-            continue
-        if owner:
-            url = subprocess.run(["git", "-C", str(folder), "remote", "get-url", "origin"],
-                                 capture_output=True, text=True).stdout
-            if owner.lower() not in url.lower():
-                continue
-        found.append(folder)
-    return found
 
 
 def lead_scan(addons: list[Path]) -> dict[str, list[str]]:
@@ -176,7 +163,8 @@ def main(argv: list[str] | None = None) -> int:
     if not addons or not addons.is_dir():
         print("\nNo AddOns folder (pass --addons or set it in .private/workspace.json); skipped the lead scan.")
         return 0
-    folders = maintained_addons(addons, settings.get("owner"))
+    from game_checks import maintained
+    folders = maintained(addons)
     leads = lead_scan(folders)
     print(f"\nReplacement leads in {len(folders)} maintained addons ({len(leads)} rules hit):")
     for rule, hits in sorted(leads.items()):

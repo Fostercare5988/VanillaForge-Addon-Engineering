@@ -143,7 +143,8 @@ checks". `python -B tools/game_checks.py` lists the open ones; `push` (game
 closed) hands them to `!ErrorLog`, where `/check` asks them one by one, runs a
 check's `/run` line and records the answer; `pull` reads the answers back.
 `find_holes.py` starts each audit with the addon's open and failed checks. A
-check answered bad is a bug to fix; one answered ok lets its note go.
+check answered bad is a bug to fix; one answered ok lets its note go; `drop`
+gives up the open ones nobody will answer.
 
 ## 4. Audit: find the holes, then close them
 
@@ -233,6 +234,9 @@ take away something players rely on.
   and their TOC (no `## Dependencies: !!!ClassicAPI`: the tooltip shows it), README
   and headers name no version, so a release changes no addon file by itself.
 - Add a known pattern only when a hazard recurs and is not covered already.
-- Facts about one addon belong in that addon's `CLAUDE.md`, not here.
+- Facts about one addon belong in that addon's `CLAUDE.md`, not here. That file
+  stays local: addon repos ignore `CLAUDE.md` and `AGENTS.md`.
+- "Maintained" means one thing in every tool: an installed addon with a suite
+  in `regressions/`.
 - Facts about one server belong in its profile. A new server starts from
   [servers/TEMPLATE.md](servers/TEMPLATE.md).
