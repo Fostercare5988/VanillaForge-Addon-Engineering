@@ -4,3 +4,6 @@ __pycache__/
 .DS_Store
 Thumbs.db
 /.private/
+CLAUDE.md
+AGENTS.md
+.claude/

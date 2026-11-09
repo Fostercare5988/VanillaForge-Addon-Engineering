@@ -206,7 +206,11 @@ take away something players rely on.
 4. Report what changed, the test results and what to check in game. Tests are
    not in-game proof; say which behaviour still needs a game check.
 5. Git: run `git status` before editing. Commit each coherent step after its
-   checks pass. Push every commit after its checks pass (user's standing order, 2026-11-01). Never force-push.
+   checks pass. Push every commit after its checks pass (user's standing order, 2026-11-01).
+   Force-push only to take something out of a repo's history when the user asks
+   for that: bundle the repo first (`git bundle create ... --all`), push with
+   `--force-with-lease`, and say what was rewritten. Never to get past a
+   rejected push (user's order, 2026-11-09).
 
 ## 6. Where things are
 
@@ -235,7 +239,8 @@ take away something players rely on.
   and headers name no version, so a release changes no addon file by itself.
 - Add a known pattern only when a hazard recurs and is not covered already.
 - Facts about one addon belong in that addon's `CLAUDE.md`, not here. That file
-  stays local: addon repos ignore `CLAUDE.md` and `AGENTS.md`.
+  stays local: every repo, this one too, ignores `CLAUDE.md`, `AGENTS.md` and
+  `.claude/`.
 - "Maintained" means one thing in every tool: an installed addon with a suite
   in `regressions/`.
 - Facts about one server belong in its profile. A new server starts from
