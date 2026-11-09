@@ -6,7 +6,7 @@
 >
 > Source basis: `brues-code/ClassicAPI`, default branch `master`, official `README.md`, official `docs/API.md`, and selected implementation/source references.
 >
-> Pinned version: `classicapi.reference_version` in [UPSTREAM_VERSIONS.json](UPSTREAM_VERSIONS.json), always the latest release; VanillaForge supports nothing older. Release notes by version: [v1.17.0 to v1.17.3](#v1170-to-v1173-api-and-behavior-contracts), [v1.17.4 to v1.17.8](#v1174-to-v1178-api-and-behavior-contracts), [v1.17.9 to v1.17.10](#v1179-to-v11710-api-and-behavior-contracts), [v1.17.11](#v11711-api-and-behavior-contracts), [v1.17.12 to v1.18.5](#v11712-to-v1185-api-and-behavior-contracts) and [v1.19.3 to v1.20.4](#v1193-to-v1204-api-and-behavior-contracts) (1.19.0 to 1.19.2 are in the sections they touch).
+> Pinned version: `classicapi.reference_version` in [UPSTREAM_VERSIONS.json](UPSTREAM_VERSIONS.json), always the latest release; VanillaForge supports nothing older, so no entry says when it arrived. What changes how an addon is written is in [Part XIII](#part-xiii--behaviour-notes), by topic.
 >
 > IMPORTANT: ClassicAPI is actively developed. This document is a local snapshot, not a claim that future versions cannot add or change functionality. If installed ClassicAPI is newer and a task depends on newly added behavior not present here, inspect the installed/current source and update this reference deliberately.
 
@@ -52,8 +52,7 @@ X*10000 + Y*100 + Z
 Therefore:
 
 ```text
-v1.18.5 -> 11805
-v1.20.4 -> 12004
+v1.2.3 -> 10203
 ```
 
 The VanillaForge support baseline is the latest release, pinned in
@@ -75,7 +74,7 @@ version. Addons check that ClassicAPI is loaded
 (`type(CLASSIC_API_VERSION) == "number"`), never a number, and their TOC,
 README and file headers say "ClassicAPI" without one (since 2026-10-30;
 the player always runs the latest release). A comment may say when a
-feature arrived ("UNIT_AURA_DELTA (1.17.10)"): that stays true. A new
+feature arrived: that stays true. A new
 release is taken with `python -B tools/upgrade_dll.py`, which shows what
 changed, pins it, and lists the leads in every addon; the hole finder
 reports any addon that names a version again.
@@ -191,9 +190,9 @@ toggle is off, native zero-argument dispatch is restored. Inspect the active
 setting and the actual registration/call path before adopting positional
 handlers, and account for the effect on other addons before changing it.
 See the pinned [script-argument contract](https://github.com/brues-code/ClassicAPI/blob/7ccbbaaf68bcde6b29b71806981d0338e0577189/docs/API.md#setmodernscriptargsenable--getmodernscriptargs).
-Since 1.17.9, frame methods work as handlers, clicks get `down`, enter and
+Frame methods work as handlers, clicks get `down`, enter and
 leave get `motion`, and `event` is restored per handler; see
-[Script handler arguments (1.17.9)](#script-handler-arguments-1179).
+[Script handler arguments](#script-handler-arguments).
 
 Do not carry forward old framework rules that categorically prohibit `(self, event, ...)` without first considering ClassicAPI's active script-argument behavior.
 
@@ -222,7 +221,6 @@ string.gmatch
 string.match
 string.reverse
 
--- 1.19.3 / 1.20.0
 gmatch                       -- global, as strmatch
 table.removemulti(t [, pos [, count]])
 string.byte(s, i, j)         -- a range; strbyte too
@@ -246,7 +244,7 @@ it. A table value of `nil`/`false` keeps the match, as in 5.1.
 
 ### 4.6 Table lengths and weak values
 
-[SOURCE-VERIFIED] ClassicAPI v1.15.12's `src/table/Length.cpp` hooks the stored-length
+[SOURCE-VERIFIED] ClassicAPI's `src/table/Length.cpp` hooks the stored-length
 reader used by `table.getn`, `table.insert`, `table.remove`, `table.concat`,
 `table.sort`, `table.foreachi`, and `unpack`. For ordinary tables whose stored final
 slot is nil, it can heal the answer to a border. A border is not necessarily the
@@ -276,7 +274,7 @@ Do not mechanically replace `table.getn` with `#` or remove `table.setn` in code
 that depends on these contracts. The transpiled `#` uses a separate border path;
 the weak-value exception here concerns the stored-length reader.
 
-Evidence: [v1.15.12 source/docs commit](https://github.com/brues-code/ClassicAPI/commit/fde3beca9dba18e7327802eb094b5bff81f39d47).
+Evidence: [source/docs commit](https://github.com/brues-code/ClassicAPI/commit/fde3beca9dba18e7327802eb094b5bff81f39d47).
 The maintainer reports in-game verification of the three-slot case and disappearance
 of Compost errors in that commit. That is **upstream-reported empirical evidence**,
 not Niko-local or VanillaForge runtime verification. [UNVERIFIED - TEST FIRST]
@@ -399,7 +397,7 @@ GetAddOnInfo("!!!ClassicAPI")
 and can be referenced by dependency metadata.
 
 A physical `Interface/AddOns/!!!ClassicAPI/` copy overrides the embedded files only
-when it holds an empty `.classicapi-dev` file or has a newer `## Version:` (1.18.0+).
+when it holds an empty `.classicapi-dev` file or has a newer `## Version:`.
 The player installs only the DLL; there is no addon folder to copy.
 
 ---
@@ -502,10 +500,10 @@ Nameplate unit tokens participate in UnitX calls and unit events.
 
 This is the preferred architecture over WorldFrame child scraping when the addon needs authoritative nameplate identity.
 
-Plate alpha follows vanilla rules, not the 1.17 inherited-alpha model; see
-[Nameplate alpha (1.17.8)](#nameplate-alpha-1178).
+Plate alpha follows vanilla rules, not the inherited-alpha model of other frames; see
+[Nameplate alpha](#nameplate-alpha).
 
-**Delivery Resilience (v1.15.13+):** [SOURCE-VERIFIED]
+**Delivery Resilience:** [SOURCE-VERIFIED]
 The dispatcher records a frame as announced only after it issues
 `NAME_PLATE_CREATED`. A new GUID's `NAME_PLATE_UNIT_ADDED` waits for that frame's
 announcement and a claimed ADDED event slot. If these conditions are not met,
@@ -568,8 +566,7 @@ Arbitrary texture dimensions/shapes are supported subject to GPU limits.
 
 ## 13. Tooltip Capacity
 
-[SOURCE-VERIFIED] Since 1.17.9 a `GameTooltipTemplate` tooltip has no line limit
-(1.17.0 to 1.17.8: a fixed 60). It keeps the stock 30 line pairs and, when an
+[SOURCE-VERIFIED] A `GameTooltipTemplate` tooltip has no line limit. It keeps the stock 30 line pairs and, when an
 added line takes the last pair, builds the next `TextLeftN` / `TextRightN`, so
 one spare pair always exists. Do not assume `TextLeftN` exists beyond
 `NumLines() + 1`, and do not create lines yourself.
@@ -644,10 +641,9 @@ returns the stored icon; `C_Macro.GetMacroIcon` returns the displayed icon. Expl
 spell IDs can display unlearned spells (unusable); the bare directive derives its
 answer from cast/use lines. Unknown foreign conditions are left to their owning
 macro addon. `C_Macro.SetMacroDisplay(slot, value)` publishes an external answer;
-`false` claims an unmatched display and `nil` releases ownership. These are
-pre-v1.15.11 behaviors, not new APIs in this refresh.
+`false` claims an unmatched display and `nil` releases ownership.
 
-**Spell-unlearn cleanup (v1.15.11+, retained in v1.15.12):** [SOURCE-VERIFIED]
+**Spell-unlearn cleanup:** [SOURCE-VERIFIED]
 the engine's spell-unlearn sweep must not remove a managed macro from an action-bar
 slot merely because its display cache names the unlearned spell. Such removal
 would otherwise be sent to the server and persist; this concerns the action-bar
@@ -666,9 +662,8 @@ unlearned; this deliberately differs from stock cleanup. Unmanaged macros retain
 stock behavior; a macro without a directive is protected only if externally
 managed. This is not a blanket promise that every macro survives every removal.
 
-Evidence: [v1.15.11 macro source and offsets](https://github.com/brues-code/ClassicAPI/commit/452f3c14fc3270420355edecd82e27868fc19d63).
-The complete range contains this one macro implementation commit and no further
-macro change in v1.15.12; see the [full audit](archive/docs/CLASSICAPI_1.15.12_AUDIT.md)
+Evidence: [macro source and offsets](https://github.com/brues-code/ClassicAPI/commit/452f3c14fc3270420355edecd82e27868fc19d63).
+See the [full audit](archive/docs/CLASSICAPI_1.15.12_AUDIT.md)
 for the earlier macro lineage and unchanged KP-53/KP-54 contracts.
 
 ### 14.2 Conditional slash-command families
@@ -793,7 +788,7 @@ GetActionInfo
 
 Additional source-confirmed action helpers include modernized action state functions in the implementation, but use the official API browser for exact current exposure.
 
-Range and usable events (1.19.1), which replace per-frame polling of action slots:
+Range and usable events, which replace per-frame polling of action slots:
 
 - `C_ActionBar.EnableActionRangeCheck(slot, enable)`: a count per slot (1 to
   120); each `true` adds one, each `false` removes one; `/reload` resets it.
@@ -808,7 +803,7 @@ Range and usable events (1.19.1), which replace per-frame polling of action slot
   whose action changes gets `ACTIONBAR_SLOT_CHANGED` instead: read
   `IsUsableAction` there.
 
-Slot queries (1.19.3), which replace slot loops and tooltip reads:
+Slot queries, which replace slot loops and tooltip reads:
 
 - `C_ActionBar.FindSpellActionButtons(spell [, set])`: the slots (1 to 120)
   that hold the spell itself, or nothing. `spell` is an ID, a link or a
@@ -823,9 +818,9 @@ Slot queries (1.19.3), which replace slot loops and tooltip reads:
   `IsStackableAction(slot)` (1/nil) and `C_ActionBar.IsStackableAction`
   (`true`/`false`), `C_ActionBar.IsMacroActionWithShowTooltip(slot)`.
 
-StatusBar (1.19.1): the standard fill moves the bar texture's rect, so a region
+StatusBar: the standard fill moves the bar texture's rect, so a region
 anchored to `GetStatusBarTexture()` (a spark) follows the fill, also under
-`SetTimerDuration`. `GetAddOnMemoryUsage` (1.19.1) counts the live objects.
+`SetTimerDuration`. `GetAddOnMemoryUsage` counts the live objects.
 
 ---
 
@@ -905,13 +900,13 @@ ClearOverrideBindings
 
 ```lua
 GetCurrentChatGUID
-GetCurrentChatEvent   -- 1.17.3
+GetCurrentChatEvent
 ```
 
-Since 1.17.0 every `CHAT_MSG_*` event also carries `arg11` (lineID) and `arg12`
-(sender GUID). See [v1.17 chat](#chat-arguments-and-getcurrentchatevent).
+Every `CHAT_MSG_*` event also carries `arg11` (lineID) and `arg12`
+(sender GUID). See [Chat arguments](#chat-arguments-and-getcurrentchatevent).
 
-Name completion for edit boxes (1.19.0, API only; it draws nothing):
+Name completion for edit boxes (API only; it draws nothing):
 
 ```lua
 C_AutoComplete.GetAutoCompleteResults   -- (name, numResults, cursorPosition, allowFullMatch, includeFlags, excludeFlags)
@@ -1015,7 +1010,7 @@ C_CVar.SetTempCVar
 
 ### Temporary Session CVars
 
-ClassicAPI v1.15.13 introduces non-persistent session CVar manipulation:
+Non-persistent session CVar manipulation:
 
 ```lua
 C_CVar.SetTempCVar(name, value)
@@ -1062,7 +1057,7 @@ GetCursorInfo
 CursorHasMacro
 ```
 
-CVar `expandedCursors` (1.20.0, default `0`; ClassicAPI options, Interface
+CVar `expandedCursors` (default `0`; ClassicAPI options, Interface
 page): the cursor over an NPC shows its first service (quest `!`/`?`, anvil
 for repairs, hearthstone for an inn, horseshoe for a stable, then the usual
 icons), grey when out of reach, and a fish hook over your bobber. The
@@ -1103,7 +1098,7 @@ C_Container.UseHearthstone
 GetItemCooldown
 ```
 
-Free slots (1.19.3): `GetContainerNumFreeSlots(bag)` and
+Free slots: `GetContainerNumFreeSlots(bag)` and
 `GetContainerFreeSlots(bag)` also take the main bank (`-1`) and the bank bags
 (`5`..`10`) while the bank window is open. A bag that is not there (keyring,
 empty slot, closed bank) gives only `0`, with `bagFamily` nil (before: `0, 0`).
@@ -1640,11 +1635,11 @@ OffhandHasWeapon
 ```
 
 `OffhandHasWeapon()` returns `1` / `nil` (engine) and `IsDualWielding()` `true` /
-`false` (1.17.10); see [Small changes (1.17.10)](#small-changes-11710).
+`false`; see [Small changes](#dual-wield-feign-death-and-edit-box-history).
 
 This namespace should be checked before implementing tooltip-based item metadata extraction.
 
-[SOURCE-VERIFIED] The pinned [v1.15.16 API reference](https://github.com/brues-code/ClassicAPI/blob/7ccbbaaf68bcde6b29b71806981d0338e0577189/docs/API.md)
+[SOURCE-VERIFIED] The [API reference](https://github.com/brues-code/ClassicAPI/blob/7ccbbaaf68bcde6b29b71806981d0338e0577189/docs/API.md)
 documents `GetLootRollItemID(rollID)` as reading the engine's active roll list,
 using the same item ID as `GetLootRollItemLink` without parsing a string. It can
 return nil when no matching roll exists. Prefer a verified direct ID accessor
@@ -1771,11 +1766,10 @@ ClassicAPI categorizes macro icons across two dimensions:
   - **Pass 1** (MPQ archive walk): Prefix-filtered for `Ability_*` / `Spell_*`.
   - **Pass 2** (Disk walk): Prefix-filtered for `Ability_*` / `Spell_*` in `<basePath>\Interface\Icons\`.
   - **Pass 3** (Disk walk): Extension-only filter (`.blp`/`.tga`) for `Interface\Icons\`.
-- Before v1.15.14, an unmodified icon loader with no loose disk icons listed only `Ability_*`/`Spell_*` icons. The previously recorded count of 746 is a historical example, not a portable count or a current baseline invariant. v1.15.14 explicitly adds the question mark as described below.
 - Putting custom `INV_*.blp` files directly into `Interface\Icons\` allows them to enter the engine's list via pass 3 after restarting the client.
 - The ~5,226 `INV_*` icons shipped inside MPQs are rejected by pass 1 prefix filtering. ClassicAPI hooks all three enumeration callbacks at their entry point, capturing these archive item icons into a separate list for `GetMacroItemIcons`.
 - `GetMacroIconInfo(index)` returns `""` (empty string) rather than `nil` when queried with an out-of-bounds index.
-- Call `GetNumMacroIcons()` before iterating `GetMacroIconInfo(index)`; do not assume the latter initializes the list. The four ClassicAPI append-to-table enumerators above also call `EnsureLoaded()` when the engine count is zero. This loading behavior predates v1.15.14.
+- Call `GetNumMacroIcons()` before iterating `GetMacroIconInfo(index)`; do not assume the latter initializes the list. The four ClassicAPI append-to-table enumerators above also call `EnsureLoaded()` when the engine count is zero.
 
 ### Question-mark icon availability
 
@@ -1941,11 +1935,11 @@ C_Spell.UnitChannelInfo(unit)
 
 plus `UNIT_SPELLCAST_*` events where appropriate.
 
-1.19.0 adds duration objects for casts (see Duration under Time):
+Duration objects for casts (see Duration under Time):
 `UnitCastingDuration(unit)` / `UnitChannelDuration(unit)`. A call returns a
 snapshot; call again on `UNIT_SPELLCAST_DELAYED` / `_CHANNEL_UPDATE`.
 
-Spell alerts and proc glows (1.19.0, API only; the addon draws the art):
+Spell alerts and proc glows (API only; the addon draws the art):
 
 ```lua
 C_SpellActivationOverlay.IsSpellOverlayed
@@ -2031,11 +2025,11 @@ C_SwingTimer.IsTargetWithinSwingRange(swingType)
 ```lua
 GetPhysicalScreenSize
 CopyToClipboard
-GetCallstackHeight             -- 1.19.0, for error handlers
+GetCallstackHeight             -- for error handlers
 GetErrorCallstackHeight
 SetErrorCallstackHeight
-debuglocals                    -- 1.20.0, only while an error handler runs
-SetPortraitTextureFromCreatureDisplayID  -- 1.20.0, a portrait without a unit
+debuglocals                    -- only while an error handler runs
+SetPortraitTextureFromCreatureDisplayID  -- a portrait without a unit
 ```
 
 In an error handler, `GetCallstackHeight() - GetErrorCallstackHeight() + 1` is
@@ -2045,10 +2039,10 @@ and upvalue (frames by name, tables one level deep, at most 4095 bytes; `true`
 leaves out functions and userdata) and returns nothing outside a handler.
 `!ErrorLog` saves both with each error.
 
-Event `UI_SCALE_CHANGED` (1.19.0, no payload) fires when the game applies the
+Event `UI_SCALE_CHANGED` (no payload) fires when the game applies the
 interface scale to `UIParent`: scale or `useUiScale` changed, or the window
 resized. ClassicAPI also replaces the stock Lua error box with a Lua error
-window (`/luaerrors`, `/luaerrors clear`; from 1.20.0 it shows each error's
+window (`/luaerrors`, `/luaerrors clear`; it shows each error's
 locals); it stays closed when `!BugGrabber`
 or an addon's own error handler takes the errors.
 
@@ -2138,7 +2132,7 @@ C_DateAndTime.GetServerTimeLocal
 
 This should be checked before writing custom timer queues or home-grown server-time synchronization.
 
-Durations (1.19.0): `C_DurationUtil.CreateDuration()` holds a start and a
+Durations: `C_DurationUtil.CreateDuration()` holds a start and a
 length (`SetTimeFromStart`, `GetRemainingDuration`, `GetElapsedPercent`,
 `HasExpired`, `Format*Duration`). `C_DurationUtil.CreateDurationTextBinding()`
 writes a countdown into a font string by itself (no `SetText` per frame), and
@@ -2369,14 +2363,14 @@ Aura indices (`1, 2, ... N`) are compacting array positions, **not stable aura i
 - When an aura expires or is dispelled at index `k`, all higher-indexed auras immediately shift downward to fill the vacant index.
 - Never assume an aura index or button frame remains bound to the same spell or aura instance across updates.
 - Cooldown frames, OnUpdate scripts, and duration caches must never be keyed to transient array indices. Key cached active state by `(spellId, source)` or fully reset the button frame upon identity mismatch.
-- Since 1.17.0 the order is sorted, not slot order: see [v1.17 auras](#auras).
-- Since 1.17.10 `AuraData.auraInstanceID` is a stable identity for one
+- The order is sorted, not slot order: see [Auras](#auras).
+- `AuraData.auraInstanceID` is a stable identity for one
   application; key caches by it. See
-  [`UNIT_AURA_DELTA`](#aura-instance-ids-and-unit_aura_delta-11710).
+  [`UNIT_AURA_DELTA`](#aura-instance-ids-and-unit_aura_delta).
 
 ### Aura Presence, Timing and Refresh
 
-[SOURCE-VERIFIED] In [v1.15.15 aura data enrichment](https://github.com/brues-code/ClassicAPI/blob/71805db62f1e8a154477033dc1f50960c535af8b/src/aura/Data.cpp),
+[SOURCE-VERIFIED] In [aura data enrichment](https://github.com/brues-code/ClassicAPI/blob/71805db62f1e8a154477033dc1f50960c535af8b/src/aura/Data.cpp),
 remote-unit timing depends on observed application/cast state. A missing or
 elapsed cached expiration can yield `expirationTime == 0` while the aura is
 still reported. Zero means no known expiration, not proof of removal or a
@@ -2394,7 +2388,7 @@ but leave an unchanged sweep running. See `ENGINE_REFERENCE.md` §12.10.
 
 - `HELPFUL` / `HARMFUL`: Filter buffs or debuffs by polarity.
 - `PLAYER` / `!PLAYER`: `[EMPIRICALLY VERIFIED]` for player/pet inclusion; `[SOURCE-VERIFIED]` for attribution and cache semantics (`src/aura/Data.h`).
-  - `PLAYER` matches only auras attributable to the local player or the player's pet (`PlayerGuid()` or `VAR_PET_GUID`), matching modern `AuraUtil.AuraFilters.Player`. Auras whose caster is unknown or unresolved (e.g. cache misses, or auras predating observation this session) are excluded. (In v1.15.9 and earlier, `PLAYER` tested only `PlayerGuid()`, which silently dropped pet auras such as Hunter pet Scorpid Poison because `SMSG_SPELL_GO` attributes pet casts to the pet's GUID).
+  - `PLAYER` matches only auras attributable to the local player or the player's pet (`PlayerGuid()` or `VAR_PET_GUID`), matching modern `AuraUtil.AuraFilters.Player`. Auras whose caster is unknown or unresolved (e.g. cache misses, or auras predating observation this session) are excluded.`, which silently dropped pet auras such as Hunter pet Scorpid Poison because `SMSG_SPELL_GO` attributes pet casts to the pet's GUID).
   - `!PLAYER` is the strict complement: it matches auras attributable to other casters AND any aura whose caster is unknown or unresolved due to missing cache attribution. Because unobserved casts lack caster data, `!PLAYER` must **not** be treated as proof that an aura was cast by a confirmed third party.
 - `DISPELLABLE` / `!DISPELLABLE`: Filter by whether the aura can be dispelled, purged, or stolen.
 - `CROWD_CONTROL` / `!CROWD_CONTROL`: Filter by crowd-control mechanic flags.
@@ -2432,7 +2426,7 @@ VOICE_CHAT_TTS_VOICES_UPDATE
 
 ### Event Reservation Stability Note
 
-- `VOICE_CHAT_TTS_VOICES_UPDATE`: `[SOURCE-VERIFIED]` In `src/event/Custom.cpp` (commit `6812771a896f8c7b3b5c97686c518266085f2d8f`), the custom event reservation ceiling `MAX_RESERVED` was raised from 64 to 96, removing the reservation-ceiling overflow condition. ClassicAPI v1.15.9 had 63 reservations (under the 64-slot ceiling). During development toward v1.15.10, the addition of the two swing events brought the count to 65 (60 file-scope plus 5 lazy TTS reservations on clients without VanillaTTS), causing the 65th reservation (`VOICE_CHAT_TTS_VOICES_UPDATE`) to exceed the 64-slot ceiling (`Slot()` stayed -1 and `Fire()` no-opped). Raising `MAX_RESERVED` to 96 resolved this overflow and accommodates subsequent additions (66 reservations in v1.15.10 after `WEAPON_SLOT_CHANGED`).
+- `VOICE_CHAT_TTS_VOICES_UPDATE`: `[SOURCE-VERIFIED]` In `src/event/Custom.cpp` (commit `6812771a896f8c7b3b5c97686c518266085f2d8f`), the custom event reservation ceiling `MAX_RESERVED` was raised from 64 to 96, removing the reservation-ceiling overflow condition.
 
 ---
 
@@ -2494,8 +2488,8 @@ PLAYER_SWING_RANGE_UPDATE
   - **Coalescing:** Coalesced on `WorldTick` to at most once per swing type per frame. Multiple hits at the exact same moment (e.g. Windfury, Sword Specialization) collapse into one event with the latest remaining time.
   - **Parry Haste:** Cuts delay to 20% of unhasted delay if remaining time was between 20% and 60%, or subtracts 40% if > 60%. Left alone if < 20%.
   - **Range Gating:** Does not fire on attack-start if declared while out of melee range; fires only once in reach.
-  - **Only while attacking (1.17.0):** a cast reset fires the event only while auto-attack is on. A buff cast out of melee no longer reports a swing.
-  - **Target switch (1.20.4):** a mid-attack target switch (another `SMSG_ATTACKSTART`) no longer re-fires `MainHand` with the time left in the running swing; only a cast reset held back before the attack is reported there. Before, a nearly finished swing read as a fresh short one.
+  - **Only while attacking:** a cast reset fires the event only while auto-attack is on. A buff cast out of melee no longer reports a swing.
+  - **Target switch:** a mid-attack target switch (another `SMSG_ATTACKSTART`) no longer re-fires `MainHand` with the time left in the running swing; only a cast reset held back before the attack is reported there. Before, a nearly finished swing read as a fresh short one.
   - **Turtle WoW Slam Override:** Registers 11 player-castable Slam ranks (`1464`, `8820`, `11430`, `11604`, `11605`, `45599`, `45960`, `45961`, `45963`, `45964`, `53214`) because Turtle WoW's server resets swing timers on Slam despite client `Spell.dbc` attributes.
 
 ### `PLAYER_SWING_RANGE_UPDATE` event
@@ -2529,7 +2523,7 @@ PLAYER_STOPPED_TURNING
 
 ### Modifier event state ordering
 
-[SOURCE-VERIFIED] At the v1.15.15 reference commit, `MODIFIER_STATE_CHANGED`
+[SOURCE-VERIFIED] `MODIFIER_STATE_CHANGED`
 provides `key, down` (`LSHIFT`, `RSHIFT`, `LCTRL`, `RCTRL`, `LALT`, `RALT`;
 numeric 1/0). ClassicAPI updates its modifier bitmap before firing the event
 from a thread message hook, before the engine dispatches that key message.
@@ -2614,12 +2608,11 @@ UNIT_SPELLCAST_CHANNEL_UPDATE
 UNIT_SPELLCAST_CHANNEL_STOP
 UNIT_SPELLCAST_RETICLE_TARGET
 UNIT_SPELLCAST_RETICLE_CLEAR
-UNIT_SPELLCAST_INTERRUPTIBLE       -- 1.17.0, target and focus only
-UNIT_SPELLCAST_NOT_INTERRUPTIBLE   -- 1.17.0, target and focus only
+UNIT_SPELLCAST_INTERRUPTIBLE       -- target and focus only
+UNIT_SPELLCAST_NOT_INTERRUPTIBLE   -- target and focus only
 ```
 
-1.17.0 changed when `FAILED` and `INTERRUPTED` fire; see
-[v1.17 spellcast](#spellcast-events).
+When `FAILED` and when `INTERRUPTED` fires: see [Spellcast events](#spellcast-events).
 
 The official README snapshot documents payloads containing combinations of:
 
@@ -2756,14 +2749,14 @@ Keep GlueXML and in-world addon design separate.
 
 ## 88. Debug Tools
 
-From 1.18.0 the DLL embeds the debug tools as `ClassicAPI_DebugTools`, a hidden,
+The DLL embeds the debug tools as `ClassicAPI_DebugTools`, a hidden,
 always-enabled addon that loads the first time one of its commands runs. Nothing
 is installed and nothing loads until then, so in-game checks may use them:
 
 ```text
 /dump <expr>      a value, tables and all returns
 /etrace           event trace window
-/fstack           frames under the cursor (1.18.0: highlight, anchors, source file)
+/fstack           frames under the cursor (highlight, anchors, source file)
 /tinspect <expr>  table inspector
 /luaerrors
 ```
@@ -2833,9 +2826,9 @@ UNIT_SPELLCAST_*
 when they provide the needed source of truth.
 
 For hits, misses, heals, aura changes, interrupts, dispels and deaths, prefer
-`COMBAT_LOG_EVENT_UNFILTERED` (1.17.0) or the NamPower spell events over
+`COMBAT_LOG_EVENT_UNFILTERED` or the NamPower spell events over
 parsing `CHAT_MSG_COMBAT_*` / `CHAT_MSG_SPELL_*` text. See
-[v1.17 combat log](#combat-log).
+[Combat log](#combat-log).
 
 ---
 
@@ -2876,7 +2869,7 @@ BAG_UPDATE_DELAYED
 
 when appropriate.
 
-ClassicAPI v1.15.13 adds equipment-slot grouping to its existing native sorter.
+The native sorter groups equipment by slot.
 Use it when that ordering meets the addon's requirements; consult
 [the container contract](#equipment-slot-grouping-in-sortbags) for the exact
 ordering, asynchronous behavior and bank/data constraints. `BAG_UPDATE_DELAYED`
@@ -3109,31 +3102,31 @@ Before writing a workaround for a limitation commonly associated with stock WoW 
 ClassicAPI exists specifically to make many of those limitations obsolete.
 
 
-## Tooltip units and equipment sets (since 1.15.15)
+---
+
+# PART XIII — BEHAVIOUR NOTES
+
+What changes how an addon is written, by topic. It comes from upstream's
+`docs/API.md` and commit messages at the pinned release; grep
+`.private/upstream/classicapi/docs/API.md` for full payloads and method tables.
+[UNVERIFIED - TEST FIRST] Unless a note says otherwise, nothing here has been
+checked in game on OctoWoW.
+
+## Tooltip units and equipment sets
 [SOURCE-VERIFIED] GameTooltip:GetUnit() returns (name, unitToken) or nothing when no unit is shown. SetUnit retains its input token; world hover uses mouseover; unit-attribute frames retain their token, including offline/far group members. Binding exists before OnTooltipSetUnit. GetUnitGUID remains (name, guid) and now resolves roster/name-cache names without a live object. Same-GUID world hover while an existing SetUnit tooltip stays visible can retain the earlier token. Tokens are mutable; use GUID identity for retained references.
 
 [SOURCE-VERIFIED] C_EquipmentSet.PickupEquipmentSet(setID) puts a native set on the cursor; unknown IDs do nothing. GetCursorInfo and GetActionInfo return "equipmentset", setName; the second value is a name, not a numeric ID. CURSOR_CHANGED reports Enum.UICursorType.EquipmentSet. Action clicks fire WEAR_EQUIPMENT_SET(setID); the event alone does not equip. The bundled EquipmentManager checks item locks and casting, then calls UseEquipmentSet. Do not add duplicate equip handlers.
 
 Set action placements persist in the per-character native equipment-set file, not addon SavedVariables or server action type. Rename/save repaint buttons; deleting a set clears its buttons. Native sets do not automatically import addon outfit schemas. Item/spell trackers must classify type before inferring identity from icons.
-[UNVERIFIED - TEST FIRST] Verify tooltip tokens/events for live/offline roster units and action pickup/place/swap/use/delete/relogin. No local runtime verification is claimed. See [v1.15.15 audit](archive/docs/CLASSICAPI_1.15.15_AUDIT.md).
+[UNVERIFIED - TEST FIRST] Verify tooltip tokens/events for live/offline roster units and action pickup/place/swap/use/delete/relogin. No local runtime verification is claimed. See [the release audit](archive/docs/CLASSICAPI_1.15.15_AUDIT.md).
 
-## Quest log, tooltips, hooks and macros (since 1.16.0)
-[SOURCE-VERIFIED] The pinned [v1.16.0 API reference](https://github.com/brues-code/ClassicAPI/blob/99de63755bdc368cf8d35ce3a09dc46dafc20930/docs/API.md) documents `C_QuestLog.GetInfo(index)` as a row-info table which does not contain completion state. `C_QuestLog.GetQuestLogTitle(index)` returns a modern row tuple; `isComplete` is `1` for complete, `-1` for failed, and `nil` otherwise. Its third value is `suggestedGroup` (always `0` here), unlike the legacy global `GetQuestLogTitle` third-value quest tag.
+## Quest log, tooltips, hooks and macros
+[SOURCE-VERIFIED] The [API reference](https://github.com/brues-code/ClassicAPI/blob/99de63755bdc368cf8d35ce3a09dc46dafc20930/docs/API.md) documents `C_QuestLog.GetInfo(index)` as a row-info table which does not contain completion state. `C_QuestLog.GetQuestLogTitle(index)` returns a modern row tuple; `isComplete` is `1` for complete, `-1` for failed, and `nil` otherwise. Its third value is `suggestedGroup` (always `0` here), unlike the legacy global `GetQuestLogTitle` third-value quest tag.
 
 [SOURCE-VERIFIED] `GameTooltip:AddTexture` inserts an icon only on an eligible line and returns success/failure. `HookScript` forwards the same script arguments to both handlers; `hooksecurefunc` runs its callback after the original, forwards arguments, and preserves original return values. Macro APIs accept names as well as indexes. For an unknown name, `GetMacroInfo` returns nils, `PickupMacro` / `DeleteMacro` do nothing, and `EditMacro` changes no macro and returns the first empty slot or 0. `string.trim` and `string.join` are also documented.
 
 
-## v1.17.0 to v1.17.3 API and behavior contracts
-
-[SOURCE-VERIFIED] From the pinned
-[v1.17.3 API reference](https://github.com/brues-code/ClassicAPI/blob/b5aed30a5db5ef033dd9a6619d8f74310787c4c9/docs/API.md)
-and the `v1.16.0...v1.17.3` commit messages. Grep `.private/upstream/classicapi/docs/API.md`
-for full payloads. 1.17.1 to 1.17.3 are small: native Cooldown drawing (1.17.1),
-the AddOn Options button (1.17.2), tooltip spell IDs, gossip POI and
-`GetCurrentChatEvent` (1.17.3). [UNVERIFIED - TEST FIRST] Nothing here has been
-checked in game on OctoWoW yet.
-
-### Combat log
+## Combat log
 
 `COMBAT_LOG_EVENT_UNFILTERED` fires once per combat event the client receives
 (the area near you). `COMBAT_LOG_EVENT` fires only for events that pass the
@@ -3160,11 +3153,8 @@ still fire unchanged.
   `MAINASSIST` flag bits. `SPELL_CAST_FAILED` is for your own casts only.
   `SPELL_CAST_START` has no target, and a spell with a cast time gets no
   `SPELL_CAST_SUCCESS`. Dose `amount` is the stack count after the change.
-- Before 1.17.10: `overkill` and `overhealing` are always 0;
-  `SPELL_AURA_REFRESH`, `SPELL_SUMMON` and `SPELL_CREATE` do not fire;
-  `DAMAGE_SHIELD`, `SPELL_DISPEL` and `SPELL_DISPEL_FAILED` have `spellId` 0;
-  `SPELL_INSTAKILL` has no source. From 1.17.10 see
-  [Combat log additions](#combat-log-additions-11710).
+- Refreshes, summons, overkill and the spells behind shields and dispels: see
+  [Combat log additions](#combat-log-additions).
 - Some servers send no `SPELL_INTERRUPT` for an interrupt that also deals
   damage (Pummel, Kick, Earth Shock). [UNVERIFIED - TEST FIRST] on OctoWoW.
 - Flags are `COMBATLOG_OBJECT_*` globals (each group has a `_MASK`).
@@ -3184,7 +3174,7 @@ still fire unchanged.
   damage shields, dispels, interrupts and deaths in one stream. Pick by what the
   feature needs and by cost.
 
-### Native Cooldown frame (1.17.1)
+## Native Cooldown frame
 
 `CreateFrame("Cooldown", name, parent, "CooldownFrameTemplate")` is a native
 CSimpleFrame that draws its own sweep, flash and edge. `SetCooldown(start, duration)`
@@ -3194,8 +3184,7 @@ works. `CooldownFrame_SetTimer(cd, start, duration, enable)` calls
 `SetCooldown`, or hides the frame when a value is not above 0.
 `CooldownFrameTemplate` makes the frame fill its parent and start hidden. A new
 frame that is shown before `SetCooldown` hides itself after one second.
-The later clients' methods arrived in 1.17.9: see
-[Cooldown API (1.17.9)](#cooldown-api-1179).
+The later clients' methods: see [Cooldown API](#cooldown-api).
 
 **Displacement:** `CreateFrame("Model", ..., "CooldownFrameTemplate")` and XML
 `<Model inherits="CooldownFrameTemplate">` are still the old 1.12 Model sweep,
@@ -3203,7 +3192,7 @@ with a Model's per-frame cost. Change the frame type to `Cooldown` and keep
 the calls. Model-only methods (`SetModel`, `SetSequenceTime`...) do not exist on
 a Cooldown.
 
-### Animation
+## Animation
 
 `region:CreateAnimationGroup([name [, template]])` on frames, textures and font
 strings, and `<Animations>` in XML. Animation types: `Alpha`, `Translation`,
@@ -3216,7 +3205,7 @@ After the end, progress returns to 0 and `IsDone` is false; use `OnFinished`.
 `SetMaxAnimFramerate` caps the update rate. Use this instead of Lua `OnUpdate`
 for fades, slides, pulses and spins.
 
-### Interface Options
+## Interface Options
 
 `InterfaceOptions_AddCategory(panel)` (with `panel.name`, and optionally `parent`,
 `okay`, `cancel`, `default`, `refresh`) and
@@ -3226,7 +3215,7 @@ for fades, slides, pulses and spins.
 settings there (soft targeting, stand/dismount/form settings, expanded
 cursors, its key bindings, player cache).
 
-### Spellcast events
+## Spellcast events
 
 - `INTERRUPTED` vs `FAILED` now follows the failure reason. Only
   `SPELL_FAILED_INTERRUPTED` / `_COMBAT` give `INTERRUPTED`. Line of sight,
@@ -3237,7 +3226,7 @@ cursors, its key bindings, player cache).
   starting value from `C_Spell.UnitCastingInfo` / `UnitChannelInfo` at `START`.
 - Channels flagged to hide the channel bar fire no channel events.
 
-### Auras
+## Auras
 
 - C_UnitAuras walks a unit's auras in 4.3.4's sorted order: first auras that
   the player (or a unit the player owns) cast, then auras the player could
@@ -3254,21 +3243,20 @@ cursors, its key bindings, player cache).
 - `duration` and `expirationTime` are both set or both `0`. A permanent player
   aura no longer reports a stale expiry left in its slot.
 
-### Chat arguments and GetCurrentChatEvent
+## Chat arguments and GetCurrentChatEvent
 
 Every `CHAT_MSG_*` event has `arg11` = lineID (the same for every frame;
 `0` for `CHAT_MSG_TEXT_EMOTE`) and `arg12` = the sender GUID. The GUID is `""`
 for non-players, system messages and GMs. Use lineID to act once per line.
-`GetCurrentChatEvent()` (1.17.3) returns the event name and `arg1` to `arg12`
+`GetCurrentChatEvent()` returns the event name and `arg1` to `arg12`
 of the chat event that is running, even when another hook changed the
 globals. It returns nothing outside a chat event.
 
-### Changed returns and behavior
+## Changed returns and behavior
 
 - `GameTooltip:SetHyperlinkCompareItem` returns `1` or `nil`, no longer a slot
   count. Stat deltas show only when a comparison tooltip is passed.
-- `GameTooltip:SetSpellByID` / `AddSpellByID(spellID [, isPet [, showSubtext]])`
-  (1.17.3): the rank is hidden unless `showSubtext` is set. They return `1` when
+- `GameTooltip:SetSpellByID` / `AddSpellByID(spellID [, isPet [, showSubtext]])`: the rank is hidden unless `showSubtext` is set. They return `1` when
   the cooldown line shows, and a bad ID raises an error.
 - `GetActionInfo` returns nothing for an empty slot, a dead macro button or
   an unknown tag. It never reports a dead macro as `"item"`.
@@ -3281,20 +3269,20 @@ globals. It returns nothing outside a chat event.
   even when the bank is closed. Flags `"0"` are false.
 - Totems: `GetTotemInfo` / `GetTotemTimeLeft` use whole seconds and raise an
   error for a slot outside 1 to 4. `GetTotemDuration(slot)` returns a duration
-  object with exact times (1.19.0), not a number.
+  object with exact times, not a number.
 - `PLAYER_EQUIPMENT_CHANGED` comes after `ITEM_LOCK_CHANGED`.
   `UPDATE_INVENTORY_DURABILITY` fires on every recompute, including at login
   and for bag items.
 - `NAME_PLATE_CREATED` passes the frame positionally as well as in `arg1`.
 - `setfenv` returns the function; `getfenv` reads only a metatable
   `__environment` field (5.1 rules).
-- `C_GossipInfo` (1.17.3) answers only after the greeting has resolved.
+- `C_GossipInfo` answers only after the greeting has resolved.
   `SelectOptionByIndex` skips hidden options.
 - `GetCursorInfo` returns `"petaction"` and `"pet", index`. A dragged action
   or auction item returns the plain item-ID link.
 - `UnitInLineOfSight` traces like the server. `UnitIsInMyGuild` follows 4.3.4.
 
-### New API in brief
+## New API in brief
 
 `strmatch`; `C_CVar.SetCVar`; `GetBindingByKey`;
 `C_AddOns.GetAddOnInterfaceVersion`; `GetNumGossipAvailableQuests` /
@@ -3322,16 +3310,7 @@ per-school spell damage.
 the soft unit. That is a gameplay choice: an addon may read the tokens but must
 not turn the CVars on by itself.
 
-## v1.17.4 to v1.17.8 API and behavior contracts
-
-[SOURCE-VERIFIED] From the pinned
-[v1.17.8 API reference](https://github.com/brues-code/ClassicAPI/blob/0d19deaee0fe19cf6735a7789870d45b787fbfee/docs/API.md),
-the `v1.17.3...v1.17.8` commit messages and, for nameplate alpha,
-[`src/frame/Alpha.cpp`](https://github.com/brues-code/ClassicAPI/blob/abd5367533acf19291a7a5aa64472d5e56cf9619/src/frame/Alpha.cpp). Grep `.private/upstream/classicapi/docs/API.md`
-for full payloads. [UNVERIFIED - TEST FIRST] Nothing here has been checked in
-game on OctoWoW yet.
-
-### Profiling (1.17.4)
+## Profiling
 
 Per-addon memory and CPU, as in later clients:
 
@@ -3352,18 +3331,19 @@ Per-addon memory and CPU, as in later clients:
   times and counts, not memory.
 - Developer aids: `_classicapi_LuaHeapAudit()` and `_classicapi_GcTagOf(value)`
   (owning addon name, `nil` for game code, a hex string for `/run` code).
-- 1.17.7 also adds the `TOTAL_MEM_*_ABBR` and `ADDON_MEM_*_ABBR` strings.
+- The `TOTAL_MEM_*_ABBR` and `ADDON_MEM_*_ABBR` strings exist too.
 
 Use: `!ErrorLog`'s per-addon CPU and memory report can read these instead of
 estimating. It must not turn `scriptProfile` on by itself; the player does.
 
-### Soft interact highlight (1.17.4)
+## Soft interact highlight
 
 The `softinteract` object glows like the mouseover object while it can be used
 right now. No API; README now lists soft interact, enemy and friend as one
-"Soft targeting" row. The rules in the 1.17.3 section still hold.
+"Soft targeting" row. The soft-targeting rules under
+[New API in brief](#new-api-in-brief) hold.
 
-### Player name cache (1.17.5)
+## Player name cache
 
 - `C_PlayerCache.SetScanEnabled` and `C_PlayerCache.IsScanEnabled` are
   **removed**, with the visible-object sweep. Turning the cache on with
@@ -3373,29 +3353,28 @@ right now. No API; README now lists soft interact, enemy and friend as one
   engine's session name cache (chat senders, group members, players seen).
   It works with the persistent cache off. Every step now ignores case.
 
-### Binding modifiers (1.17.6)
+## Binding modifiers
 
 Modifier keys of the bound key are hidden only while a `SPELL`, `ITEM`,
 `MACRO` or `CLICK` binding runs. A binding that runs Lua sees them again:
-a handler on `SHIFT-E` gets `1` from `IsShiftKeyDown()`. This reverts the
-1.17.0 rule that hid them for every binding.
+a handler on `SHIFT-E` gets `1` from `IsShiftKeyDown()`.
 
-### Small changes (1.17.7)
+## Taskbar flash, spell range and spell links
 
 - `FlashClientIcon([briefly])`: flashes the taskbar button; does nothing while
   WoW has focus. No argument: until focused. Truthy: three flashes. Returns
-  nothing. This replaces `UnitXP("notify", "taskbarIcon")` for addons that
-  guard `11707`.
+  nothing. This replaces `UnitXP("notify", "taskbarIcon")`.
 - `SpellHasRange` / `C_Spell.SpellHasRange` use the engine's own min/max range,
   so range bonuses count. Self-cast spells return false.
 - Spell links that Turtle's chat link handler would drop (such as
   `spell:<id>:0` from `GetSpellLink`) now reach `SetItemRef`. There is one
   `SetItemRef` override left to chain.
 
-### Nameplate alpha (1.17.8)
+## Nameplate alpha
 
+[SOURCE-VERIFIED] [`src/frame/Alpha.cpp`](https://github.com/brues-code/ClassicAPI/blob/abd5367533acf19291a7a5aa64472d5e56cf9619/src/frame/Alpha.cpp).
 Default nameplates, and every frame parented under one at any depth, are
-exempt from the 1.17 rule that frame alpha multiplies into children
+exempt from the rule that frame alpha multiplies into children
 (`frame:GetEffectiveAlpha`). Inside a plate the vanilla rules hold again:
 
 - `plate:SetAlpha(a)` copies `a` down to the plate's child frames, except a
@@ -3416,18 +3395,9 @@ The CVars are the player's: an addon may read them but should not change them
 for the player. [UNVERIFIED - TEST FIRST] Whether the engine writes the plate
 fade every frame or only when the target changes is not documented.
 
-## v1.17.9 to v1.17.10 API and behavior contracts
+## Cooldown API
 
-[SOURCE-VERIFIED] From the pinned
-[v1.17.10 API reference](https://github.com/brues-code/ClassicAPI/blob/9daf3960c48d42f01b5f8cc38d98b157dfcac934/docs/API.md)
-and the `v1.17.8...v1.17.10` commit messages, which also describe changes the
-API reference leaves out. Grep `.private/upstream/classicapi/docs/API.md` for
-full method tables and payloads. [UNVERIFIED - TEST FIRST] Nothing here has
-been checked in game on OctoWoW yet.
-
-### Cooldown API (1.17.9)
-
-Native `Cooldown` frames (see [Native Cooldown frame](#native-cooldown-frame-1171))
+Native `Cooldown` frames (see [Native Cooldown frame](#native-cooldown-frame))
 get the later clients' methods:
 
 - Timing: `SetCooldown(start, duration [, modRate])`,
@@ -3466,13 +3436,12 @@ frames, so the two never overlap when the player turns the CVar on.
 [UNVERIFIED - TEST FIRST] The stock action buttons are indicator Models, which
 have no countdown font string, so the CVar should add no numbers to them.
 
-### Script handler arguments (1.17.9)
+## Script handler arguments
 
 These extend [4.4](#44-modern-script-handler-arguments):
 
 - A C function given to `SetScript`, such as a frame method, gets the
   positional arguments: `f:SetScript("OnDragStart", f.StartMoving)` works.
-  Before 1.17.9 it raised "Attempt to find 'this' in non-table object".
 - `OnClick`, `PreClick` and `PostClick` run as `(self, button, down)`;
   `OnEnter` and `OnLeave` as `(self, motion)`. `down` is true on a press and
   false on a release (for `button:Click(name, down)`, the given value).
@@ -3487,7 +3456,7 @@ These extend [4.4](#44-modern-script-handler-arguments):
   values are read with `rawget`, so a strict-globals `__index` on `_G` no longer
   runs for them.
 
-### Small changes (1.17.9)
+## Item range, tooltip lines and small textures
 
 - `ItemHasRange(item)` (`1` / `nil`, as 3.3.5) and `C_Item.ItemHasRange(item)`
   (`true` / `false`): whether the item's on-use spell has a minimum or maximum
@@ -3498,7 +3467,7 @@ These extend [4.4](#44-modern-script-handler-arguments):
   48x48 could be handed to the next 32x32 request), and textures from 1x1 to
   7x7 load (the minimum was 8 px).
 
-### Aura instance IDs and `UNIT_AURA_DELTA` (1.17.10)
+## Aura instance IDs and `UNIT_AURA_DELTA`
 
 - Every `AuraData` has `auraInstanceID`: one number for one application on one
   unit. It stays through stacks and refreshes, is new when the aura goes and
@@ -3531,7 +3500,7 @@ can keep an `auraInstanceID` to button map and touch only the changed IDs,
 reading each with the `buf` form. Instance IDs are also the stable key that
 [aura indices](#aura-slot-compaction-and-index-instability) are not.
 
-### Player aura timing and loss of control (1.17.10)
+## Player aura timing and loss of control
 
 - For `unit == "player"`, `AuraData.duration` is the duration the server
   applied (`SMSG_UPDATE_AURA_DURATION`), with diminishing returns and the
@@ -3542,9 +3511,9 @@ reading each with the `buf` form. Instance IDs are also the stable key that
   They are `nil` only when the debuff has no timer. Before, they were `nil`
   unless ClassicAPI saw the applying cast, and had no diminishing returns.
 
-### Combat log additions (1.17.10)
+## Combat log additions
 
-These correct the 1.17.0 limits in [Combat log](#combat-log):
+More on the [Combat log](#combat-log):
 
 - `SPELL_AURA_REFRESH` (`auraType`): an aura's duration started again while
   the aura stays. Every refresh of your own auras; on another unit only when
@@ -3569,14 +3538,12 @@ These correct the 1.17.0 limits in [Combat log](#combat-log):
   keeps `spellId` 0.
 - `SPELL_INSTAKILL` has a source when the cast was seen.
 
-### Small changes (1.17.10)
+## Dual wield, feign death and edit-box history
 
 - `IsDualWielding()` (`true` / `false`): the player can dual wield and has a
   weapon in the off hand; `false` until the off-hand item is cached.
-- `OffhandHasWeapon()` is the engine's own function again: `1` for a
-  weapon-class off-hand item, else `nil`. ClassicAPI's earlier override
-  returned `true` / `false`, so `OffhandHasWeapon() == 1` was always false
-  under 1.17.9 and earlier. Test its truth, never compare it.
+- `OffhandHasWeapon()` is the engine's own function: `1` for a weapon-class
+  off-hand item, else `nil`. Test its truth, never compare it.
 - `UnitIsFeignDeath(unit)` reads the dynamic flag `UNIT_DYNFLAG_DEAD`, as 3.3.5
   does. Before, it read a unit flag that vmangos-based servers never set, so it
   was always false there. [UNVERIFIED - TEST FIRST] On OctoWoW, while
@@ -3589,14 +3556,7 @@ These correct the 1.17.0 limits in [Combat log](#combat-log):
   number. Before, the fifth custom event shared slot 6 with
   `ADDON_LIST_UPDATE` and could fire with it.
 
-## v1.17.11 API and behavior contracts
-
-Source: the pinned
-[v1.17.11 API reference](https://github.com/brues-code/ClassicAPI/blob/317539dbd8aa9e9cd7a23441c0e355bb85c7e2ab/docs/API.md)
-and the `v1.17.10...v1.17.11` commit messages (four commits, released
-2026-10-27). Guard: `11711`.
-
-### String helpers (1.17.11)
+## String helpers
 
 Four Blizzard string globals the base library lacked:
 
@@ -3613,7 +3573,7 @@ Four Blizzard string globals the base library lacked:
 - `strconcat(...)` / `string.concat(...)`: joins its arguments like `..`;
   numbers convert, anything else is an error, no arguments gives `""`.
 
-### Fixes (1.17.11)
+## Bank item locations, reversed cooldowns and the sound cap
 
 - `C_EquipmentSet.GetItemLocations`: an item in the main bank is
   `BANK | inventorySlot` (`BankButtonIDToInvSlotID`: bank slot N is
@@ -3629,17 +3589,9 @@ Four Blizzard string globals the base library lacked:
   at once in a probe); at the cap the call returns `false`. A file holds its
   place until it ends, also while fading.
 
-## v1.17.12 to v1.18.5 API and behavior contracts
+## Fixes that retire workarounds
 
-Source: the pinned
-[v1.18.5 API reference](https://github.com/brues-code/ClassicAPI/blob/c965e4911726f9cedd6354ecd856d92a0b203831/docs/API.md)
-and the `v1.17.11...v1.18.5` commit messages (eight releases, 2026-10-27 to
-2026-10-30). Guard: `11805`. Search the pinned docs for a name before using it;
-this section lists only what changes how VanillaForge addons are written.
-
-### Fixes that retire workarounds
-
-- **Range answers know the target** (1.18.0). `C_Spell.IsSpellInRange` and
+- **Range answers know the target**. `C_Spell.IsSpellInRange` and
   `C_Item.IsItemInRange` return `nil` for a unit the spell cannot be cast on:
   a heal on an enemy, a damage spell on a friend, the wrong creature type, a
   dead unit for anything but a resurrect. A pet spell measures to the pet, a
@@ -3647,25 +3599,25 @@ this section lists only what changes how VanillaForge addons are written.
   `UnitCanAttack` / `UnitIsFriend` test written only to make a range answer
   meaningful can go; `nil` means "no answer", so colour only `true`/`false`.
   Self-range spells (Hearthstone, totems) return `nil`, not `false`.
-- **Spell ranges include talents** (1.17.13). `GetSpellInfo` and
+- **Spell ranges include talents**. `GetSpellInfo` and
   `C_Spell.GetSpellInfo` report `minRange`/`maxRange` through the engine:
   range talents, spell mods, the ranged-weapon scale; `0`/`0` for melee. Code
   that adds talent yards itself now counts them twice.
-- **`isOnGCD`** (1.17.13). `C_Spell.GetSpellCooldown(spell)` sets
+- **`isOnGCD`**. `C_Spell.GetSpellCooldown(spell)` sets
   `isOnGCD = true` when the reported start and duration are the global
   cooldown. Replaces `duration <= 1.5` guesses (a rogue's GCD is 1 s).
-- **Player aura durations after login** (1.18.0). Auras already on the
+- **Player aura durations after login**. Auras already on the
   character at login reported the time left as their full duration; they now
   report the base duration (or the remaining time where a caster modifier
   stretched it). Remove any re-learning of totals after login.
-- **Loot** (1.17.13). An unanswered loot request no longer blocks all looting
+- **Loot**. An unanswered loot request no longer blocks all looting
   until relog; every loot sender refuses while mounted.
-- **Loss of control** (1.18.0). A spell that grants immunity to the effect is
+- **Loss of control**. A spell that grants immunity to the effect is
   not reported as locked: a druid's forms while polymorphed.
-- **Region scale** (1.18.0). A texture or font string on a hidden frame has
+- **Region scale**. A texture or font string on a hidden frame has
   its frame's scale at once; `GetLeft`/`GetRect` on hidden regions are right.
 
-### Retail functions now native (1.18.0 to 1.18.2)
+## Retail functions now native
 
 Use these instead of loops, scans or own helpers:
 
@@ -3691,7 +3643,7 @@ Completed-quest functions (`QueryQuestsCompleted`, `GetQuestsCompleted`,
 Turtle-lineage client or server; do not use them without checking the active
 server profile.
 
-### Frames and UI kits (1.18.0 to 1.18.5)
+## Frames and UI kits
 
 - Mouse: `SetMouseClickEnabled` / `SetMouseMotionEnabled` separately,
   `SetPropagateMouseClicks` / `SetPropagateMouseMotion`, `IsMouseMotionFocus`.
@@ -3715,63 +3667,63 @@ server profile.
 - `GameTooltip:SetFrameStack(showHidden, showRegions, highlightIndexChanged)`,
   `region:GetDebugName`, `region:GetSourceLocation`.
 - `securecall`, `securecallfunction`, `secureexecuterange`.
-- Edit boxes: caret, selection and clicks follow tall inline icons (1.18.4).
+- Edit boxes: caret, selection and clicks follow tall inline icons.
 
-## v1.19.3 to v1.20.4 API and behavior contracts
+## Settings that retire addon code
 
-Source: the pinned
-[v1.20.4 API reference](https://github.com/brues-code/ClassicAPI/blob/24404b5a239da55cac0c69f492d651c51d9f5e73/docs/API.md)
-and the `v1.19.2...v1.20.4` commit messages (six releases, 2026-11-03 to
-2026-11-06). Search the pinned docs for a name before using it; this section
-lists only what changes how VanillaForge addons are written. New functions
-are in the sections they belong to: Lua (4.5), Action (15), Cursor (29),
-Containers (30), System (59), `PLAYER_SWING` (74).
-
-### Settings that retire addon code
-
-- **Stand, dismount and form beyond casts** (1.20.1, 1.20.3). `autoStand`,
-  `autoDismount` and `autoUnshift` now also act when you talk to an NPC
-  (unshift), use an object (dismount, except at a mailbox; unshift), loot a
+- **Stand, dismount and form beyond casts**. `autoStand`,
+  `autoDismount` and `autoUnshift` now also act when you talk to an NPC or
+  use an object (dismount, except at a mailbox; unshift only out of a form
+  that cannot do it), loot a
   creature (stand, dismount) or a corpse (stand), use an item (unshift),
   attack (dismount, only in melee range) and open the flight map (all three).
   They act when the cast is sent, so a cast with no target, or a cancelled
-  targeting cursor, no longer dismounts. A form that can talk and use objects
-  (Shadowform) stays. An addon that dismounts or unshifts on
+  targeting cursor, no longer dismounts. With `autoUnshift` on, the druid
+  forms and Ghost Wolf talk to NPCs and use objects without leaving the form
+  (the cursor shows its usual icon); a form that cannot leaves. Shadowform
+  always can. `autoUnshift` never removes Spirit of Redemption, and none of
+  the three acts on a flight path. An addon that dismounts or unshifts on
   `UI_ERROR_MESSAGE` (`ERR_ATTACK_MOUNTED`, `ERR_TAXIPLAYERALREADYMOUNTED`,
   `ERR_TAXIPLAYERSHAPESHIFTED`, `ERR_CANT_INTERACT_SHAPESHIFTED`,
   `ERR_NO_ITEMS_WHILE_SHAPESHIFTED`) does it a click late and twice over:
   retire it and point the player at the settings (AddOn Options >
   ClassicAPI). The settings default to `0`.
-- **Key bindings in AddOn Options** (1.19.3): Interact With Target, Interact
+- **Key bindings in AddOn Options**: Interact With Target, Interact
   With Mouseover and AoE Loot have binding rows on ClassicAPI's pages.
 
-### Changed returns and behavior
+## Class, login, power cost and other changed returns
 
-- **`UnitClassBase` / `UnitRaceBase`** (1.20.3) follow `UnitClass` /
+- **`UnitClassBase` / `UnitRaceBase`** follow `UnitClass` /
   `UnitRace` exactly: creatures get a class and race too (the old docs said
   `nil`), `"player"` answers during addon load, and out-of-range group members
   answer from the name cache. `UnitClassBase(unit) == nil` is **not** a
   player test; use `UnitIsPlayer`.
-- **`IsLoggedIn`** (1.20.0) is false on the login screen and while addon files
+- **`IsLoggedIn`** is false on the login screen and while addon files
   run, also on `/reload`, and true from the `PLAYER_LOGIN` handlers on. Before,
   it was true during a `/reload`'s load, so `EventUtil.ContinueOnPlayerLogin`
   ran at once. Code that used it to tell a `/reload` from a login no longer
   can.
-- **`C_Spell.GetSpellPowerCost`** (1.20.2) reports rage in whole points (was
+- **`C_Spell.GetSpellPowerCost`** reports rage in whole points (was
   tenths: Shield Slam 200). Remove any `/ 10`.
-- **Free slots** (1.19.3): bank while open; a missing bag gives one `0`
+- **Free slots**: bank while open; a missing bag gives one `0`
   (Containers, 30).
-- **`"anyinteract"`** (1.19.3) is the soft-interact pick when the target is
+- **`"anyinteract"`** is the soft-interact pick when the target is
   out of reach (the target only when nothing is picked).
   `C_PlayerInteractionManager.InteractUnit`'s `looseTargeting` now works and
   defaults to `true`: with a target, the interaction keeps it.
-- **`string.gsub`** (1.19.3): `%0` and string/number replacements as in 5.1;
+- **`string.gsub`**: `%0` and string/number replacements as in 5.1;
   the old residual (a back-reference pattern removing a missing table key) is
   gone. The function rule stays 5.0's (4.5).
-- **`C_Loot.LootAllCorpses`** (1.20.2) keeps walking past refused and stale
-  corpses.
+- **`C_Loot.LootAllCorpses`** keeps walking past refused and stale corpses.
+  Later walks skip a corpse that opened with nothing for you but stays
+  lootable (another player's quest item) until it leaves view and returns,
+  the creature respawns, or your quest log changes; such corpses are not in
+  `C_Loot.GetLastScanResults()`. A corpse that still shows loot (full bags, a
+  roll or master loot in progress) is tried again.
+- **`GetSpellBonusHealing`** counts set bonuses whose piece count the
+  equipped gear meets, and ignores a set's profession-skill requirement.
 
-### Models and portraits (1.20.0)
+## Models and portraits
 
 `PlayerModel`: `SetItem`, `SetUnit` (returns a result), `CanSetUnit`,
 `GetDisplayInfo`, `SetAnimation` / `FreezeAnimation` / `HasAnimation`,
@@ -3780,3 +3732,21 @@ Containers (30), System (59), `PLAYER_SWING` (74).
 enchant])` with a result, `IsGeoReady`, `SetSheathed`, `SetAutoDress`.
 `SetPortraitTextureFromCreatureDisplayID(texture, displayID)` draws a round
 portrait without a unit, once per display, kept until logout.
+
+## Mounts
+
+A mount ID is the ID of the spell that summons the mount.
+
+- `C_MountJournal.GetMountFromSpell(spell)`: the mount ID of a mount spell,
+  `nil` for any other spell. `spell` is an ID, a link or a name; a name works
+  only for a spell in the spellbook, an ID also for a mount you do not know.
+- `C_MountJournal.GetMountInfoExtraByID(mountID)`: nine values, nothing for an
+  ID that is not a mount. The first is `creatureDisplayInfoID` (what you look
+  like riding it), the second the spell's description, the fifth
+  `mountTypeID`, the sixth `uiModelSceneID`; the rest are constants. The
+  display ID is `nil` until the game has the summoned creature's data: the
+  call requests it, and `CREATURE_DATA_LOAD_RESULT` says when to ask again.
+- "Am I mounted?" is still `IsMounted()`. Upstream notes that on Turtle WoW a
+  mount item carries "Add Mount to Collection", not the mount spell, so only
+  the spellbook spell gives a mount ID. [UNVERIFIED - TEST FIRST] on OctoWoW:
+  `/run print(C_MountJournal.GetMountFromSpell("<your mount's spell name>"))`.

@@ -672,8 +672,8 @@ C_Container.SortBags()
 C_Container.SortBankBags()
 ```
 
-prefer it when its ordering meets the addon's requirements. In ClassicAPI
-v1.15.13+, equipment-slot grouping is part of that ordering; see the
+prefer it when its ordering meets the addon's requirements. Equipment-slot
+grouping is part of that ordering; see the
 [canonical container contract](CLASSICAPI_MASTER_REFERENCE.md#equipment-slot-grouping-in-sortbags)
 for its semantics and constraints. Different ordering requirements can still
 justify addon logic using verified native movement APIs.
@@ -1059,7 +1059,7 @@ garbage generation in combat hot paths.
 - Use `WEAPON_SLOT_CHANGED` when the addon independently needs to react to
   weapon-slot identity or equipment changes (slots 16, 17, 18).
 - Do not reconstruct swing cadence from combat-log text, spell hooks, equipment
-  polling, or high-frequency `OnUpdate` sampling when ClassicAPI v1.15.10+ provides
+  polling, or high-frequency `OnUpdate` sampling when ClassicAPI provides
   the required state.
 - Keep the pattern capability-based: register and consume only the specific
   events or APIs the addon's feature set actually requires.
@@ -1144,9 +1144,8 @@ doubled backslash and keeps each file's line endings.
 
 **Problem:** Some ClassicAPI container calls answer for the backpack and the equipped
 bags (IDs 0 to 4) only, and return an empty answer for the bank, its bags and the
-keyring: `C_Container.HasContainerItem`, and before 1.19.3 also
-`GetContainerNumFreeSlots` (free count and bag family) and `GetContainerFreeSlots`,
-which now take the bank (`-1`, `5`..`10`) while it is open. A bag addon that loops over
+keyring: `C_Container.HasContainerItem`. `GetContainerNumFreeSlots` (free count and
+bag family) and `GetContainerFreeSlots` take the bank (`-1`, `5`..`10`) while it is open. A bag addon that loops over
 every container ID gets zeros for the bank, with no error. Bagnon's bank counted
 `0 / 122 Free` and showed no bag colours that way; GearRack's free-slot walk with
 `HasContainerItem` saw every bank slot as empty, picked full ones and could not put a set
@@ -1156,7 +1155,7 @@ equipped bags or the bank bags.
 
 **Preferred direction:** Read the container range in the call's section of `docs/API.md`
 before using it on a loop over bag IDs. For the open bank use `GetContainerNumFreeSlots`
-(count and family, 1.19.3); for a closed or saved bank read the bag's family from its item
+(count and family); for a closed or saved bank read the bag's family from its item
 (`C_Item.GetItemFamily` on the link). When the DLL cannot do a job for some containers, say so to the
 user and keep the control out of the UI instead of showing one that does nothing.
 

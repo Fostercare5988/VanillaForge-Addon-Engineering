@@ -162,8 +162,8 @@ Therefore, old blanket rules that treat every `(self, event, ...)` handler as in
 are obsolete. The actual registration/call path still matters, especially for legacy
 XML or manually invoked handlers.
 
-ClassicAPI's table-length behavior also preserves some Lua 5.0 contracts. In
-v1.15.12+, weak-valued tables retain their stored length after GC clears values.
+ClassicAPI's table-length behavior also preserves some Lua 5.0 contracts. Weak-valued
+tables retain their stored length after GC clears values.
 Do not infer stale writer state from a nil final slot or mechanically replace
 `table.getn` / `table.setn`; see the source-verified rules in
 [ClassicAPI table lengths](CLASSICAPI_MASTER_REFERENCE.md#46-table-lengths-and-weak-values).
@@ -463,9 +463,8 @@ task specifically needs.
 `UnitXP("notify", "taskbarIcon")` and `UnitXP("notify", "systemSound", soundName)`.
 These are OS notifications, not ordinary gameplay state APIs. The previously
 listed standalone `SetClientWindowForeground` global is not established by
-this source; do not assume it exists. `FlashClientIcon([briefly])` exists from
-ClassicAPI 1.17.7 (see the ClassicAPI reference); before that, use the
-`notify` branch.
+this source; do not assume it exists. ClassicAPI's `FlashClientIcon([briefly])` flashes the
+taskbar button; use it, not the `notify` branch.
 
 ### 7.3 Documented project role
 
@@ -747,7 +746,7 @@ On removal or identity reuse, explicitly reset addon-owned state:
 - identity bindings (unit GUID, `auraIndex`, `spellId`, source GUID)
 - duration/expiration timestamps and cached timer bindings
 - text labels (`countText:SetText("")`, `durationText:SetText("")`)
-- cooldown animation (`CooldownFrame_SetTimer(cooldown, 0, 0, 0)`, or `cooldown:Clear()` on a ClassicAPI `Cooldown` frame from 1.17.9; a 1.12 cooldown Model has no `SetCooldown` or `Clear`)
+- cooldown animation (`CooldownFrame_SetTimer(cooldown, 0, 0, 0)`, or `cooldown:Clear()` on a ClassicAPI `Cooldown` frame; a 1.12 cooldown Model has no `SetCooldown` or `Clear`)
 - texture asset, vertex color, alpha (`button:SetAlpha(1.0)`), and border overlay (`border:Hide()`)
 
 An unavailable or elapsed timer is not proof that an API-reported aura has gone.
@@ -836,7 +835,7 @@ prove native pointer safety or input ordering. See the deployed
 
 ## 13. Runtime Diagnostics
 
-The enhanced environment provides useful diagnostics. ClassicAPI 1.18.0+ embeds its
+The enhanced environment provides useful diagnostics. ClassicAPI embeds its
 debug tools (`/dump`, `/etrace`, `/fstack`, `/tinspect`); they load on first use.
 
 Common tools:
