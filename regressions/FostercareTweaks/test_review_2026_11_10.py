@@ -221,5 +221,19 @@ class StockFramesNeedNoChecks(unittest.TestCase):
         self.assertNotIn("if not frame then return end", text)
 
 
+class RaidButtonsAreSizedInOnePlace(unittest.TestCase):
+    def test_creation_and_a_size_change_share_one_function(self):
+        text = source("mods/unitframes/raid.lua")
+        self.assertEqual(text.count("math.floor(height * 0.12)"), 1)
+        self.assertNotIn("math.floor(btnH * 0.12)", text)
+        self.assertEqual(text.count("SizeButton(btn, "), 3)                 # itself, creation, a size change
+
+    def test_the_test_grid_follows_the_health_text_setting(self):
+        # It wrote "-1.5k" whatever the setting, and after any change "Dead" became a number.
+        text = source("mods/unitframes/raid.lua")
+        self.assertNotIn('SetText("-1.5k")', text)
+        self.assertEqual(text.count("MockHealth(btn, fmt)"), 3)             # itself, the toggle, a settings change
+
+
 if __name__ == "__main__":
     unittest.main()

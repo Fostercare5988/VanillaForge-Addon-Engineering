@@ -131,7 +131,7 @@ class RaidClicks(unittest.TestCase):
                     + '\nSetUnit(btn, "raid7"); first = btn.attr.unit; SetUnit(btn, nil)')
         self.assertEqual(lua.eval('first'), "raid7")
         self.assertIsNone(lua.eval('btn.attr.unit'))
-        create = between(RAID, "local function CreateRaidButton", "-- Health Bar")
+        create = between(RAID, "local function CreateRaidButton", "-- The health bar over the power bar")
         self.assertIn('SetAttribute("type1", "target")', create)
         self.assertIn('SetAttribute("type2", "menu")', create)
         self.assertNotIn('SetScript("OnClick"', create)
