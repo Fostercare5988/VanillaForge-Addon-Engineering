@@ -42,7 +42,8 @@ class OnePlace(unittest.TestCase):
         # By default only its own icon: out of Blizzard's buffs and the row.
         self.assertTrue(hidden("Evasion", "player", "top") and hidden("Evasion", "player"))
         self.assertFalse(hidden("Evasion", "target"))
-        self.assertTrue(hidden("Expose Armor", "target"))
+        # 2026-11-10: an "Only mine" debuff (the default) keeps only yours out of the row.
+        self.assertTrue(lua.eval('FT.IsAuraHidden("Expose Armor", "target", "row", "player")'))
         self.assertFalse(hidden("Expose Armor", "player"))
         lua.execute('W.SetShown(1, "topRight", true); W.SetShown(2, "inRow", true)')
         self.assertFalse(hidden("Evasion", "player", "top"))
