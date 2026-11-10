@@ -100,12 +100,14 @@ FT = { mods = {}, overwrites = {} }
 FostercareTweaks = FT
 function FT:register(m) self.mods[m.title] = m; return m end
 function FT.SetEventHandler(frame, fn) handlers[frame] = fn end
-function FT.IsEnabled(key, default)
+-- A switch's default is its module's; every one these files read is on but this.
+function FT.IsEnabled(key)
     local v = FostercareTweaks_Config[key]
-    if v == nil then return default ~= false end
+    if v == nil then return key ~= "Show All Raid Buffs" end
     return v == 1
 end
-function FT.GetNumber(_, default) return default end
+--NUMBERS--
+function FT.GetNumber(key) return FT.NUMBERS[key][1] end
 FT.hooksecurefunc, FT.HookScript, hooksecurefunc = NOOP, NOOP, NOOP
 FT.RestoreFramePosition, FT.RegisterFrameMover = NOOP, NOOP
 TargetofTargetFrame = { IsShown = function() return false end }
@@ -121,9 +123,15 @@ function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 '''
 
 
+def numbers():
+    """Helpers.lua's FT.NUMBERS: every numeric setting's default and range."""
+    text = source("Helpers.lua")
+    return text[text.index("FT.NUMBERS = {"):text.index("-- A saved value from the overrides table")]
+
+
 def runtime():
     lua = LuaRuntime(unpack_returned_tuples=True)
-    lua.execute(BASE)
+    lua.execute(BASE.replace("--NUMBERS--", numbers()))
     return lua
 
 

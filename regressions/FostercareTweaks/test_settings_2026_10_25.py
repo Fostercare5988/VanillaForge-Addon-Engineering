@@ -64,19 +64,7 @@ function HideUIPanel(f) f:Hide() end
 FostercareTweaks_Config = { overwrites = {} }
 local FT = { mods = {} }
 FostercareTweaks = FT
-function FT.IsEnabled(key, default)
-    local v = FostercareTweaks_Config[key]
-    if v == nil then return default == true end
-    return v == 1
-end
-function FT.GetOverride(key, default)
-    local v = FostercareTweaks_Config.overwrites[key]
-    if v == nil then return default end
-    return v
-end
-function FT.ClampNumber(v, d, lo, hi) v = tonumber(v) or d; return math.max(lo, math.min(hi, v)) end
-function FT.GetNumber(key, d, lo, hi) return FT.ClampNumber(FT.GetOverride(key), d, lo, hi) end
-function FT.SetOverride(key, v) FostercareTweaks_Config.overwrites[key] = v end
+--SETTINGS--
 function FT.HookScript(frame, script, fn)
     local old = frame.scripts[script]
     frame.scripts[script] = function(...) if old then old(...) end; fn(...) end
@@ -84,9 +72,18 @@ end
 function FT.SetEventHandler(frame, fn) frame.scripts.OnEvent = fn end
 calls = {}
 local function Count(name) return function() calls[name] = (calls[name] or 0) + 1 end end
-for _, title in ipairs({ "Hide Stealth / Stance Bar", "Hide Default Cast Bar", "Unit Frame Class Colors", "Enemy Castbars" }) do
+for _, title in ipairs({ "Hide Stealth / Stance Bar", "Hide Default Cast Bar", "Unit Frame Class Colors", "Enemy Castbars",
+    "Auto Stance", "MiniMap Clock", "Chat Timestamps", "Chat Class Colors", "Blue Shaman Class Colors",
+    "Hide Gryphons", "Reagent Counter" }) do
     FT.mods[title] = { apply = Count(title) }
 end
+-- A switch's default is its module's (FT:register); these are on.
+for _, title in ipairs({ "Show Standard Buffs", "Show Standard Debuffs", "Show Weapon Enchants",
+    "Show Weapon Enchant Borders", "Show Group Labels", "Show Raid Buffs", "Show Raid Aggro Indicator",
+    "Show Raid HoT Indicator", "Show Raid Debuff Badges", "Show Energy Ticks" }) do
+    FT.mods[title] = { enabled = true }
+end
+FT.mods["Show All Raid Buffs"] = { enabled = false }
 raidTest, groupEnabled = false, true
 FT.UnitFrames = {
     ApplyConfiguration = Count("ApplyConfiguration"),
@@ -118,7 +115,9 @@ FT.WatchedAuras = { List = function() return watched end,
 
 def window():
     lua = LuaRuntime(unpack_returned_tuples=True)
-    lua.execute(BASE)
+    helpers = (ROOT / "Helpers.lua").read_text("utf-8-sig")
+    core = helpers[helpers.index("-- A switch: its saved value"):helpers.index("-- One load watcher")]
+    lua.execute(BASE.replace("--SETTINGS--", core))
     ns = lua.table()
     for name in ("ForgeUI.lua", "ForgeLayout.lua", "Settings.lua"):
         lua.execute((ROOT / name).read_text("utf-8-sig"), "FostercareTweaks", ns)
@@ -128,7 +127,7 @@ def window():
 class SettingsWindow(unittest.TestCase):
     def test_opens_on_every_page(self):
         lua = window()
-        for name in ("general", "unit", "auras", "raid", "bars"):
+        for name in ("general", "unit", "auras", "watched", "raid", "bars"):
             lua.execute('FostercareTweaks.OpenSettings("%s")' % name)
             self.assertTrue(lua.eval('FostercareTweaksSettingsGUI:IsShown()'))
 
@@ -139,9 +138,9 @@ class SettingsWindow(unittest.TestCase):
     def test_every_page_is_a_category_in_addon_options(self):
         # 2026-11-02, the player's notes: the menus in ClassicAPI's AddOn Options.
         lua = window()
-        names = [lua.eval("categories[%d].name" % i) for i in range(2, 7)]
-        self.assertEqual(names, ["General", "Unit Frames", "Auras", "Raid", "Action Bars"])
-        self.assertTrue(all(lua.eval("categories[%d].parent" % i) == "FostercareTweaks" for i in range(2, 7)))
+        names = [lua.eval("categories[%d].name" % i) for i in range(2, 8)]
+        self.assertEqual(names, ["General", "Frames", "Auras", "Watched", "Raid", "Bars"])   # 2026-11-10
+        self.assertTrue(all(lua.eval("categories[%d].parent" % i) == "FostercareTweaks" for i in range(2, 8)))
 
     def test_a_category_borrows_its_page_and_gives_it_back(self):
         lua = window()
@@ -168,8 +167,8 @@ class SettingsWindow(unittest.TestCase):
         # full size instead. Nothing on a page starts right of the left margin,
         # and no two controls share a line.
         lua = window()
-        lua.execute('FostercareTweaks.OpenSettings("auras"); widgets.FTOpt_WatchName:SetText("Sprint"); widgets.FTOpt_WatchBuff:Click()')
-        for index in range(1, 6):
+        lua.execute('FostercareTweaks.OpenSettings("watched"); widgets.FTOpt_WatchName:SetText("Sprint"); widgets.FTOpt_WatchBuff:Click()')
+        for index in range(1, 7):
             lua.execute("host = categories[%d]; host.shown = false; host:Show()" % (index + 1))
             spots = lua.eval('''(function()
                 local page, t = FTOptPage%d, {}

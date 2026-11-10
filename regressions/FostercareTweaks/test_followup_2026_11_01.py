@@ -121,9 +121,9 @@ class WorldMapWindowSize(unittest.TestCase):
             FT.HookScript = function(frame, script, fn) scripts[script] = fn end
             FT.HookAddonOrVariable = NOOP
             saved = {}
-            function FT.GetNumber(key, default, lo, hi)
-                local v = saved[key] or default
-                return math.max(lo, math.min(hi, v))
+            function FT.GetNumber(key)
+                local n = FT.NUMBERS[key]
+                return math.max(n[2], math.min(n[3], saved[key] or n[1]))
             end
             function FT.SetOverride(key, value) saved[key] = value end
             function IsControlKeyDown() return ctrl end
@@ -164,7 +164,9 @@ class WorldMapWindowSize(unittest.TestCase):
         self.assertEqual(self.lua.eval("WorldMapFrame.scale"), 1)  # full screen is never scaled
 
     def test_size_has_a_slider(self):
-        self.assertRegex(source("Settings.lua"), r'Slider\(general, "worldmap_scale", 1, 0\.6, 2,')
+        # 2026-11-10: the default and range are the setting's own, in Helpers.lua.
+        self.assertIn('Slider(general, "worldmap_scale", 0.05,', source("Settings.lua"))
+        self.assertIn("worldmap_scale = { 1, 0.6, 2 }", source("Helpers.lua"))
 
 
 class SettingsWording(unittest.TestCase):

@@ -138,7 +138,7 @@ class WatchedAurasSettings(unittest.TestCase):
     def test_type_a_name_and_pick_where_it_shows(self):
         lua = window()
         lua.execute('heights = {}; FostercareTweaksSettingsGUI.SetHeight = function(_, h) heights[#heights + 1] = h end;'
-                    ' FostercareTweaks.OpenSettings("auras")')
+                    ' FostercareTweaks.OpenSettings("watched")')              # its own page since 2026-11-10
         before = lua.eval("heights[#heights]")
         lua.execute('widgets.FTOpt_WatchName:SetText("Rupture"); widgets.FTOpt_WatchDebuff:Click()')
         self.assertEqual(lua.eval("watched[1].unit"), "target")
@@ -158,7 +158,7 @@ class WatchedAurasSettings(unittest.TestCase):
     def test_the_list_is_two_chips_a_row(self):
         # 2026-11-02 in play: fifteen auras made a list longer than the screen.
         lua = window()
-        lua.execute('FostercareTweaks.OpenSettings("auras")')
+        lua.execute('FostercareTweaks.OpenSettings("watched")')
         for name in ("A", "B", "C", "D", "E"):
             lua.execute('widgets.FTOpt_WatchName:SetText("%s"); widgets.FTOpt_WatchBuff:Click()' % name)
         lua.execute('widgets.FTOpt_WatchChip5:Click()')                     # close the card

@@ -328,7 +328,13 @@ class ReducedBarLeavesLayoutsAlone(unittest.TestCase):
             MultiBarBottomLeft = Widget({ ClearAllPoints = function() moves = moves + 1 end })
             MultiBarBottomRight, MainMenuBar, MainMenuExpBar, ReputationWatchBar = Widget(), Widget(), Widget(), Widget()
             MainMenuBarArtFrame, ActionButton1 = Widget(), Widget()
-            ReputationWatchBarTexture0, ReputationWatchBarTexture1 = Widget(), Widget()
+            -- 2026-11-10: the game's own frames are used without existence checks.
+            NUM_SHAPESHIFT_SLOTS = 10
+            setmetatable(_G, { __index = function(t, name)
+                if type(name) == "string" and string.find(name, "^%u%a+%d*%a*%d*$") and not string.find(name, "^FT") then
+                    local w = Widget(); rawset(t, name, w); return w
+                end
+            end })
             FT.ActionBars = { enabled = true }
         ''')
         lua.execute(source("mods/reduced-actionbar.lua"))

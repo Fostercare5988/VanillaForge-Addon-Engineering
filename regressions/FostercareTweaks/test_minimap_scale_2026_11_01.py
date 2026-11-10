@@ -32,9 +32,9 @@ SETUP = r'''
     function MinimapCluster:ClearAllPoints() end
     -- TOPRIGHT of UIParent, offsets in cluster units
     function MinimapCluster:SetPoint(_, _, _, x, y) self.right, self.top = (1000 + x * self.scale) / self.scale, (1000 + y * self.scale) / self.scale end
-    function FT.GetNumber(key, default, low, high)
-        local v = FostercareTweaks_Config.overwrites[key]
-        return math.max(low, math.min(high, v or default))
+    function FT.GetNumber(key)
+        local n = FT.NUMBERS[key]
+        return math.max(n[2], math.min(n[3], FostercareTweaks_Config.overwrites[key] or n[1]))
     end
     Minimap = Widget({ w = 140, h = 140, zoom = 3 })
     function Minimap:GetWidth() return self.w end
