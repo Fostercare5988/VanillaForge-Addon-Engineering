@@ -31,6 +31,9 @@ DEFAULTS = r'''
             standard_player = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 592, y = -618 },
             far_right = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 1511, y = -100 },
             standard_target_buffs = { point = "TOPRIGHT", relPoint = "TOPRIGHT", x = 44, y = 45 },
+            minimap = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 1490, y = 55 },
+            minimap_zone_s = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 1589, y = -228 },
+            minimap_clock_s = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 1539, y = -223 },
         },
         actionbars = { enabled = true, bars = {
             extra = { visible = true, scale = 0.9, x = 447, y = 147 },
@@ -72,6 +75,19 @@ class NewCharacter(unittest.TestCase):
         self.assertIsNone(bars.left.x)                              # a bar that cannot be placed uses its default spot
         self.assertTrue(bars.left.visible)                          # but keeps its other settings
         self.assertEqual(bars.extra.x, 447)
+
+    def test_the_minimap_keeps_its_layout_whole_or_not_at_all(self):
+        # 1700 wide: the zone name (x 1589) fits, so does everything else.
+        positions = load(1700, 1000).eval("FostercareTweaks_Config.unitframe_positions")
+        self.assertEqual(positions.minimap.x, 1490)
+        self.assertEqual(positions.minimap_zone_s.x, 1589)
+        # 1600 wide: the zone name no longer fits, so no piece is placed and
+        # none is left half-moved; everything else stays.
+        positions = load(1600, 1000).eval("FostercareTweaks_Config.unitframe_positions")
+        self.assertIsNone(positions.minimap)
+        self.assertIsNone(positions.minimap_zone_s)
+        self.assertIsNone(positions.minimap_clock_s)
+        self.assertEqual(positions.standard_player.x, 592)
 
     def test_the_defaults_table_is_copied_not_shared(self):
         lua = load(1920, 1080)
