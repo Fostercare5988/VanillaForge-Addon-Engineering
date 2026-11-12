@@ -164,7 +164,7 @@ class Drawing(unittest.TestCase):
         self.assertEqual(names(lua), ["Tank", "A", "B", "Me"])
 
     def test_the_title_has_the_target_and_our_share(self):
-        self.assertEqual(self.lua.eval("title()"), "Boss  |cffffd10030%")
+        self.assertEqual(self.lua.eval("title()"), "Boss  30%")
 
     def test_rows_beyond_the_setting_stay_hidden(self):
         lua = fight("{rows = 3}")
@@ -183,9 +183,8 @@ class Drawing(unittest.TestCase):
         self.assertEqual(hot[1], 1)
         self.assertLess(hot[2], 0.4)
 
-    def test_the_tank_is_named_in_gold(self):
-        gold = self.lua.eval("barRows()[1].nameColor")
-        self.assertEqual(gold[2], 0.82)
+    def test_names_have_no_special_colour(self):
+        self.assertIsNone(self.lua.eval("barRows()[1].nameColor"))
 
     def test_a_bar_that_changes_owner_does_not_glide_from_the_old_player(self):
         lua = self.lua
