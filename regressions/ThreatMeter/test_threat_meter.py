@@ -222,6 +222,20 @@ class Drawing(unittest.TestCase):
         lua.execute('answer("Me:1:1000:100:1;A:0:700:70:1")')
         self.assertEqual(lua.eval("footRow().name"), "You hold aggro")
 
+    def test_the_pull_aggro_line_is_on_top_and_the_players_follow(self):
+        lua = self.lua
+        foot_y = lua.eval("footRow().y")
+        first_y = lua.eval("barRows()[1].y")
+        self.assertGreater(foot_y, first_y)
+        self.assertEqual(foot_y - first_y, lua.eval("ThreatMeterDB.rowHeight"))
+
+    def test_without_the_line_the_players_move_up_to_its_place(self):
+        lua = fight()
+        lua.execute('answer("Tank:1:1000:100:1;A:0:700:70:1;Me:0:300:30:0")')
+        with_line = lua.eval("barRows()[1].y")
+        lua.execute('step(0.2); answer("A:0:700:70:1;Me:0:300:30:0")')
+        self.assertEqual(lua.eval("barRows()[1].y") - with_line, lua.eval("ThreatMeterDB.rowHeight"))
+
     def test_no_footer_without_a_tank_in_the_answer(self):
         lua = fight()
         lua.execute('answer("A:0:700:70:1;Me:0:300:30:0")')
