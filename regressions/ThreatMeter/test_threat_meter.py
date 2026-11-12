@@ -171,12 +171,13 @@ class Drawing(unittest.TestCase):
         lua.execute('answer("%s")' % FIGHT)
         self.assertEqual(names(lua), ["Tank", "A", "B"])
 
-    def test_class_colours_and_the_heat_of_our_own_bar(self):
+    def test_class_colours_and_our_own_bar_stays_red(self):
         lua = self.lua
         mage = lua.eval("barRows()[2].color")
         self.assertAlmostEqual(mage[1], 0.41)
         mine = lua.eval("barRows()[4].color")
-        self.assertAlmostEqual(mine[1], 0.6)        # 30% is green turning yellow
+        self.assertEqual(mine[1], 1)                # always red, at any share
+        self.assertLess(mine[2], 0.4)
         lua.execute('step(0.2); answer("Tank:1:1000:100:1;Me:0:900:90:0")')
         hot = lua.eval("barRows()[2].color")
         self.assertEqual(hot[1], 1)
@@ -228,13 +229,13 @@ class Drawing(unittest.TestCase):
 
 
 class Size(unittest.TestCase):
-    def test_a_full_raid_fits_in_the_window(self):
+    def test_the_most_players_shown_is_fourteen(self):
         lua = fight("{rows = 40}")
-        self.assertEqual(lua.eval("sent[1].msg"), "limit=40")
-        body = ";".join("P%d:%d:%d:%d:1" % (i, i == 1, 4000 - i * 50, 100 - i) for i in range(1, 41))
+        self.assertEqual(lua.eval("sent[1].msg"), "limit=14")
+        body = ";".join("P%d:%d:%d:%d:1" % (i, i == 1, 4000 - i * 50, 100 - i) for i in range(1, 15))
         lua.execute('answer("%s")' % body)
-        self.assertEqual(lua.eval("#barRows()"), 40)
-        self.assertEqual(lua.eval("barRows()[40].name"), "P40")
+        self.assertEqual(lua.eval("#barRows()"), 14)
+        self.assertEqual(lua.eval("barRows()[14].name"), "P14")
 
     def test_a_wide_window_shows_every_column(self):
         lua = fight("{width = 300}")
