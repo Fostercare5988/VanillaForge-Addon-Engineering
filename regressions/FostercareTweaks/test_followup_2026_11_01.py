@@ -206,7 +206,7 @@ class RaidBarsWriteOnlyOnChange(unittest.TestCase):
                 bar.SetMinMaxValues = function() ranges = ranges + 1 end
                 bar.SetStatusBarColor = function() colors = colors + 1 end
             end
-            btn.powerBar = { SetValue = function() end,
+            btn.powerBar = { SetValue = function() end, bg = { SetVertexColor = function() end },
                 SetMinMaxValues = function() ranges = ranges + 1 end,
                 SetStatusBarColor = function() colors = colors + 1 end }
             UF.PowerColors = { [0] = { r = 0, g = 0, b = 1 } }
@@ -317,7 +317,7 @@ class ChatLinesCostLess(unittest.TestCase):
             lines = {}
             function FT.IsCombatChatFrame() return false end
             function FT.GetPlayerClass(name) return name == "Jaina" and "MAGE" or nil end
-            FT.rgbhex = function() return "|cff3fc7eb" end
+            C_ClassColor = { GetClassColor = function(c) return c == "MAGE" and { GenerateHexColorMarkup = function() return "|cff3fc7eb" end } or nil end }
             RAID_CLASS_COLORS = { MAGE = {} }
             ChatFrame1 = { AddMessage = function(_, text) lines[#lines + 1] = text end }
         ''')
@@ -342,7 +342,6 @@ class ChatLinesCostLess(unittest.TestCase):
         lua.execute(r'''
             NUM_CHAT_WINDOWS = 1
             function FT.IsCombatChatFrame() return false end
-            FT.rgbhex = function() return "|cff999999" end
             function GetRealmName() return "R" end
             function UnitName() return "P" end
             FostercareTweaks_Cache = { chat = { [1] = { "|cff999999newer", "|cff999999older" } } }
@@ -371,8 +370,8 @@ class ChatLinesCostLess(unittest.TestCase):
         lua.execute('for _, f in ipairs(frames) do fire(f, "PLAYER_LOGOUT") end')
         saved = lua.eval("FostercareTweaks_Cache.chat[1]")
         self.assertEqual(list(saved.values()), [
-            "|cff999999hi |r|cff999999there",                   # dimmed once
-            "|cff999999login line",
+            "|cffb2b2b2hi |r|cffb2b2b2there",                   # dimmed once (white at 0.7)
+            "|cffb2b233login line",
             "|cff999999newer",                                   # restored lines stay as they were
             "|cff999999older",
         ])

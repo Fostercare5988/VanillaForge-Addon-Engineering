@@ -106,7 +106,7 @@ class RaidNames(unittest.TestCase):
             function UnitIsConnected() return 1 end
             function UnitIsGhost() end
             local function sb() return { SetMinMaxValues = function() end, SetValue = function() end,
-                SetStatusBarColor = function() end } end
+                SetStatusBarColor = function() end, bg = { SetVertexColor = function() end } } end
             btn = { unit = "raid3", rosterName = %s, IsShown = function() return true end,
                 healthBar = sb(), nameText = { GetText = function(s) return s.t end, SetText = function(s, t) s.t = t end },
                 healthText = { GetText = function() end, SetText = function() end } }
@@ -176,24 +176,20 @@ class RetiredSettings(unittest.TestCase):
 class ModernFramesRetired(unittest.TestCase):
     """The Modern player, target and ToT frames were removed (2026-10-25)."""
     def test_bar_color_writes_only_on_change(self):
+        # Since 2026-11-13 raid.lua's SetBarColor remembers the colour and sets
+        # the background with it; the bar's own method is no longer wrapped.
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(BASE)
         lua.execute('''
-            FT.HookScript, FT.SetEventHandler = function() end, function() end
             native = 0
-            local Bar = {}
-            function Bar:SetStatusBarColor() native = native + 1 end
-            function Bar:CreateTexture() return { SetAllPoints = function() end, SetTexture = function() end,
-                SetVertexColor = function(s, r) s.r = r end } end
-            setmetatable(Bar, { __index = function() return function() end end })
-            function CreateFrame(kind) if kind == "StatusBar" then return setmetatable({}, { __index = Bar }) end
-                return { RegisterEvent = function() end } end
+            bar = { SetStatusBarColor = function() native = native + 1 end,
+                bg = { SetVertexColor = function(s, r) s.r = r end } }
         ''')
-        lua.execute(source("mods/unitframes/core.lua"))
-        lua.execute('''bar = FT.UnitFrames:CreateBar("b")
-            bar:SetStatusBarColor(1, 0.5, 0); bar:SetStatusBarColor(1, 0.5, 0)''')
+        lua.execute(between(RAID, "-- Range and colour change rarely", "-- The number a button shows")
+                    + "\nSetBarColor(bar, 1, 0.5, 0); SetBarColor(bar, 1, 0.5, 0)")
         self.assertEqual(lua.eval('native'), 1)
         self.assertEqual(lua.eval('bar.bg.r'), 0.2)
+        self.assertNotIn("SetStatusBarColorNative", source("mods/unitframes/core.lua"))
 
 
 class BadgeClicks(unittest.TestCase):

@@ -207,7 +207,7 @@ class UnitEventsReachOnlyTheirUnits(unittest.TestCase):
         lua.execute(r'''
             UF = { Auras = { CreateAuraButton = function() return Widget() end, ResetAuraButton = NOOP } }
             FT.UnitFrames = UF
-            function UF:CreateBar() return Widget() end
+            function UF:CreateBar() return Widget({ bg = Widget() }) end
             FT.RegisterFrameMover = NOOP
             function FT.ClampNumber(v, d, lo, hi) return math.max(lo, math.min(hi, tonumber(v) or d)) end
         ''')
@@ -283,7 +283,6 @@ class ChatTimestampsSkipCombatLog(unittest.TestCase):
             ChatFrame1 = { AddMessage = function(_, msg) got[1] = msg end }
             ChatFrame2 = { combat = true, AddMessage = function(_, msg) got[2] = msg end }
             function FT.IsCombatChatFrame(cf) return cf.combat == true end
-            FT.rgbhex = function() return "|cffcccccc" end
             function date() return "18:21:57" end
         ''')
         lua.execute(source("mods/chat-tweaks.lua"))
@@ -301,7 +300,7 @@ RAID_ROSTER = r'''
         UpdateAuraTiming = NOOP, StyleBorder = NOOP },
         ClassColors = { ROGUE = { r = 1, g = 1, b = 0 } }, PowerColors = { [0] = { r = 0, g = 0, b = 1 } } }
     FT.UnitFrames = UF
-    function UF:CreateBar() return Widget() end
+    function UF:CreateBar() return Widget({ bg = Widget() }) end
     function UF.SetFontSize() end
     function UF:IsRaidShowHoT() return true end
     function UF:IsRaidShowDebuffs() return true end

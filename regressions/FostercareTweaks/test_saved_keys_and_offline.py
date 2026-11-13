@@ -158,7 +158,6 @@ class ChatHistoryIsTheCharactersOwn(unittest.TestCase):
         lua.execute(r'''
             NUM_CHAT_WINDOWS = 1
             function FT.IsCombatChatFrame() return false end
-            FT.rgbhex = function() return "|cff999999" end
             function GetRealmName() return "R" end
             function UnitName() return "P" end
             msgs = {}

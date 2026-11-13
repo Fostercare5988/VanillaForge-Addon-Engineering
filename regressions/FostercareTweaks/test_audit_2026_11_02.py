@@ -180,7 +180,7 @@ class ChatHasOneWrapper(unittest.TestCase):
             native2 = ChatFrame2.AddMessage
             function FT.IsCombatChatFrame(cf) return cf.combat == true end
             function FT.GetPlayerClass(name) return name == "Jaina" and "MAGE" or nil end
-            FT.rgbhex = function() return "|cff3fc7eb" end
+            C_ClassColor = { GetClassColor = function(c) return c == "MAGE" and { GenerateHexColorMarkup = function() return "|cff3fc7eb" end } or nil end }
             RAID_CLASS_COLORS = { MAGE = {} }
             function date() return "[12:00:00] " end
             function SetItemRef() end
