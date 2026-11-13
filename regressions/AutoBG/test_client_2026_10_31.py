@@ -70,6 +70,26 @@ class CrossFactionTests(unittest.TestCase):
         self.request(lua)
         self.assertEqual(lua.eval('joined[1]'), 0)
 
+    def test_the_queue_row_follows_the_choice_per_battleground(self):
+        lua = runtime()
+        lua.execute('listed = { 9001, 9002, 4 }; AutoBG_Settings.QueueMode_WSG = "fx"')
+        self.request(lua)
+        self.assertEqual(lua.eval('joined[1]'), 2)
+        lua.execute('joined = {}; shownMap = "Arathi Basin"; AutoBG_Settings.QueueMode_AB = "fa"')
+        self.request(lua, "Arathi Basin")
+        self.assertEqual(lua.eval('joined[1]'), 0)
+
+    def test_a_row_the_list_lacks_falls_back_to_first_available(self):
+        lua = runtime()
+        lua.execute('listed = { 9001, 4 }; AutoBG_Settings.QueueMode_WSG = "fx"')
+        self.request(lua)
+        self.assertEqual(lua.eval('joined[1]'), 0)
+
+    def test_cross_faction_is_the_default_choice(self):
+        lua = runtime()
+        self.assertEqual(lua.eval('AutoBG_Settings.QueueMode_WSG'), "xf")
+        self.assertEqual(lua.eval('AutoBG_Settings.QueueMode_AB'), "xf")
+
 
 class ArenaQueueTests(unittest.TestCase):
     def test_auto_queue_includes_the_chosen_arena(self):
