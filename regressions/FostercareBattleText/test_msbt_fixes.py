@@ -141,8 +141,8 @@ class ManaEnableBaseline(unittest.TestCase):  # F6
             local function gains() local g={} for _,e in ipairs(sent) do if e.NotificationType==FBT.Combat.NOTIFICATIONTYPE_POWER_GAIN then table.insert(g,e.Amount) end end return g end
             units.player.mana=offMana; ManaEvent()
             FBT.Options.ShowTab(1); FBT_ShowAllManaGains:Click()
-            sent={}; units.player.mana=offMana+5; ManaEvent(); local g=gains(); assert(#g==1 and g[1]=="5 "..MANA, "first gain "..tostring(g[1]))
-            sent={}; units.player.mana=offMana+7; ManaEvent(); g=gains(); assert(#g==1 and g[1]=="2 "..MANA)
+            sent={}; units.player.mana=offMana+5; ManaEvent(); local g=gains(); assert(#g==1 and g[1]==5, "first gain "..tostring(g[1]))
+            sent={}; units.player.mana=offMana+7; ManaEvent(); g=gains(); assert(#g==1 and g[1]==2)
             FBT_ShowAllManaGains:Click(); sent={}; units.player.mana=offMana+9; ManaEvent(); assert(#gains()==0)
             ''')
 

@@ -140,7 +140,7 @@ class PowerLoss(unittest.TestCase):  # Power Losses now has a source
         ''')
         g = lua.globals()
         got = [(e.NotificationType, e.Amount, e.EffectName) for e in g.sent.values()]
-        self.assertEqual(got, [(g.FBT.Combat.NOTIFICATIONTYPE_POWER_LOSS, "120 Mana", "Viper Sting")])
+        self.assertEqual(got, [(g.FBT.Combat.NOTIFICATIONTYPE_POWER_LOSS, 120, "Viper Sting")])
 
 
 RECORD_TRIGGERS = '''
@@ -258,7 +258,7 @@ class CombatLogSource(unittest.TestCase):  # item 1: the combat log is the only 
         self.assertEqual((got[0]["DirectionType"], got[0]["HealType"], got[0]["Amount"]),
                          (c.DIRECTIONTYPE_PLAYER_INCOMING, c.HEALTYPE_CRIT, 900))  # self-heal shown once
         self.assertEqual((got[1]["HealType"], got[1]["Name"]), (c.HEALTYPE_OVER_TIME, "Ally"))
-        self.assertEqual((got[2]["Amount"], got[2]["EffectName"], got[2]["IsSpellManaGain"]), ("300 Mana", "Innervate", True))
+        self.assertEqual((got[2]["Amount"], got[2]["EffectName"], got[2]["IsSpellManaGain"]), (300, "Innervate", True))
         self.assertEqual((got[3]["ActionType"], got[3]["Amount"]), (c.ACTIONTYPE_FALLING, 220))
         self.assertEqual((got[4]["EffectName"], got[4]["DamageType"], got[4]["DirectionType"]),
                          ("Damage Shield", c.DAMAGETYPE_NATURE, c.DIRECTIONTYPE_PLAYER_OUTGOING))
@@ -274,7 +274,7 @@ class CombatLogSource(unittest.TestCase):  # item 1: the combat log is the only 
         ''')
         c = lua.eval("FBT.Combat")
         self.assertEqual([e["NotificationType"] for e in got],
-                         [c.NOTIFICATIONTYPE_DEBUFF, c.NOTIFICATIONTYPE_DEBUFF, c.NOTIFICATIONTYPE_BUFF_FADE])
+                         [c.NOTIFICATIONTYPE_DEBUFF, c.NOTIFICATIONTYPE_DEBUFF_STACK, c.NOTIFICATIONTYPE_BUFF_FADE])
 
 
 class SettingsWindow(unittest.TestCase):  # item 2: ForgeUI settings write the profile

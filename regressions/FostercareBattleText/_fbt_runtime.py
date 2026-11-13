@@ -74,19 +74,60 @@ function PickerCancel() if ColorPickerFrame.cancelFunc then ColorPickerFrame.can
 function getglobal(name) return rawget(_G,name) or NewWidget(name) end
 setglobal=function(k,v) _G[k]=v end
 
+-- The client's combat log filter, as ClassicAPI's API.md "CombatLogAddFilter"
+-- gives it: an event matches one filter (or there is none), and a mask matches
+-- flags that have a bit of the mask in each of the four groups.
+combatFilters={}
+function CombatLogResetFilter() combatFilters={} end
+function CombatLogAddFilter(events, src, dst, spell) table.insert(combatFilters,{events=events,src=src,dst=dst,spell=spell}) end
+local GROUPS={0xF,0xF0,0x300,0xFC00}
+function CombatLog_Object_IsA(flags, mask)
+  for _,g in ipairs(GROUPS) do if bit.band(bit.band(flags or 0,g),mask)==0 then return nil end end
+  return 1
+end
+local function Part(want, guid, flags)
+  if want==nil then return true end
+  if type(want)=="string" then return want==guid end
+  return CombatLog_Object_IsA(flags, want)~=nil
+end
+local function Passes(sub, srcGUID, srcFlags, dstGUID, dstFlags, spellId, spellName)
+  if #combatFilters==0 then return true end
+  for _,f in ipairs(combatFilters) do
+    local events=f.events and string.upper(","..string.gsub(f.events,"[%s,]+",",")..",")
+    if (not events or string.find(events,","..sub..",",1,true)) and Part(f.src,srcGUID,srcFlags) and Part(f.dst,dstGUID,dstFlags)
+       and (f.spell==nil or f.spell==spellId or f.spell==spellName) then return true end
+  end
+end
+
 -- Fire an event with every argument kept: the combat log reads them back.
+-- A combat log event also fires COMBAT_LOG_EVENT when it passes the filter.
 function Fire(e,...)
   cleu={n=select("#",...),...}
   for i=1,24 do _G["arg"..i]=cleu[i] end
   fire(e,...)
+  if e=="COMBAT_LOG_EVENT_UNFILTERED" then
+    local c=cleu
+    if Passes(c[2],c[4],c[6],c[8],c[10],c[12],c[13]) then
+      for i=1,24 do _G["arg"..i]=c[i] end
+      cleu=c
+      fire("COMBAT_LOG_EVENT",unpack(c,1,c.n))
+    end
+  end
 end
 function CombatLogGetCurrentEventInfo() count("CombatLogGetCurrentEventInfo"); return unpack(cleu,1,cleu.n) end
+-- Unit flags as the client sends them: you, your pet (both yours, friendly,
+-- player-controlled), no unit, and everyone else (an outsider hostile player).
+function Flags(guid)
+  if guid == "0xPLAYER" then return 0x511 end
+  if guid == "0xPET" then return 0x1111 end
+  if guid == nil then return 0x80000000 end
+  return 0x548
+end
 -- One combat log event: subevent, source GUID/name, dest GUID/name, then the
 -- subevent's own values (position 12 on), as ClassicAPI documents them.
 function CL(sub, src, srcName, dst, dstName, ...)
   local a={n=select("#",...),...}
-  local flags = (dst=="0xPLAYER" or dst=="0xPET") and 0x511 or 0x548
-  Fire("COMBAT_LOG_EVENT_UNFILTERED", 1, sub, false, src, srcName, 0x511, 0, dst, dstName, flags, 0, unpack(a,1,a.n))
+  Fire("COMBAT_LOG_EVENT_UNFILTERED", 1, sub, false, src, srcName, Flags(src), 0, dst, dstName, Flags(dst), 0, unpack(a,1,a.n))
 end
 
 -- Bit library (ClassicAPI ships one; lupa's 5.1 has none).
@@ -134,9 +175,16 @@ function PlaySoundFile() count("PlaySoundFile") end
 function PlaySound() end
 timers={}
 C_Timer={}
-function C_Timer.NewTimer(d,f) local t={f=f,Cancel=function(self) self.cancelled=true end}; table.insert(timers,t); return t end
+function C_Timer.NewTimer(d,f) local t={f=f,d=d,Cancel=function(self) self.cancelled=true end}; table.insert(timers,t); return t end
 function C_Timer.After(d,f) C_Timer.NewTimer(d,f) end
 function RunTimers() local list=timers; timers={}; for _,t in ipairs(list) do if not t.cancelled then t.f() end end end
+-- Runs the timers due within `seconds`; the later ones stay pending.
+function RunTimersUpTo(seconds)
+  local list=timers; timers={}
+  for _,t in ipairs(list) do
+    if t.d and t.d > seconds then table.insert(timers,t) elseif not t.cancelled then t.f() end
+  end
+end
 
 -- 1.12 GlobalStrings the core files read (English client).
 MANA="Mana"; RAGE="Rage"; ENERGY="Energy"; HONOR="Honor"; UNKNOWN="Unknown"; ALL="All"
@@ -160,6 +208,8 @@ VSDODGESELFOTHER="You attack. %s dodges."; SPELLDODGEDSELFOTHER="Your %s was dod
 COMBATLOG_OBJECT_AFFILIATION_MINE=0x1; COMBATLOG_OBJECT_AFFILIATION_OUTSIDER=0x8
 COMBATLOG_OBJECT_REACTION_HOSTILE=0x40; COMBATLOG_OBJECT_CONTROL_PLAYER=0x100; COMBATLOG_OBJECT_CONTROL_NPC=0x200
 COMBATLOG_OBJECT_TYPE_PLAYER=0x400; COMBATLOG_OBJECT_TYPE_NPC=0x800; COMBATLOG_OBJECT_TYPE_MASK=0xFC00
+-- Complete masks: you; you and your objects; your pets and guardians.
+COMBATLOG_FILTER_ME=0x511; COMBATLOG_FILTER_MINE=0x4511; COMBATLOG_FILTER_MY_PET=0x3111
 '''
 
 

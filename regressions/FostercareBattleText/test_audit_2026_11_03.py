@@ -65,7 +65,7 @@ class DruidMana(unittest.TestCase):  # P2-2
             inForm = #sent
         ''')
         self.assertEqual(lua.eval("inForm"), 1)
-        self.assertEqual(lua.eval("sent[1].Amount"), "10 Mana")
+        self.assertEqual((lua.eval("sent[1].Amount"), lua.eval("sent[1].PowerName")), (10, "Mana"))
 
 
 class EventsOnlyWhenNeeded(unittest.TestCase):  # P3-2
