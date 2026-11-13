@@ -166,7 +166,7 @@ class EventTriggers(unittest.TestCase):  # P3-3
         lua.execute(RECORD_TRIGGERS + '''
         local function add(key, kind)
           FBT.CurrentProfile.Triggers[key] = {EventSettings={Show=true, Message=key,
-            FontSettings={Color={r=1,g=1,b=1}, Normal={FontIndex=0,OutlineIndex=0,FontSize=0}}},
+            FontSettings={Color={r=1,g=1,b=1}, Normal={OutlineIndex=0,FontSize=0}}},
             TriggerSettings={TriggerType=kind}}
         end
         add("DODGE", FBT.Combat.TRIGGERTYPE_YOU_DODGE); add("PARRY", FBT.Combat.TRIGGERTYPE_YOU_PARRY)

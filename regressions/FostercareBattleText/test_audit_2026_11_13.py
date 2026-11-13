@@ -96,5 +96,89 @@ class Overheal(unittest.TestCase):  # P2-2
         self.assertEqual(texts(lua, "Incoming"), ["+500 (Priest)"])
 
 
+class SavedKeySweep(unittest.TestCase):  # P3-1, KNOWN_PATTERNS KP-64
+    # Four retired event keys were cleared one line each, and nothing cleared
+    # any other key a release left behind. One sweep clears every saved key no
+    # default owns; the player's own triggers and filters keep theirs.
+
+    def test_keys_no_default_owns_are_cleared(self):
+        lua = m.runtime('''
+        FostercareBattleTextDB = {UserDisabled = false, Junk = 1, Profiles = {Default = {
+          OldSwitch = true,
+          EventSettings = {MSBT_EVENTTYPE_INCOMING_RESIST = {Show = true}, MSBT_EVENTTYPE_OLD = {Show = true}},
+          DisplaySettings = {Old = {Show = true}},
+          Triggers = {MSBT_TRIGGER_CUSTOM1 = {EventSettings = {Show = false}, TriggerSettings = {TriggerType = 1}, Extra = 1}},
+          Suppressions = {MSBT_SUPPRESSION_CUSTOM1 = {Enabled = true, SearchPattern = "Renew"}},
+        }}}''')
+        p = lua.eval("FostercareBattleTextDB.Profiles.Default")
+        self.assertIsNone(lua.eval("FostercareBattleTextDB.Junk"))
+        self.assertIsNone(p.OldSwitch)
+        self.assertIsNone(p.EventSettings.MSBT_EVENTTYPE_INCOMING_RESIST)
+        self.assertIsNone(p.EventSettings.MSBT_EVENTTYPE_OLD)
+        self.assertIsNone(p.DisplaySettings.Old)
+        self.assertEqual(p.Triggers.MSBT_TRIGGER_CUSTOM1.Extra, 1)
+        self.assertEqual(p.Suppressions.MSBT_SUPPRESSION_CUSTOM1.SearchPattern, "Renew")
+        self.assertEqual(lua.eval("FostercareBattleTextDB.UserDisabled"), False)
+        self.assertEqual(p.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE.Show, True)
+
+
+class FontsByName(unittest.TestCase):  # P3-2
+    # Fonts were saved by their place in the font list, so no font could leave
+    # the list without moving every later font. They are saved by name now;
+    # Simhei (a 9.7 MB Chinese font no profile used) has left the list.
+
+    SAVED = '''
+    FostercareBattleTextDB = {UserDisabled = false, Profiles = {Default = {
+      MasterFontSettings = {Normal = {FontIndex = 37, OutlineIndex = 2, FontSize = 20},
+                            Crit = {FontIndex = 40, OutlineIndex = 2, FontSize = 26}},
+      BlizzardFontSettings = {Normal = {FontIndex = 6}},
+      DisplaySettings = {Incoming = {FontSettings = {Normal = {FontIndex = 31, OutlineIndex = 0, FontSize = 0}}}},
+      EventSettings = {MSBT_EVENTTYPE_INCOMING_DAMAGE = {FontSettings = {Normal = {FontIndex = 0, OutlineIndex = 0, FontSize = 0}}}},
+    }}}'''
+
+    def test_saved_font_places_become_names(self):
+        lua = m.runtime(self.SAVED)
+        p = lua.eval("FostercareBattleTextDB.Profiles.Default")
+        self.assertEqual(p.MasterFontSettings.Normal.FontName, "Inter Bold")
+        self.assertEqual(p.MasterFontSettings.Crit.FontName, "Roboto Mono")
+        self.assertEqual(p.BlizzardFontSettings.Normal.FontName, "Friz")
+        # Simhei and "inherit" both inherit now.
+        self.assertIsNone(p.DisplaySettings.Incoming.FontSettings.Normal.FontName)
+        self.assertIsNone(p.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE.FontSettings.Normal.FontName)
+        self.assertIsNone(p.MasterFontSettings.Normal.FontIndex)
+        self.assertIsNone(p.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE.FontSettings.Normal.FontIndex)
+
+    def test_text_uses_the_inherited_font(self):
+        lua = m.runtime(self.SAVED)
+        path = lua.eval('FBT.GetFontPath(FBT.scrollAreas.Incoming, FBT.CurrentProfile.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE, false)')
+        self.assertTrue(path.endswith("Inter-Bold.ttf"), path)
+        self.assertEqual(lua.eval('DAMAGE_TEXT_FONT'), "Fonts\\FRIZQT__.TTF")
+
+    def test_the_font_editor_steps_by_name(self):
+        lua = m.runtime()
+        lua.execute('''
+          FBT.Options.ShowTab(1); FBT_MasterFonts:Click()
+          FBT_FontNormalFaceNext:Click()
+        ''')
+        self.assertEqual(lua.eval("FBT.CurrentProfile.MasterFontSettings.Normal.FontName"), "Inter SemiBold")
+        self.assertEqual(lua.eval("FBT_FontNormalFaceText.text"), "Inter SemiBold")
+
+
+class FontWrites(unittest.TestCase):  # P3-3
+    def test_a_slot_sets_its_font_only_when_it_changes(self):
+        lua = m.runtime()
+        lua.execute('''
+          setFonts = 0
+          for _, area in pairs(FBT.scrollAreas) do for _, slot in ipairs(area.Slots) do
+            local font = slot.FontObject
+            font.SetFont = function(self, path) setFonts = setFonts + 1; self.fontPath = path end
+            font.GetFont = function(self) return self.fontPath end
+          end end
+          for i = 1, 25 do FBT.DisplayMessage("x" .. i, FBT.DISPLAYTYPE_NOTIFICATION) end
+        ''')
+        # Ten scrolling slots take 25 lines of one font: one SetFont each.
+        self.assertEqual(lua.eval("setFonts"), 10)
+
+
 if __name__ == "__main__":
     unittest.main()
