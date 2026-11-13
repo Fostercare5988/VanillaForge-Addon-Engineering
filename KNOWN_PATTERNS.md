@@ -1196,6 +1196,21 @@ gets the error inside the failing call, with its stack, and the caller still res
 state or stops the failing timer from `xpcall`'s first return. Keep `pcall` with a chat
 line only for player-written code (macro-like scripts), where the message is the point.
 
+### KP-64 --- Saved Keys Cleared One Line Each
+
+**Problem:** Each retired switch gets a line at load that sets its saved key to `nil`.
+The line is forgotten, or removed in a later cleanup before every character has
+logged in, and the key stays in saved files for good. FostercareTweaks removed its
+"Auto Dismount" line on 2026-11-08; eight characters still held the key on 11-13.
+The lines also pile up as migrations nobody dares to delete.
+
+**Preferred direction:** one sweep at load, after every module has registered: clear
+each saved key that no switch, number, choice or named saved table owns
+(FostercareTweaks Core.lua, `SAVED_TABLES`). A retired key then goes on its own,
+and a new saved table is one line in the owner list. A migration that moves data
+(not one that only clears) stays until no saved file holds the old form.
+`find_holes.py` lists addons that still clear keys one by one.
+
 ------------------------------------------------------------------------
 
 ## 11. Pattern Governance

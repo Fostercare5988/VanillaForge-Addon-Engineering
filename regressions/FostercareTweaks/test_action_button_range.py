@@ -9,7 +9,7 @@ check of its own slot (and gives it back when it shows another one), the event
 paints the game's colours, and the stock OnUpdate runs only while a button
 flashes or shows its tooltip.
 
-Built on wowkit. The FrameXML functions are stand-ins with the stock fields
+Built on ft_env (wowkit). The FrameXML functions are stand-ins with the stock fields
 (this.action, rangeTimer, flashing, updateTooltip; ActionButton.lua of client
 2026.10.31). Fails on 701d8b1 (no actionbar-range.lua; the stock buttons kept
 their OnUpdate).
@@ -23,19 +23,12 @@ import os
 import unittest
 from pathlib import Path
 
-import wowkit
+import ft_env
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 
+# FrameXML stand-ins with the stock fields (ActionButton.lua, client 2026.10.31).
 WORLD = r'''
-FostercareTweaks = { mods = {} }
-FT = FostercareTweaks
-function FT:register(m) self.mods[m.title] = m; return m end
-function FT.SetEventHandler(frame, fn) frame:SetScript("OnEvent", function(self, ...) fn(self, ...) end) end
-function hooksecurefunc(name, fn)
-    local f = _G[name]
-    _G[name] = function(...) local a, b, c = f(...); fn(...); return a, b, c end
-end
 NUM_ACTIONBAR_BUTTONS, RANGE_INDICATOR = 12, "dot"
 enabled = {}
 C_ActionBar = { EnableActionRangeCheck = function(slot, on)
@@ -71,11 +64,8 @@ this = ActionButton1; ActionButton_Update(); this = ActionButton2; ActionButton_
 
 
 def world():
-    lua = wowkit.runtime(unpack_returned_tuples=True)
-    lua.execute(WORLD)
-    lua.execute((ROOT / "mods" / "actionbar-range.lua").read_text("utf-8-sig"))
-    lua.execute('FT.mods["Action Button Range"].enable()')
-    return lua
+    lua = ft_env.world(["mods/actionbar-range.lua"], extra=WORLD)
+    return ft_env.start(lua)        # Core starts the always-on module
 
 
 def call(lua, fn, button):

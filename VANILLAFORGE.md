@@ -113,7 +113,9 @@ the addon's existing convention. Details: CLASSICAPI_MASTER_REFERENCE.md §4.
   locale layers. In the code you touch, remove displaced helpers, dead branches
   and options that do nothing.
 - **Retire features completely:** code, option, default, slash command and docs
-  together, and clear the old saved setting (set it to `nil` on load).
+  together, and clear the old saved setting: one sweep at load clears every saved
+  key nothing owns, so the retired key needs no line of its own (KNOWN_PATTERNS
+  KP-64).
 - **Learn the server's numbers instead of assuming them.** A duration or rule the
   server decides (capture times, respawns, invite windows, cooldowns) is either
   verified against the server profile, or measured from events in play and
@@ -165,7 +167,8 @@ closed) hands them to `!ErrorLog`, where `/check` asks them one by one, runs a
 check's `/run` line and records the answer; `pull` reads the answers back.
 `find_holes.py` starts each audit with the addon's open and failed checks. A
 check answered bad is a bug to fix; one answered ok lets its note go; `drop`
-gives up the open ones nobody will answer.
+gives up the open ones nobody will answer. The tool reads the comment lines after
+an `UNVERIFIED:` note as part of it: put the note last in its comment block.
 
 ## 4. Audit: find the holes, then close them
 
@@ -179,7 +182,10 @@ python -B tools/find_holes.py "<addon folder>"
 It needs `python -B tools/fetch_upstream_docs.py` and
 `python -B tools/extract_framexml.py --client "<client>" --all` once. Its
 findings are leads; read the code before acting. So are earlier audits: what
-they kept, and why, is asked again, not inherited. Then answer every question
+they kept, and why, is asked again, not inherited (FostercareTweaks' Vendor Values
+was kept for a reason the docs contradict). Each reason an audit keeps something
+cites its evidence (a doc section, a FrameXML file:line, a measurement), so the
+next audit checks it instead of trusting it. Then answer every question
 below, in this order, and write the answers in `.private/audit-<Addon>-<date>.md`:
 
 1. **How would it be built today?** Compare with the addon's reference addons
@@ -202,7 +208,10 @@ below, in this order, and write the answers in `.private/audit-<Addon>-<date>.md
 6. **What runs while nothing changes?** Every repeating timer and OnUpdate (the
    hole finder lists them): what does it wait for, and does it stop when nothing
    will change? Cheap is not a reason to keep one: fix the shape, then the cost
-   (§2). Also garbage built on hot paths (Lua 5.0 collects in one full pass).
+   (§2). The game's own code counts too where the addon takes its frames over:
+   the hole finder lists the FrameXML OnUpdates on frames the addon touches
+   (FostercareTweaks' 72 action buttons, 2026-11-13). Also garbage built on hot
+   paths (Lua 5.0 collects in one full pass).
 7. **What do players see and use?** Their settings, errors and stutters; what is
    confusing in the settings window. An option every character leaves alone, or
    that has no reason to be off, becomes permanent: retire it (§2).
@@ -234,10 +243,15 @@ take away something players rely on.
    a suite, the linter alone: `python -B tools/vanillaforge_linter.py "<addon folder>"`.
 2. When behaviour changes on purpose, update the test that encoded the old
    behaviour. For a bug fix, add a test that fails on the old code where
-   practical. Suites and their commands: [regressions/README.md](regressions/README.md).
+   practical, and prove it: `python -B tools/run_suite.py <Addon> <test file>
+   --old <commit>` runs it against the addon at that commit (unpacked, never
+   stashed) and gives each failure's first error line, so a test that only
+   fails in its own setup shows. Without `--old` it runs one file or the suite.
+   Suites and their commands: [regressions/README.md](regressions/README.md).
 3. Keep each file's line endings (several addons use CRLF). Patch addon files with
    [tools/addon_edit.py](tools/addon_edit.py): it keeps the endings and the
-   backslashes of Lua paths (the `@@` placeholder writes two; KNOWN_PATTERNS KP-60).
+   backslashes of Lua paths (the `@@` placeholder writes two, KNOWN_PATTERNS KP-60;
+   `@/` writes one, for a TOC line or an XML file path).
 4. Report what changed, the test results and what to check in game. Tests are
    not in-game proof; say which behaviour still needs a game check.
 5. Git: run `git status` before editing. Commit each coherent step after its
@@ -256,7 +270,7 @@ take away something players rely on.
 | A recurring bug or performance hazard | [KNOWN_PATTERNS.md](KNOWN_PATTERNS.md) |
 | Old ways a DLL now does better | [tools/replacements.json](tools/replacements.json), read by `tools/find_holes.py` |
 | Server facts and data sources | [servers/](servers/) |
-| An addon's regression tests | [regressions/README.md](regressions/README.md) |
+| An addon's regression tests | [regressions/README.md](regressions/README.md); one file, or on an old commit: `tools/run_suite.py` |
 | The game's Lua and engine model for tests | `regressions/wowlua.py`, `regressions/wowkit.py` |
 | What only the game can answer, and the answers | `python -B tools/game_checks.py`; `/check` in `!ErrorLog` |
 | The settings style | `templates/ForgeUI/` |

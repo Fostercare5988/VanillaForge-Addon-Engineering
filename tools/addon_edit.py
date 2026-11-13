@@ -11,7 +11,8 @@ as it is: the old text is matched with LF or with CRLF endings, and the new text
 takes the endings of the text it replaces, so no other line changes.
 
 Use it from a small script, one file per call, and write replacement text that
-contains backslashes with the placeholder @@, which becomes two backslashes:
+contains backslashes with a placeholder: @@ becomes two backslashes (a Lua
+string), @/ one (a TOC line or an XML file path, which Lua never reads):
 
     import sys; sys.path.insert(0, "tools")
     from addon_edit import sub, cut, regex
@@ -47,7 +48,7 @@ def write(path, text, endings):
 
 
 def _fix(text):
-    return text.replace("@@", BACKSLASH * 2)
+    return text.replace("@@", BACKSLASH * 2).replace("@/", BACKSLASH)
 
 
 def _crlf(text):

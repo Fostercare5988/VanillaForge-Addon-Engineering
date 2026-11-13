@@ -33,6 +33,13 @@ class AddonEdit(unittest.TestCase):
         addon_edit.sub(str(path), '""', '"Fonts@@FRIZQT__.TTF"')
         self.assertEqual(path.read_text(), 'local p = "Fonts' + BS * 2 + 'FRIZQT__.TTF"\n')
 
+    def test_the_toc_placeholder_writes_one_backslash(self):
+        # 2026-11-13: a TOC line takes one backslash; @@ wrote two and the match failed.
+        path = self.root / "Toy.toc"
+        path.write_bytes(b"mods" + BS.encode() + b"a.lua\r\n")
+        addon_edit.sub(str(path), "mods@/a.lua\n", "mods@/a.lua\nmods@/b.lua\n")
+        self.assertEqual(path.read_bytes(), b"mods\\a.lua\r\nmods\\b.lua\r\n")
+
     def test_a_patch_that_does_not_match_fails(self):
         path = self.root / "d.lua"
         path.write_bytes(b"x\n")

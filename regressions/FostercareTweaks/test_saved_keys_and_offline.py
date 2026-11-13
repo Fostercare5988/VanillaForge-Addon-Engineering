@@ -21,21 +21,17 @@ from pathlib import Path
 
 from test_audit_2026_10_25 import source
 from test_audit_2026_10_26 import RAID_ROSTER, ROOT, runtime
-from test_audit_2026_11_01 import core
+import ft_env
 
 
 def initialize(saved):
-    lua = core()
-    lua.execute("FT = FostercareTweaks")
-    lua.execute(source("Helpers.lua")[source("Helpers.lua").index("-- A switch: its saved value"):
-                                      source("Helpers.lua").index("function FT.ClampNumber")])
+    lua = ft_env.world()
     lua.execute(r'''
         FT:register({ title = "Chat History", enabled = true })
         FT:register({ title = "Vendor Values", always = true })
     ''')
     lua.execute("FostercareTweaks_Config = " + saved)
-    lua.execute("FostercareTweaks:Initialize()")
-    return lua
+    return ft_env.start(lua)
 
 
 class SavedKeysNothingReadsAreCleared(unittest.TestCase):

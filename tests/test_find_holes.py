@@ -199,6 +199,52 @@ class RepeatingWork(unittest.TestCase):
                 ("XML OnUpdate", "Toy.xml:1", False)])
 
 
+class StockPerFrame(unittest.TestCase):
+    """2026-11-13: FostercareTweaks' biggest saving was FrameXML's own
+    ActionButton_OnUpdate on 72 buttons, which no section saw."""
+
+    def test_the_games_onupdate_on_frames_the_addon_touches_is_listed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "game", {
+                "Interface/FrameXML/ActionButton.lua": ("function ActionButton_OnUpdate(e) end\n"
+                                                        "function ActionButton_Update() end\n"
+                                                        "function UIParent_Helper() end\n"),
+                "Interface/FrameXML/ActionBarFrame.xml": (
+                    "<Ui><CheckButton name='ActionButton1'><Scripts><OnUpdate>ActionButton_OnUpdate(arg1);"
+                    "</OnUpdate></Scripts></CheckButton><Frame name='UIParentish'/></Ui>"),
+            })
+            write(root / "Bars", {
+                "Bars.toc": "## Title: Bars\nBars.lua\n",
+                "Bars.lua": ("hooksecurefunc('ActionButton_Update', f)\nUIParent_Helper()\n"),
+            })
+            write(root / "Plain", {"Plain.toc": "## Title: Plain\nPlain.lua\n", "Plain.lua": "UIParent_Helper()\n"})
+            work = HOLES.stock_frame_work(root / "game")
+            found = HOLES.stock_per_frame(HOLES.Addon(root / "Bars"), work)
+            self.assertEqual([(f["function"], f["touched"], f["names"]) for f in found],
+                             [("ActionButton_OnUpdate", [("ActionButton_Update", "Bars.lua:1")], False)])
+            # A helper of the same file without the prefix is not the frame's family.
+            self.assertEqual(HOLES.stock_per_frame(HOLES.Addon(root / "Plain"), work), [])
+
+
+class PiecemealCleanup(unittest.TestCase):
+    def test_saved_keys_cleared_one_by_one_are_listed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "Old", {
+                "Old.toc": "## Title: Old\n## SavedVariables: Old_DB\nOld.lua\n",
+                "Old.lua": 'Old_DB["Gone One"] = nil\nOld_DB.gone2 = nil\nlocal x = nil\n',
+            })
+            write(root / "Swept", {
+                "Swept.toc": "## Title: Swept\n## SavedVariables: Swept_DB\nSwept.lua\n",
+                "Swept.lua": "for k in pairs(Swept_DB) do if not OWNED[k] then Swept_DB[k] = nil end end\n"
+                             'Swept_DB["One"] = nil\n',
+            })
+            found = HOLES.piecemeal_cleanup(HOLES.Addon(root / "Old"))
+            self.assertEqual([(f["key"], f["where"]) for f in found], [("Gone One", "Old.lua:1"), ("gone2", "Old.lua:2")])
+            self.assertEqual(HOLES.piecemeal_cleanup(HOLES.Addon(root / "Swept")), [])   # one line is no pattern
+
+
 class ReplacementUnless(unittest.TestCase):
     def test_a_file_already_on_the_event_is_no_lead(self):
         with tempfile.TemporaryDirectory() as tmp:

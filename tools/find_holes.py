@@ -607,6 +607,77 @@ def repeating_work(addon):
     return findings
 
 
+def stock_frame_work(framexml=FRAMEXML):
+    """The game's own per-frame work: {function: {"xml", "lua", "family"}} for each
+    function an <OnUpdate> or <OnUpdateModel> of FrameXML calls. Its family is
+    what shares its prefix (ActionButton_OnUpdate: ActionButton_Update,
+    ActionButton1): the functions of its Lua file and the frames of its XML."""
+    defined, functions = {}, {}
+    for path in framexml.rglob("*.lua"):
+        names = set(re.findall(r"^function\s+([A-Za-z_]\w*)\s*\(", path.read_text("latin-1"), re.M))
+        functions[path] = names
+        for name in names:
+            defined[name] = path
+    work = {}
+    for path in framexml.rglob("*.xml"):
+        text = path.read_text("latin-1")
+        bodies = re.findall(r"<(OnUpdate|OnUpdateModel)>(.*?)</\1>", text, re.S)
+        if not bodies:
+            continue
+        frames = set(re.findall(r'\bname="([A-Za-z_]\w*)"', text))
+        for _, body in bodies:
+            for name in set(re.findall(r"\b([A-Z][A-Za-z0-9]*_\w+)\s*\(", body)):
+                lua = defined.get(name)
+                if not lua:
+                    continue
+                prefix = name.split("_")[0]
+                entry = work.setdefault(name, {"xml": set(), "lua": lua.name, "family": set()})
+                entry["xml"].add(path.name)
+                entry["family"] |= {n for n in functions[lua] | frames
+                                    if n != name and n.startswith(prefix)}
+    return work
+
+
+def stock_per_frame(addon, work=None):
+    """The game's per-frame work on frames this addon takes over: a stock OnUpdate
+    runs every frame on a shown frame whether or not anything changed. Each hit
+    is a question (section 4, question 6): can an event, a native widget or a
+    script set only while needed do it? `names` says the addon names the
+    per-frame function itself (it may already handle it)."""
+    work = stock_frame_work() if work is None else work
+    code = {rel: strip_lua(text, keep_strings=True) if rel.lower().endswith(".lua") else text
+            for rel, text in addon.files.items() if rel.lower().endswith((".lua", ".xml"))}
+    findings = []
+    for name, entry in sorted(work.items()):
+        touched, names = [], False
+        for rel, text in code.items():
+            if re.search(r"\b%s\b" % re.escape(name), text):
+                names = True
+            for m in IDENT.finditer(text):
+                if m.group(0) in entry["family"] and len(touched) < 3 \
+                        and all(t[0] != m.group(0) for t in touched):
+                    touched.append((m.group(0), "%s:%d" % (rel, text.count("\n", 0, m.start()) + 1)))
+        if touched:
+            findings.append({"function": name, "xml": sorted(entry["xml"]), "lua": entry["lua"],
+                             "touched": touched, "names": names})
+    return findings
+
+
+def piecemeal_cleanup(addon):
+    """Saved keys cleared one line each (`Saved["Old"] = nil`): a retired switch
+    that needs its own line is forgotten once the line goes. One sweep at load
+    that clears every key nothing owns does it for all (KNOWN_PATTERNS KP-64)."""
+    findings = []
+    for rel, text in addon.lua():
+        code = strip_lua(text, keep_strings=True)
+        for table in addon.saved:
+            pattern = r"\b%s\s*(?:\[\s*[\"']([^\"']+)[\"']\s*\]|\.(\w+))\s*=\s*nil\b" % re.escape(table)
+            for m in re.finditer(pattern, code):
+                findings.append({"key": m.group(1) or m.group(2), "table": table,
+                                 "where": "%s:%d" % (rel, code.count("\n", 0, m.start()) + 1)})
+    return findings if len(findings) >= 2 else []
+
+
 # Report ----------------------------------------------------------------------
 
 def unreferenced_functions(addon):
@@ -668,6 +739,13 @@ def report(results, out):
     section("Function bodies that repeat", results["duplicate_functions"], lambda f: ", ".join(f["where"]))
     section("Repeating work (what does each wait for? cheap is no reason to run)", results["repeating_work"],
             lambda f: "%s at %s%s" % (f["kind"], f["where"], "" if f["stops"] else "  [never stopped in this file]"))
+    section("The game's per-frame work it takes over (FrameXML OnUpdate; does it need to run?)",
+            results["stock_per_frame"], lambda f: "%s (%s, %s): touches %s%s" % (
+                f["function"], ", ".join(f["xml"]), f["lua"],
+                ", ".join("%s at %s" % t for t in f["touched"]),
+                "  [the addon names it: check it is handled]" if f["names"] else ""))
+    section("Saved keys cleared one line each (one sweep clears them all)", results["piecemeal_cleanup"],
+            lambda f: "%s[%r] at %s" % (f["table"], f["key"], f["where"]))
     section("A DLL does it now", results["replacements"], lambda f: "%s (%d at %s)\n  %s\n  Better: %s\n  Source: %s"
             % (f["id"], f["hits"], ", ".join(f["where"]), f["finding"], f["better"], f["source"]))
     section("Connections between addons", results["connections"], lambda f: "%s reads %s's %s at %s%s"
@@ -719,6 +797,8 @@ def main(argv=None):
         "unreferenced_functions": unreferenced_functions(addon),
         "duplicate_functions": duplicate_functions(addon),
         "repeating_work": repeating_work(addon),
+        "stock_per_frame": stock_per_frame(addon),
+        "piecemeal_cleanup": piecemeal_cleanup(addon),
         "replacements": replacements(addon),
         "connections": connections(addon, everyone, game),
         "leaks": leaks(addon, game),
