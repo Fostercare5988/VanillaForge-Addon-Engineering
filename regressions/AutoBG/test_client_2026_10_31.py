@@ -414,7 +414,7 @@ class ArenaExtrasTests(unittest.TestCase):
         self.assertEqual(lua.eval(slot + '.Age.text'), "2")  # seconds since: no length known yet
         lua.execute('NOW = 1013')
         self.event(lua, "BUFF_REMOVED_OTHER", self.GUID, 1, 22, 1, 60, 0, 0)
-        self.assertEqual(lua.eval('AutoBG_ArenaOptions().Durations["Blessing of Freedom"]'), 10)
+        self.assertEqual(lua.eval('AutoBG_ArenaOptions().Durations[22]'), 10)
         lua.execute('NOW = 1020')
         self.event(lua, "BUFF_ADDED_OTHER", self.GUID, 1, 22, 1, 60, 0, 0)
         lua.execute('NOW = 1024; AutoBG_Arena.Tick()')

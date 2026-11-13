@@ -19,6 +19,10 @@ function AutoBG_LoadPosition() end
 function AutoBG_FindPlayerClass(name) return name and playerClasses and playerClasses[name] end
 function AutoBG_GetClassColor() return nil end
 function AutoBG_GetBGIcon() return nil end
+-- AutoBG.lua owns the side you play on; alone, it is your faction.
+function AutoBG_MySide() return UnitFactionGroup("player") end
+function AutoBG_SideOf(name) if name == UnitName("player") then return AutoBG_MySide() end end
+function AutoBG_NoteSide() end
 function GetUnitField() return nil end -- NamPower; nil for units it has no fields for
 local Widget = {}
 setmetatable(Widget, { __index = function(_, name)

@@ -59,6 +59,7 @@ MAX_BATTLEFIELD_QUEUES = 3
 statuses = {}
 function GetBattlefieldStatus(i) local s = statuses[i]; if s then return s[1], s[2] end; return "none" end
 function AcceptBattlefieldPort(id, accept) table.insert(ports, { id = id, accept = accept }) end
+expirations = {}; function GetBattlefieldPortExpiration(i) return expirations[i] or 0 end
 now = 1000; function GetTime() return now end
 zone, pvp = "Orgrimmar", false
 function GetRealZoneText() return zone end

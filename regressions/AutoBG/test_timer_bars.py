@@ -24,6 +24,10 @@ function AutoBG_GetBGIcon() return nil end
 function GetAreaSpiritHealerTime() return 0 end
 ARENA = "Arena"
 function AutoBG_QueueMap(map) return map end
+-- AutoBG.lua owns the side you play on; alone, it is your faction.
+function AutoBG_MySide() return UnitFactionGroup("player") end
+function AutoBG_SideOf(name) if name == UnitName("player") then return AutoBG_MySide() end end
+function AutoBG_NoteSide() end
 function OctoBGQueueName(map) return map end -- the client's FrameXML (BattlefieldFrame.lua)
 local Widget = {}
 setmetatable(Widget, { __index = function(_, name)

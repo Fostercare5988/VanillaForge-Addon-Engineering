@@ -37,6 +37,7 @@ function GetTime() return now end
 function IsInInstance() return 1, "pvp" end
 function GetRealZoneText() return "Arathi Basin" end
 function UnitFactionGroup() return "Alliance" end
+function AutoBG_MySide() return UnitFactionGroup("player") end -- AutoBG.lua
 function UnitGUID(u) if u == "player" then return "0x0000000000000001" end end
 function UnitName(u) if u == "player" then return "Tester" end end
 function GetNumRaidMembers() return 0 end

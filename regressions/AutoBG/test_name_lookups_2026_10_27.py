@@ -60,7 +60,8 @@ class MessageFactionTests(unittest.TestCase):
         return lua.eval('AutoBG_NodeFrame.rows[1].icon.texture')
 
     def test_group_member_named_in_the_message_is_your_side(self):
-        icon = self.runtime('function UnitTokenFromName(n) if n == "Grom" then return "raid3" end end\n'
+        # AutoBG.lua answers who plays for which side (AutoBG_SideOf).
+        icon = self.runtime('function AutoBG_SideOf(n) if n == "Grom" then return "Alliance" end end\n'
                             'function UnitFactionGroup(u) return "Alliance" end')
         self.assertTrue(icon.endswith("Stables_Alliance"), icon)
 
