@@ -8,9 +8,9 @@ whose numbers show, ours stand aside; frames that keep their own timer text
 (aura buttons) hide the native numbers. GearRack's buttons are native
 Cooldown frames since 2026-11-01, so it needs no special case.
 
-Three fail on c143613: native frames get double numbers and the aura buttons
-leave native numbers on. The Model test is a control. The CVar's
-real value, the native font and the stock buttons' Models stay in-game checks.
+Three failed on c143613: native frames got double numbers and the aura buttons
+left native numbers on. Since 2026-11-13 the stock Models get native numbers
+too (CooldownNumbers below). The native font over a Model stays an in-game check.
 """
 from pathlib import Path
 import os
@@ -72,46 +72,62 @@ end
 
 
 class CooldownNumbers(unittest.TestCase):
+    """2026-11-13 (1.20.0): the client draws the stock buttons' numbers too. Each
+    Model gets a native Cooldown child with no sweep and the addon's formatter;
+    the 0.1 s ticker, the sync on page changes and the old flags are gone. These
+    fail on 701d8b1."""
+
     def setUp(self):
         self.lua = LuaRuntime(unpack_returned_tuples=True)
         self.lua.execute(BASE)
-        module = self.lua.execute(source("mods/cooldown-numbers.lua").replace("\r\n", "\n")
-                                  .replace("local module = FT:register", "module = FT:register"))
+        self.lua.execute(r'''
+            local W = getmetatable(Widget())
+            function W:SetCooldown(s, d) rawset(self, "running", { s, d }); calls = (calls or 0) + 1 end
+            function W:Clear() rawset(self, "running", false) end
+            function W:GetCountdownFontString() local f = rawget(self, "fs") or Widget(); rawset(self, "fs", f); return f end
+            function W:SetCountdownFormatter(f) rawset(self, "formatter", f) end
+            function W:SetDrawSwipe(on) rawset(self, "swipe", on) end
+            local create = CreateFrame
+            function CreateFrame(kind, name, parent) local f = create(kind, name, parent); rawset(f, "kind", kind); return f end
+        ''')
+        self.lua.execute(source("mods/cooldown-numbers.lua").replace("\r\n", "\n")
+                         .replace("local module = FT:register", "module = FT:register"))
         self.lua.execute("module:enable()")
 
-    def number(self, kind, name=None, setup=""):
-        return self.lua.execute(setup + '''
-            local cd = Cooldown("%s", %s)
-            SetTimer(cd, 95, 30, 1)
-            return Number(cd)
-        ''' % (kind, '"%s"' % name if name else "nil"))
+    def test_a_stock_model_gets_native_numbers_without_a_sweep(self):
+        lua = self.lua
+        lua.execute('model = Cooldown("Model"); SetTimer(model, 95, 30, 1)')
+        self.assertEqual(lua.eval("model.fctNumbers.kind"), "Cooldown")
+        self.assertTrue(lua.eval("model.fctNumbers.parent == model"))      # hides with the Model
+        self.assertEqual(lua.eval("model.fctNumbers.swipe"), False)
+        self.assertTrue(lua.eval("model.fctNumbers.formatter == FT.Countdown"))
+        self.assertEqual(list(lua.eval("model.fctNumbers.running").values()), [95, 30])
 
-    def test_stock_models_get_our_numbers(self):
-        self.assertEqual(self.number("Model"), "25")
-        self.assertEqual(self.number("Model", setup='cvar = "1"'), "25")
+    def test_no_timer_runs(self):
+        self.lua.execute('for i = 1, 5 do SetTimer(Cooldown("Model"), 95, 30, 1) end')
+        self.assertEqual(self.lua.eval("tickers"), 0)
+        self.assertNotIn("NewTicker", source("mods/cooldown-numbers.lua"))
 
-    def test_native_numbers_off_means_ours(self):
-        self.assertEqual(self.number("Cooldown"), "25")
+    def test_the_same_cooldown_again_does_not_restart_it(self):
+        lua = self.lua
+        lua.execute('model = Cooldown("Model"); calls = 0; SetTimer(model, 95, 30, 1); SetTimer(model, 95, 30, 1)')
+        self.assertEqual(lua.eval("calls"), 1)
 
-    def test_native_numbers_on_means_ours_stand_aside(self):
-        self.assertFalse(self.number("Cooldown", setup='cvar = "1"'))
+    def test_a_cleared_cooldown_clears_the_numbers(self):
+        lua = self.lua
+        lua.execute('model = Cooldown("Model"); SetTimer(model, 95, 30, 1); SetTimer(model, 0, 0, 1)')
+        self.assertEqual(lua.eval("model.fctNumbers.running"), False)
 
-    def test_a_running_number_hands_over_to_native(self):
-        self.assertFalse(self.lua.execute('''
-            local cd = Cooldown("Cooldown")
-            SetTimer(cd, 95, 30, 1)
-            cvar = "1"
-            SetTimer(cd, 96, 30, 1)
-            return Number(cd)
-        '''))
+    def test_a_native_cooldown_is_left_alone(self):
+        lua = self.lua
+        lua.execute('cd = Cooldown("Cooldown"); SetTimer(cd, 95, 30, 1)')
+        self.assertEqual(lua.eval("cd.fctNumbers"), False)
 
-    def test_hidden_native_numbers_keep_ours(self):
-        self.assertEqual(self.lua.execute('''
-            cvar = "1"
-            local cd = Cooldown("Cooldown"); rawset(cd, "hideNumbers", true)
-            SetTimer(cd, 95, 30, 1)
-            return Number(cd)
-        '''), "25")
+    def test_no_old_flags(self):
+        for path in ROOT.rglob("*.lua"):
+            text = path.read_text("utf-8-sig")
+            self.assertNotIn("noCooldownCount", text, path.name)
+            self.assertNotIn(".readable", text, path.name)
 
 
 class AuraButtonsUseNativeNumbers(unittest.TestCase):

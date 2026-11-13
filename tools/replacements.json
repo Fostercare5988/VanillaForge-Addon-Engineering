@@ -20,6 +20,7 @@
     {
       "id": "action-range-usable-polling",
       "pattern": "\\bIsActionInRange\\s*\\(|\\brangeTimer\\b|\\bActionButton_OnUpdate\\s*\\(|\"ACTIONBAR_UPDATE_USABLE\"",
+      "unless": "EnableActionRangeCheck",
       "finding": "Polls action slots for range every frame, or re-reads every button's usable state on each ACTIONBAR_UPDATE_USABLE.",
       "better": "C_ActionBar.EnableActionRangeCheck(slot, true) with ACTION_RANGE_CHECK_UPDATE (fires on change only), and ACTION_USABLE_CHANGED (only the slots that changed). Keep an OnUpdate only while a button flashes or its tooltip is shown.",
       "source": "ClassicAPI docs/API.md#c_actionbarenableactionrangecheckslot-enable, #action_usable_changed-event"
@@ -111,9 +112,9 @@
     {
       "id": "cooldown-countdown-text",
       "pattern": "hooksecurefunc\\s*\\(\\s*\"CooldownFrame_SetTimer\"|CooldownFrame_SetTimer\\s*=",
-      "unless": "\"countdownForCooldowns\"",
+      "unless": "\"countdownForCooldowns\"|SetDrawSwipe\\(false\\)",
       "finding": "Draws its own countdown text over cooldown frames.",
-      "better": "Native Cooldown frames draw countdown numbers while the player's countdownForCooldowns CVar is 1; SetHideCountdownNumbers, GetCountdownFontString and the thresholds set them per frame. Read the CVar, never set it. Stock action buttons are 1.12 Models and get no numbers.",
+      "better": "Native Cooldown frames draw countdown numbers while the player's countdownForCooldowns CVar is 1; SetHideCountdownNumbers, GetCountdownFontString and the thresholds set them per frame. Read the CVar, never set it. The stock buttons' sweeps are 1.12 Models with none: give each a native Cooldown child with SetDrawSwipe(false), SetDrawBling(false) and the formatter, set from the CooldownFrame_SetTimer hook, with no timer (FostercareTweaks cooldown-numbers.lua, 2026-11-13).",
       "source": "CLASSICAPI_MASTER_REFERENCE.md#cooldown-api-1179"
     },
     {

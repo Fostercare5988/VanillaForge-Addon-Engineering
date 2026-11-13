@@ -302,6 +302,7 @@ class ExtraRowsQueueOneCallback(unittest.TestCase):
         lua.execute(r'''
             EA, refreshed, callbacks = {}, 0, {}
             function RefreshVisible() refreshed = refreshed + 1 end
+            function SyncTicker() end
             C_Timer = { After = function(_, fn) callbacks[#callbacks + 1] = fn end }
         ''')
         lua.execute(slice(source("ExtraActions.lua"), "-- One callback for every queued refresh", "local function SyncOwner")
