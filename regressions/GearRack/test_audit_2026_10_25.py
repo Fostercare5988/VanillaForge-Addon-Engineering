@@ -24,7 +24,7 @@ def between(text, start, end):
 def runtime():
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(r'''
-        GearRack = { enabled = true }
+        GearRack = { enabled = true, EquippedGUID = function() end }
         table.wipe = function(t) for k in pairs(t) do t[k] = nil end return t end
         messages, calls = {}, {}
         DEFAULT_CHAT_FRAME = { AddMessage = function(_, m) table.insert(messages, m) end }

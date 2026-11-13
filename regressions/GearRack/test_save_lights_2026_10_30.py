@@ -22,7 +22,7 @@ def between(text, start, end):
 def runtime():
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute('''
-        GearRack = { enabled = true, UpdateSetMacro = function() end }
+        GearRack = { enabled = true, UpdateSetMacro = function() end, EquippedGUID = function() end }
         GearRackUIText = { SAVED = "%s: %d" }
         GearRackDB = { sets = { Me = { Sets = {} } } }
         GearRackUI = { SetBuild = { [1] = 1, [16] = 1 }, SelectedIcon = "iconA" }
