@@ -303,7 +303,7 @@ class SettingsWindow(unittest.TestCase):  # item 2: ForgeUI settings write the p
         assert(p.DisplaySettings.Incoming.AnimationStyle == 1)
 
         FBT.Options.ShowTab(8); FBT_ProfileName:SetText("Raid"); FBT_ProfileCreate:Click()
-        assert(FostercareBattleTextDB.Profiles.Raid and FostercareBattleTextDB.CurrentProfile == "Default")
+        assert(FostercareBattleTextDB.Profiles.Raid and FostercareBattleTextCharDB.CurrentProfile == "Default")
         for i = 1, 10 do local row = getglobal("FBT_ProfileRow" .. i); if row.name == "Raid" then getglobal("FBT_ProfileRow" .. i .. "Delete"):Click() end end
         assert(FostercareBattleTextDB.Profiles.Raid == nil)
         ''')

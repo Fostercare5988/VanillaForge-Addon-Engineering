@@ -76,7 +76,7 @@ class PickerProfileOwner(unittest.TestCase):  # F4
         l.execute('''
         FBT.Options.ShowTab(8)
         for i=1,10 do local row=getglobal("FBT_ProfileRow"..i); if row.name=="Second" then getglobal("FBT_ProfileRow"..i.."Use"):Click() end end
-        assert(FostercareBattleTextDB.CurrentProfile=="Second")
+        assert(FostercareBattleTextCharDB.CurrentProfile=="Second")
         ''')
 
     def test_profile_load_retires_picker_and_restores_owner(self):
