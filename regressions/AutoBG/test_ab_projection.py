@@ -2,8 +2,9 @@
 
 AutoBG_Timers.lua runs whole under Lua 5.1 with generic widget mocks. The
 projection is driven through its real path: world-state text, BG system
-messages and the timer update. Tick rates are the vanilla values the addon
-assumes; OctoWoW rates remain an in-game check.
+messages and the timer update. No tick has been learned here, so the vanilla
+values stand in and every estimate starts with "~" (test_audit_2026_11_13
+covers the learning).
 """
 from pathlib import Path
 import os

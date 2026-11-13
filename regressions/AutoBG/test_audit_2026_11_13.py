@@ -108,5 +108,44 @@ class RankLengthTests(unittest.TestCase):
         self.assertEqual(lua.eval('AutoBG_TargetButton1.Strip.slots[1].Age.text'), "1")
 
 
+class LearnedTickTests(unittest.TestCase):
+    """Arathi Basin ticks come from the score in play, not from vanilla tables."""
+
+    def test_a_whole_tick_is_learned_and_drives_the_estimate(self):
+        lua = projection.runtime(3, 1480, 0, 500)
+        lua.execute('NOW = 1006; function GetTime() return NOW end; SetScores(3, 1500, 0, 500)')
+        lua.execute('AutoBG_Timers_UpdateVisibility()')
+        # 500 left at 20 every 6 s: 150 s (the vanilla 10 every 6 s gave 300).
+        self.assertEqual(lua.eval('AutoBG_ABProjectionFrame.r1Status.text'), "|cFFFF5555Loss 02:30|r")
+        self.assertEqual(lua.eval('AutoBG_Settings.ABTicks[3].gain'), 20)
+        self.assertEqual(lua.eval('AutoBG_Settings.ABTicks[3].every'), 6)
+
+    def test_a_tick_across_a_base_change_teaches_nothing(self):
+        lua = projection.runtime(3, 1480, 0, 500)
+        lua.execute('NOW = 1003; function GetTime() return NOW end; SetScores(4, 1480, 0, 500)')
+        lua.execute('NOW = 1006; SetScores(4, 1500, 0, 500)')
+        self.assertIsNone(lua.eval('AutoBG_Settings.ABTicks'))
+
+    def test_an_estimate_from_unseen_ticks_looks_like_a_guess(self):
+        text = projection.shown(projection.runtime(3, 1500, 2, 1000))
+        self.assertTrue(text['r1Status'].startswith('|cFFFF5555~Loss'), text['r1Status'])
+
+
+class InviteRowTests(unittest.TestCase):
+    """An invite counts down on the queue bar until it runs out (as Capping shows it)."""
+
+    def test_an_invite_shows_the_time_it_has_left(self):
+        import test_timer_bars as ttb
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(ttb.BASE + '''
+            AutoBG_Settings.QueueTimers = true
+            function GetBattlefieldStatus(i) if i == 1 then return "confirm", "Warsong Gulch", 0 end return "none" end
+            function GetBattlefieldPortExpiration(i) return 42000 end''')
+        lua.execute(ttb.TIMERS)
+        lua.execute('local f = AutoBG_TimersEventFrame; f.scripts.OnEvent(f, "UPDATE_BATTLEFIELD_STATUS")')
+        self.assertEqual(lua.eval('AutoBG_QueueFrame.rows[1].labelFs.text'), "Warsong Gulch: enter")
+        self.assertEqual(lua.eval('AutoBG_QueueFrame.rows[1].timeFs.text'), "42")
+
+
 if __name__ == "__main__":
     unittest.main()
