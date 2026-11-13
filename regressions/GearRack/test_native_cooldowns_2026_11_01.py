@@ -30,7 +30,7 @@ class NativeCooldownTests(unittest.TestCase):
             self.assertNotIn('"$parentTime"', xml)
 
     def test_no_hand_made_countdown_remains(self):
-        code = "".join(text(n) for n in ("Core.lua", "Equipment.lua", "Trinkets.lua", "TrinketOptions.lua"))
+        code = "".join(text(n) for n in ("Core.lua", "Engine.lua", "Equipment.lua", "Trinkets.lua", "TrinketOptions.lua"))
         for gone in ("WriteCooldown", "HasCooldownNumbers", "UpdateCooldownNumbers", "SetCooldownFont",
                      "WriteWornCooldowns", "WriteMenuCooldowns", "ReflectCooldownFont"):
             self.assertNotIn(gone, code)

@@ -12,7 +12,7 @@ import unittest
 from wowlua import LuaRuntime
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
-EQUIPMENT = (ROOT / "src/Equipment.lua").read_text("utf-8")
+EQUIPMENT = ((ROOT / "src/Equipment.lua").read_text("utf-8") + (ROOT / "src/Engine.lua").read_text("utf-8"))
 CORE = (ROOT / "src/Core.lua").read_text("utf-8")
 QUEUES = (ROOT / "src/TrinketQueues.lua").read_text("utf-8")
 
@@ -169,7 +169,7 @@ class TimerOwnerTests(unittest.TestCase):
 
     def lua(self):
         lua = runtime()
-        lua.execute(TIMER_MOCK + between(EQUIPMENT, "--[[ Timer maintenance", "--[[ old OnUpdates"))
+        lua.execute(TIMER_MOCK + between(EQUIPMENT, "--[[ Timer maintenance", "--[[ Bank support ]]"))
         return lua
 
     def test_repeating_timer_ticks_on_one_handle(self):
@@ -236,8 +236,9 @@ class TimerOwnerTests(unittest.TestCase):
             GearRackDB = { bars = { Me = { Locked = "OFF" } } }
             function IsAltKeyDown() end
             GearRackUI_ControlFrame = { Hide = function() table.insert(fired, "hide") end }
-        ''' + between(EQUIPMENT, "function GearRackEngine.ControlFrame()", "-- Only the current source") + '''
-            GearRackEngine.CreateTimer("ControlFrame", GearRackEngine.ControlFrame, .75, 1)
+            GearRackUI = {}
+        ''' + between(EQUIPMENT, "function GearRackUI.ControlFrameUpdate()", "-- Only the current source") + '''
+            GearRackEngine.CreateTimer("ControlFrame", GearRackUI.ControlFrameUpdate, .75, 1)
             GearRackEngine.StartTimer("ControlFrame")
             Advance(10)
         ''')

@@ -79,7 +79,7 @@ def text(name):
 
 
 # Every Lua file in TOC order, for a whole-addon login.
-ALL = ["Bootstrap.lua", "ForgeUI.lua", "Core.lua", "Constants.lua", "Events.lua", "Equipment.lua",
+ALL = ["Bootstrap.lua", "ForgeUI.lua", "Core.lua", "Constants.lua", "Events.lua", "Engine.lua", "Equipment.lua",
        "PoisonSwap.lua", "Trinkets.lua", "TrinketOptions.lua", "TrinketQueues.lua", "Skin.lua",
        "Navigation.lua", "Settings.lua", "BarLayout.lua", "SetMacros.lua", "Minimap.lua"]
 

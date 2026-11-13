@@ -12,7 +12,7 @@ The mocks do not prove how the client draws the windows; check them in game.
 import unittest
 import gr_env
 
-CORE = ["Bootstrap.lua", "ForgeUI.lua", "Core.lua", "Constants.lua", "Events.lua", "Equipment.lua"]
+CORE = ["Bootstrap.lua", "ForgeUI.lua", "Core.lua", "Constants.lua", "Events.lua", "Engine.lua", "Equipment.lua"]
 
 STUBS = r'''
 function GetInventoryItemLink() end

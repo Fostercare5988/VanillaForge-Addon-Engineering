@@ -11,7 +11,7 @@ import unittest
 from wowlua import LuaRuntime
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
-SOURCE = (ROOT / "src/Equipment.lua").read_text("utf-8-sig")
+SOURCE = ((ROOT / "src/Equipment.lua").read_text("utf-8-sig") + (ROOT / "src/Engine.lua").read_text("utf-8-sig"))
 
 
 def form_runtime(names, active):

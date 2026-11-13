@@ -11,7 +11,7 @@ import unittest
 from wowlua import LuaRuntime
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
-EQUIPMENT = (ROOT / "src/Equipment.lua").read_text("utf-8")
+EQUIPMENT = ((ROOT / "src/Equipment.lua").read_text("utf-8") + (ROOT / "src/Engine.lua").read_text("utf-8"))
 EVENTS = (ROOT / "src/Events.lua").read_text("utf-8")
 
 
