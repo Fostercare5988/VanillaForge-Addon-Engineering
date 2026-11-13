@@ -180,5 +180,36 @@ class FontWrites(unittest.TestCase):  # P3-3
         self.assertEqual(lua.eval("setFonts"), 10)
 
 
+class ClassSwitches(unittest.TestCase):  # P3-4
+    # General showed every character the mana and frost-resist switches. On a
+    # rogue (Claude) none of them can do anything: no mana, no Frost Nova.
+
+    def general(self, cls, maxmana):
+        lua = m.runtime()
+        lua.execute(f'units.player.class = "{cls}"; units.player.maxmana = {maxmana}; FBT.Options.ShowTab(1)')
+        return lua
+
+    def shown(self, lua, name):
+        return lua.eval(f"{name}:IsShown() and true or false")
+
+    def test_a_rogue_sees_no_mana_or_frost_switches(self):
+        lua = self.general("ROGUE", 0)
+        for name in ("FBT_ShowAllManaGains", "FBT_LowManaSound", "FBT_ResistSound"):
+            self.assertFalse(self.shown(lua, name), name)
+        self.assertTrue(self.shown(lua, "FBT_LowHealthSound"))
+        rogue_y = lua.eval("FBT_ShowGameDamage.pt[5]")
+        mage = self.general("MAGE", 100)
+        for name in ("FBT_ShowAllManaGains", "FBT_LowManaSound", "FBT_ResistSound"):
+            self.assertTrue(self.shown(mage, name), name)
+        # The hidden switch takes no room: the next one moves up a line.
+        self.assertEqual(rogue_y - mage.eval("FBT_ShowGameDamage.pt[5]"), 36)
+
+    def test_a_priest_sees_mana_but_not_frost(self):
+        lua = self.general("PRIEST", 100)
+        self.assertTrue(self.shown(lua, "FBT_ShowAllManaGains"))
+        self.assertTrue(self.shown(lua, "FBT_LowManaSound"))
+        self.assertFalse(self.shown(lua, "FBT_ResistSound"))
+
+
 if __name__ == "__main__":
     unittest.main()
