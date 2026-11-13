@@ -64,6 +64,9 @@ Do not trust for this server:
 - Source-verified 2026-11-13 (client FrameXML BattlefieldFrame.lua:325): the
   client knows an invite's time left, `GetBattlefieldPortExpiration(i)` in ms,
   so the ~80 s invite window is only the slider's bound, not a timing rule.
+- Unverified: one spirit healer wave every 30 seconds for the whole
+  battleground (as on MaNGOS cores). AutoBG's respawn bar and its dead enemy
+  rows count to it.
 - Unverified: Arathi Basin resource ticks. AutoBG learns what each base count
   earns from the score in play (`AutoBG_Settings.ABTicks`) and uses the vanilla
   ticks, marked `~`, until then.

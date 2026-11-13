@@ -50,8 +50,12 @@ class MessageFactionTests(unittest.TestCase):
         lua.execute(ttb.BASE + r'''
             function GetRealZoneText() return "Arathi Basin" end
             function IsInInstance() return 1, "pvp" end
-            function UnitName(u) if u == "player" then return "Tester" end end
-            function GetNumRaidMembers() error("the raid is not walked any more") end
+            -- The spirit wave's ghost scan may count the raid; naming it is the old walk.
+            function GetNumRaidMembers() return 2 end
+            function UnitName(u)
+                if u == "player" then return "Tester" end
+                if string.find(u, "^raid") then error("the raid is not walked any more") end
+            end
         ''' + prelude)
         lua.execute(ttb.TIMERS)
         lua.execute('local f = AutoBG_TimersEventFrame; f.scripts.OnEvent(f, "PLAYER_ENTERING_WORLD")')

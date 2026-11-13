@@ -126,6 +126,22 @@ class SpiritWaveTests(unittest.TestCase):
         fire(lua, "UNIT_HEALTH", "raid1")
         self.assertIn("~", respawn_text(lua, 1005))
 
+    def test_the_enemy_frames_get_the_next_wave(self):
+        # 2026-11-13: dead enemies count down to it (test_enemy_respawn.py).
+        lua = runtime()
+        lua.execute('now = 1003')
+        fire(lua, "PLAYER_UNGHOST")
+        lua.execute('now = 1013')
+        self.assertEqual(list(lua.eval('{AutoBG_NextSpiritWave()}').values()), [1033, True])
+
+    def test_the_wave_is_followed_with_the_bar_off(self):
+        # Fails on 6623680: with Spirit healer waves off nothing ran in Warsong.
+        lua = runtime()
+        lua.execute('AutoBG_Settings.RessTimer = false; function GetAreaSpiritHealerTime() return 10 end')
+        fire(lua, "PLAYER_ENTERING_WORLD")
+        lua.execute('now = 1005; for _, fn in ipairs(tickers) do fn() end')
+        self.assertEqual(list(lua.eval('{AutoBG_NextSpiritWave()}').values()), [1015, True])
+
 
 if __name__ == '__main__':
     unittest.main()
