@@ -159,6 +159,36 @@ def wake(env):
                     " return c.enabled and c.deadline and c.deadline - now end)()")
 
 
+class Flyout(unittest.TestCase):
+    def test_lists_carried_weapons_by_name(self):
+        env = world(r'''-- The flyout template's parts, as the client makes them.
+            local create = CreateFrame
+            function CreateFrame(kind, name, parent, template)
+                local f = create(kind, name, parent)
+                if template == "GearRackUIMenuTemplate" then
+                    for _, part in ipairs({ "Icon", "Count", "HotKey", "Name", "Border", "CD" }) do newWidget("Texture", name .. part, f) end
+                end
+                return f
+            end
+            ITEMS[300] = { "Axe", "INVTYPE_WEAPON", "x" }; ITEMS[400] = { "Club", "INVTYPE_WEAPON", "x" }
+            worn[16] = item(100, '0xA'); bags[0][1] = item(200, '0xS'); bags[0][2] = item(400, '0xC'); bags[0][3] = item(300, '0xX')''')
+        env.run("GearRackDB.settings.ShowEmpty = 'OFF'; GearRackUI_BuildMenu(16)")
+        names = [env.eval("GearRackUI.BaggedItems[%d].name" % i) for i in range(1, env.eval("GearRackUI.NumberOfItems") + 1)]
+        self.assertEqual(names, ["Axe", "Club", "Sword"])
+        self.assertEqual(env.eval("GearRackUIMenu1Icon.texture"), "x")
+
+
+class QueueStats(unittest.TestCase):
+    def test_empty_entries_are_dropped_and_set_ones_kept(self):
+        # Ticking and clearing a box saved an empty entry ("61095" = {} on every character).
+        env = world("")
+        env.run('''GearRackCharDB.queues.Stats = { ["61095"] = {}, ["14022"] = { delay = 20 }, ["11122"] = { keep = 1 } }
+            GearRackTrinkets.QueueInit()''')
+        self.assertIsNone(env.eval('GearRackCharDB.queues.Stats["61095"]'))
+        self.assertEqual(env.eval('GearRackCharDB.queues.Stats["14022"].delay'), 20)
+        self.assertEqual(env.eval('GearRackCharDB.queues.Stats["11122"].keep'), 1)
+
+
 class NoIdleTick(unittest.TestCase):
     def test_nothing_to_count_down_means_no_timer(self):
         env = world(TIMED + "worn[16] = item(100, '0xA')")
