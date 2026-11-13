@@ -231,5 +231,39 @@ class QuietWorkTests(unittest.TestCase):
         self.assertGreater(lua.eval('asked'), 0)
 
 
+class ClockTests(unittest.TestCase):
+    """ClassicAPI writes the clocks (duration text bindings): no OnUpdate is left."""
+
+    def queued(self):
+        import test_timer_bars as ttb
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(ttb.BASE + '''
+            now = 1000; function GetTime() return now end
+            tickers = 0; C_Timer.NewTicker = function() tickers = tickers + 1; return { Cancel = function() end } end
+            AutoBG_Settings.QueueTimers = true
+            function GetBattlefieldStatus(i) if i == 1 then return "queued", "Warsong Gulch", 0 end return "none" end
+            function GetBattlefieldTimeWaited() return 272000 end
+            function GetBattlefieldEstimatedWaitTime() return 360000 end''')
+        lua.execute(ttb.TIMERS)
+        lua.execute('local f = AutoBG_TimersEventFrame; f.scripts.OnEvent(f, "PLAYER_ENTERING_WORLD")')
+        lua.execute('local f = AutoBG_TimersEventFrame; f.scripts.OnEvent(f, "UPDATE_BATTLEFIELD_STATUS")')
+        return lua
+
+    def test_no_timer_group_runs_code_every_frame(self):
+        lua = self.queued()
+        for frame in ("AutoBG_QueueFrame", "AutoBG_NodeFrame", "AutoBG_AVNodeFrame", "AutoBG_RespawnFrame"):
+            self.assertIsNone(lua.eval('%s.scripts and %s.scripts.OnUpdate' % (frame, frame)), frame)
+
+    def test_a_queue_clock_counts_up_by_itself(self):
+        lua = self.queued()
+        self.assertEqual(lua.eval('AutoBG_QueueFrame.rows[1].timeFs.text'), "4:32")
+        lua.execute('now = 1005; __frame()')
+        self.assertEqual(lua.eval('AutoBG_QueueFrame.rows[1].timeFs.text'), "4:37")
+
+    def test_waiting_in_a_queue_needs_no_once_a_second_pass(self):
+        # In Orgrimmar with a queue: nothing ticks.
+        self.assertEqual(self.queued().eval('tickers'), 0)
+
+
 if __name__ == "__main__":
     unittest.main()

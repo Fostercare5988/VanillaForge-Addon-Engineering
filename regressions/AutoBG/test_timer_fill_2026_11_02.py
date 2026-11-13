@@ -32,7 +32,7 @@ class TimerFill(unittest.TestCase):
         lua = av_timers()
         yell(lua, STONEHEARTH)
         self.assertFalse(row(lua, "AutoBG_AVNodeFrame", 1, "sparkShown"))
-        frame_update(lua, "AutoBG_AVNodeFrame", 1000 + 150)
+        lua.execute('now = 1150; AutoBG_Timers_UpdateVisibility()')
         self.assertTrue(row(lua, "AutoBG_AVNodeFrame", 1, "sparkShown"))
 
     def test_preview_rows_hold_a_value(self):

@@ -8,6 +8,7 @@ import os
 import re
 import unittest
 from wowlua import LuaRuntime
+from clock_mock import CLOCK
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 TIMERS = (ROOT / "AutoBG_Timers.lua").read_text("utf-8-sig")
@@ -79,7 +80,7 @@ function GetNumWorldStateUI() return 0 end
 AutoBG_Settings = { ABTimers = true, AVTimers = true, WSGTimers = true,
                     StartTimer = true, NodeColors = true, ABProjection = false,
                     RessTimer = false, QueueTimers = false }
-'''
+''' + CLOCK
 
 
 def runtime():

@@ -89,8 +89,9 @@ class AlteracMineTests(unittest.TestCase):
 
 
 def frame_update(lua, frame, at):
-    """One drawn frame at time `at`: the group's OnUpdate, with `this` set like the client."""
-    lua.execute('now = %s; this = %s; %s.scripts.OnUpdate()' % (at, frame, frame))
+    """One drawn frame at time `at`: ClassicAPI writes the running clocks and the
+    timers that are due run (clock_mock). No AutoBG code runs per frame."""
+    lua.execute('now = %s; __frame()' % at)
 
 
 def row(lua, frame, i, field):
@@ -108,15 +109,19 @@ class TimerLookTests(unittest.TestCase):
         self.assertEqual(lua.eval('AutoBG_AVNodeFrame.rows[1].timeFs.text'), "1:51")
         frame_update(lua, "AutoBG_AVNodeFrame", 1000 + 300 - 21.5)
         self.assertEqual(lua.eval('AutoBG_AVNodeFrame.rows[1].timeFs.text'), "21")
-        self.assertEqual(row(lua, "AutoBG_AVNodeFrame", 1, "announceText"), "Stonehearth Graveyard (Horde) captured in 21")
+        lua.execute('said = {}; function AutoBG_SendAnnouncement(t) table.insert(said, t) end; function IsControlKeyDown() return 1 end')
+        lua.execute('this = AutoBG_AVNodeFrame.rows[1]; this.scripts.OnClick()')
+        self.assertEqual(lua.eval('said[1]'), "Stonehearth Graveyard (Horde) captured in 21")
+        lua.execute('AutoBG_Timers_UpdateVisibility()')  # the spark follows the logic pass
         self.assertTrue(row(lua, "AutoBG_AVNodeFrame", 1, "sparkShown"))
 
     def test_last_ten_seconds_turn_gold(self):
         lua = av_timers()
         yell(lua, "The Stonehearth Graveyard is under attack! If left unchecked, the Horde will capture it!")
-        self.assertFalse(row(lua, "AutoBG_AVNodeFrame", 1, "displayUrgent"))
-        frame_update(lua, "AutoBG_AVNodeFrame", 1000 + 300 - 9.5)
-        self.assertTrue(row(lua, "AutoBG_AVNodeFrame", 1, "displayUrgent"))
+        frame_update(lua, "AutoBG_AVNodeFrame", 1000 + 300 - 11.5)
+        self.assertEqual(lua.eval('AutoBG_AVNodeFrame.rows[1].timeFs.text'), "11")
+        frame_update(lua, "AutoBG_AVNodeFrame", 1000 + 300 - 10.5)
+        self.assertEqual(lua.eval('AutoBG_AVNodeFrame.rows[1].timeFs.text'), "|cffffcc4010|r")
 
     def test_a_row_that_runs_out_leaves_at_once(self):
         lua = av_timers()
@@ -138,7 +143,9 @@ class TimerLookTests(unittest.TestCase):
         frame_update(lua, "AutoBG_RespawnFrame", 1012.5)
         self.assertEqual(lua.eval('AutoBG_RespawnFrame.rows[1].timeFs.text'), "~18")
         # The chat line reads as a sentence: "Ress in 18", no colon, no "~".
-        self.assertEqual(lua.eval('AutoBG_RespawnFrame.rows[1].announceText'), "Ress in 18")
+        lua.execute('said = {}; function AutoBG_SendAnnouncement(t) table.insert(said, t) end; function IsControlKeyDown() return 1 end')
+        lua.execute('this = AutoBG_RespawnFrame.rows[1]; this.scripts.OnClick()')
+        self.assertEqual(lua.eval('said[1]'), "Ress in 18")
         frame_update(lua, "AutoBG_RespawnFrame", 1030.2)  # the wave passes
         frame_update(lua, "AutoBG_RespawnFrame", 1030.5)
         self.assertEqual(lua.eval('AutoBG_RespawnFrame.rows[1].timeFs.text'), "~30")
@@ -154,7 +161,9 @@ class TimerLookTests(unittest.TestCase):
         self.assertEqual(lua.eval('AutoBG_QueueFrame.rows[1].labelFs.text'), "Warsong Gulch")
         self.assertEqual(lua.eval('AutoBG_QueueFrame.rows[1].timeFs.text'), "4:32")
         self.assertEqual(row(lua, "AutoBG_QueueFrame", 1, "estText"), "Estimated: 6:00")
-        self.assertEqual(row(lua, "AutoBG_QueueFrame", 1, "announceText"), "In WSG queue for 4:32")
+        lua.execute('said = {}; function AutoBG_SendAnnouncement(t) table.insert(said, t) end; function IsControlKeyDown() return 1 end')
+        lua.execute('this = AutoBG_QueueFrame.rows[1]; this.scripts.OnClick()')
+        self.assertEqual(lua.eval('said[1]'), "In WSG queue for 4:32")
         self.assertEqual(row(lua, "AutoBG_QueueFrame", 1, "fillDuration"), 360)
 
 

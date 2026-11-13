@@ -8,6 +8,7 @@ from pathlib import Path
 import os
 import unittest
 from wowlua import LuaRuntime
+from clock_mock import CLOCK
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 TIMERS = (ROOT / "AutoBG_Timers.lua").read_text("utf-8-sig")
@@ -75,7 +76,7 @@ function GetNumRaidMembers() return 2 end
 function UnitIsGhost(u) return ghosts[u] end
 function UnitIsDeadOrGhost(u) return ghosts[u] end
 AutoBG_Settings = { RessTimer = true }
-'''
+''' + CLOCK
 
 
 def runtime():
@@ -92,7 +93,7 @@ def fire(lua, event, arg=None):
 
 
 def respawn_text(lua, at):
-    lua.execute('now = %s; for _, fn in ipairs(tickers) do fn() end' % at)
+    lua.execute('now = %s; for _, fn in ipairs(tickers) do fn() end; __frame()' % at)
     return lua.eval('AutoBG_RespawnFrame.rows[1].timeFs.text')
 
 
