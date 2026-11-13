@@ -123,6 +123,8 @@ for _, n in ipairs({ "Ammo", "Head", "Neck", "Shoulder", "Shirt", "Chest", "Wais
 end
 local function inertTable() return setmetatable({}, { __index = function() return function() end end }) end
 C_Item, C_Container, C_Spell = inertTable(), inertTable(), inertTable()
+-- The fill form: slot ids into the table, then the token and their count.
+C_UnitAuras = { GetAuraSlots = function() return nil, 0 end }
 '''
 
 # Installed after the files load, so `X = X or {}` still makes the addon's own tables.

@@ -405,7 +405,7 @@ class NotifyEventTests(unittest.TestCase):
         ''' + between(EQUIPMENT, "-- enables a specific eventname", "-- disables a sepcific eventname")
           + between(EQUIPMENT, "function GearRackUI_EnableAllEvents()", "-- Suspend event watching")
           + between(CORE, "-- Ready notices feed the alert", "function GearRack.GetInventoryCooldown(")
-          + between(EQUIPMENT, "-- Ready alert for a used item", "-- Notify list: a used item") + r'''
+          + between(EQUIPMENT, "-- Ready alert for a used item", "-- The seconds until the next shown enchant label") + r'''
             GearRackUI_EnableAllEvents()
             GearRack.ItemReady("Insignia of the Horde", false)
         ''')

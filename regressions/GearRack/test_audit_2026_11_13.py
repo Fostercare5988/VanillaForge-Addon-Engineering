@@ -132,5 +132,131 @@ class SetsRememberTheCopy(unittest.TestCase):
         self.assertTrue(env.eval(lit))
 
 
+# Cooldowns per equipped slot ({start, duration}) and a poison on the main hand.
+TIMED = r'''
+cooldowns = {}
+function GetInventoryItemCooldown(_, slot) local c = cooldowns[slot]; if c then return c[1], c[2], 1 end; return 0, 0, 1 end
+poisonEnds = nil
+C_Item.GetItemTempEnchantInfo = function(loc)
+    if loc.equipmentSlotIndex == 16 and poisonEnds and poisonEnds > now then
+        return true, (poisonEnds - now) * 1000, nil, 7
+    end
+    return false
+end
+function SecondsToTimeAbbrev(s)
+    if s > 3600 then return math.ceil(s / 3600) .. " h" end
+    if s > 60 then return math.ceil(s / 60) .. " m" end
+    return math.floor(s) .. " s"
+end
+C_Item.GetEnchantInfo = function() return { name = "Instant Poison", spellID = 1 } end
+C_Spell = { GetSpellTexture = function() return "Interface\Icons\Ability_Poisons" end }
+'''
+
+
+def wake(env):
+    """Seconds until the cooldown timer runs again, or None while it sleeps."""
+    return env.eval("(function() local c = GearRackEngine.TimerPool.CooldownUpdate"
+                    " return c.enabled and c.deadline and c.deadline - now end)()")
+
+
+class NoIdleTick(unittest.TestCase):
+    def test_nothing_to_count_down_means_no_timer(self):
+        env = world(TIMED + "worn[16] = item(100, '0xA')")
+        settle(env, 3)
+        self.assertIsNone(wake(env), "with no poison, alert or queue the cooldown timer sleeps")
+
+    def test_a_long_poison_wakes_once_a_minute(self):
+        env = world(TIMED + "worn[16] = item(100, '0xA'); poisonEnds = now + 25 * 60 + 10")
+        env.run("fire('UNIT_INVENTORY_CHANGED', 'player')")
+        settle(env, 1)
+        self.assertGreater(wake(env), 5, "a 25-minute label changes once a minute")
+        self.assertEqual(env.eval("GearRackUIInv16.enchantOverlay.duration:GetText()"), "26m")
+
+    def test_poison_put_on_shows_at_once(self):
+        env = world(TIMED + "worn[16] = item(100, '0xA')")
+        settle(env, 2)
+        env.run("poisonEnds = now + 600; fire('UNIT_INVENTORY_CHANGED', 'player')")
+        self.assertTrue(env.eval("GearRackUIInv16.enchantOverlay:IsShown()"))
+        self.assertIsNotNone(wake(env))
+
+    def test_the_label_turns_red_under_two_minutes(self):
+        env = world(TIMED + "worn[16] = item(100, '0xA'); poisonEnds = now + 125")
+        env.run("fire('UNIT_INVENTORY_CHANGED', 'player')")
+        settle(env, 0.5)
+        self.assertGreater(env.eval("GearRackUIInv16.enchantOverlay.green"), .5)
+        settle(env, 5)
+        self.assertLess(env.eval("GearRackUIInv16.enchantOverlay.green"), .5)
+
+
+class ReadyAlerts(unittest.TestCase):
+    def test_used_item_alerts_once_thirty_seconds_before_ready(self):
+        env = world(TIMED + "worn[13] = item(100, '0xT')")
+        env.run("cooldowns[13] = { now, 120 }; GearRackUI.OnUseInventoryItem(13)")
+        settle(env, 5)
+        self.assertGreater(wake(env), 60, "no once-a-second polling while the cooldown runs")
+        before = env.eval("#chat")
+        settle(env, 86)
+        self.assertEqual(env.eval("#chat"), before + 1)
+        self.assertIn("ready soon", env.eval("chat[#chat]"))
+        settle(env, 40)
+        self.assertEqual(env.eval("#chat"), before + 1, "one alert")
+        self.assertIsNone(wake(env))
+
+    def test_an_item_without_a_cooldown_is_dropped(self):
+        env = world(TIMED + "worn[16] = item(100, '0xA')")
+        env.run("GearRackUI.OnUseInventoryItem(16)")
+        settle(env, 5)
+        self.assertIsNone(env.eval("next(GearRackCharDB.ItemsUsed)"))
+        self.assertIsNone(wake(env))
+
+    def test_saved_trinket_watch_moves_to_the_shared_watch(self):
+        # Older versions kept the trinkets' watch apart; the client restores it before login.
+        env = world(TIMED + "worn[14] = item(100, '0xT'); cooldowns[14] = { now - 10, 120 }")
+        env.run("GearRackCharDB.trinkets.ItemsUsed = { [100] = 30 }; GearRackCharDB.ItemsUsed = nil; GearRack.NormalizeSavedData()")
+        self.assertEqual(env.eval("GearRackCharDB.ItemsUsed[100]"), 30)
+        self.assertIsNone(env.eval("GearRackCharDB.trinkets.ItemsUsed"))
+
+    def test_an_enabled_queue_still_looks_every_second(self):
+        env = world(TIMED + "worn[13] = item(100, '0xT')")
+        env.run("GearRack.SetTrinketQueue(0, 'ON')")
+        settle(env, 2)
+        self.assertLessEqual(wake(env), 1.01)
+
+
+class BuffsOnDemand(unittest.TestCase):
+    EVENTS = r'''
+        GearRackDB.settings.EnableEvents = "ON"
+        GearRackDB.events.Probe = { trigger = "%s", delay = 0,
+            script = "seen = GearRackUI.Buffs['Spirit Tap'] and 1 or 0" }
+        GearRackDB.sets["Claude of Y'Shaarj"].Sets.Probe = { icon = "x" }
+        GearRackDB.bars["Claude of Y'Shaarj"].Events.Probe = { setname = "Probe", enabled = 1 }
+        GearRackUI_SetsFrame:Hide()
+        GearRackUI_EnableAllEvents()
+    '''
+    AURAS = r'''
+        C_UnitAuras = {
+            GetAuraSlots = function(_, _, _, _, out) out[1] = 1; return nil, 1 end,
+            UnitAuraBySlot = function() return "Spirit Tap", "Interface\Icons\Spell_Shadow_Requiem" end,
+        }
+    '''
+
+    def test_no_buff_reading_without_a_buff_event(self):
+        env = world(self.AURAS)
+        env.run(self.EVENTS % "PLAYER_TARGET_CHANGED")
+        self.assertFalse(env.eval("GearRackUIFrame.events.PLAYER_AURAS_CHANGED ~= nil"))
+        # A script on another trigger still sees the current buffs.
+        env.run("fire('PLAYER_TARGET_CHANGED')")
+        self.assertEqual(env.eval("seen"), 1)
+
+    def test_a_buff_event_watches_auras(self):
+        env = world(self.AURAS)
+        env.run(self.EVENTS % "GEARRACK_BUFFS_CHANGED")
+        self.assertTrue(env.eval("GearRackUIFrame.events.PLAYER_AURAS_CHANGED ~= nil"))
+        env.run("fire('PLAYER_AURAS_CHANGED')")
+        self.assertEqual(env.eval("seen"), 1)
+        env.run("GearRackUI_DisableAllEvents()")
+        self.assertFalse(env.eval("GearRackUIFrame.events.PLAYER_AURAS_CHANGED ~= nil"))
+
+
 if __name__ == "__main__":
     unittest.main()
