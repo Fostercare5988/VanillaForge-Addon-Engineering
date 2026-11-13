@@ -144,7 +144,8 @@ class WindowUnchanged(unittest.TestCase):
         lua.execute("FBT.Options.ShowTab(8)")
         self.assertEqual(pos(lua, "FBT_ProfileRow1"), (28, -118))
         self.assertEqual(pos(lua, "FBT_ProfileName"), (352, -118))
-        self.assertEqual(pos(lua, "FBT_ProfileReset"), (352, -210))
+        self.assertEqual(pos(lua, "FBT_ProfileCopy"), (352, -174))
+        self.assertEqual(pos(lua, "FBT_ProfileReset"), (352, -234))  # 2.4.0: under Copy current
         self.assertEqual(pos(lua, "FBT_ProfileRow1Delete"), (236, -2))
 
 
