@@ -183,7 +183,9 @@ they kept, and why, is asked again, not inherited. Then answer every question
 below, in this order, and write the answers in `.private/audit-<Addon>-<date>.md`:
 
 1. **How would it be built today?** Compare with the addon's reference addons
-   (named in its `CLAUDE.md`; ask the user when none is named): what each saves
+   (named in its `CLAUDE.md`; when none is, find the most used modern addon for
+   the job on CurseForge or GitHub, write it there and name it in the report;
+   ask the user only when nothing fits): what each saves
    per item, set and character, which events it listens to, when it wakes, how
    its files split the work, what players can do with it. Every gap is a
    finding, and so is anything ours does that it does not need. Of each saved
