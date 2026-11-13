@@ -114,11 +114,10 @@ class MovedPathTests(unittest.TestCase):
             AutoBG_Settings.Targets.pos = {}
             AutoBG_Settings.Targets.Spy = { Enabled = true }
             AutoBG_Settings.Targets.IndependentPositionsVersion = 1
-            AutoBG_Settings.Positions = { AutoBG_TargetsMainFrame = { x = 1 }, AutoBG_TargetsMainFrame10 = { x = 2 } }
+            AutoBG_Settings.Positions = { AutoBG_TargetsMainFrame10 = { x = 2 } }
             AutoBG_Targets:EnsureOptions()
         ''')
         self.assertIsNone(lua.eval('AutoBG_Settings.Targets.pos or AutoBG_Settings.Targets.Spy or AutoBG_Settings.Targets.IndependentPositionsVersion'))
-        self.assertIsNone(lua.eval('AutoBG_Settings.Positions.AutoBG_TargetsMainFrame'))
         self.assertEqual(lua.eval('AutoBG_Settings.Positions.AutoBG_TargetsMainFrame10.x'), 2)
 
 

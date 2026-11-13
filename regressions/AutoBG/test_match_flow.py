@@ -18,6 +18,7 @@ CLASSIC_API_VERSION, SUPERWOW_VERSION = 11711, "2.2"
 function GetNampowerVersion() return 4, 6, 2 end
 flashes = 0; function FlashClientIcon() flashes = flashes + 1 end
 function IsInRaid() return nil end; function IsInGroup() return nil end
+function IsActiveBattlefieldArena() return false, false end
 local Widget = {}
 setmetatable(Widget, { __index = function(_, name)
     if string.find(name, "^%u") then return function() end end

@@ -147,5 +147,89 @@ class InviteRowTests(unittest.TestCase):
         self.assertEqual(lua.eval('AutoBG_QueueFrame.rows[1].timeFs.text'), "42")
 
 
+class SavedKeySweepTests(unittest.TestCase):
+    """One sweep per saved table clears what nothing owns (KNOWN_PATTERNS KP-64)."""
+
+    def test_an_unowned_key_goes_and_what_was_learned_stays(self):
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(core.BASE)
+        lua.execute(core.CORE)
+        lua.execute('''AutoBG_Settings = { Retired = true, FlagSpots = { [529] = {} }, ABTicks = { [3] = {} },
+            OpeningSpell = 24391, LastPlayedBG = "Arathi Basin", Positions = { AutoBG_SpyFrame = {} } }''')
+        core.fire(lua, "ADDON_LOADED", "AutoBG")
+        self.assertIsNone(lua.eval('AutoBG_Settings.Retired'))
+        for key in ("FlagSpots", "ABTicks", "OpeningSpell", "LastPlayedBG", "Positions"):
+            self.assertIsNotNone(lua.eval('AutoBG_Settings.%s' % key), key)
+
+    def test_spy_clears_its_own_leftovers_and_keeps_its_lists(self):
+        import test_spy_features as spy
+        lua = spy.runtime()
+        lua.execute('AutoBG_Settings.Spy = { StableRowsMigration = 1, KoS = { grom = "Grom" } }; AutoBG_Spy:EnsureOptions()')
+        self.assertIsNone(lua.eval('AutoBG_Settings.Spy.StableRowsMigration'))
+        self.assertEqual(lua.eval('AutoBG_Settings.Spy.KoS.grom'), "Grom")
+
+    def test_the_arena_table_clears_its_leftovers(self):
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(core.BASE)
+        lua.execute(core.CORE)
+        lua.execute('AutoBG_Settings = { Arena = { Buffs = true, Durations = { [22] = 10 } } }')
+        core.fire(lua, "ADDON_LOADED", "AutoBG")
+        lua.execute('AutoBG_ArenaOptions()')
+        self.assertIsNone(lua.eval('AutoBG_Settings.Arena.Buffs'))
+        self.assertEqual(lua.eval('AutoBG_Settings.Arena.Durations[22]'), 10)
+
+
+RECORD = '''
+local create = CreateFrame
+function CreateFrame(...)
+    local f = create(...)
+    f.events = {}
+    f.RegisterEvent = function(self, e) self.events[e] = true end
+    f.UnregisterEvent = function(self, e) self.events[e] = nil end
+    return f
+end
+'''
+
+
+class QuietWorkTests(unittest.TestCase):
+    """Work that ran with nothing to do."""
+
+    def test_carrier_debuff_events_wait_for_a_carrier(self):
+        # NamPower sends them for every unit once registered, raids included.
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(carriers.BASE + RECORD)
+        lua.execute(carriers.FC)
+        self.assertIsNone(lua.eval('AutoBG_FCEventFrame.events.DEBUFF_ADDED_OTHER'))
+        lua.execute('local f = AutoBG_FCEventFrame; f.scripts.OnEvent(f, "CHAT_MSG_BG_SYSTEM_HORDE", "The Horde flag was picked up by Grom!")')
+        self.assertTrue(lua.eval('AutoBG_FCEventFrame.events.DEBUFF_ADDED_OTHER'))
+
+    def test_a_line_that_changes_no_timer_draws_nothing(self):
+        import test_timer_bars as ttb
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(ttb.BASE + '''
+            AutoBG_Settings.QueueTimers = true
+            function GetRealZoneText() return "Warsong Gulch" end
+            function IsInInstance() return 1, "pvp" end
+            function GetBattlefieldStatus(i) if i == 1 then return "queued", "Arathi Basin", 0 end return "none" end
+            waits = 0
+            function GetBattlefieldTimeWaited() waits = waits + 1; return 1000 end
+            function GetBattlefieldEstimatedWaitTime() return 0 end''')
+        lua.execute(ttb.TIMERS)
+        lua.execute('local f = AutoBG_TimersEventFrame; f.scripts.OnEvent(f, "PLAYER_ENTERING_WORLD")')
+        before = lua.eval('waits')
+        lua.execute('local f = AutoBG_TimersEventFrame; f.scripts.OnEvent(f, "CHAT_MSG_BG_SYSTEM_NEUTRAL", "Grom: hello")')
+        lua.execute('local f = AutoBG_TimersEventFrame; f.scripts.OnEvent(f, "UPDATE_WORLD_STATES")')
+        self.assertEqual(lua.eval('waits'), before)
+
+    def test_the_scoreboard_is_not_asked_for_outside_a_match(self):
+        import test_event_scope as scope
+        lua = scope.targets()
+        lua.execute('asked = 0; function RequestBattlefieldScoreData() asked = asked + 1 end')
+        scope.enter(lua, None)
+        self.assertEqual(lua.eval('asked'), 0)
+        scope.enter(lua, "Warsong Gulch")
+        self.assertGreater(lua.eval('asked'), 0)
+
+
 if __name__ == "__main__":
     unittest.main()

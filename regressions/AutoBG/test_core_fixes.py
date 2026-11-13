@@ -20,6 +20,7 @@ CLASSIC_API_VERSION, SUPERWOW_VERSION = 11711, "2.2"
 function GetNampowerVersion() return 4, 6, 2 end
 flashes = 0; function FlashClientIcon() flashes = flashes + 1 end
 function IsInRaid() return nil end; function IsInGroup() return nil end
+function IsActiveBattlefieldArena() return false, false end
 local Widget = {}
 setmetatable(Widget, { __index = function(_, name)
     if string.find(name, "^%u") then return function() end end
@@ -138,6 +139,8 @@ class ScoreboardColorTests(unittest.TestCase):
     def test_class_color_reaches_framexml_name_fontstring(self):
         lua = runtime(r'''
             MAX_WORLDSTATE_SCORE_BUTTONS = 22
+            WorldStateScoreScrollFrame = {}
+            function FauxScrollFrame_GetOffset() return 0 end
             nameText = NewWidget("WorldStateScoreButton1NameButtonName")
             function GetNumBattlefieldScores() return 1 end
             function GetBattlefieldScore(i)

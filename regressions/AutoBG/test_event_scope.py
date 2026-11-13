@@ -76,7 +76,8 @@ class TargetsEventScopeTests(unittest.TestCase):
     def test_unit_events_only_for_enemy_tokens(self):
         lua = targets()
         enter(lua, "Alterac Valley")
-        for ev in ("UNIT_AURA_DELTA", "UNIT_HEALTH"):
+        self.assertIsNone(lua.eval('AutoBG_Targets.events.UNIT_HEALTH'))
+        for ev in ("UNIT_AURA_DELTA", "UNIT_NAME_UPDATE"):
             units = list(lua.eval('AutoBG_Targets.events.%s' % ev).values())
             self.assertIn("target", units)
             self.assertIn("nameplate40", units)

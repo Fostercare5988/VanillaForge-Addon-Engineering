@@ -239,14 +239,11 @@ class RetiredSettingsTests(unittest.TestCase):
         import test_core_fixes as core
         lua = LuaRuntime(unpack_returned_tuples=True)
         lua.execute(core.BASE + r'''
-            spyOptions = { StableRowsMigration = 1 }
-            AutoBG_Spy = { EnsureOptions = function() return spyOptions end }
             AutoBG_Settings = { TestAllTimers = true, AutoQueue_TG = false }''')
         lua.execute(core.CORE)
         lua.execute('AutoBGFrame.scripts.OnEvent(AutoBGFrame, "ADDON_LOADED", "AutoBG")')
         self.assertIsNone(lua.eval('AutoBG_Settings.TestAllTimers'))
         self.assertIsNone(lua.eval('AutoBG_Settings.AutoQueue_TG'))
-        self.assertIsNone(lua.eval('spyOptions.StableRowsMigration'))
 
     def test_no_battlegroundtargets_globals(self):
         import re
