@@ -19,7 +19,8 @@ class NativeAuraTimers(unittest.TestCase):
             self.assertNotIn(gone, SRC)
 
     def test_the_icon_gets_a_numbers_only_countdown(self):
-        for needle in ('CreateFrame("Cooldown", nil, icon, "CooldownFrameTemplate")', "SetDrawSwipe(false)",
+        # No template since 2026-11-13: CooldownFrameTemplate is the 1.12 Model one.
+        for needle in ('CreateFrame("Cooldown", nil, icon)', "SetDrawSwipe(false)",
                        "SetDrawBling(false)", "SetCountdownAbbrevThreshold(60)", "GetCountdownFontString()",
                        'SetScript("OnCooldownDone"'):
             self.assertIn(needle, SRC)

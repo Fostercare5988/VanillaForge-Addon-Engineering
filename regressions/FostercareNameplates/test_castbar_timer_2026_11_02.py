@@ -8,8 +8,8 @@ nameplateN token, and a plate getting its unit, are the only times it asks
 C_Spell; the 0.1 s re-query while casting and the 1 s idle query are gone.
 Another unit's pushback is never sent to the client (ClassicAPI docs,
 UNIT_SPELLCAST_*: DELAYED fires for the player only), so nothing was there to
-catch. A bar whose STOP never came hides at its end time, checked twice a
-second while a bar is up. Native drawing stays an in-game check.
+catch. A bar whose STOP never came hides at its end time: one timer waits for the
+earliest end (a 0.5 s ticker until 2026-11-13). Native drawing stays an in-game check.
 """
 import unittest
 from fnp_env import load
@@ -25,7 +25,11 @@ PRELUDE = '''
     C_Spell.UnitChannelInfo = function()
         if cast and cast.channel then return cast.name, "", "tex", cast.s, cast.e, false, cast.locked end
     end
-    C_Timer.NewTicker = function(_, f) backstop = f; return { Cancel = function() backstop = nil end } end
+    -- The backstop timer: `backstop` runs it now, and is nil when none waits.
+    C_Timer.NewTimer = function(_, f)
+        backstop = function() backstop = nil; f() end
+        return { Cancel = function() backstop = nil end }
+    end
 '''
 
 

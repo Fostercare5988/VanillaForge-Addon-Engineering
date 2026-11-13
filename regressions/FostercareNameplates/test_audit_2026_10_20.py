@@ -128,15 +128,19 @@ class UnitFilters(unittest.TestCase):
 
     def test_target_is_never_faded(self):
         lua = load(prelude='units["0xF1"] = { type = 8 }')
-        lua.execute(FADE + 'fade("nameplate_fade_critters"); FostercareNameplates.Nameplates.targetGUID = "0xF1"')
+        lua.execute(FADE + '''fade("nameplate_fade_critters")
+            local unitGUID = UnitGUID
+            UnitGUID = function(u) if u == "target" then return "0xF1" end return unitGUID(u) end
+            fire("PLAYER_TARGET_CHANGED")''')
         self.assertEqual(self.alpha(lua), 1)
 
     def test_neutral_fades_only_out_of_combat(self):
         lua = load(prelude='units["0xF1"] = { type = 1, reaction = 4, combat = 1 }')
         lua.execute(FADE + 'fade("nameplate_fade_neutral")')
         self.assertEqual(self.alpha(lua), 1)
-        lua.execute('units["0xF1"].combat = nil')
-        self.assertEqual(self.alpha(lua, 40), 0.3)
+        # 2026-11-13: UNIT_FLAGS says when the combat flag changes; no 0.5 s recheck.
+        lua.execute('units["0xF1"].combat = nil; fire("UNIT_FLAGS", "nameplate1")')
+        self.assertEqual(self.alpha(lua, 1), 0.3)
 
     def test_opacity_setting_applies(self):
         lua = load(prelude='units["0xF1"] = { type = 8 }')

@@ -43,6 +43,13 @@ setmetatable(_G, { __index = function(_, k)
     if type(k) == "string" and string.find(k, "^FNP") then return widget(k) end
 end })
 function SetRaidTargetIconTexture() end
+function GetNampowerVersion() return 2, 0, 0 end
+-- The client's error handler: errors that reach it, with their stack.
+errors = {}
+function geterrorhandler() return function(e) errors[#errors + 1] = e; return e end end
+-- Raid marks by GUID (SuperWoW takes a GUID wherever a unit goes).
+marks = {}
+function GetRaidTargetIndex(u) return marks[u] end
 function GetAddOnMetadata() return "test" end
 calls = {}
 function count(name) calls[name] = (calls[name] or 0) + 1 end
@@ -67,7 +74,8 @@ C_NamePlate = { GetNamePlateGUIDs = function() return {} end, GetNamePlateForUni
     GetNamePlateForGUID = function() end }
 C_EventUtils = { IsEventValid = function() return true end }
 C_Timer = { After = function() count("After") end,
-    NewTicker = function() return { Cancel = function() end } end }
+    NewTicker = function() return { Cancel = function() end } end,
+    NewTimer = function() count("NewTimer"); return { Cancel = function() end } end }
 Enum = { StatusBarInterpolation = { Immediate = 0 },
     StatusBarTimerDirection = { ElapsedTime = 0, RemainingTime = 1 },
     NumericRuleFormatRounding = { Nearest = 0, Up = 1, Down = 2 } }
