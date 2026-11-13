@@ -25,9 +25,11 @@ class LayoutsRetired(unittest.TestCase):
         self.assertNotIn("Profiles.lua", text("FostercareTweaks.toc"))
 
     def test_core_clears_the_saved_keys(self):
+        # Core clears every key nothing reads (test_saved_keys_and_offline.py).
         core = text("Core.lua")
-        for key in ("Zone Layouts", "profile", "profiles"):
-            self.assertIn('FostercareTweaks_Config["%s"] = nil' % key, core)
+        self.assertIn("SAVED_TABLES", core)
+        for key in ("Zone Layouts", "profiles"):
+            self.assertNotIn(key, core)
 
     def test_nothing_else_still_speaks_of_layout_switches(self):
         for path in ROOT.rglob("*.lua"):

@@ -85,18 +85,14 @@ class WorldMapWindowRetired(unittest.TestCase):
             WORLDMAP_WINDOWED = %d
             function WorldMapFrame_Minimize() minimized = minimized + 1 end
             FostercareTweaks_Config["WorldMap Window"] = %s
+            FostercareTweaks.NUMBERS, FostercareTweaks.CHOICES = {}, {}
             FostercareTweaks:Initialize()
         ''' % (windowed, saved))
         return lua
 
-    def test_a_character_that_used_it_keeps_a_window(self):
+    def test_the_old_switch_goes_and_the_map_stays_as_the_client_has_it(self):
+        # No saved file held the key on 2026-11-13; the sweep in Core clears it.
         lua = self.initialize("1", 0)
-        self.assertEqual(lua.eval("WORLDMAP_WINDOWED"), 1)
-        self.assertEqual(lua.eval("minimized"), 1)
-        self.assertIsNone(lua.eval('FostercareTweaks_Config["WorldMap Window"]'))
-
-    def test_others_keep_the_full_screen_map(self):
-        lua = self.initialize("0", 0)
         self.assertEqual(lua.eval("WORLDMAP_WINDOWED"), 0)
         self.assertEqual(lua.eval("minimized"), 0)
         self.assertIsNone(lua.eval('FostercareTweaks_Config["WorldMap Window"]'))
@@ -349,7 +345,7 @@ class ChatLinesCostLess(unittest.TestCase):
             FT.rgbhex = function() return "|cff999999" end
             function GetRealmName() return "R" end
             function UnitName() return "P" end
-            FostercareTweaks_Cache = { chathistory = { R = { P = { [1] = { "|cff999999newer", "|cff999999older" } } } } }
+            FostercareTweaks_Cache = { chat = { [1] = { "|cff999999newer", "|cff999999older" } } }
             msgs = { { "login line", 1, 1, 0 } }
             ChatFrame1 = {}
             function ChatFrame1:AddMessage(text, r, g, b, mark) msgs[#msgs + 1] = { text, r, g, b, mark } end
@@ -373,7 +369,7 @@ class ChatLinesCostLess(unittest.TestCase):
         lua = self.history()
         lua.execute('ChatFrame1:AddMessage("hi |rthere", 1, 1, 1, 7)')
         lua.execute('for _, f in ipairs(frames) do fire(f, "PLAYER_LOGOUT") end')
-        saved = lua.eval("FostercareTweaks_Cache.chathistory.R.P[1]")
+        saved = lua.eval("FostercareTweaks_Cache.chat[1]")
         self.assertEqual(list(saved.values()), [
             "|cff999999hi |r|cff999999there",                   # dimmed once
             "|cff999999login line",

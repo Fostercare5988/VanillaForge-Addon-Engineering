@@ -9,9 +9,10 @@ game (and /reload, so the file is saved). AutoLazy keeps its defaults in
 AutoLazy.lua (a handful of values); edit them there.
 
 Left out on purpose: the chat history in FostercareTweaks_Cache (private), and
-the spell and item lists of the extra action bars (they depend on the class).
-Also left out: switches the addon retires (modules with `always = true`, and the
-keys Core.lua clears on load), so a new character never runs an old migration.
+the spell and item lists of the extra action bars (they depend on the class), and
+the watched auras with their icons' places (spells of the author's class). Also left out: every key the
+addon does not read (Core.lua clears those at login), so a new character never
+starts with a retired switch.
 Pixel positions are filtered at first run by FostercareTweaks (Core.lua), so a
 smaller screen never gets a frame off screen.
 """
@@ -40,27 +41,34 @@ def to_python(value):
     return value
 
 
-def retired_keys(addon):
-    """Switch keys FostercareTweaks retires: titles of modules registered with
-    `always = true` (Core.lua clears their key) and keys Core.lua sets to nil."""
+def kept_keys(addon):
+    """The saved keys FostercareTweaks reads (Core.lua clears every other one at
+    login): each switch, the title of a module registered without `always`
+    (a module with a list of switches registers each by its title), and the
+    tables in Core.lua's SAVED_TABLES."""
     keys = set()
     for path in Path(addon).rglob("*.lua"):
         text = path.read_text("utf-8-sig")
         for block in re.finditer(r"FT:register\(\{(.*?)\}\)", text, re.S):
             title = re.search(r'title\s*=\s*"([^"]+)"', block.group(1))
-            if title and re.search(r"\balways\s*=\s*true", block.group(1)):
+            if title and not re.search(r"\balways\s*=\s*true", block.group(1)):
                 keys.add(title.group(1))
+        # Switches registered from a list: FT:register({ title = switch[1], ... }).
+        for block in re.finditer(r"for _, (?:switch|title) in ipairs\(\{(.*?)\}\) do\s*FT:register", text, re.S):
+            keys.update(re.findall(r'"([^"]+)"', block.group(1)))
     core = (Path(addon) / "Core.lua").read_text("utf-8-sig")
-    keys.update(re.findall(r'FostercareTweaks_Config\["([^"]+)"\]\s*=\s*nil', core))
-    for block in re.finditer(r"ipairs\(\{(.*?)\}\)\s*do\s*FostercareTweaks_Config\[key\]\s*=\s*nil", core, re.S):
-        keys.update(re.findall(r'"([^"]+)"', block.group(1)))
+    tables = re.search(r"SAVED_TABLES = \{(.*?)\n\}", core, re.S)
+    keys.update(re.findall(r"^\s*(\w+) = true", tables.group(1), re.M))
     return keys
 
 
-def clean(config, retired=()):
-    config.pop("Social Colors", None)
-    for key in retired:
-        config.pop(key, None)
+def clean(config, kept):
+    # The watched auras are spells of the author's class, like the extra bars' lists.
+    for key in [k for k in config if k not in kept or k == "watched"]:
+        config.pop(key)
+    positions = config.get("unitframe_positions", {})
+    for key in [k for k in positions if k.startswith("watch_")]:
+        del positions[key]
     bars = config.get("actionbars", {}).get("bars", {})
     for bar in bars.values():
         bar.pop("actions", None)
@@ -117,7 +125,7 @@ def main():
     parser.add_argument("--addons", default=str(DEFAULT_ADDONS), help="the AddOns folder")
     args = parser.parse_args()
     addon = Path(args.addons) / "FostercareTweaks"
-    config = clean(to_python(load_config(args.tweaks)), retired_keys(addon))
+    config = clean(to_python(load_config(args.tweaks)), kept_keys(addon))
     out = addon / "Defaults.lua"
     # The addon's files use CRLF.
     out.write_bytes(render(config).replace("\n", "\r\n").encode("utf-8"))

@@ -49,7 +49,8 @@ class CenterTheRightBarsRetired(unittest.TestCase):
     def test_no_trace_and_the_saved_switch_is_cleared(self):
         for path in ("mods/actionbar-float.lua", "Settings.lua", "Defaults.lua"):
             self.assertNotIn("Center Vertical Actionbar", source(path), path)
-        self.assertIn('FostercareTweaks_Config["Center Vertical Actionbar"] = nil', source("Core.lua"))
+        # Core's sweep clears it (test_saved_keys_and_offline.py).
+        self.assertNotIn("Center Vertical Actionbar", source("Core.lua"))
 
 
 class OneDefaultPerSetting(unittest.TestCase):

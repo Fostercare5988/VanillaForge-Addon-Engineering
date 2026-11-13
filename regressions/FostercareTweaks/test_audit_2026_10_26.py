@@ -126,7 +126,8 @@ function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 def numbers():
     """Helpers.lua's FT.NUMBERS: every numeric setting's default and range."""
     text = source("Helpers.lua")
-    return text[text.index("FT.NUMBERS = {"):text.index("-- A saved value from the overrides table")]
+    start = text.index("FT.NUMBERS = {")
+    return text[start:text.index("\n}\n", start) + 3]
 
 
 def runtime():

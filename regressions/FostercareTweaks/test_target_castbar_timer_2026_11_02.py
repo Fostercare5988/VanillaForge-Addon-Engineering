@@ -126,7 +126,7 @@ class TargetCastbarMover(unittest.TestCase):
 
     def test_the_bar_stays_up_while_held_and_hides_after(self):
         lua = self.build("false")
-        lua.execute("local b = FCTweaksTargetCastbar; b:Show(); b.fctForcedShown = true; FostercareTweaks.RefreshTargetCastbar()")
+        lua.execute("local b = FCTweaksTargetCastbar; b:Show(); b.fctForcedShown = true; FostercareTweaks.mods['Enemy Castbars']:apply()")
         self.assertTrue(lua.eval("FCTweaksTargetCastbar:IsShown()"))
         lua.execute("local b = FCTweaksTargetCastbar; b.fctForcedShown = nil; b.fctRestoreShown(b)")
         self.assertFalse(lua.eval("FCTweaksTargetCastbar:IsShown()"))

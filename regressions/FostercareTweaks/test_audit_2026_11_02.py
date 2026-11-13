@@ -141,6 +141,7 @@ class NewCharacterKeepsTheMap(unittest.TestCase):
         lua.execute('''
             minimized, WORLDMAP_WINDOWED = 0, 0
             function WorldMapFrame_Minimize() minimized = minimized + 1 end
+            FostercareTweaks.NUMBERS, FostercareTweaks.CHOICES = {}, {}
             FostercareTweaks:Initialize()
         ''')
         return lua
@@ -151,15 +152,16 @@ class NewCharacterKeepsTheMap(unittest.TestCase):
         self.assertEqual(lua.eval("minimized"), 0)
 
     def test_retired_switches_are_not_shipped(self):
-        # The kind: whatever the addon retires (always-on modules, keys Core.lua
-        # clears) never reaches a new character. Run tools/export_defaults.py
-        # again after retiring a switch.
-        from export_defaults import retired_keys
-        retired = retired_keys(ROOT)
-        self.assertIn("WorldMap Window", retired)
-        self.assertIn("Blizzard Aura Controls", retired)
+        # The kind: only what the addon reads reaches a new character (Core.lua
+        # clears the rest at login). Run tools/export_defaults.py again after
+        # retiring a switch.
+        from export_defaults import kept_keys
+        kept = kept_keys(ROOT)
+        self.assertNotIn("WorldMap Window", kept)
+        self.assertNotIn("Blizzard Aura Controls", kept)        # always on: no switch
         text = source("Defaults.lua")
-        self.assertEqual(sorted(k for k in retired if '["%s"]' % k in text), [])
+        for key in ("WorldMap Window", "Blizzard Aura Controls", "Auto Dismount"):
+            self.assertNotIn('["%s"]' % key, text)
 
 
 # Old code and hot paths (each fails on 192e14d).
