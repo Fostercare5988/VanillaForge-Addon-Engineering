@@ -265,5 +265,43 @@ class ClockTests(unittest.TestCase):
         self.assertEqual(self.queued().eval('tickers'), 0)
 
 
+class SpyRestTests(unittest.TestCase):
+    """Spy's second-by-second pass sleeps with nobody around; sightings wake it."""
+
+    def test_the_pass_stops_when_the_list_empties_and_a_nameplate_wakes_it(self):
+        import test_spy_nearby as nearby
+        lua = nearby.runtime()
+        lua.execute('visible = false')
+        nearby.advance(lua, 33)  # Grom times out, nobody else is in view
+        self.assertEqual(lua.eval('#tickers'), 0)
+        lua.execute('plates.nameplate3 = { guid = "0x0000000000000002", name = "Thrall" }')
+        nearby.fire(lua, "NAME_PLATE_UNIT_ADDED", "nameplate3")
+        self.assertEqual(lua.eval('#tickers'), 1)
+
+
+class ArenaWriteTests(unittest.TestCase):
+    """Power follows NamPower's power events; the pass rewrites nothing unchanged."""
+
+    def setup(self):
+        case = client.ArenaExtrasTests()
+        lua = case.setup()
+        lua.execute('AutoBG_Arena.Tick(); local bar = AutoBG_TargetButton1.PowerBar; bar.SetWidth = function(self, w) self.w = w end')
+        return case, lua
+
+    def test_a_power_change_shows_at_once(self):
+        case, lua = self.setup()
+        lua.execute('mana.cur = 60')
+        case.event(lua, "UNIT_MANA_GUID", case.GUID, 0, 0, 0, 0, 0, 0)
+        self.assertEqual(lua.eval('AutoBG_TargetButton1.PowerBar.w'), 88)  # 148 * 0.6
+
+    def test_a_second_pass_writes_no_icon_again(self):
+        case, lua = self.setup()
+        case.event(lua, "UNIT_CASTEVENT", case.GUID, "x", "CAST", 21)
+        lua.execute('AutoBG_Arena.Tick(); writes = 0; local icon = AutoBG_TargetButton1.Strip.slots[1].Icon; '
+                    'local set = icon.SetTexture; icon.SetTexture = function(...) writes = writes + 1; return set(...) end')
+        lua.execute('AutoBG_Arena.Tick()')
+        self.assertEqual(lua.eval('writes'), 0)
+
+
 if __name__ == "__main__":
     unittest.main()
