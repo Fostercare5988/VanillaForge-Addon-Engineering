@@ -412,6 +412,14 @@
       "better": "C_DurationUtil.CreateDurationTextBinding with a C_StringUtil.CreateNumericRuleFormatter writes the text in the engine (whole seconds, m:ss, a color for the last seconds); a C_Timer at the end replaces the per-frame expiry check.",
       "source": "ClassicAPI docs/API.md#c_durationutilcreatedurationtextbinding, #c_stringutilcreatenumericruleformatter",
       "unless": "CreateDurationTextBinding"
+    },
+    {
+      "id": "combat-log-unfiltered-in-lua",
+      "pattern": "COMBAT_LOG_EVENT_UNFILTERED",
+      "finding": "Takes the whole nearby combat log in Lua. An addon that reads only some units or subevents throws the rest away, one Lua call per event (hundreds a second in a raid or battleground).",
+      "better": "CombatLogAddFilter(events, source, dest) and COMBAT_LOG_EVENT: the engine drops the rest before Lua (FostercareBattleText 2.3.0: your and your pet's combat). The client has ONE filter, kept over /reload, and COMBAT_LOG_EVENT gets the union of every addon's filters, so only one addon can own it: FostercareBattleText does (2026-11-13). Before adopting it elsewhere, grep every installed addon for CombatLogAddFilter, CombatLogResetFilter and COMBAT_LOG_EVENT, and agree on one owner.",
+      "source": "ClassicAPI docs/API.md#combatlogaddfilterevents--source--dest--spell--combatlogresetfilter",
+      "unless": "CombatLogAddFilter"
     }
   ]
 }
