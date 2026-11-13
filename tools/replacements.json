@@ -359,6 +359,28 @@
       "finding": "Registers ClassicAPI UNIT_SPELLCAST_SUCCEEDED for other units. A lead only when the addon also reads SuperWoW UNIT_CASTEVENT: that reports the same casts (SMSG_SPELL_GO, instants included) for every unit, so the token events add only de-duplication work.",
       "better": "Keep one cast source: UNIT_CASTEVENT when swings matter too, otherwise NamPower SPELL_GO_OTHER; UNIT_SPELLCAST_* for the player or token-bound frames.",
       "source": "ClassicAPI docs/API.md#unit_spellcast_-events; SuperWoW wiki Features.md (UNIT_CASTEVENT)"
+    },
+    {
+      "id": "combat-state-poll",
+      "pattern": "UnitAffectingCombat\\((?!\\s*[\"']player[\"'])",
+      "unless": "[\"']UNIT_FLAGS[\"']",
+      "finding": "Asks another unit's combat state on a timer or every frame (FostercareNameplates' idle-neutral fade rechecked it every 0.5 s until 2026-11-13).",
+      "better": "UNIT_FLAGS: a stock unit event (engine id 40) that ClassicAPI fires for every token naming the unit, nameplateN included; read UnitAffectingCombat when it fires. That it fires on the combat flag is a game check (FostercareNameplates Details.lua).",
+      "source": "ClassicAPI docs/Events.md (UNIT_FLAGS), docs/API.md#unit-tokens-nameplaten"
+    },
+    {
+      "id": "cooldown-model-template",
+      "pattern": "CreateFrame\\(\\s*[\"']Cooldown[\"'][^)]*CooldownFrameTemplate",
+      "finding": "Makes a native Cooldown frame with CooldownFrameTemplate, the 1.12 Model template (Cooldown.xml: a model file, scale 0.75 and an OnUpdateModel script).",
+      "better": "CreateFrame(\"Cooldown\", name, parent) and SetAllPoints: a Cooldown needs no template. Check the numbers' size after the change (the template may have scaled the frame).",
+      "source": "ClassicAPI docs/API.md#createframecooldown--name-parent-template; FrameXML Cooldown.xml"
+    },
+    {
+      "id": "hand-rolled-hookscript",
+      "pattern": "local\\s+\\w+\\s*=\\s*[\\w.]+:GetScript\\(",
+      "finding": "Keeps a frame's old script and sets a wrapper that calls it and then its own (a hand-made HookScript), often decoding the arguments per call.",
+      "better": "frame:HookScript(script, handler): the old handler runs first, both get the same arguments, and an error in the hook reaches the error handler. A closure that names its frame needs no arguments at all.",
+      "source": "ClassicAPI docs/API.md#framehookscriptscripttype-handler"
     }
   ]
 }
