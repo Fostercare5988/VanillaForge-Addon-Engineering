@@ -381,6 +381,37 @@
       "finding": "Keeps a frame's old script and sets a wrapper that calls it and then its own (a hand-made HookScript), often decoding the arguments per call.",
       "better": "frame:HookScript(script, handler): the old handler runs first, both get the same arguments, and an error in the hook reaches the error handler. A closure that names its frame needs no arguments at all.",
       "source": "ClassicAPI docs/API.md#framehookscriptscripttype-handler"
+    },
+    {
+      "id": "invite-window-constant",
+      "pattern": "AcceptBattlefieldPort\\(",
+      "finding": "Accepts a battleground invite after a delay of its own. A lead when the delay is capped by a measured or assumed invite length: after a reload or a loading screen the invite has less left.",
+      "better": "GetBattlefieldPortExpiration(i) gives the invite's time left in ms, as the client's own tooltip shows it; enter before it, and show it as a countdown.",
+      "source": "ClassicAPI docs/BlizzardScriptAPI.md (battlefield functions); FrameXML BattlefieldFrame.lua (BATTLEFIELD_QUEUE_CONFIRM)",
+      "unless": "GetBattlefieldPortExpiration"
+    },
+    {
+      "id": "nampower-other-events-at-load",
+      "pattern": "RegisterEvent\\([\"'](DE)?BUFF_(ADDED|REMOVED)_OTHER[\"']\\)",
+      "finding": "Registers NamPower's aura events for other units at load. Once registered they fire for every unit around you, raids included, also where the feature has nothing to do.",
+      "better": "Register them while the feature has something to watch (a carrier tracked, a match on) and unregister after.",
+      "source": "NamPower EVENTS.md (aura events; registering an event enables it)"
+    },
+    {
+      "id": "power-polled",
+      "pattern": "UnitManaMax\\(",
+      "finding": "Reads another unit's mana, rage or energy. A lead when it is read on a ticker to keep a bar current.",
+      "better": "NamPower UNIT_MANA_GUID, UNIT_RAGE_GUID and UNIT_ENERGY_GUID fire once per change for every unit, by GUID.",
+      "source": "NamPower EVENTS.md (Unit GUID Events)",
+      "unless": "UNIT_(MANA|RAGE|ENERGY)_GUID"
+    },
+    {
+      "id": "countdown-text-per-frame",
+      "pattern": "SetScript\\([\"']OnUpdate[\"']",
+      "finding": "An OnUpdate script. A lead when it rewrites a countdown's text (or checks for its end) every frame.",
+      "better": "C_DurationUtil.CreateDurationTextBinding with a C_StringUtil.CreateNumericRuleFormatter writes the text in the engine (whole seconds, m:ss, a color for the last seconds); a C_Timer at the end replaces the per-frame expiry check.",
+      "source": "ClassicAPI docs/API.md#c_durationutilcreatedurationtextbinding, #c_stringutilcreatenumericruleformatter",
+      "unless": "CreateDurationTextBinding"
     }
   ]
 }

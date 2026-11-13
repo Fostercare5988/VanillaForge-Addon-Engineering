@@ -64,7 +64,7 @@ The kit builds no garbage of its own, so a garbage test measures the addon.
 | Addon | Folder | Harness |
 | --- | --- | --- |
 | ActionBarProfiles | `regressions/ActionBarProfiles` | abp_env.py |
-| AutoBG | `regressions/AutoBG` | inline per test file; addon_loader.py loads files |
+| AutoBG | `regressions/AutoBG` | inline per test file; addon_loader.py loads files; clock_mock.py is ClassicAPI's duration text bindings, rule formatters and timers that fire by time (`__frame()` is a drawn frame) |
 | AutoLazy | `regressions/AutoLazy` | inline per test file |
 | Bagnon | `regressions/Bagnon` | bgn_env.py |
 | BrainwasherPro | `regressions/BrainwasherPro` | bwp_env.py |
