@@ -577,6 +577,36 @@ def replacements(addon):
     return findings
 
 
+TICKER = re.compile(r"C_Timer\.NewTicker\s*\(")
+ON_UPDATE = re.compile(r"""(?:SetScript|HookScript)\s*\(\s*["']OnUpdate["']\s*,(?!\s*nil\b)""")
+ON_UPDATE_OFF = re.compile(r"""SetScript\s*\(\s*["']OnUpdate["']\s*,\s*nil\b""")
+
+
+def repeating_work(addon):
+    """Every repeating timer and OnUpdate handler: each must say what it waits for.
+
+    `stops` tells whether the same file ever cancels a ticker or clears an
+    OnUpdate. One that never stops runs while nothing changes; one that does may
+    still run longer than it needs to. Both are questions (section 4), not verdicts.
+    """
+    findings = []
+    for rel, text in addon.files.items():
+        if rel.lower().endswith(".lua"):
+            code = strip_lua(text, keep_strings=True)
+            kinds = (("ticker", TICKER, re.compile(r":Cancel\s*\(")), ("OnUpdate", ON_UPDATE, ON_UPDATE_OFF))
+        elif rel.lower().endswith(".xml"):
+            code = text
+            kinds = (("XML OnUpdate", re.compile(r"<OnUpdate\b"), ON_UPDATE_OFF),)
+        else:
+            continue
+        for kind, start, stop in kinds:
+            stops = bool(stop.search(code))
+            for m in start.finditer(code):
+                findings.append({"kind": kind, "where": "%s:%d" % (rel, code.count("\n", 0, m.start()) + 1),
+                                 "stops": stops})
+    return findings
+
+
 # Report ----------------------------------------------------------------------
 
 def unreferenced_functions(addon):
@@ -636,6 +666,8 @@ def report(results, out):
     section("Global functions nothing refers to", results["unreferenced_functions"],
             lambda f: "%s at %s" % (f["name"], f["where"]))
     section("Function bodies that repeat", results["duplicate_functions"], lambda f: ", ".join(f["where"]))
+    section("Repeating work (what does each wait for? cheap is no reason to run)", results["repeating_work"],
+            lambda f: "%s at %s%s" % (f["kind"], f["where"], "" if f["stops"] else "  [never stopped in this file]"))
     section("A DLL does it now", results["replacements"], lambda f: "%s (%d at %s)\n  %s\n  Better: %s\n  Source: %s"
             % (f["id"], f["hits"], ", ".join(f["where"]), f["finding"], f["better"], f["source"]))
     section("Connections between addons", results["connections"], lambda f: "%s reads %s's %s at %s%s"
@@ -686,6 +718,7 @@ def main(argv=None):
         "saved_settings": saved_settings(addon, wtf),
         "unreferenced_functions": unreferenced_functions(addon),
         "duplicate_functions": duplicate_functions(addon),
+        "repeating_work": repeating_work(addon),
         "replacements": replacements(addon),
         "connections": connections(addon, everyone, game),
         "leaks": leaks(addon, game),

@@ -253,8 +253,9 @@ desynchronized.
 **Problem:** `OnUpdate` is used as a timer or generic state polling
 engine.
 
-**Preferred direction:** use authoritative events or `C_Timer` for
-periodic work.
+**Preferred direction:** use authoritative events, or a `C_Timer` set for the
+moment something next changes. A fixed-rate tick only for state that changes
+all the time and that no event reports, and only while it does.
 
 **Exception:** retain `OnUpdate` for genuinely frame-rate-dependent
 rendering, animation, dragging, interpolation, or similar behavior.
@@ -262,6 +263,14 @@ rendering, animation, dragging, interpolation, or similar behavior.
 Separate state sampling, countdown text, layout and animation; they need not
 share one cadence. Event-only code is incorrect when the chosen events do not
 cover live state changes. Verify event coverage before removing reconciliation.
+
+A once-a-second `C_Timer` tick is the same hazard in modern calls, and a cheap
+one is still a hole. GearRack's cooldown tick measured nearly free (2026-10-26)
+and was kept; it woke 1800 times for a 30-minute poison whose label changes 30
+times. The fix (2026-11-13): each view returns when it next changes (a
+`SecondsToTimeAbbrev` label at its next text, an alert at its threshold) and one
+timer sleeps until the soonest, or until an event wakes it.
+`tools/find_holes.py` lists every ticker and OnUpdate under "Repeating work".
 When periodic sampling remains necessary, reuse an appropriate owned ticker and
 share pass-wide snapshots instead of rereading the same target for each member.
 Preserve optional providers' semantics; a current-target fallback cannot observe

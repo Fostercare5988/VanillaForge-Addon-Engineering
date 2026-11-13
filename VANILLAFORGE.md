@@ -1,9 +1,10 @@
 # VanillaForge
 
 **Goal:** build and modernize World of Warcraft 1.12.1 addons that are lean,
-clean and modern. They take their data and events from the client's extension
-DLLs, do as little work per frame as possible, and are correct for the server
-they are played on.
+clean and modern: at least as good as the best modern addon that does the same
+job. They take their data and events from the client's extension DLLs, do as
+little work per frame as possible, and are correct for the server they are
+played on.
 
 This file is the whole working contract. Everything else here is reference
 material: search it for the question at hand, never read it whole.
@@ -26,6 +27,12 @@ does not end with a list: it ends with the fixes made, tested and pushed.
   event, a smaller design)? When there is, replace it. "It works" is not a reason
   to keep it; "players rely on it" is, and that means behaviour and settings,
   not the lines that produce them.
+- **Today's best is the yardstick, not 2006.** Asking "what is wrong with these
+  lines?" finds only what the old design allows; modern calls in an old shape
+  pass it. Ask "how would this be built today?" and compare with a modern addon
+  doing the same job (Classic Era or later: GearRack's are ItemRack Classic and
+  TrinketMenu). That finds the design holes: what it stores, what it waits for,
+  how its files split the work.
 - **Wonder.** Read the players' settings, the error log and the stutter report.
   The best findings come from asking what is really used and what really costs.
 - **Evidence beats memory.** Docs, measurements and tests decide; a guess is
@@ -84,7 +91,20 @@ the addon's existing convention. Details: CLASSICAPI_MASTER_REFERENCE.md §4.
 - **Use the DLLs.** Structured events, GUIDs and the `C_` APIs beat tooltip
   scraping, combat-log text parsing, name matching, target swapping and polling.
   Pick the provider by verified behaviour and cost, not by habit.
+- **Start from a modern addon, not the 2006 one.** ClassicAPI aims to run
+  Classic Era addons "with little or no change" (its README), so a modern addon
+  that does the job is the design to build towards, and its code may be ported
+  when its license allows (credit its authors, as EasyPoisons credits Horyoshi).
+  A new addon starts by looking for one. It was still written for another client:
+  every function, event, argument and widget method it calls must be in the DLL
+  docs (§1 rule 4), its Lua must run on 5.0 with the backports, its game data
+  (spell and item IDs, durations, talent tables) is Classic Era's and is never
+  taken over (§1 rule 2), and its locale layer, libraries and settings panel go
+  (ForgeUI, below).
 - **Events and timers, not OnUpdate,** except for animation and dragging.
+  Work that runs while nothing changes is a hole even when it measures cheap:
+  wake on the event, or at the moment something will next change (a label's
+  next text, a cooldown's end), and sleep otherwise.
   Coalesce bursts into one refresh per frame. Skip UI writes that change nothing.
   Avoid allocations in hot paths (combat, auras, health, nameplates, bags).
 - **Never block a frame.** Big scans and rebuilds are split across frames in
@@ -100,8 +120,9 @@ the addon's existing convention. Details: CLASSICAPI_MASTER_REFERENCE.md §4.
   saved, like AutoBG's flag spots. A value that is still a guess looks like
   one to the player (AutoBG's `~`), and it stops looking like a guess as soon
   as evidence arrives.
-- **Fix the kind, not just the case.** After finding a problem, search the addon
-  for others of the same kind and fix them all.
+- **Fix the kind, not just the case.** After finding a problem, search the whole
+  addon by pattern for others of the same kind, not only the path where it
+  showed or was measured, and fix them all.
 - **Keep what players rely on.** Keep behaviour players notice and their
   SavedVariables, or migrate or clear them on purpose. The code itself is not
   protected: rewrite old working code when the result is leaner, clearer or
@@ -157,28 +178,40 @@ python -B tools/find_holes.py "<addon folder>"
 
 It needs `python -B tools/fetch_upstream_docs.py` and
 `python -B tools/extract_framexml.py --client "<client>" --all` once. Its
-findings are leads; read the code before acting. Then answer every question
+findings are leads; read the code before acting. So are earlier audits: what
+they kept, and why, is asked again, not inherited. Then answer every question
 below, in this order, and write the answers in `.private/audit-<Addon>-<date>.md`:
 
-1. **What is unused?** Files, functions, images, options no character turns on,
+1. **How would it be built today?** Compare with the addon's reference addons
+   (named in its `CLAUDE.md`; ask the user when none is named): what each saves
+   per item, set and character, which events it listens to, when it wakes, how
+   its files split the work, what players can do with it. Every gap is a
+   finding, and so is anything ours does that it does not need. Of each saved
+   record: does it tell apart what the player can (two copies of one item, two
+   ranks of one spell)?
+2. **What is unused?** Files, functions, images, options no character turns on,
    saved settings no code reads.
-2. **What does a DLL do now?** Search the docs for the job, not just the name.
+3. **What does a DLL do now?** Search the docs for the job, not just the name.
    Add each new find to [tools/replacements.json](tools/replacements.json).
-3. **What reaches into another addon?** Globals read across addons, aliases,
+4. **What reaches into another addon?** Globals read across addons, aliases,
    shared tables. Make each connection visible and narrow, or remove it.
-4. **What is old or stale?** Code for other clients or missing libraries,
+5. **What is old or stale?** Code for other clients or missing libraries,
    "unverified" notes the docs now cover, old migrations, version drift.
-5. **What runs too often?** Timers and per-frame work that run when nothing
-   changed, garbage built on hot paths (Lua 5.0 collects in one full pass).
-6. **What do players see and use?** Their settings, errors and stutters; what is
+6. **What runs while nothing changes?** Every repeating timer and OnUpdate (the
+   hole finder lists them): what does it wait for, and does it stop when nothing
+   will change? Cheap is not a reason to keep one: fix the shape, then the cost
+   (§2). Also garbage built on hot paths (Lua 5.0 collects in one full pass).
+7. **What do players see and use?** Their settings, errors and stutters; what is
    confusing in the settings window. An option every character leaves alone, or
    that has no reason to be off, becomes permanent: retire it (§2).
-7. **What is just old?** The 2006 habits: `getglobal` and name concatenation per
+8. **What is just old?** The 2006 habits: `getglobal` and name concatenation per
    call, handlers that decode `this` or `arg1` by type, wrapped `Set*` methods
    where a script event exists, fallbacks for things that always exist, two files
-   doing one job, the same work repeated per slot or per event, tables built per
-   call, settings windows in the old style (move them to ForgeUI).
-8. **Of each finding: is it a kind?** Search for the rest of that kind (§2).
+   doing one job or one file doing several, two routines doing one job, the same
+   work repeated per slot or per event, tables built per call, settings windows
+   in the old style (move them to ForgeUI).
+9. **Of each finding: is it a kind?** Search the whole addon by pattern for the
+   rest of that kind (§2).
 
 Then fix everything the audit found, in one pass of coherent batches: the
 bugs, the old code, the options that should not exist, the settings window. Each

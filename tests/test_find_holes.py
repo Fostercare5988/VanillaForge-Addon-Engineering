@@ -179,6 +179,26 @@ class DeadAndDuplicateFunctions(unittest.TestCase):
             self.assertEqual(len(HOLES.duplicate_functions(addon)), 1)
 
 
+class RepeatingWork(unittest.TestCase):
+    def test_every_ticker_and_on_update_is_listed_with_whether_it_stops(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "Toy", {
+                "Toy.toc": "## Title: Toy\nForever.lua\nStops.lua\nToy.xml\n",
+                "Forever.lua": ("-- C_Timer.NewTicker(1, f) in a comment is no timer\n"
+                                "C_Timer.NewTicker(1, function() end)\n"
+                                "frame:SetScript('OnUpdate', function() end)\n"),
+                "Stops.lua": ("local t = C_Timer.NewTicker(1, function() end)\nt:Cancel()\n"
+                              "f:SetScript(\"OnUpdate\", step)\nf:SetScript(\"OnUpdate\", nil)\n"),
+                "Toy.xml": "<Ui><Frame name='F'><Scripts><OnUpdate>Step()</OnUpdate></Scripts></Frame></Ui>",
+            })
+            found = [(f["kind"], f["where"], f["stops"]) for f in HOLES.repeating_work(HOLES.Addon(root / "Toy"))]
+            self.assertEqual(found, [
+                ("ticker", "Forever.lua:2", False), ("OnUpdate", "Forever.lua:3", False),
+                ("ticker", "Stops.lua:1", True), ("OnUpdate", "Stops.lua:3", True),
+                ("XML OnUpdate", "Toy.xml:1", False)])
+
+
 class ReplacementUnless(unittest.TestCase):
     def test_a_file_already_on_the_event_is_no_lead(self):
         with tempfile.TemporaryDirectory() as tmp:
