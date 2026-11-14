@@ -160,15 +160,11 @@ measuring tool:
 A stutter with almost no addon time is the engine (model loading, shader
 compiles, drawing), not addon code. Fix measured problems first.
 
-**Game checks close the loop.** Every question only the game can answer is a
-check: an `-- UNVERIFIED:` note in the code or an item under an audit's "In-game
-checks". `python -B tools/game_checks.py` lists the open ones; `push` (game
-closed) hands them to `!ErrorLog`, where `/check` asks them one by one, runs a
-check's `/run` line and records the answer; `pull` reads the answers back.
-`find_holes.py` starts each audit with the addon's open and failed checks. A
-check answered bad is a bug to fix; one answered ok lets its note go; `drop`
-gives up the open ones nobody will answer. The tool reads the comment lines after
-an `UNVERIFIED:` note as part of it: put the note last in its comment block.
+**No in-game checklists.** The player reports what goes wrong: errors in
+`/err`, stutters in `/lag`, things that look wrong (user's order, 2026-11-14).
+Audits and reports write no "In-game checks" lists, and an open game check is
+not work. A guess in the code is still marked `-- UNVERIFIED:` (§1 rule 2), and
+the stutter report and error log are read at the start of every audit.
 
 ## 4. Audit: find the holes, then close them
 
@@ -252,8 +248,8 @@ take away something players rely on.
    [tools/addon_edit.py](tools/addon_edit.py): it keeps the endings and the
    backslashes of Lua paths (the `@@` placeholder writes two, KNOWN_PATTERNS KP-60;
    `@/` writes one, for a TOC line or an XML file path).
-4. Report what changed, the test results and what to check in game. Tests are
-   not in-game proof; say which behaviour still needs a game check.
+4. Report what changed, the test results and what players will notice. Tests
+   are not in-game proof: say so when a change rests on a guess.
 5. Git: run `git status` before editing. Commit each coherent step after its
    checks pass. Push every commit after its checks pass (user's standing order, 2026-11-01).
    Force-push only to take something out of a repo's history when the user asks
@@ -272,7 +268,6 @@ take away something players rely on.
 | Server facts and data sources | [servers/](servers/) |
 | An addon's regression tests | [regressions/README.md](regressions/README.md); one file, or on an old commit: `tools/run_suite.py` |
 | The game's Lua and engine model for tests | `regressions/wowlua.py`, `regressions/wowkit.py` |
-| What only the game can answer, and the answers | `python -B tools/game_checks.py`; `/check` in `!ErrorLog` |
 | The settings style | `templates/ForgeUI/` |
 | DLL versions and upstream tracking | [UPSTREAM_VERSIONS.json](UPSTREAM_VERSIONS.json), `python -B tools/check_upstream.py` |
 | Patch addon files safely | [tools/addon_edit.py](tools/addon_edit.py) |
