@@ -82,22 +82,6 @@ class FindHoles(unittest.TestCase):
         self.assertEqual([s["name"] for s in stale], ["C_Owner.GoneFunction", "OwnerFrameShow", "OwnerRemovedLongAgo"])
         self.assertEqual(stale[-1]["where"], ["test_owner.py:2"])
 
-    def test_game_checks_open_and_bad(self):
-        private = self.root / "private"
-        write(private, {"audit-Owner-2026-11-07.md": "## In-game checks\n1. Bars move.\n2. Icons show.\n"})
-        write(self.root / "regressions" / "Owner", {"test_owner.py": ""})
-        sys.path.insert(0, str(TOOLS))
-        import game_checks as gc
-        checks = gc.collect(self.root, private, self.root / "regressions")
-        ledger = {}
-        gc.record(ledger, next(c["id"] for c in checks if c["text"] == "Icons show."), "bad", "no icons")
-        gc.save_ledger(ledger, private / "game-checks.json")
-        owner = HOLES.Addon(self.root / "Owner")
-        rows = HOLES.game_checks(owner, self.root, private=private, regressions=self.root / "regressions")
-        got = sorted((r["text"], r["verdict"], r.get("note")) for r in rows)
-        self.assertIn(("Bars move.", "open", None), got)
-        self.assertIn(("Icons show.", "bad", "no icons"), got)
-
     def test_ghost_names(self):
         names = [g["name"] for g in HOLES.ghosts(self.owner, self.everyone, set(), set(), set())]
         self.assertIn("Banzai", names)

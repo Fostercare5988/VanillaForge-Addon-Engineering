@@ -16,7 +16,7 @@ real work: the release-notes section in the reference, new rules in
 tools/replacements.json and the refactors the leads point to.
 
 Maintained addons are the installed addons that have a regression suite in
-regressions/ (the same meaning as in game_checks.py), so addons we only keep a
+regressions/, so addons we only keep a
 copy of, such as BigWigs, are left out. The AddOns folder comes from --addons
 or from .private/workspace.json ({"addons": "<client>/Interface/AddOns"}).
 
@@ -41,6 +41,13 @@ from check_upstream import CheckError, github_api  # noqa: E402
 
 CONFIG = ROOT / "UPSTREAM_VERSIONS.json"
 PRIVATE = ROOT / ".private"
+REGRESSIONS = ROOT / "regressions"
+
+
+def maintained(addons_dir, regressions=REGRESSIONS):
+    """Installed folders of the addons that have a regression suite."""
+    suites = {p.name.lower() for p in regressions.iterdir() if p.is_dir() and any(p.glob("test_*.py"))}
+    return sorted(d for d in Path(addons_dir).iterdir() if d.is_dir() and d.name.lstrip("!").lower() in suites)
 
 
 def token() -> str | None:
@@ -163,7 +170,6 @@ def main(argv: list[str] | None = None) -> int:
     if not addons or not addons.is_dir():
         print("\nNo AddOns folder (pass --addons or set it in .private/workspace.json); skipped the lead scan.")
         return 0
-    from game_checks import maintained
     folders = maintained(addons)
     leads = lead_scan(folders)
     print(f"\nReplacement leads in {len(folders)} maintained addons ({len(leads)} rules hit):")

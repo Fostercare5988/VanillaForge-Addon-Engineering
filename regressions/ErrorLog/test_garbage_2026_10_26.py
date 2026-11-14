@@ -38,7 +38,7 @@ function CreateFrame(kind)
         index = { scripts = nil }
         function index:SetScript(s, fn)
             self.scripts[s] = fn
-            if s == "OnUpdate" then tick = fn end -- only the profiler's driver sets one
+            if s == "OnUpdate" then tick, driver = fn, self end -- only the profiler's driver sets one
         end
         function index:GetScript(s) return self.scripts[s] end
         function index:Hide() end
@@ -101,6 +101,24 @@ class GarbagePerAddon(unittest.TestCase):
         text = self.report()
         self.assertIn("freed 11.7 MB (Lua memory 37 MB), started inside GearRack", text)
         self.assertIn("worst one held a garbage collection", text)
+
+    def test_handlers_ranked_by_new_memory(self):
+        # 2026-11-14: 18 of 19 collections started in FostercareTweaks at
+        # 4.6 KB/s, and the report could not say which of its handlers.
+        text = self.report()
+        self.assertIn("The handlers that make the most:", text)
+        self.assertIn("30.00 KB/s  GearRack Core.lua:10 OnEvent", text)
+        self.assertIn("5.00 KB/s  AutoLazy Core.lua:10 OnEvent", text)
+
+    def test_saved_file_keeps_the_handlers(self):
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(BASE)
+        lua.execute((ROOT / "Profiler.lua").read_text("utf-8-sig"))
+        lua.execute('saved = { profile = true }; ErrorLog.onLoad[1](saved)')
+        lua.execute(SESSION)
+        lua.execute('event = "PLAYER_LOGOUT"; driver.scripts.OnEvent()')
+        self.assertAlmostEqual(lua.eval('saved.garbageBy["GearRack Core.lua:10 OnEvent"]'), 30.0)
+        self.assertAlmostEqual(lua.eval('saved.garbage["AutoLazy"]'), 5.0)
 
 
 if __name__ == "__main__":

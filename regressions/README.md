@@ -69,7 +69,7 @@ The kit builds no garbage of its own, so a garbage test measures the addon.
 | Bagnon | `regressions/Bagnon` | bgn_env.py |
 | BrainwasherPro | `regressions/BrainwasherPro` | bwp_env.py |
 | EasyPoisons | `regressions/EasyPoisons` | ep_env.py |
-| !ErrorLog | `regressions/ErrorLog` | inline; test_game_checks on wowkit |
+| !ErrorLog | `regressions/ErrorLog` | inline |
 | FostercareBattleText | `regressions/FostercareBattleText` | _fbt_runtime.py |
 | FostercareNameplates | `regressions/FostercareNameplates` | fnp_env.py |
 | FostercareTweaks | `regressions/FostercareTweaks` | ft_env.py for new tests; older files inline (`BASE` in test_audit_2026_10_26.py) |

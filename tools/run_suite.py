@@ -94,8 +94,11 @@ def main(argv=None):
     parser.add_argument("--old", metavar="REV", help="run against the addon at this commit instead")
     parser.add_argument("--addons", help="the AddOns folder; default from .private/workspace.json")
     args = parser.parse_args(argv)
-    suite = REGRESSIONS / args.addon
+    # A suite drops the folder's load-order "!" (regressions/ErrorLog runs !ErrorLog).
+    suite = REGRESSIONS / args.addon.lstrip("!")
     addon_dir = addons_folder(args.addons) / args.addon
+    if not addon_dir.is_dir():
+        addon_dir = addons_folder(args.addons) / ("!" + args.addon)
     if not suite.is_dir():
         raise SystemExit("No suite at %s" % suite)
     with tempfile.TemporaryDirectory() as tmp:
