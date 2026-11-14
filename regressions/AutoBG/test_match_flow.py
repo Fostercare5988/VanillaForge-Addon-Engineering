@@ -95,7 +95,7 @@ def fire(lua, event, arg=None):
 class AutoAcceptTests(unittest.TestCase):
     def accepted(self, lua):
         lua.execute('n = 0; for _, p in ipairs(ports) do if p.accept == 1 then n = n + 1 end end')
-        lua.execute('m = 0; for _, s in ipairs(messages) do if string.find(s, "Auto%-Accepted") then m = m + 1 end end')
+        lua.execute('m = 0; for _, s in ipairs(messages) do if string.find(s, "Entering |cffffd100", 1, true) then m = m + 1 end end')
         return lua.eval('n'), lua.eval('m')
 
     def test_instant_accept_happens_once_when_the_popup_shows_first(self):
@@ -118,7 +118,7 @@ class AutoAcceptTests(unittest.TestCase):
         self.assertEqual(lua.eval('AutoBG_Settings.AutoAcceptDelay'), 78)
         lua.execute('statuses[1] = { "confirm", "Arathi Basin" }')
         fire(lua, "UPDATE_BATTLEFIELD_STATUS")
-        lua.execute('m = 0; for _, s in ipairs(messages) do if string.find(s, "Entering in |cFFFFFF0078s", 1, true) then m = m + 1 end end')
+        lua.execute('m = 0; for _, s in ipairs(messages) do if string.find(s, "entering in |cffffd10078s", 1, true) then m = m + 1 end end')
         self.assertEqual(lua.eval('m'), 1)
 
     def missed(self, final_status):
@@ -131,7 +131,7 @@ class AutoAcceptTests(unittest.TestCase):
         fire(lua, "UPDATE_BATTLEFIELD_STATUS")
         lua.execute('now = 1077; statuses[1] = { "%s", "Arathi Basin" }' % final_status)
         fire(lua, "UPDATE_BATTLEFIELD_STATUS")
-        lua.execute('m = 0; for _, s in ipairs(messages) do if string.find(s, "ended after |cFFFFFF0077s|r, before Auto-Enter at |cFFFFFF0078s|r", 1, true) then m = m + 1 end end')
+        lua.execute('m = 0; for _, s in ipairs(messages) do if string.find(s, "ended after |cffffd10077s|r, before the |cffffd10078s|r enter delay", 1, true) then m = m + 1 end end')
         return lua.eval('m')
 
     def test_invite_that_ends_before_the_enter_is_reported_once(self):

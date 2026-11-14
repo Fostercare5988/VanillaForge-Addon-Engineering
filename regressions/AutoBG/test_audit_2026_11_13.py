@@ -77,7 +77,7 @@ class InviteTimeTests(unittest.TestCase):
         core.fire(lua, "ADDON_LOADED", "AutoBG")
         lua.execute('expirations[1] = %d; statuses[1] = { "confirm", "Arathi Basin" }' % left_ms)
         core.fire(lua, "UPDATE_BATTLEFIELD_STATUS")
-        lua.execute('m = nil; for _, s in ipairs(messages) do local _, _, n = string.find(s, "Entering in |cFFFFFF00(%d+)s") if n then m = tonumber(n) end end')
+        lua.execute('m = nil; for _, s in ipairs(messages) do local _, _, n = string.find(s, "entering in |cffffd100(%d+)s") if n then m = tonumber(n) end end')
         return lua.eval('m')
 
     def test_an_invite_with_30_seconds_left_is_entered_after_29(self):
