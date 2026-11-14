@@ -82,6 +82,16 @@ class SameSplit(unittest.TestCase):
         self.assertEqual(lua.eval("abpLoaded[1]"), "PvP")
         self.assertEqual(lua.eval("BrainwasherProDB.current"), 3)
 
+    def test_swap_without_events_is_seen_at_the_timeout(self):
+        """If a swap inside one split sends no talent or spell event, the
+        timeout still sees the new build and loads the bars."""
+        lua = device()
+        save(lua, 1)
+        lua.execute(f'click(BrainwasherProIcon3); accept("BRAINWASHERPRO_LOAD_SPEC"); leave()'
+                    f'; setBuild({BUILD_B}); advance(61)')
+        self.assertEqual(lua.eval("abpLoaded[1]"), "PvP")
+        self.assertNotIn("left as they are", lua.eval("table.concat(messages, '\\n')"))
+
     def test_swap_without_bars_records_the_spec(self):
         lua = load("BrainwasherProDB = { specs = { [1] = { name = 'A' }, [3] = { name = 'B' } } }")
         lua.execute(f"setBuild({BUILD_A}); talk(DEVICE, {MENU})")
