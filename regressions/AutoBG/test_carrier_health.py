@@ -81,10 +81,12 @@ def runtime(health, maximum):
 
 
 class CarrierHealthTests(unittest.TestCase):
-    def test_carrier_frames_have_tooltips_backdrop_border(self):
+    def test_carrier_cards_wear_the_flat_look_of_the_timer_bars(self):
+        # 2026-11-14: the 2006 tooltip border gave way to the one-pixel frame
+        # the timer bars and enemy rows wear.
         lua = runtime(3690, 4500)
-        self.assertEqual(lua.eval('AutoBG_AllianceFC.backdrop.edgeFile'), "Interface\\Tooltips\\UI-Tooltip-Border")
-        self.assertEqual(lua.eval('AutoBG_HordeFC.backdrop.edgeFile'), "Interface\\Tooltips\\UI-Tooltip-Border")
+        self.assertIsNone(lua.eval('AutoBG_AllianceFC.backdrop'))
+        self.assertIsNone(lua.eval('AutoBG_HordeFC.backdrop'))
 
     def test_real_health_is_shown_when_available(self):
         lua = runtime(3690, 4500)
@@ -123,7 +125,7 @@ class CarrierHealthTests(unittest.TestCase):
     def test_live_carrier_returns_after_timer_test_mode(self):
         lua = runtime(3690, 4500)
         lua.execute('AutoBG_FC_SetPreview(true); AutoBG_FC_UpdateVisibility()')
-        self.assertIn("Alliance Druid", lua.eval('AutoBG_AllianceFC.nameText.text'))
+        self.assertIn("Leafwhisper", lua.eval('AutoBG_AllianceFC.nameText.text'))
         lua.execute('AutoBG_FC_SetPreview(false); AutoBG_FC_UpdateVisibility()')
         self.assertEqual(lua.eval('AutoBG_AllianceFC.nameText.text'), "Grom")
         self.assertEqual(lua.eval('AutoBG_AllianceFC.hpText.text'), "3690 / 4500")

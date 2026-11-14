@@ -118,6 +118,16 @@ class RetiredSwitches(unittest.TestCase):
         self.assertIsNone(lua.eval('AutoBG_Settings.Spy.StealthProximityOnly'))
 
 
+class Looks(unittest.TestCase):
+    def test_the_preview_reads_like_a_match(self):
+        import test_targets_guid_events as tg
+        lua = tg.runtime()
+        lua.execute('AutoBG_Targets:EnableConfigMode(10)')
+        names = [lua.eval('AutoBG_TargetButton%d.targetName' % i) for i in range(1, 11)]
+        self.assertFalse([n for n in names if n.startswith("Target")])
+        self.assertEqual(len(set(names)), 10)
+
+
 PLACES = r'''
 local Widget = getmetatable(UIParent).__index
 function Widget:SetPoint(...) self.pt = { ... } end
