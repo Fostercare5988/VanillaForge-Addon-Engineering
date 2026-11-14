@@ -313,7 +313,7 @@ class FalseAlarms2026_11_14(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             write(root / "Box", {"Box.toc": "## Title: Box\n## SavedVariables: Box_DB\nBox.lua\n",
-                                 "Box.lua": "Box_DB = Box_DB or {}\nlocal s = Box_DB.Spy\nif s.Range then end\n"})
+                                 "Box.lua": "Box_DB = Box_DB or {}\nlocal s, n = Box_DB.Spy, Box_DB.Names\nif s.Range then end\n"})
             saved = ("Box_DB = { ['Claude of Realm'] = 1, Old = 1, ['Realm|Horde'] = { Ann = 1 },"
                      " Names = { Ann = 1, Bob = 2, Cid = 3 }, Spy = { Range = 1, Gone = 1 } }")
             wtf = root / "WTF"
