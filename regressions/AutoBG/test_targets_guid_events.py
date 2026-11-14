@@ -249,8 +249,8 @@ class TargetsGuidEventTests(unittest.TestCase):
         o = 'AutoBG_Settings.Targets.'
         for size in (10, 15):
             got = [lua.eval(o + k + '[%d]' % size) for k in ("ButtonFontSize", "ButtonWidth", "ButtonHeight", "ButtonScale",
-                                                              "ButtonHideRealm", "DimStealthed", "ShowTrinket")]
-            self.assertEqual(got, [20, 195, 25, 1, True, True, True], size)
+                                                              "ButtonHideRealm", "ShowTrinket")]
+            self.assertEqual(got, [20, 195, 25, 1, True, True], size)
         self.assertEqual(lua.eval(o + 'ButtonFontSize[40]'), 11)  # 40v40 stays compact
         self.assertEqual((lua.eval(o + 'TrinketPos'), lua.eval(o + 'CastPos')), ("LEFT", "LEFT"))
 

@@ -155,7 +155,7 @@ class OptionsLayoutTests(unittest.TestCase):
         lua = runtime()
         lua.execute('AutoBG_OpenOptions("targets")')
         for name, key in (("AutoBG_Tgt_CastBars", "ShowCastBars"), ("AutoBG_Tgt_FadeRange", "FadeOutOfRange"),
-                          ("AutoBG_Tgt_RaidIcons", "ShowRaidIcons"), ("AutoBG_Tgt_TargetCount", "ShowTargetCount")):
+                          ("AutoBG_Tgt_TargetCount", "ShowTargetCount")):
             self.assertTrue(lua.eval('%s.checked' % name), name)
             toggle(lua, name)
             self.assertFalse(lua.eval('AutoBG_Settings.Targets.%s' % key), key)
@@ -169,14 +169,13 @@ class OptionsLayoutTests(unittest.TestCase):
         toggle(lua, "AutoBG_Tgt_CastBars")
         self.assertFalse(lua.eval('AutoBG_Tgt_CastLeft.enabled'))
 
-    def test_nearby_only_dims_while_stealth_warnings_are_off(self):
+    def test_switches_every_character_left_on_are_gone(self):
+        # 2026-11-14: always on now (Pause while AFK, scoreboard colors, health
+        # percent, dim stealthed, raid icons, only enemies I can see).
         lua = runtime()
-        lua.execute('AutoBG_OpenOptions("spy")')
-        self.assertFalse(lua.eval('AutoBG_Spy_StealthProximityOnly.disabled'))
-        toggle(lua, "AutoBG_Spy_StealthAlert")
-        self.assertFalse(lua.eval('AutoBG_Settings.Spy.StealthAlert'))
-        self.assertTrue(lua.eval('AutoBG_Spy_StealthProximityOnly.disabled'))
-
+        for name in ("AutoBG_Opt_SkipAFK", "AutoBG_Opt_ScoreColor", "AutoBG_Tgt_HealthText",
+                     "AutoBG_Tgt_DimStealth", "AutoBG_Tgt_RaidIcons", "AutoBG_Spy_StealthProximityOnly"):
+            self.assertIsNone(lua.eval('_G["%s"]' % name), name)
 
 if __name__ == "__main__":
     unittest.main()

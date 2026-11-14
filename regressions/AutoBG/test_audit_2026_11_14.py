@@ -83,5 +83,40 @@ class ArenaSweep(unittest.TestCase):
         self.assertEqual(lua.eval('AutoBG_Targets.EnemyCount()'), 2)
 
 
+class RetiredSwitches(unittest.TestCase):
+    """2026-11-14: switches every character left on, with no reason to be off,
+    are always on; their saved keys are cleared by the sweeps (KP-64)."""
+
+    def test_enemy_rows_always_dim_in_stealth_show_their_text_and_raid_icons(self):
+        import test_targets_guid_events as tg
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(TARGETS_BASE)
+        lua.execute('AutoBG_Settings = { Targets = { DimStealthed = { [10] = false }, '
+                    'ButtonShowHealthText = { [10] = false }, ShowRaidIcons = false } }')
+        addon_loader.load(lua, TARGETS, "AutoBG_Targets.lua")
+        for event in ("PLAYER_LOGIN", "UPDATE_BATTLEFIELD_STATUS"):
+            lua.execute('AutoBG_Targets.scripts.OnEvent(AutoBG_Targets, "%s")' % event)
+        lua.execute('target = "Grom"; AutoBG_Targets.scripts.OnEvent(AutoBG_Targets, "PLAYER_TARGET_CHANGED"); target = nil')
+        for key in ("DimStealthed", "ButtonShowHealthText", "ShowRaidIcons"):
+            self.assertIsNone(lua.eval('AutoBG_Settings.Targets.%s' % key), key)
+        self.assertEqual(tg.row_text(lua), "100%")
+        lua.execute('raidIcons["%s"] = 8; AutoBG_Targets.UpdateRowStatus()' % tg.GROM)
+        self.assertTrue(lua.eval('AutoBG_TargetButton1.RaidIcon.shown'))
+        tg.fire(lua, "BUFF_ADDED_OTHER", tg.GROM, 1, 1787, 1, 60, 5, 0)
+        self.assertEqual(lua.eval('AutoBG_TargetButton1.alpha'), 0.75)
+
+    def test_a_stealth_heard_from_an_enemy_you_cannot_see_never_warns(self):
+        import test_spy_stealth_alert as ts
+        lua = LuaRuntime(unpack_returned_tuples=True)
+        lua.execute(ts.BASE)
+        lua.execute(ts.STEALTH.replace("StealthProximityOnly = true", "StealthProximityOnly = false"))
+        addon_loader.load(lua, ts.SPY, "AutoBG_Spy.lua")
+        lua.execute('AutoBG_SpyEventFrame.scripts.OnEvent(AutoBG_SpyEventFrame, "PLAYER_LOGIN")')
+        lua.execute('stealthed["%s"] = "Stealth"; visible = false' % ts.ROGUE)
+        ts.dispatch(lua, "UNIT_CASTEVENT", ts.ROGUE, "", "CAST", 1787, 0)
+        self.assertFalse(lua.eval('AutoBG_SpyAlertWindow ~= nil and AutoBG_SpyAlertWindow.shown'))
+        self.assertIsNone(lua.eval('AutoBG_Settings.Spy.StealthProximityOnly'))
+
+
 if __name__ == "__main__":
     unittest.main()

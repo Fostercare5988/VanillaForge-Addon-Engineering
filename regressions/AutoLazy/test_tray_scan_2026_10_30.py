@@ -35,7 +35,9 @@ class TrayScan(unittest.TestCase):
         ''')
         self.assertEqual(lua.eval("tests"), 0)
 
-    def test_known_launcher_is_found_wherever_it_sits(self):
+    def test_a_named_button_off_the_minimap_is_not_a_launcher(self):
+        # The one launcher matched by name, AutoBG's quick-queue button, was
+        # invisible and retired with AutoBG 1.1.0 (2026-11-14).
         lua = tray(FOREIGN + r'''
             local b = CreateFrame("Button", "AutoBG_QuickQueueButton", plate)
             b.w, b.h = 32, 32
@@ -43,7 +45,7 @@ class TrayScan(unittest.TestCase):
             b.GetNormalTexture = function() return { GetTexture = function() return "Interface\Icons\X" end } end
         ''')
         lua.execute('fire("PLAYER_ENTERING_WORLD"); settle()')
-        self.assertEqual(lua.eval("#AutoLazy.Tray.GetEntries()"), 1)
+        self.assertEqual(lua.eval("#AutoLazy.Tray.GetEntries()"), 0)
 
     def test_uiparent_launcher_is_found(self):
         lua = tray(r'''
