@@ -100,7 +100,11 @@ function GetBindingText(k) return k end
 function GetBindingAction() return "" end
 function SetBinding() return 1 end
 function GetCurrentBindingSet() return 1 end
-function GetNumMacroIcons() return 0 end
+-- ClassicAPI's macro icon lists append capitalised basenames (API.md, GetMacroIcons).
+function GetLooseMacroIcons() end
+function GetLooseMacroItemIcons() end
+function GetMacroIcons(t) t[#t + 1] = "ABILITY_KICK" end
+function GetMacroItemIcons(t) t[#t + 1] = "INV_SWORD_25" end
 function GetShapeshiftForm() return 0 end
 function GetNumShapeshiftForms() return 0 end
 function GetNetStats() return 0, 0, 50 end
