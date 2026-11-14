@@ -108,7 +108,7 @@ function FT.IsEnabled(key)
 end
 --NUMBERS--
 function FT.GetNumber(key) return FT.NUMBERS[key][1] end
-FT.hooksecurefunc, FT.HookScript, hooksecurefunc = NOOP, NOOP, NOOP
+FT.hooksecurefunc, hooksecurefunc = NOOP, NOOP
 FT.RestoreFramePosition, FT.RegisterFrameMover = NOOP, NOOP
 TargetofTargetFrame = { IsShown = function() return false end }
 function UnitGUID(u) return "0x" .. u end

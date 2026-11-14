@@ -37,6 +37,12 @@ class OldFormsGone(unittest.TestCase):
         for path in lua_files():
             self.assertIsNone(re.search(r"UnitHealth(Max)?\([^)]*\) or 0", path.read_text("utf-8-sig")), path.name)
 
+    def test_native_hookscript_not_a_hand_made_one(self):
+        # 2026-11-14: FT.HookScript rebuilt ClassicAPI's frame:HookScript, which
+        # passes the same arguments to both handlers (API.md, frame:HookScript).
+        for path in lua_files():
+            self.assertNotIn("FT.HookScript", path.read_text("utf-8-sig"), path.name)
+
     def test_bars_keep_their_own_methods(self):
         core = (ROOT / "mods/unitframes/core.lua").read_text("utf-8-sig")
         self.assertNotIn("bar.SetStatusBarColor =", core)

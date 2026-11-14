@@ -114,7 +114,6 @@ class WorldMapWindowSize(unittest.TestCase):
         lua.execute(r'''
             hooks, scripts, ctrl = {}, {}, false
             hooksecurefunc = function(name, fn) hooks[name] = fn end
-            FT.HookScript = function(frame, script, fn) scripts[script] = fn end
             FT.HookAddonOrVariable = NOOP
             saved = {}
             function FT.GetNumber(key)
@@ -125,6 +124,7 @@ class WorldMapWindowSize(unittest.TestCase):
             function IsControlKeyDown() return ctrl end
             WORLDMAP_WINDOWED = 1
             WorldMapFrame = Widget({ scale = 1 })
+            function WorldMapFrame:HookScript(script, fn) scripts[script] = fn end
             function WorldMapFrame:GetScale() return self.scale end
             function WorldMapFrame:SetScale(s) self.scale = s end
             function WorldMapFrame:GetCenter() return 500 / self.scale, 400 / self.scale end

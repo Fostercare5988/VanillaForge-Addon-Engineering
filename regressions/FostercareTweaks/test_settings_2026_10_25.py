@@ -65,9 +65,9 @@ FostercareTweaks_Config = { overwrites = {} }
 local FT = { mods = {} }
 FostercareTweaks = FT
 --SETTINGS--
-function FT.HookScript(frame, script, fn)
-    local old = frame.scripts[script]
-    frame.scripts[script] = function(...) if old then old(...) end; fn(...) end
+function Widget:HookScript(script, fn)
+    local old = self.scripts[script]
+    self.scripts[script] = function(...) if old then old(...) end; fn(...) end
 end
 function FT.SetEventHandler(frame, fn) frame.scripts.OnEvent = fn end
 calls = {}

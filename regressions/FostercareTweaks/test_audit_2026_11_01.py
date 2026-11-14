@@ -283,7 +283,7 @@ class NoPolling(unittest.TestCase):
             C_Timer = { After = function(_, fn) fn() end, NewTicker = function() tickers = tickers + 1; return { Cancel = NOOP } end }
             compared = {}
             hooks = {}
-            function FT.HookScript(frame, script, fn) hooks[frame] = hooks[frame] or {}; hooks[frame][script] = fn end
+            local function Hook(self, script, fn) hooks[self] = hooks[self] or {}; hooks[self][script] = fn end
             function FT.HookAddonOrVariable() end
             shift = false
             function IsLeftShiftKeyDown() return shift end
@@ -291,7 +291,7 @@ class NoPolling(unittest.TestCase):
             function IsShiftKeyDown() return shift end
             function MouseIsOver() return false end
             function GameTooltip_ShowCompareItem(t) compared[#compared + 1] = t.item end
-            local function Tip(name) local t = Widget({ name = name }); t.GetItem = function(self) return self.item, self.item end; return t end
+            local function Tip(name) local t = Widget({ name = name }); t.HookScript = Hook; t.GetItem = function(self) return self.item, self.item end; return t end
             GameTooltip, ItemRefTooltip = Tip("GameTooltip"), Tip("ItemRefTooltip")
             ShoppingTooltip1, ShoppingTooltip2 = Widget(), Widget()
             function setItem(link) GameTooltip.item = link; GameTooltip.shown = true; hooks[GameTooltip].OnTooltipSetItem(GameTooltip) end
