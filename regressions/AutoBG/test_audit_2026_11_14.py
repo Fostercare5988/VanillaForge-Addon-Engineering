@@ -118,5 +118,117 @@ class RetiredSwitches(unittest.TestCase):
         self.assertIsNone(lua.eval('AutoBG_Settings.Spy.StealthProximityOnly'))
 
 
+PLACES = r'''
+local Widget = getmetatable(UIParent).__index
+function Widget:SetPoint(...) self.pt = { ... } end
+function Widget:ClearAllPoints() self.pt = nil end
+function Widget:SetParent(p) self.parent = p end
+function Widget:SetWidth(w) self.width = w end
+function Widget:GetWidth() return self.width end
+function Widget:SetAlpha(a) self.alpha = a end
+function Widget:EnableMouse(on) self.mouse = on end
+function Widget:Enable() self.enabled = true end
+function Widget:Disable() self.enabled = false end
+function Widget:SetChecked(v) self.checked = v and true or nil end
+function Widget:GetChecked() return self.checked end
+-- The named controls placed on a page: { name, x, y }.
+function Spots(page)
+    local t = {}
+    for name, w in pairs(_G) do
+        if type(name) == "string" and string.find(name, "^AutoBG_") and type(w) == "table"
+            and w.pt and w.pt[2] == page and w.shown ~= false then
+            t[#t + 1] = { name, w.pt[4], w.pt[5] }
+        end
+    end
+    return t
+end
+'''
+
+# Controls that share their line on purpose: a battleground's teams button, the
+# sound's Play, the second queue button.
+SHARES_A_LINE = ("AutoBG_Opt_QueueModeWSG", "AutoBG_Opt_QueueModeAB", "AutoBG_BtnTestSound", "AutoBG_BtnCancelAll")
+
+
+def window():
+    import test_options_preview as op
+    lua = LuaRuntime(unpack_returned_tuples=True)
+    lua.execute(op.BASE)
+    lua.execute(PLACES)
+    lua.execute('AutoBG_Targets.activeBG = true')
+    addon_loader.load(lua, op.OPTIONS, "AutoBG_Options.lua")
+    return lua
+
+
+class SettingsInAddOnOptions(unittest.TestCase):
+    def test_every_page_is_a_category_under_autobg(self):
+        lua = window()
+        self.assertEqual(lua.eval('categories[1].name'), "AutoBG")
+        names = [lua.eval('categories[%d].name' % i) for i in range(2, 7)]
+        self.assertEqual(names, ["General", "Timers", "Enemy frames", "Spy", "Arena"])
+        self.assertTrue(all(lua.eval('categories[%d].parent' % i) == "AutoBG" for i in range(2, 7)))
+
+    def test_a_category_borrows_its_page_and_gives_it_back(self):
+        lua = window()
+        lua.execute('AutoBG_OpenOptions("general")')
+        lua.execute('host = categories[2]; host.shown = false; host:Show()')
+        self.assertTrue(lua.eval('AutoBG_OptionsPage1.parent == host.holder'))
+        self.assertEqual(lua.eval('AutoBG_Opt_AutoAccept.pt[4]'), 28)          # one column
+        lua.execute('host.scripts.OnHide(host)')
+        self.assertTrue(lua.eval('AutoBG_OptionsPage1.parent == AutoBG_OptionsPanel'))
+        lua.execute('AutoBG_OptionsPanel.shown = false; AutoBG_OpenOptions("general")')
+        self.assertTrue(lua.eval('AutoBG_OptionsPage1.shown'))
+        self.assertEqual(lua.eval('AutoBG_Opt_AutoAccept.pt[4]'), 264)         # two columns again
+
+    def test_in_addon_options_every_page_is_one_column(self):
+        lua = window()
+        for index in range(1, 6):
+            lua.execute('host = categories[%d]; host.shown = false; host:Show()' % (index + 1))
+            spots = lua.eval('Spots(AutoBG_OptionsPage%d)' % index)
+            seen = {}
+            for i in range(1, len(spots) + 1):
+                name, x, y = spots[i][1], spots[i][2], spots[i][3]
+                if name in SHARES_A_LINE:
+                    continue
+                self.assertLess(x, 120, "page %d: %s at x=%s" % (index, name, x))
+                self.assertNotIn(round(y), seen, "page %d: %s shares a line with %s" % (index, name, seen.get(round(y))))
+                seen[round(y)] = name
+            self.assertGreater(len(seen), 4, index)
+            lua.execute('host.scripts.OnHide(host)')
+
+    def test_the_window_closes_addon_options(self):
+        lua = window()
+        lua.execute('InterfaceOptionsFrame.shown = true; AutoBG_OpenOptions("spy")')
+        self.assertFalse(lua.eval('InterfaceOptionsFrame:IsShown()'))
+        self.assertTrue(lua.eval('AutoBG_OptionsPanel:IsShown()'))
+
+
+class SettingsThatDoNothingDim(unittest.TestCase):
+    """2026-11-14, Claude's saved settings: an enter delay of 78 s with
+    Accept queue pops off, and team rows picked for battlegrounds not queued."""
+
+    def test_the_enter_delay_dims_while_entering_is_off(self):
+        lua = window()
+        lua.execute('AutoBG_Settings.AutoAccept = false; AutoBG_OpenOptions("general")')
+        self.assertEqual(lua.eval('AutoBG_Opt_AcceptDelay.alpha'), 0.4)
+        lua.execute('local w = AutoBG_Opt_AutoAccept; w:SetChecked(true); w.scripts.OnClick(w)')
+        self.assertTrue(lua.eval('AutoBG_Settings.AutoAccept'))
+        self.assertEqual(lua.eval('AutoBG_Opt_AcceptDelay.alpha'), 1)
+
+    def test_a_teams_button_dims_while_its_battleground_is_not_queued(self):
+        lua = window()
+        lua.execute('AutoBG_Settings.AutoQueue_WSG = false; AutoBG_Settings.AutoQueue_AB = true; '
+                    'AutoBG_Settings.QueueMode_WSG = "fa"; AutoBG_OpenOptions("general")')
+        self.assertFalse(lua.eval('AutoBG_Opt_QueueModeWSG.enabled'))
+        self.assertTrue(lua.eval('AutoBG_Opt_QueueModeAB.enabled'))
+        self.assertEqual(lua.eval('AutoBG_Opt_QueueModeWSG.text'), "Any")
+
+    def test_the_arena_type_dims_while_no_arena_is_queued(self):
+        lua = window()
+        lua.execute('AutoBG_Settings.AutoQueue_Arena = false; AutoBG_OpenOptions("general")')
+        self.assertFalse(lua.eval('AutoBG_Opt_ArenaType1.enabled'))
+        lua.execute('local w = AutoBG_Opt_QueueArena; w:SetChecked(true); w.scripts.OnClick(w)')
+        self.assertTrue(lua.eval('AutoBG_Opt_ArenaType1.enabled'))
+
+
 if __name__ == "__main__":
     unittest.main()

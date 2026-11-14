@@ -65,16 +65,36 @@ UIParent = CreateFrame("Frame", "UIParent")
 UISpecialFrames = {}
 tinsert = table.insert
 function UnitFactionGroup() return "Alliance" end
+-- ClassicAPI's AddOn Options: categories in order, and the frames around them.
+categories = {}
+function InterfaceOptions_AddCategory(panel) table.insert(categories, panel) end
+InterfaceOptionsFrame, GameMenuFrame = CreateFrame("Frame", "InterfaceOptionsFrame"), CreateFrame("Frame", "GameMenuFrame")
+function HideUIPanel(f) f:Hide() end
 previews = 0
+local function Nothing() end
 AutoBG_Targets = {
     activeBG = true, isConfig = false,
-    EnsureOptions = function() end,
+    EnsureOptions = Nothing, SetupButtonLayout = Nothing, ApplyRowFeatures = Nothing,
+    RenderRoster = Nothing, ResetPosition = Nothing,
     EnableConfigMode = function() previews = previews + 1 end,
 }
-AutoBG_Spy = {}
-AutoBG_Settings = { Targets = { EnableBracket = {}, ButtonHideRealm = {}, ButtonShowHealthText = {},
-                                DimStealthed = {}, ShowTrinket = {}, ButtonFontSize = {},
-                                ButtonScale = {}, ButtonWidth = {}, ButtonHeight = {} } }
+AutoBG_Spy = {
+    EnsureOptions = function() AutoBG_Settings.Spy = AutoBG_Settings.Spy or {}; return AutoBG_Settings.Spy end,
+    RenderRows = Nothing, ApplyScale = Nothing, ClearHistory = Nothing, ResetPosition = Nothing,
+}
+function AutoBG_ArenaOptions() AutoBG_Settings.Arena = AutoBG_Settings.Arena or {}; return AutoBG_Settings.Arena end
+AutoBG_Arena, AutoBG_ArenaPets = { Refresh = Nothing }, { Refresh = Nothing }
+AutoBG_MAX_ENTER_DELAY = 78
+for _, name in ipairs({ "AutoBG_Timers_UpdateVisibility", "AutoBG_FC_UpdateVisibility", "AutoBG_LoadTimerPositions",
+    "AutoBG_ResetTimerPositions", "AutoBG_ResetFCPositions", "AutoBG_Timers_SetPreview", "AutoBG_FC_SetPreview",
+    "AutoBG_Print", "AutoBG_QueueAllBGs", "AutoBG_CancelAllQueues", "AutoBG_PlayNotificationSound",
+    "AutoBG_StopNotificationSound" }) do _G[name] = Nothing end
+-- What Targets:EnsureOptions fills on load.
+local function Sizes(a, b) return { [10] = a, [15] = a, [40] = b, [5] = a } end
+AutoBG_Settings = { Positions = {}, Targets = { EnableBracket = Sizes(true, true), ButtonHideRealm = Sizes(true, true),
+                                ShowTrinket = Sizes(true, true), ButtonFontSize = Sizes(20, 11),
+                                ButtonScale = Sizes(1, 0.9), ButtonWidth = Sizes(195, 210), ButtonHeight = Sizes(25, 20),
+                                ButtonOpacity = {}, TrinketPos = "LEFT", ShowCastBars = true } }
 '''
 
 

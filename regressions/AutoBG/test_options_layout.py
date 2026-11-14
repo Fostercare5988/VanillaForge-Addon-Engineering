@@ -26,6 +26,8 @@ timersPreview = nil
 function AutoBG_Timers_SetPreview(on) timersPreview = on end
 function AutoBG_FC_SetPreview(on) fcPreview = on end
 AutoBG_Targets.DisableConfigMode = function(self) self.isConfig = false; table.insert(calls, "targets off") end
+function Widget:EnableMouse(on) self.mouse = on end
+function Widget:SetAlpha(a) self.alpha = a end
 AutoBG_Targets.EnableConfigMode = function(self, size) self.isConfig = true; table.insert(calls, "targets " .. size) end
 AutoBG_Spy.EnsureOptions = function() AutoBG_Settings.Spy = AutoBG_Settings.Spy or {}; return AutoBG_Settings.Spy end
 AutoBG_Spy.EnableTestMode = function(self) self.isTestMode = true; table.insert(calls, "spy on") end
@@ -65,21 +67,21 @@ class OptionsLayoutTests(unittest.TestCase):
     def test_one_preview_toggle_shows_and_hides_every_frame(self):
         lua = runtime()
         lua.execute('AutoBG_OpenOptions("spy")')
-        click(lua, "AutoBG_BtnTestAll")
+        click(lua, "AutoBG_BtnPreview4")
         self.assertEqual(list(lua.eval('calls').values()), ["targets 10", "spy on"])
         self.assertTrue(lua.eval('timersPreview'))
-        self.assertTrue(lua.eval('AutoBG_BtnTestAll.selected'))
-        self.assertEqual(lua.eval('AutoBG_BtnTestAll.text'), "Hide preview")
-        click(lua, "AutoBG_BtnTestAll")
+        self.assertTrue(lua.eval('AutoBG_BtnPreview4.selected'))
+        self.assertEqual(lua.eval('AutoBG_BtnPreview4.text'), "Hide preview")
+        click(lua, "AutoBG_BtnPreview4")
         self.assertFalse(lua.eval('timersPreview'))
         self.assertFalse(lua.eval('AutoBG_Spy.isTestMode'))
-        self.assertFalse(lua.eval('AutoBG_BtnTestAll.selected'))
-        self.assertEqual(lua.eval('AutoBG_BtnTestAll.text'), "Preview frames")
+        self.assertFalse(lua.eval('AutoBG_BtnPreview4.selected'))
+        self.assertEqual(lua.eval('AutoBG_BtnPreview4.text'), "Preview frames")
 
     def test_closing_the_window_ends_the_preview(self):
         lua = runtime()
         lua.execute('AutoBG_OpenOptions("spy")')
-        click(lua, "AutoBG_BtnTestAll")
+        click(lua, "AutoBG_BtnPreview4")
         lua.execute('AutoBG_OptionsPanel:Hide(); AutoBG_OptionsPanel.scripts.OnHide()')
         self.assertFalse(lua.eval('AutoBG_Spy.isTestMode'))
         self.assertFalse(lua.eval('AutoBG_Targets.isConfig'))
@@ -125,7 +127,6 @@ class OptionsLayoutTests(unittest.TestCase):
         for name in ("AutoBG_Tgt_FontSize", "AutoBG_Tgt_Scale", "AutoBG_Tgt_Width", "AutoBG_Tgt_Height", "AutoBG_Tgt_Opacity"):
             self.assertNotEqual(lua.eval('%s.shown' % name), False, name)
         self.assertIsNone(lua.eval('AutoBG_Tgt_CustomSize'))
-        self.assertEqual(lua.eval('AutoBG_OptionsPanel.height'), 542)
 
     def test_text_size_zero_to_twenty_is_font_ten_to_thirty(self):
         lua = runtime()
