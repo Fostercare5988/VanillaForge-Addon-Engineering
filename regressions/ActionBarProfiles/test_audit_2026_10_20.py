@@ -19,7 +19,7 @@ class AuditReproductions(unittest.TestCase):
             bars[19] = {kind='ITEM', id=13452}
             profile({[1]={kind='SPELL', id=10, name='Wanted', rank='Rank 1'},
                      [19]={kind='ITEM', id=13452, name='Elixir of the Mongoose'}})
-            ok = ABP_LoadProfile(1, 'Test')
+            ok = ABP_LoadProfileByName('Test')
         ''')
         self.assertTrue(lua.eval("ok"), list(lua.eval("messages").values()))
         self.assertEqual(lua.eval("bars[1] and bars[1].id"), 10)
@@ -35,7 +35,7 @@ class AuditReproductions(unittest.TestCase):
             profile({[1]={kind='SPELL', id=10, name='Wanted', rank='Rank 1'},
                      [2]={kind='SPELL', id=20, name='Other Spec', rank=''},
                      [3]={kind='ITEM', id=13452, name='Elixir of the Mongoose'}})
-            ok = ABP_LoadProfile(1, 'Test')
+            ok = ABP_LoadProfileByName('Test')
             text = table.concat(messages, '\\n')
         ''')
         self.assertTrue(lua.eval("ok"))
@@ -52,7 +52,7 @@ class AuditReproductions(unittest.TestCase):
         lua.execute('''
             bags[0] = {{id=13452, locked=true}}
             profile({[1]={kind='ITEM', id=13452, name='Elixir of the Mongoose'}})
-            ABP_LoadProfile(1, 'Test'); text = table.concat(messages, '\\n')
+            ABP_LoadProfileByName('Test'); text = table.concat(messages, '\\n')
         ''')
         self.assertIn("slot 1 (Elixir of the Mongoose): item is locked", lua.eval("text"))
         self.assertEqual(lua.eval("calls.PlaceAction or 0"), 0)
