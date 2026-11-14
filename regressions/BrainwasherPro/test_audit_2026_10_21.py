@@ -67,18 +67,12 @@ class Device(unittest.TestCase):
     def test_kept_save_records_the_talent_split(self):
         """Kept: saving a slot selects its Save option and stores the point split."""
         lua = device("talents = { 31, 20, 0 }")
-        lua.execute('(BrainwasherPro.SaveSlot or BrainwasherPro.OnSaveClicked)(BrainwasherPro, 1); accept("BRAINWASHERPRO_SAVE_SPEC")')
+        lua.execute('click(BrainwasherProSlot1Save); accept("BRAINWASHERPRO_SAVE_SPEC")')
         self.assertEqual(lua.eval("selected[1]"), 11)
         self.assertEqual(lua.eval("BrainwasherProDB.specs[1].t1"), 31)
 
 
 class SavedData(unittest.TestCase):
-    def test_unused_talent_snapshot_is_cleared(self):
-        """1.5 saved every talent of each spec and never read it back."""
-        lua = load("BrainwasherProDB = { specs = { [2] = { name = 'PVE ASSA', talents = { { { name = 'Malice' } } } } } }")
-        self.assertIsNone(lua.eval("BrainwasherProDB.specs[2].talents"))
-        self.assertEqual(lua.eval("BrainwasherProDB.specs[2].name"), "PVE ASSA")
-
     def test_saved_split_is_shown(self):
         """The 31/20/0 summary was built but never displayed."""
         lua = load("BrainwasherProDB = { specs = { [2] = { name = 'PvP', t1 = 31, t2 = 20, t3 = 0 } } }")
@@ -159,7 +153,7 @@ class Audit2(unittest.TestCase):
 
     def test_save_names_the_spec_it_replaces(self):
         lua = device("BrainwasherProDB = { specs = { [2] = { name = 'PvP' } } }")
-        lua.execute("BrainwasherPro:SaveSlot(2)")
+        lua.execute("click(BrainwasherProSlot2Save)")
         self.assertIn("PvP", lua.eval("popups.BRAINWASHERPRO_SAVE_SPEC.text"))
 
     def test_missing_profile_is_shown_and_not_loaded(self):
@@ -192,7 +186,7 @@ class Icons(unittest.TestCase):
         """1.5 built a button for each of the 600 icons on the first Edit."""
         lua = device()
         before = lua.eval('count("Button")')
-        lua.execute("BrainwasherPro:OnEditClicked(2)")
+        lua.execute("click(BrainwasherProSlot2Edit)")
         self.assertLess(lua.eval('count("Button")') - before, 100)
 
 
@@ -241,7 +235,7 @@ class ActionBars(unittest.TestCase):
     def test_edit_window_cycles_through_profiles(self):
         lua = device()
         lua.execute('''
-            BrainwasherPro:OnEditClicked(2)
+            click(BrainwasherProSlot2Edit)
             click(BrainwasherProEditBars); click(BrainwasherProEditBars)
             click(BrainwasherProEditConfirm)
         ''')

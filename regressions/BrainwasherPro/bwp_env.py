@@ -26,12 +26,34 @@ GameTooltip = {
 inCombat, talents = false, { 0, 0, 0 }
 function UnitAffectingCombat() return inCombat end
 function GetTalentTabInfo(tab) return "Tab" .. tab, "Icon", talents[tab] end
-function GetTalentInfo() end
+-- Talent ranks: `ranks[tab][i]` when a test sets them (setBuild), else one
+-- talent per tab holding the tab's points.
+ranks = nil
+function GetNumTalents(tab) return ranks and #ranks[tab] or 1 end
+function GetTalentInfo(tab, i)
+    local rank = ranks and ranks[tab][i] or talents[tab]
+    return "Talent" .. tab .. "." .. i, "Icon", 1, i, rank, 5
+end
+function setBuild(r)
+    ranks = r
+    for tab = 1, 3 do
+        local sum = 0
+        for _, n in ipairs(r[tab]) do sum = sum + n end
+        talents[tab] = sum
+    end
+end
 function GetAddOnMetadata(_, key) if key == "Version" then return "test" end end
 function CloseGossip() selected.closed = true end
+-- ClassicAPI's icon lists (API.md, GetMacroIcons): each appends basenames.
 numIcons = 600
-function GetNumMacroIcons() return numIcons end
-function GetMacroIconInfo(i) calls.icon = (calls.icon or 0) + 1; return "Interface\\Icons\\Icon" .. i end
+local function icons(prefix, n)
+    return function(list)
+        calls.icon = (calls.icon or 0) + 1
+        for i = 1, n do list[#list + 1] = prefix .. i end
+    end
+end
+GetLooseMacroIcons, GetLooseMacroItemIcons = icons("LOOSE_", 0), icons("LOOSE_INV_", 0)
+GetMacroIcons, GetMacroItemIcons = icons("SPELL_", numIcons / 2), icons("INV_", numIcons / 2)
 
 -- Widgets ----------------------------------------------------------------
 -- 6 pixels per visible character; colour codes take no room.
