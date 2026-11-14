@@ -70,6 +70,12 @@ end }
 -- ClassicAPI timed status bars: the bar keeps the duration object it is given.
 Enum = { StatusBarInterpolation = { Immediate = 0 }, StatusBarTimerDirection = { ElapsedTime = 0, RemainingTime = 1 } }
 C_DurationUtil = { CreateDuration = function() return { SetTimeSpan = function(self, s, e) self.start, self.finish = s, e end } end }
+-- Text bindings and formatters that write nothing; clock_mock.CLOCK has real ones.
+local Inert = { __index = function() return function() end end }
+C_DurationUtil.CreateDurationTextBinding = function() return setmetatable({}, Inert) end
+C_StringUtil = { CreateNumericRuleFormatter = function() return setmetatable({}, Inert) end }
+Enum.NumericRuleFormatRounding = { Nearest = 0, Up = 1, Down = 2 }
+Enum.DurationTextBindingProperty = { RemainingDuration = 0, ElapsedDuration = 2 }
 function Widget:SetTimerDuration(d, _, direction) self.timer, self.direction = d, direction end
 function Widget:SetStatusBarColor(r, g, b) self.color = { r, g, b } end
 -- AutoBG.lua, loaded before this file in the client.
@@ -148,9 +154,12 @@ end
 '''
 
 
-def runtime(sighting=True):
+def runtime(sighting=True, clock=False):
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(BASE)
+    if clock:
+        from clock_mock import CLOCK
+        lua.execute(CLOCK)
     addon_loader.load(lua, TARGETS, "AutoBG_Targets.lua")
     for event in ("PLAYER_LOGIN", "UPDATE_BATTLEFIELD_STATUS"):
         lua.execute('AutoBG_Targets.scripts.OnEvent(AutoBG_Targets, "%s")' % event)
@@ -194,8 +203,9 @@ class TargetsGuidEventTests(unittest.TestCase):
         self.assertEqual(row_text(lua), "100%")
 
     def test_trinket_aura_starts_the_trinket_timer_by_spell_id(self):
-        lua = runtime()
+        lua = runtime(clock=True)
         fire(lua, "BUFF_ADDED_OTHER", GROM, 1, 23276, 1, 60, 5, 0)
+        lua.execute('__frame()')
         self.assertEqual(lua.eval('AutoBG_TargetButton1.Trinket.Text.text'), "3:00")
 
     def test_never_targeted_enemy_is_learned_from_its_guid(self):

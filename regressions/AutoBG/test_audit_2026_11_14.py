@@ -128,6 +128,67 @@ class Looks(unittest.TestCase):
         self.assertEqual(len(set(names)), 10)
 
 
+COOLDOWNS = r'''
+local Widget = getmetatable(UIParent).__index
+function Widget:SetCooldown(start, duration) self.cd = { start, duration } end
+function Widget:Clear() self.cd = nil end
+function Widget:SetHideCountdownNumbers(on) self.hideNumbers = on end
+'''
+
+
+def trinket_world():
+    import test_targets_guid_events as tg
+    from clock_mock import CLOCK
+    lua = LuaRuntime(unpack_returned_tuples=True)
+    lua.execute(TARGETS_BASE)
+    lua.execute(CLOCK)
+    lua.execute(COOLDOWNS)
+    addon_loader.load(lua, TARGETS, "AutoBG_Targets.lua")
+    for event in ("PLAYER_LOGIN", "UPDATE_BATTLEFIELD_STATUS"):
+        lua.execute('AutoBG_Targets.scripts.OnEvent(AutoBG_Targets, "%s")' % event)
+    lua.execute('target = "Grom"; AutoBG_Targets.scripts.OnEvent(AutoBG_Targets, "PLAYER_TARGET_CHANGED"); target = nil')
+    return lua, tg
+
+
+def trinket_text(lua, now):
+    lua.execute('NOW = %s; __frame()' % now)
+    return lua.eval('AutoBG_TargetButton1.Trinket.Text.text')
+
+
+class EnemyTrinketSweep(unittest.TestCase):
+    """2026-11-14, asked for by the player: enemy trinkets count down like
+    GearRack's (a native cooldown sweep), with AutoBG's timer clock."""
+
+    def use(self, lua, tg, now):
+        lua.execute('NOW = %s' % now)
+        tg.fire(lua, "BUFF_ADDED_OTHER", tg.GROM, 1, 23276, 1, 60, 5, 0)
+
+    def test_a_used_trinket_sweeps_and_counts_like_the_timers(self):
+        lua, tg = trinket_world()
+        self.use(lua, tg, 1000)
+        cd = 'AutoBG_TargetTrinketCD1'
+        self.assertEqual((lua.eval(cd + '.cd[1]'), lua.eval(cd + '.cd[2]')), (1000, 180))
+        self.assertTrue(lua.eval(cd + '.hideNumbers'))        # the player's CVar decides those
+        self.assertEqual(trinket_text(lua, 1000), "3:00")
+        self.assertEqual(trinket_text(lua, 1142), "38")
+
+    def test_the_half_second_pass_leaves_a_counting_trinket_alone(self):
+        lua, tg = trinket_world()
+        self.use(lua, tg, 1000)
+        lua.execute('NOW = 1010; AutoBG_TargetButton1.Trinket.Text:SetText("engine")')
+        run_tickers(lua)
+        self.assertEqual(lua.eval('AutoBG_TargetButton1.Trinket.Text.text'), "engine")
+
+    def test_the_trinket_is_ready_again_when_the_sweep_ends(self):
+        lua, tg = trinket_world()
+        self.use(lua, tg, 1000)
+        lua.execute('NOW = 1180; local cd = AutoBG_TargetTrinketCD1; cd.scripts.OnCooldownDone(cd)')
+        self.assertIsNone(lua.eval('AutoBG_TargetTrinketCD1.cd'))
+        self.assertEqual(lua.eval('AutoBG_TargetButton1.Trinket.Text.text'), "")
+        self.use(lua, tg, 1181)
+        self.assertEqual(lua.eval('AutoBG_TargetTrinketCD1.cd[1]'), 1181)
+
+
 PLACES = r'''
 local Widget = getmetatable(UIParent).__index
 function Widget:SetPoint(...) self.pt = { ... } end
