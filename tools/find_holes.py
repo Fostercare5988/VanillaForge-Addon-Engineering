@@ -139,6 +139,30 @@ def numbered(name, defined):
 
 # Children a template gives every frame that inherits it ("$parentTextLeft1").
 TEMPLATE_SUFFIXES = set()
+# Per virtual frame: the suffixes of its $parent children, and the template it
+# inherits; per file, the frames that inherit a template.
+TEMPLATE_CHILDREN, TEMPLATE_PARENT = {}, {}
+
+
+def template_suffixes(template, seen=None):
+    """The $parent children a frame inheriting `template` gets, its own templates' too."""
+    seen = seen or set()
+    if template in seen:
+        return set()
+    seen.add(template)
+    found = set(TEMPLATE_CHILDREN.get(template, ()))
+    for parent in TEMPLATE_PARENT.get(template, ()):
+        found |= template_suffixes(parent, seen)
+    return found
+
+
+def inherited_names(instances):
+    """Names of the template children of each (frame, templates) pair."""
+    names = set()
+    for frame, templates in instances:
+        for template in templates:
+            names |= {frame + s for s in template_suffixes(template)}
+    return names
 
 
 def from_template(name, defined):
@@ -152,9 +176,10 @@ def from_template(name, defined):
     return False
 
 
-def xml_names(text):
-    """Frame names an XML file creates, with $parent expanded where it can be."""
-    names, stack = set(), []
+def xml_names(text, instances=None):
+    """Frame names an XML file creates, with $parent expanded where it can be.
+    Frames that inherit a template go into `instances` (inherited_names)."""
+    names, stack, virtual = set(), [], set()
     for m in re.finditer(r"<(/?)(\w+)([^>]*?)(/?)>", text):
         closing, tag, attrs, selfclosing = m.groups()
         if closing:
@@ -170,7 +195,17 @@ def xml_names(text):
         explicit = explicit.group(1) if explicit else None
         if name and "$parent" in name:
             parent = explicit or next((p for p in reversed(stack) if p), None)
+            if parent in virtual and name.startswith("$parent"):
+                TEMPLATE_CHILDREN.setdefault(parent, set()).add(name[7:])
             name = name.replace("$parent", parent) if parent else None
+        inherits = re.search(r'\binherits="([^"]+)"', attrs)
+        inherits = [t.strip() for t in inherits.group(1).split(",")] if inherits else []
+        if name and re.search(r'\bvirtual="true"', attrs):
+            virtual.add(name)
+            if inherits:
+                TEMPLATE_PARENT[name] = inherits
+        elif name and inherits and instances is not None:
+            instances.append((name, inherits))
         if name:
             names.add(name)
         if not selfclosing:
@@ -222,6 +257,14 @@ def helper_frame_names(codes):
                 if hit:
                     namers[name], changed = params.index(hit), True
                     break
+    # Children a helper names after its name argument: name .. "Close".
+    suffixed = defaultdict(set)
+    for name, params, body in funcs:
+        for fname, index in namers.items():
+            for a in calls(body, fname):
+                m = index < len(a) and re.fullmatch(r"([A-Za-z_]\w*)\s*\.\.\s*[\"'](\w+)[\"']", a[index])
+                if m and m.group(1) in params:
+                    suffixed[name].add((params.index(m.group(1)), m.group(2)))
     names = set()
     for code in codes:
         for fname, index in namers.items():
@@ -229,6 +272,7 @@ def helper_frame_names(codes):
                 m = index < len(a) and re.fullmatch(r"[\"']([A-Za-z_]\w*)[\"']", a[index])
                 if m:
                     names.add(m.group(1))
+                    names |= {m.group(1) + s for i, s in suffixed.get(fname, ()) if i == index}
     return names
 
 
@@ -253,15 +297,17 @@ class Addon:
             if path.is_file():
                 self.files[rel] = path.read_text("utf-8", "replace")
         self.defs = set()
+        instances = []
         for rel, text in self.files.items():
             if rel.lower().endswith(".lua"):
                 self.defs |= global_defs(strip_lua(text, True))
             elif rel.lower().endswith(".xml"):
-                self.defs |= xml_names(text)
+                self.defs |= xml_names(text, instances)
                 for script in re.findall(r"<(On\w+)>(.*?)</\1>", text, re.S):
                     self.defs |= global_defs(strip_lua(script[1], True))
         self.defs |= helper_frame_names([strip_lua(t, True) for r, t in self.files.items()
                                          if r.lower().endswith(".lua")])
+        self.defs |= inherited_names(instances)
         self.saved = set(re.split(r"[,\s]+", self.meta.get("savedvariables", "")) +
                          re.split(r"[,\s]+", self.meta.get("savedvariablespercharacter", ""))) - {""}
         self.defs |= self.saved
@@ -498,9 +544,25 @@ def saved_settings(addon, wtf):
                         for sub, subvalue in value.items():
                             if isinstance(sub, str) and lua.eval("type")(subvalue) != "table":
                                 values[(table + "." + key, sub)].append(subvalue)
+    def named(key):
+        return re.search(r"(?<![\w])" + re.escape(key) + r"(?![\w])", code)
+
+    def data_key(key):
+        return "'" in key or "|" in key or re.search(r" of \S", key)
+    missing, total = defaultdict(int), defaultdict(int)
+    for table, key in values:
+        if data_key(key):
+            continue
+        total[table] += 1
+        if not named(key):
+            missing[table] += 1
+    # Only a nested table can be data: the saved table itself holds the settings.
+    data_tables = {t for t in total if "." in t and missing[t] >= 3 and missing[t] * 2 >= total[t]}
     off, stale = [], []
     for (table, key), seen in sorted(values.items()):
-        if not re.search(r"(?<![\w])" + re.escape(key) + r"(?![\w])", code):
+        if data_key(key) or data_key(table) or table in data_tables:
+            continue
+        if not named(key):
             stale.append({"table": table, "key": key, "characters": len(seen)})
         elif characters > 1 and len(seen) == characters and all(v in (0, False) for v in seen):
             off.append({"table": table, "key": key, "characters": len(seen)})
@@ -667,21 +729,27 @@ def piecemeal_cleanup(addon):
 
 # Report ----------------------------------------------------------------------
 
-def unreferenced_functions(addon):
-    """Global functions the addon defines and nothing in its Lua, XML or TOC mentions again."""
+def unreferenced_functions(addon, everyone=()):
+    """Global functions the addon defines and nothing in its Lua, XML or TOC, or in
+    another installed addon, mentions again."""
     stripped = {rel: strip_lua(text, keep_strings=True) for rel, text in addon.lua()}
     # The client loads Bindings.xml itself (no TOC line); its bodies call our globals.
     bindings = addon.folder / "Bindings.xml"
     extra = [bindings.read_text("utf-8", "replace")] if bindings.is_file() else []
     everything = "\n".join(list(stripped.values()) + extra +
                            [t for r, t in addon.files.items() if not r.lower().endswith(".lua")])
+    others = [o for o in everyone if o.folder != addon.folder]
+
+    def others_use(name):
+        pattern = re.compile(r"\b%s\b" % re.escape(name))
+        return any(pattern.search(text) for o in others for _, text in o.files.items())
     findings = []
     for rel, code in stripped.items():
         for m in re.finditer(r"^function\s+([A-Za-z_]\w*)\s*\(", code, re.M):
             name = m.group(1)
             if name in HANDLER_GLOBALS or name.startswith(("SLASH_", "BINDING_")):
                 continue
-            if len(re.findall(r"\b%s\b" % re.escape(name), everything)) <= 1:
+            if len(re.findall(r"\b%s\b" % re.escape(name), everything)) <= 1 and not others_use(name):
                 findings.append({"name": name, "where": "%s:%d" % (rel, code.count(chr(10), 0, m.start()) + 1)})
     return findings
 
@@ -778,7 +846,7 @@ def main(argv=None):
         "addon": addon.name,
         "unused_files": unused_files(addon),
         "saved_settings": saved_settings(addon, wtf),
-        "unreferenced_functions": unreferenced_functions(addon),
+        "unreferenced_functions": unreferenced_functions(addon, everyone),
         "duplicate_functions": duplicate_functions(addon),
         "repeating_work": repeating_work(addon),
         "stock_per_frame": stock_per_frame(addon),

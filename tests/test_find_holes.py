@@ -278,5 +278,49 @@ class FrameNamesFromHelpersAndParents(unittest.TestCase):
         self.assertEqual([g["name"] for g in ghosts], ["ProbeMissing"])
 
 
+class FalseAlarms2026_11_14(unittest.TestCase):
+    """A template's $parent children, a helper's name .. "Close" child, a function another
+    addon calls, and saved keys that are data were all reported as holes."""
+
+    def test_template_children_and_helper_suffixes_are_defined(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "Probe", {
+                "Probe.toc": "## Title: Probe\nProbe.xml\nUI.lua\nProbe.lua\n",
+                "Probe.xml": ('<Ui><Frame name="ProbeSlots" virtual="true"><Frames>'
+                              '<Button name="$parent0"/></Frames></Frame>'
+                              '<Frame name="ProbeMain"><Frames><Frame name="$parentBags" inherits="ProbeSlots"/>'
+                              '</Frames></Frame></Ui>'),
+                "UI.lua": ("local UI = {}\nfunction UI.Window(name, title)\n"
+                           "    local f = CreateFrame(\"Frame\", name)\n"
+                           "    local close = CreateFrame(\"Button\", name .. \"Close\", f)\nend\n"),
+                "Probe.lua": "UI.Window(\"ProbeFrame\", \"x\")\nProbeMainBags0:Show() ProbeFrameClose:Show() ProbeGone:Show()\n",
+            })
+            probe = HOLES.Addon(root / "Probe")
+            ghosts = HOLES.ghosts(probe, [probe], {"CreateFrame"}, set(), set())
+        self.assertEqual([g["name"] for g in ghosts], ["ProbeGone"])
+
+    def test_a_function_another_addon_calls_is_not_dead(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "Lib", {"Lib.toc": "## Title: Lib\nLib.lua\n",
+                                 "Lib.lua": "function Lib_Shared()\nend\nfunction Lib_Dead()\nend\n"})
+            write(root / "User", {"User.toc": "## Title: User\nUser.lua\n", "User.lua": "Lib_Shared()\n"})
+            lib, user = HOLES.Addon(root / "Lib"), HOLES.Addon(root / "User")
+            self.assertEqual([f["name"] for f in HOLES.unreferenced_functions(lib, [lib, user])], ["Lib_Dead"])
+
+    def test_saved_data_keys_are_not_stale_settings(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "Box", {"Box.toc": "## Title: Box\n## SavedVariables: Box_DB\nBox.lua\n",
+                                 "Box.lua": "Box_DB = Box_DB or {}\nlocal s = Box_DB.Spy\nif s.Range then end\n"})
+            saved = ("Box_DB = { ['Claude of Realm'] = 1, Old = 1, ['Realm|Horde'] = { Ann = 1 },"
+                     " Names = { Ann = 1, Bob = 2, Cid = 3 }, Spy = { Range = 1, Gone = 1 } }")
+            wtf = root / "WTF"
+            write(wtf / "Account" / "A" / "SavedVariables", {"Box.lua": saved})
+            result = HOLES.saved_settings(HOLES.Addon(root / "Box"), wtf)
+        self.assertEqual(sorted(s["key"] for s in result["not_in_code"]), ["Gone", "Old"])
+
+
 if __name__ == "__main__":
     unittest.main()
