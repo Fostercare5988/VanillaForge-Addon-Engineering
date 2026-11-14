@@ -420,6 +420,38 @@
       "better": "CombatLogAddFilter(events, source, dest) and COMBAT_LOG_EVENT: the engine drops the rest before Lua (FostercareBattleText 2.3.0: your and your pet's combat). The client has ONE filter, kept over /reload, and COMBAT_LOG_EVENT gets the union of every addon's filters, so only one addon can own it: FostercareBattleText does (2026-11-13). Before adopting it elsewhere, grep every installed addon for CombatLogAddFilter, CombatLogResetFilter and COMBAT_LOG_EVENT, and agree on one owner.",
       "source": "ClassicAPI docs/API.md#combatlogaddfilterevents--source--dest--spell--combatlogresetfilter",
       "unless": "CombatLogAddFilter"
+    },
+    {
+      "id": "superwow-action-text",
+      "pattern": "\\bGetActionText\\s*\\(",
+      "unless": "\\bGetActionInfo\\s*\\(",
+      "finding": "Reads what an action slot holds from SuperWoW's GetActionText type and id returns.",
+      "better": "GetActionInfo(slot): \"spell\", spellID / \"item\", itemID / \"macro\", macroSlot / \"equipmentset\", setName; nothing for an empty slot or a deleted macro. No SuperWoW needed (ActionBarProfiles 1.1.0).",
+      "source": "ClassicAPI docs/API.md#getactioninfoslot"
+    },
+    {
+      "id": "spellbook-walk-for-spell",
+      "pattern": "GetSpellTabInfo\\s*\\(|GetSpellBookItemInfo\\s*\\(",
+      "unless": "\\bFindSpellBookSlotByID\\s*\\(",
+      "finding": "Walks every spellbook tab and slot to find where a known spell ID sits (to pick it up or show it).",
+      "better": "FindSpellBookSlotByID(spellID) returns the slot and bookType, or nil when the spell is not known.",
+      "source": "ClassicAPI docs/API.md#findspellbookslotbyidspellid"
+    },
+    {
+      "id": "bag-walk-to-pick-up-item",
+      "pattern": "PickupContainerItem\\s*\\(|PickupInventoryItem\\s*\\(",
+      "unless": "\\bC_Item\\.PickupItem\\s*\\(",
+      "finding": "Scans equipment and bags for an item ID to know whether it is carried and where, then picks it up by bag and slot.",
+      "better": "C_Item.GetItemCount(id) (equipped items count) and C_Item.PickupItem(id) (equipment first, then bags; a locked item stays put). Keep the walk where the bag and slot themselves matter.",
+      "source": "ClassicAPI docs/API.md#c_itemgetitemcountiteminfo-includebank-includeuses, #c_itempickupitemiteminfo"
+    },
+    {
+      "id": "macro-icon-info-list",
+      "pattern": "\\bGetNumMacroIcons\\s*\\(",
+      "unless": "\\bGetMacroItemIcons\\s*\\(",
+      "finding": "An icon picker built from GetNumMacroIcons/GetMacroIconInfo, which lists no INV_ item icons.",
+      "better": "GetLooseMacroIcons, GetLooseMacroItemIcons, GetMacroIcons and GetMacroItemIcons append spell and item icon names to a table (BrainwasherPro 1.1.0).",
+      "source": "ClassicAPI docs/API.md#getmacroicons--getmacroitemicons--getloosemacroicons--getloosemacroitemicons"
     }
   ]
 }
