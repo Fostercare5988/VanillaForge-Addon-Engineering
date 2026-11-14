@@ -64,6 +64,13 @@ Do not trust for this server:
 - Source-verified 2026-11-13 (client FrameXML BattlefieldFrame.lua:325): the
   client knows an invite's time left, `GetBattlefieldPortExpiration(i)` in ms,
   so the ~80 s invite window is only the slider's bound, not a timing rule.
+- 2026-11-14, from the database (?spells=-4, Racial Traits): the racials used in
+  a fight and their cooldowns. Perception 20600 180 s, Stoneform 20594 180 s,
+  Shadowmeld 20580 60 s, Escape Artist 20589 90 s, Blood Fury 20572 120 s, Will
+  of the Forsaken 7744 150 s, War Stomp 20549 150 s, Berserking 20554, 26296,
+  26297 (by power type) 180 s. Shadowmeld, War Stomp and Will of the Forsaken
+  differ from vanilla. Custom: Spiritwalk 52926 (racial, 180 s, 12 s invisible;
+  race not stated).
 - Unverified: one spirit healer wave every 30 seconds for the whole
   battleground (as on MaNGOS cores). AutoBG's respawn bar and its dead enemy
   rows count to it.

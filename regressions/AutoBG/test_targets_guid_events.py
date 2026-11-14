@@ -105,6 +105,7 @@ function UnitExists(u) return u == "player" or (u == "target" and target ~= nil)
 function UnitIsPlayer() return 1 end
 function UnitCanAttack() return true end
 function UnitClass() return "Warrior", "WARRIOR" end
+function UnitRace() return nil end
 function UnitIsVisible() return 1 end
 function UnitIsDeadOrGhost() return nil end
 function UnitIsDead() return nil end

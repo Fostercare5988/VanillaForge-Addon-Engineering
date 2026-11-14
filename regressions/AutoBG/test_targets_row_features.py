@@ -121,8 +121,8 @@ class CastBarTests(unittest.TestCase):
         point, rel, _ = lua.eval('anchor[1]'), lua.eval('anchor[2]'), lua.eval('anchor[3]')
         if lua.eval('anchor[2] == AutoBG_TargetButton1'):
             rel = "row"
-        elif lua.eval('anchor[2] == AutoBG_TargetButton1.Trinket'):
-            rel = "trinket"
+        elif lua.eval('anchor[2] == AutoBG_TargetButton1.Racial'):
+            rel = "racial"
         return point, rel
 
     def test_cast_bar_side_follows_the_setting(self):
@@ -132,10 +132,11 @@ class CastBarTests(unittest.TestCase):
         lua.execute('AutoBG_Settings.Targets.CastPos = "LEFT"')
         self.assertEqual(self.cast_anchor(lua), ("RIGHT", "row"))
 
-    def test_cast_bar_on_the_trinket_side_sits_outside_the_trinket(self):
+    def test_cast_bar_on_the_trinket_side_sits_outside_the_trinket_and_racial(self):
+        # 2026-11-14: the racial sits beside the trinket, farther out.
         lua = setup()
         lua.execute('local o = AutoBG_Settings.Targets; o.CastPos, o.TrinketPos = "RIGHT", "RIGHT"; o.ShowTrinket[10] = true')
-        self.assertEqual(self.cast_anchor(lua), ("LEFT", "trinket"))
+        self.assertEqual(self.cast_anchor(lua), ("LEFT", "racial"))
 
     def test_cast_bars_switch_off(self):
         lua = setup()

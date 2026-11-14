@@ -136,13 +136,14 @@ function Widget:SetHideCountdownNumbers(on) self.hideNumbers = on end
 '''
 
 
-def trinket_world():
+def trinket_world(extra=""):
     import test_targets_guid_events as tg
     from clock_mock import CLOCK
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(TARGETS_BASE)
     lua.execute(CLOCK)
     lua.execute(COOLDOWNS)
+    lua.execute(extra)
     addon_loader.load(lua, TARGETS, "AutoBG_Targets.lua")
     for event in ("PLAYER_LOGIN", "UPDATE_BATTLEFIELD_STATUS"):
         lua.execute('AutoBG_Targets.scripts.OnEvent(AutoBG_Targets, "%s")' % event)
@@ -166,7 +167,7 @@ class EnemyTrinketSweep(unittest.TestCase):
     def test_a_used_trinket_sweeps_and_counts_like_the_timers(self):
         lua, tg = trinket_world()
         self.use(lua, tg, 1000)
-        cd = 'AutoBG_TargetTrinketCD1'
+        cd = 'AutoBG_TargetTrinket1CD'
         self.assertEqual((lua.eval(cd + '.cd[1]'), lua.eval(cd + '.cd[2]')), (1000, 180))
         self.assertTrue(lua.eval(cd + '.hideNumbers'))        # the player's CVar decides those
         self.assertEqual(trinket_text(lua, 1000), "3:00")
@@ -182,11 +183,70 @@ class EnemyTrinketSweep(unittest.TestCase):
     def test_the_trinket_is_ready_again_when_the_sweep_ends(self):
         lua, tg = trinket_world()
         self.use(lua, tg, 1000)
-        lua.execute('NOW = 1180; local cd = AutoBG_TargetTrinketCD1; cd.scripts.OnCooldownDone(cd)')
-        self.assertIsNone(lua.eval('AutoBG_TargetTrinketCD1.cd'))
+        lua.execute('NOW = 1180; local cd = AutoBG_TargetTrinket1CD; cd.scripts.OnCooldownDone(cd)')
+        self.assertIsNone(lua.eval('AutoBG_TargetTrinket1CD.cd'))
         self.assertEqual(lua.eval('AutoBG_TargetButton1.Trinket.Text.text'), "")
         self.use(lua, tg, 1181)
-        self.assertEqual(lua.eval('AutoBG_TargetTrinketCD1.cd[1]'), 1181)
+        self.assertEqual(lua.eval('AutoBG_TargetTrinket1CD.cd[1]'), 1181)
+
+
+# The client names each spell and its icon.
+SPELL_ICONS = r'''
+function GetSpellInfo(id) return "Spell" .. id, "", "icon-" .. id end
+'''
+
+
+class EnemyRacials(unittest.TestCase):
+    """2026-11-14, asked for by the player: the racial beside the trinket, with
+    OctoWoW's cooldowns (octowow.st/db, Racial Traits). Grom is an Orc on the
+    test scoreboard."""
+
+    def racial(self, lua):
+        return lua.eval('AutoBG_TargetRacial1CD.cd and AutoBG_TargetRacial1CD.cd[1]'),             lua.eval('AutoBG_TargetRacial1CD.cd and AutoBG_TargetRacial1CD.cd[2]')
+
+    def test_the_scoreboard_race_shows_its_racial_ready(self):
+        lua, tg = trinket_world(SPELL_ICONS)
+        self.assertTrue(lua.eval('AutoBG_TargetRacial1.shown'))
+        self.assertEqual(lua.eval('AutoBG_TargetRacial1.spell'), 20572)       # Blood Fury
+        self.assertEqual(self.racial(lua), (None, None))
+
+    def test_a_racial_used_sweeps_for_the_servers_cooldown(self):
+        lua, tg = trinket_world(SPELL_ICONS)
+        lua.execute('NOW = 1000')
+        tg.fire(lua, "UNIT_CASTEVENT", tg.GROM, "", "CAST", 20572, 0)
+        self.assertEqual(self.racial(lua), (1000, 120))
+        self.assertIsNone(lua.eval('AutoBG_TargetTrinket1CD.cd'))              # the trinket is untouched
+        lua.execute('NOW = 1000; __frame()')
+        self.assertEqual(lua.eval('AutoBG_TargetRacial1.Text.text'), "2:00")
+        # The buff of the same use does not start it again.
+        lua.execute('NOW = 1001')
+        tg.fire(lua, "BUFF_ADDED_OTHER", tg.GROM, 1, 20572, 1, 60, 5, 0)
+        self.assertEqual(self.racial(lua), (1000, 120))
+
+    def test_a_racial_used_tells_the_race(self):
+        # Will of the Forsaken: 150 s on OctoWoW (vanilla 120).
+        lua, tg = trinket_world(SPELL_ICONS)
+        lua.execute('NOW = 1000')
+        tg.fire(lua, "UNIT_CASTEVENT", tg.GROM, "", "CAST", 7744, 0)
+        self.assertEqual(lua.eval('AutoBG_TargetRacial1.spell'), 7744)
+        self.assertEqual(self.racial(lua), (1000, 150))
+
+    def test_an_enemy_off_the_scoreboard_shows_its_race_when_seen(self):
+        lua, tg = trinket_world(SPELL_ICONS + r'''
+            local score = GetBattlefieldScore
+            function GetBattlefieldScore(i)
+                local a, b, c, d, e, f, g, _, h, j = score(i)
+                return a, b, c, d, e, f, g, nil, h, j
+            end
+            function UnitRace() return "Troll", "Troll" end
+        ''')
+        self.assertEqual(lua.eval('AutoBG_TargetRacial1.spell'), 20554)       # Berserking
+
+    def test_the_trinket_switch_hides_the_racial_too(self):
+        lua, tg = trinket_world(SPELL_ICONS)
+        lua.execute('AutoBG_Settings.Targets.ShowTrinket[10] = false; AutoBG_Targets:RenderRoster()')
+        self.assertFalse(lua.eval('AutoBG_TargetRacial1.shown'))
+        self.assertFalse(lua.eval('AutoBG_TargetButton1.Trinket.shown'))
 
 
 PLACES = r'''
