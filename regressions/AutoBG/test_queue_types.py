@@ -50,7 +50,6 @@ UIParent = CreateFrame("Frame", "UIParent")
 -- AutoBG files load, the enemy frames and Spy that ADDON_LOADED fills.
 ARENA = "Arena" -- GlobalStrings
 BattlefieldFrame = CreateFrame("Frame", "BattlefieldFrame")
-TWMiniMapBattlefieldFrame = CreateFrame("Button", "TWMiniMapBattlefieldFrame")
 AutoBG_Targets = { EnsureOptions = function() AutoBG_Settings.Targets = AutoBG_Settings.Targets or {} end }
 AutoBG_Spy = { EnsureOptions = function() AutoBG_Settings.Spy = AutoBG_Settings.Spy or {}; return AutoBG_Settings.Spy end }
 DEFAULT_CHAT_FRAME = { AddMessage = function() end }

@@ -158,7 +158,9 @@ class SavedKeySweepTests(unittest.TestCase):
             OpeningSpell = 24391, LastPlayedBG = "Arathi Basin", Positions = { AutoBG_SpyFrame = {} } }''')
         core.fire(lua, "ADDON_LOADED", "AutoBG")
         self.assertIsNone(lua.eval('AutoBG_Settings.Retired'))
-        for key in ("FlagSpots", "ABTicks", "OpeningSpell", "LastPlayedBG", "Positions"):
+        # Retired 2026-11-15: only /abg q with an unknown name read it.
+        self.assertIsNone(lua.eval('AutoBG_Settings.LastPlayedBG'))
+        for key in ("FlagSpots", "ABTicks", "OpeningSpell", "Positions"):
             self.assertIsNotNone(lua.eval('AutoBG_Settings.%s' % key), key)
 
     def test_spy_clears_its_own_leftovers_and_keeps_its_lists(self):
