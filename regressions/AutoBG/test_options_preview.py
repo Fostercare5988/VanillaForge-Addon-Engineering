@@ -84,6 +84,7 @@ AutoBG_Spy = {
 }
 function AutoBG_ArenaOptions() AutoBG_Settings.Arena = AutoBG_Settings.Arena or {}; return AutoBG_Settings.Arena end
 AutoBG_Arena, AutoBG_ArenaPets = { Refresh = Nothing }, { Refresh = Nothing }
+AutoBG_FlagAlert = { SetPreview = function(self, on) self.isPreview = on end, ResetPosition = Nothing }
 AutoBG_MAX_ENTER_DELAY = 78
 for _, name in ipairs({ "AutoBG_Timers_UpdateVisibility", "AutoBG_FC_UpdateVisibility", "AutoBG_LoadTimerPositions",
     "AutoBG_ResetTimerPositions", "AutoBG_ResetFCPositions", "AutoBG_Timers_SetPreview", "AutoBG_FC_SetPreview",

@@ -39,7 +39,7 @@ BG = r'''
 bgName = nil
 function GetBattlefieldStatus(i) if i == 1 and bgName then return "active", bgName end return "none" end
 notified = {}
-AutoBG_Spy = { NotifyStealth = function(_, name, spell, _, _, inBattleground)
+AutoBG_Spy = { OnBattlegroundChanged = function() end, NotifyStealth = function(_, name, spell, _, _, inBattleground)
     table.insert(notified, name .. " " .. spell .. " " .. tostring(inBattleground)); return true end }
 '''
 

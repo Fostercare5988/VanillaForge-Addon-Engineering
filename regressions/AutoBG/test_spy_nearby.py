@@ -93,6 +93,7 @@ function time() return clock end
 function GetRealZoneText() return zoneName end
 function IsInInstance() return nil, "none" end
 function AutoBG_Print(msg) table.insert(printed, msg) end
+function AutoBG_Options_Refresh() end -- AutoBG_Options.lua
 function IsShiftKeyDown() return shift end
 function IsControlKeyDown() return ctrl end
 function GetNumPartyMembers() return 0 end

@@ -58,6 +58,8 @@ auraScans = 0
 C_UnitAuras = { GetAuraSlots = function() auraScans = auraScans + 1; return nil, 0 end }
 function GetSpellInfo(id) if id == 46392 then return "Focused Assault" end return "Other" end
 function GetRealZoneText() return "Warsong Gulch" end
+-- AutoBG_Targets.lua, loaded before this file: unit buttons and the carrier mark.
+AutoBG_Targets = { BindUnit = function() end, OnCarrierChanged = function() end, SelectEnemy = function() return false end }
 function UnitTokenFromName(name) if name == "Grom" then return "raid3" end end
 function UnitExists(u) return u == "raid3" end
 function UnitIsPlayer(u) return u == "raid3" end

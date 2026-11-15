@@ -79,6 +79,7 @@ CARRIER_BUTTONS = r'''
 selected = {}
 AutoBG_Targets = {
     BindUnit = function(frame, guid) frame.bound = guid end,
+    OnCarrierChanged = function() end,
     SelectEnemy = function(name, guid, button) table.insert(selected, name .. "|" .. tostring(guid) .. "|" .. button); return true end,
 }
 function AutoBG_Print() end
