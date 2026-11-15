@@ -1190,10 +1190,14 @@ again with `error(err)`, never reaches the error handler with its stack. `!Error
 nothing, or a line in the catching file instead of the failing one. GearRack's timer owner
 printed every timer error to chat (2026-11-08); FostercareTweaks' `WithButton` and
 FostercareNameplates' module start do the same kind.
+ClassicAPI's own `C_Timer` is one too: it runs each callback in `pcall` and drops the
+error (API.md, C_Timer.After), so a broken timer callback never reaches `!ErrorLog`.
 
 **Preferred direction:** `xpcall(func, geterrorhandler())` (ClassicAPI API.md): the handler
 gets the error inside the failing call, with its stack, and the caller still restores its
-state or stops the failing timer from `xpcall`'s first return. Keep `pcall` with a chat
+state or stops the failing timer from `xpcall`'s first return. For `C_Timer`, make each callback once
+with a guard (FostercareTweaks `FT.Guarded`: `function() xpcall(fn, geterrorhandler()) end`),
+never a new closure per call. Keep `pcall` with a chat
 line only for player-written code (macro-like scripts), where the message is the point.
 
 ### KP-64 --- Saved Keys Cleared One Line Each
