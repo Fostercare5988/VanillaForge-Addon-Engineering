@@ -452,6 +452,30 @@
       "finding": "An icon picker built from GetNumMacroIcons/GetMacroIconInfo, which lists no INV_ item icons.",
       "better": "GetLooseMacroIcons, GetLooseMacroItemIcons, GetMacroIcons and GetMacroItemIcons append spell and item icon names to a table (BrainwasherPro 1.1.0).",
       "source": "ClassicAPI docs/API.md#getmacroicons--getmacroitemicons--getloosemacroicons--getloosemacroitemicons"
+    },
+    {
+      "id": "equipment-scanned-on-inventory-event",
+      "pattern": "\"UNIT_INVENTORY_CHANGED\"",
+      "unless": "\"PLAYER_EQUIPMENT_CHANGED\"",
+      "finding": "Reads the equipped slots on UNIT_INVENTORY_CHANGED to see what changed; the event also fires for every charge, durability point and arrow used.",
+      "better": "PLAYER_EQUIPMENT_CHANGED(equipmentSlot, hasCurrent): one fire per slot that changed, also when only the copy (GUID) did. Keep UNIT_INVENTORY_CHANGED for charges, durability and ammo (GearRack 2026-11-15).",
+      "source": "ClassicAPI docs/API.md#player_equipment_changed-event"
+    },
+    {
+      "id": "modifier-release-polled",
+      "pattern": "\\bnot\\s+Is(?:Alt|Shift|Control)KeyDown\\s*\\(",
+      "unless": "\"MODIFIER_STATE_CHANGED\"",
+      "finding": "Waits for a modifier key to be let go by checking it again on a timer or OnUpdate (a lead: read where the check runs).",
+      "better": "MODIFIER_STATE_CHANGED(key, down): LSHIFT/RSHIFT/LCTRL/RCTRL/LALT/RALT, on press and release only, also reconciled after alt-tab; IsLeftAltKeyDown and the others read the same state (GearRack 2026-11-15).",
+      "source": "ClassicAPI docs/API.md#modifier_state_changed-event, #isleftaltkeydown--isrightaltkeydown"
+    },
+    {
+      "id": "own-set-swap-engine",
+      "pattern": "\\bPickupInventoryItem\\s*\\(|\\bEquipCursorItem\\s*\\(",
+      "unless": "\\bC_EquipmentSet\\.UseEquipmentSet\\s*\\(",
+      "finding": "Equips gear sets by moving items through the cursor in stages, with its own lock scans, retries and timeouts.",
+      "better": "C_EquipmentSet: sets saved from worn gear by item GUID, UseEquipmentSet swaps each item server-side without the cursor (bank too while open; in combat only weapons), EQUIPMENT_SWAP_PENDING/FINISHED report it. Slots 1-19 only (no ammo); a set is saved from worn gear, never from an item list. GearRack moves its engine onto it next.",
+      "source": "ClassicAPI docs/API.md#c_equipmentsetuseequipmentsetsetid, #equipment_swap_finished-event"
     }
   ]
 }
