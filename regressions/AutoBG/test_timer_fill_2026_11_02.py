@@ -28,11 +28,10 @@ class TimerFill(unittest.TestCase):
             frame_update(lua, "AutoBG_AVNodeFrame", 1000 + i / 60)
         self.assertIsNone(lua.eval("AutoBG_AVNodeFrame.rows[1].bar.fillValue"))
 
-    def test_the_spark_appears_once_the_bar_is_part_way(self):
+    def test_a_running_bar_wears_the_spark_from_the_start(self):
+        # 2026-11-15: no pass runs later to show it, so a draining row has it at once.
         lua = av_timers()
         yell(lua, STONEHEARTH)
-        self.assertFalse(row(lua, "AutoBG_AVNodeFrame", 1, "sparkShown"))
-        lua.execute('now = 1150; AutoBG_Timers_UpdateVisibility()')
         self.assertTrue(row(lua, "AutoBG_AVNodeFrame", 1, "sparkShown"))
 
     def test_preview_rows_hold_a_value(self):

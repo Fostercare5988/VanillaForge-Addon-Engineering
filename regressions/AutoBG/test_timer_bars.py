@@ -23,11 +23,13 @@ function AutoBG_FindPlayerClass(name) return name and playerClasses and playerCl
 function AutoBG_GetClassColor() return nil end
 function AutoBG_GetBGIcon() return nil end
 function GetAreaSpiritHealerTime() return 0 end
--- The spirit wave's ghost scan walks the raid in every battleground.
+-- The spirit wave looks for the dead of the raid on entering a battleground.
 function GetNumRaidMembers() return 0 end
 function UnitIsGhost() return nil end
+function UnitIsDeadOrGhost() return nil end
 ARENA = "Arena"
 function AutoBG_QueueMap(map) return map end
+function AutoBG_IsArenaZone() return arenaZone or false end
 -- AutoBG.lua owns the side you play on; alone, it is your faction.
 function AutoBG_MySide() return UnitFactionGroup("player") end
 function AutoBG_SideOf(name) if name == UnitName("player") then return AutoBG_MySide() end end

@@ -15,6 +15,7 @@ TIMERS = (ROOT / "AutoBG_Timers.lua").read_text("utf-8-sig")
 
 BASE = r'''
 function AutoBG_QueueMap(map) return map end
+function AutoBG_IsArenaZone() return arenaZone or false end
 function table.wipe(t) for k in pairs(t) do t[k] = nil end return t end
 CLASSIC_API_VERSION, SUPERWOW_VERSION = 11711, "2.2"
 -- AutoBG.lua's shared helpers (loaded before this file in the client).
@@ -112,8 +113,8 @@ class SpiritWaveTests(unittest.TestCase):
 
     def test_teammate_ghost_revival_syncs_the_wave(self):
         lua = runtime()
-        lua.execute('ghosts.raid2 = true')
-        respawn_text(lua, 1001)  # the once-a-second scan learns the ghost
+        lua.execute('now = 1001; ghosts.raid2 = true')
+        fire(lua, "UNIT_HEALTH", "raid2")  # the death; the look at the dead learns the ghost
         lua.execute('now = 1007; ghosts.raid2 = nil')
         fire(lua, "UNIT_HEALTH", "raid2")
         text = respawn_text(lua, 1017)
@@ -139,7 +140,9 @@ class SpiritWaveTests(unittest.TestCase):
         lua = runtime()
         lua.execute('AutoBG_Settings.RessTimer = false; function GetAreaSpiritHealerTime() return 10 end')
         fire(lua, "PLAYER_ENTERING_WORLD")
-        lua.execute('now = 1005; for _, fn in ipairs(tickers) do fn() end')
+        # A ghost near the spirit healer: the client knows the time to its wave.
+        lua.execute('now = 1005')
+        fire(lua, "AREA_SPIRIT_HEALER_IN_RANGE")
         self.assertEqual(list(lua.eval('{AutoBG_NextSpiritWave()}').values()), [1015, True])
 
 

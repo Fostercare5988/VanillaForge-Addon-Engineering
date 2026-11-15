@@ -130,10 +130,11 @@ class TimerLookTests(unittest.TestCase):
         self.assertEqual(av_labels(lua), [])
         self.assertFalse(lua.eval('AutoBG_AVNodeFrame.shown'))
 
-    def test_logic_ticks_once_a_second(self):
+    def test_no_pass_runs_while_the_rows_count(self):
+        # 2026-11-15: the once-a-second pass is gone; lines, scores and a row's end wake the logic.
         lua = av_timers()
         yell(lua, "The Stonehearth Graveyard is under attack! If left unchecked, the Horde will capture it!")
-        self.assertEqual(list(lua.eval('tickIntervals').values()), [1])
+        self.assertEqual(list(lua.eval('tickIntervals').values()), [])
 
     def test_respawn_bar_counts_down_and_starts_the_next_wave(self):
         lua = av_timers()
