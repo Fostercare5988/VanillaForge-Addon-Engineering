@@ -99,7 +99,9 @@ function AutoBG_GetEnemyCarrier() return enemyCarrier end
 AutoBG_Arena = { SetActive = function() end, RowsChanged = function() end, Refresh = function() end }
 AutoBG_ArenaPets = { SetActive = function() end, Refresh = function() end }
 -- AutoBG_Spy.lua: Spy rests in a match and gives the stealth warnings.
-AutoBG_Spy = { OnBattlegroundChanged = function() end, NotifyStealth = function() return false end }
+groupMembers = {}
+AutoBG_Spy = { OnBattlegroundChanged = function() end, NotifyStealth = function() return false end,
+    IsGroupMember = function(name) return groupMembers[name] or false end }
 C_UnitAuras = { GetAuraSlots = function() return nil, 0 end }
 function GetTime() return NOW or 1000 end
 MAX_BATTLEFIELD_QUEUES = 3

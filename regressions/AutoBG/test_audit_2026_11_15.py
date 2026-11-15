@@ -209,5 +209,19 @@ class LingeringArenaStatusTests(unittest.TestCase):
         self.assertTrue(lua.eval('AutoBG_Targets.activeBG'))
 
 
+
+class GroupOnTheScoreboardTests(unittest.TestCase):
+    """Your group is never the enemy, whatever side the scoreboard puts it on.
+    The enemy frames rebuilt their own list of the group's names on every
+    scoreboard pass; they ask Spy's, kept current by the roster events."""
+
+    def test_a_raid_member_on_the_enemy_side_gets_no_row(self):
+        import test_targets_guid_events as tge
+        lua = tge.runtime(sighting=False)
+        self.assertEqual(lua.eval('AutoBG_Targets.EnemyCount()'), 1)
+        lua.execute('groupMembers.Grom = true; AutoBG_Targets:BattlefieldScoreUpdate(true)')
+        self.assertEqual(lua.eval('AutoBG_Targets.EnemyCount()'), 0)
+
+
 if __name__ == '__main__':
     unittest.main()
