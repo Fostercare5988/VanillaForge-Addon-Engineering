@@ -93,7 +93,7 @@ PARTY = r'''
     rebuilt = 0
     function UpdateButtonAll() rebuilt = rebuilt + 1 end
     function LayoutRaidGroups() end
-    FT = { NormalizeClass = function(c) return c end, Guarded = function(f) return f end }
+    FT = { Guarded = function(f) return f end }
     UF = { Auras = { ResetAuraButton = function() end } }
     function UF:GetGroupDimensions() return { enabled = true } end
 '''

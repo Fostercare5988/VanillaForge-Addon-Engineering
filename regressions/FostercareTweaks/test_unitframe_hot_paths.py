@@ -47,7 +47,6 @@ def raid_runtime():
     lua.execute(WIDGETS)
     lua.execute(r'''
         FT = { GetRaidMarkSettings = function() return 14, "portrait" end,
-               NormalizeClass = function(c) return c end,
                GetUnitHealthValues = function() return 3000, 4000 end }
         function AbbreviateNumbers(n) return n end
         layouts = 0

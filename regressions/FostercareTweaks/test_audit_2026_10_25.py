@@ -100,7 +100,6 @@ class RaidNames(unittest.TestCase):
         lua.execute(BASE)
         lua.execute('''
             UF = { ClassColors = {} }
-            function FT.NormalizeClass() end
             function UnitClass() end
             function UnitName() return %s end
             function UnitIsConnected() return 1 end

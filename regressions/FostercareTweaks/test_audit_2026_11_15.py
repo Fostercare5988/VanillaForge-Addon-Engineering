@@ -109,5 +109,25 @@ class TimerCallbacksAreGuarded(unittest.TestCase):
         self.assertGreater(checked, 10)
 
 
+class EventsReadTheEngineGlobals(unittest.TestCase):
+    """The old wrapper guessed the dispatch by the first argument's type; the
+    engine sets `event` and `arg1`... for every handler either way (API.md,
+    SetModernScriptArgs), so they are read directly. Class tokens come as
+    tokens from every source, so NormalizeClass went too."""
+
+    def test_a_handler_gets_the_event_and_its_arguments(self):
+        lua = ft_env.world()
+        lua.execute('''f = CreateFrame("Frame"); f:RegisterEvent("UNIT_HEALTH")
+            FT.SetEventHandler(f, function(frame, ev, unit, a2) got = { frame == f, ev, unit, a2 } end)
+            fire("UNIT_HEALTH", "raid3", 7)''')
+        self.assertEqual(list(lua.eval("got").values()), [True, "UNIT_HEALTH", "raid3", 7])
+
+    def test_the_guessing_helpers_are_gone(self):
+        for path in ROOT.rglob("*.lua"):
+            text = path.read_text("utf-8-sig")
+            for gone in ("EventArgs", "NormalizeClass"):
+                self.assertNotIn(gone, text, path.name)
+
+
 if __name__ == "__main__":
     unittest.main()

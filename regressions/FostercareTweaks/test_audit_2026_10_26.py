@@ -192,6 +192,8 @@ class NoVarargEventWrapper(unittest.TestCase):
                 local info = debug.getinfo(2, "Su")
                 if info and info.what == "Lua" and info.isvararg then varargs = varargs + 1 end
             end, "c")
+            -- The engine sets the globals for every handler (API.md SetModernScriptArgs).
+            event, arg1 = "UNIT_HEALTH", "raid3"
             frame.OnEvent(frame, "UNIT_HEALTH", "raid3")
             debug.sethook()
         ''')
@@ -309,7 +311,6 @@ RAID_ROSTER = r'''
     function FT.GetUnitHealthValues() return 100, 100 end
     FT.RegisterFrameMover = NOOP
     function FT.ClampNumber(v, d, lo, hi) return math.max(lo, math.min(hi, tonumber(v) or d)) end
-    function FT.NormalizeClass(c) return c end
     function AbbreviateNumbers(n) return n end
     timers = {}
     C_Timer.After = function(_, fn) timers[#timers + 1] = fn end

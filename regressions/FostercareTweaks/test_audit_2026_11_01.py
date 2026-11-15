@@ -105,7 +105,6 @@ class ClassColorsFollowTheHooks(unittest.TestCase):
             RAID_CLASS_COLORS = {}
             function UnitClass() return "Rogue", "ROGUE" end
             function UnitIsPlayer() return true end
-            function FT.NormalizeClass(c) return c end
             TargetFrame_CheckFaction, TargetFrame_Update, PlayerFrame_Update, PartyMemberFrame_UpdateMember = NOOP, NOOP, NOOP, NOOP
             FT.UnitFrames = { ClassColors = { ROGUE = { r = 1, g = 0.96, b = 0.41 } } }
         ''')
