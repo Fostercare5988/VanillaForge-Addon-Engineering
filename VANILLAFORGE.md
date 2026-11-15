@@ -69,7 +69,10 @@ Rules, in order of importance:
    client: the same function name can take other arguments or behave
    differently here. Never invent a function, event, argument or return value;
    grep the docs for the exact name first. If it is not documented, say so and
-   mark it unverified.
+   mark it unverified. The linter does the grep too: a function or an event
+   that is in no DLL doc, not in the client and not the addon's own is an
+   error (rules K1 and K2, `tools/known_api.py`). It proves the name, not the
+   arguments.
 5. **Treat the DLLs as installed.** Do not inspect, hash or verify them or the
    client installation; the user says when one changes. Extracting FrameXML is
    fine, and so is reading config and log files when the user asks for help
@@ -132,12 +135,14 @@ the addon's existing convention. Details: CLASSICAPI_MASTER_REFERENCE.md §4.
 - **Own your state.** Asynchronous work tracks its current request and ignores
   stale callbacks. Each addon owns its own data; integrations with other addons
   check availability and use narrow public functions.
-- **Settings:** use the ForgeUI kit in `templates/ForgeUI/` (see
-  [KNOWN_PATTERNS.md](KNOWN_PATTERNS.md#preferred-settings-theme)). Pages are
-  built as sections (`ForgeLayout.lua`) and every page is also in AddOn Options,
-  one column at full size (`/options <Addon>`). Every option
-  needs a real player benefit. Player text is short and factual, with no
-  developer jargon.
+- **Settings:** a new or rebuilt addon has no settings window of its own. Its
+  options are a page that ClassicAPI's Settings window draws
+  ([CLASSICAPI_MASTER_REFERENCE.md](CLASSICAPI_MASTER_REFERENCE.md#settings-window)),
+  and its slash command opens that page. The addons not rebuilt yet keep the
+  ForgeUI kit in `templates/ForgeUI/`
+  ([KNOWN_PATTERNS.md](KNOWN_PATTERNS.md#preferred-settings-theme)) until they
+  are replaced; no new page is built with it. Every option needs a real player
+  benefit. Player text is short and factual, with no developer jargon.
 - Recurring hazards and their fixes are in [KNOWN_PATTERNS.md](KNOWN_PATTERNS.md).
 
 ## 3. Measure in game
@@ -235,7 +240,9 @@ take away something players rely on.
    ```
 
    Lint findings are hints, not orders, but read the warning count as well as the
-   error count (rule A5 catches string escapes Lua 5.0 drops, as a warning). Without
+   error count (rule A5 catches string escapes Lua 5.0 drops, as a warning). Rules
+   K1 and K2 are orders: an unknown function or event is fixed, or the line that
+   calls into another addon is marked `-- vanillaforge-ignore: K1`. Without
    a suite, the linter alone: `python -B tools/vanillaforge_linter.py "<addon folder>"`.
 2. When behaviour changes on purpose, update the test that encoded the old
    behaviour. For a bug fix, add a test that fails on the old code where
@@ -268,7 +275,8 @@ take away something players rely on.
 | Server facts and data sources | [servers/](servers/) |
 | An addon's regression tests | [regressions/README.md](regressions/README.md); one file, or on an old commit: `tools/run_suite.py` |
 | The game's Lua and engine model for tests | `regressions/wowlua.py`, `regressions/wowkit.py` |
-| The settings style | `templates/ForgeUI/` |
+| The settings style | The Settings window: [CLASSICAPI_MASTER_REFERENCE.md](CLASSICAPI_MASTER_REFERENCE.md#settings-window). `templates/ForgeUI/` for addons not rebuilt yet |
+| Whether a function or event exists | `python -B tools/known_api.py "<addon folder>"` (linter rules K1, K2) |
 | DLL versions and upstream tracking | [UPSTREAM_VERSIONS.json](UPSTREAM_VERSIONS.json), `python -B tools/check_upstream.py` |
 | Patch addon files safely | [tools/addon_edit.py](tools/addon_edit.py) |
 | Take a new DLL release | `python -B tools/upgrade_dll.py [component] [--pin]`: what changed, the pin, leads in every addon |
@@ -289,3 +297,25 @@ take away something players rely on.
   in `regressions/`.
 - Facts about one server belong in its profile. A new server starts from
   [servers/TEMPLATE.md](servers/TEMPLATE.md).
+
+## 8. A rebuild from scratch
+
+The maintained addons are being written new, one at a time (since 2026-11-15).
+The plan, its status board and each addon's handoff are local, in
+`.private/rebuild/`. Sections 1 and 2 stay in force; these rules are added, and
+win where they disagree:
+
+1. **Empty folder.** The old code is read for what the addon does and for the
+   server facts it found. No line is copied; a modern reference addon informs
+   the design the same way.
+2. **Spec before code.** Nothing is built until the kept and dropped lists are
+   approved. Only what is turned on in the saved settings is kept.
+3. **A DLL first, with proof.** The spec maps every job to a DLL call or event
+   and names its doc heading.
+4. **A job no DLL does** is dropped, or is one small function marked
+   `-- GAP: <what a DLL should do>`, so it is deleted in one place when a
+   release covers it.
+5. **Each addon stands alone.** No shared library addon; addons talk through
+   narrow public functions.
+6. **Tests come from the spec.** A new, smaller suite replaces the old one
+   when the new addon takes over.

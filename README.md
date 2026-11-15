@@ -21,8 +21,8 @@ does not only guard against mistakes; it hunts for what can be done better.
 | [ENGINE_REFERENCE.md](ENGINE_REFERENCE.md) | SuperWoW, NamPower, UnitXP and native UI behaviour |
 | [KNOWN_PATTERNS.md](KNOWN_PATTERNS.md) | Recurring hazards and their fixes |
 | [regressions/](regressions/README.md) | Behaviour tests for the maintained addons |
-| `templates/ForgeUI/` | The shared settings look |
-| `tools/` | Hole finder, linter, audit and test runner, FrameXML extractor, upstream doc fetcher and checker |
+| `templates/ForgeUI/` | The settings look of the addons not rebuilt yet; new ones use ClassicAPI's Settings window |
+| `tools/` | Hole finder, linter (with the check that every function and event exists), audit and test runner, FrameXML extractor, upstream doc fetcher and checker |
 | `tools/replacements.json` | Old ways a DLL now does better; grows with every audit |
 | [archive/](archive/README.md) | Earlier workflows and audits, for history |
 
