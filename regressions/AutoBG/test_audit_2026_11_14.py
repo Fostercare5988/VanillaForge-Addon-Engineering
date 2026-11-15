@@ -128,12 +128,7 @@ class Looks(unittest.TestCase):
         self.assertEqual(len(set(names)), 10)
 
 
-COOLDOWNS = r'''
-local Widget = getmetatable(UIParent).__index
-function Widget:SetCooldown(start, duration) self.cd = { start, duration } end
-function Widget:Clear() self.cd = nil end
-function Widget:SetHideCountdownNumbers(on) self.hideNumbers = on end
-'''
+from clock_mock import COOLDOWNS
 
 
 def trinket_world(extra=""):
@@ -158,7 +153,8 @@ def trinket_text(lua, now):
 
 class EnemyTrinketSweep(unittest.TestCase):
     """2026-11-14, asked for by the player: enemy trinkets count down like
-    GearRack's (a native cooldown sweep), with AutoBG's timer clock."""
+    GearRack's (a native cooldown sweep), with AutoBG's timer clock (the
+    client's countdown with AutoBG's formatter since 2026-11-15)."""
 
     def use(self, lua, tg, now):
         lua.execute('NOW = %s' % now)
@@ -169,7 +165,7 @@ class EnemyTrinketSweep(unittest.TestCase):
         self.use(lua, tg, 1000)
         cd = 'AutoBG_TargetTrinket1CD'
         self.assertEqual((lua.eval(cd + '.cd[1]'), lua.eval(cd + '.cd[2]')), (1000, 180))
-        self.assertTrue(lua.eval(cd + '.hideNumbers'))        # the player's CVar decides those
+        self.assertFalse(lua.eval(cd + '.hideNumbers'))       # 2026-11-15: the client counts it
         self.assertEqual(trinket_text(lua, 1000), "3:00")
         self.assertEqual(trinket_text(lua, 1142), "38")
 

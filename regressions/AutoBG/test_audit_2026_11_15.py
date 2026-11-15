@@ -186,5 +186,28 @@ class FlagWatchSwitchTests(unittest.TestCase):
         self.assertIsNone(lua.eval('tick'))
 
 
+
+class LingeringArenaStatusTests(unittest.TestCase):
+    """After an arena the queue status can still say "active" for a moment. It
+    names the arena by its zone ("Blood Ring", confirmed 2026-11-04), not
+    "Arena", so the enemy frames took it for a battleground: match events in the
+    open world, and Spy rested until the status cleared."""
+
+    def test_an_arena_status_named_by_its_zone_is_no_match_outside(self):
+        import test_targets_guid_events as tge
+        lua = tge.runtime(sighting=False)
+        lua.execute('''ARENA = "Arena"
+            function AutoBG_IsArenaZone() return false end
+            function GetBattlefieldStatus(i) if i == 1 then return "active", "Blood Ring" end return "none" end
+            AutoBG_Targets:BattlefieldScoreUpdate(true)''')
+        self.assertFalse(lua.eval('AutoBG_Targets.activeBG'))
+
+    def test_a_battleground_status_is_still_a_match(self):
+        import test_targets_guid_events as tge
+        lua = tge.runtime(sighting=False)
+        lua.execute('AutoBG_Targets:BattlefieldScoreUpdate(true)')
+        self.assertTrue(lua.eval('AutoBG_Targets.activeBG'))
+
+
 if __name__ == '__main__':
     unittest.main()

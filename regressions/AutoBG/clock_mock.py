@@ -116,3 +116,27 @@ function __frame()
     for _, b in ipairs(bindings) do if b.enabled then b:UpdateFontString() end end
 end
 '''
+
+# ClassicAPI Cooldown frames on a widget model (after CLOCK and the base that
+# made UIParent): SetCooldown, Clear, and the client's countdown, written with
+# the frame's formatter on each __frame() (countdownForCooldowns 1, API.md Cooldown).
+COOLDOWNS = r'''
+local Widget = getmetatable(UIParent).__index
+local running = {}
+function Widget:SetCooldown(start, duration) self.cd = { start, duration }; running[self] = true end
+function Widget:Clear() self.cd = nil; running[self] = nil; self:GetCountdownFontString():SetText("") end
+function Widget:SetHideCountdownNumbers(on) self.hideNumbers = on end
+-- A drawn frame: the client counts each running cooldown down with its
+-- formatter (countdownForCooldowns 1, API.md Cooldown), unless numbers are hidden.
+local frame = __frame
+function __frame()
+    frame()
+    for cd in pairs(running) do
+        local left = cd.cd[1] + cd.cd[2] - GetTime()
+        if not cd.hideNumbers and cd.formatter then
+            cd:GetCountdownFontString():SetText(left > 0 and cd.formatter:FormatNumber(left) or "")
+        end
+    end
+end
+'''
+

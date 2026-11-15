@@ -52,6 +52,8 @@ UIParent = CreateFrame("Frame", "UIParent")
 -- Always in the client: the battlemaster window (FrameXML) and, after all
 -- AutoBG files load, the enemy frames and Spy that ADDON_LOADED fills.
 ARENA = "Arena" -- GlobalStrings
+-- FrameXML Fonts.xml: the class colors, each with its hex code.
+RAID_CLASS_COLORS = { WARRIOR = { r = 0.78, g = 0.61, b = 0.43, hex = "|cffc79c6e" } }
 BattlefieldFrame = CreateFrame("Frame", "BattlefieldFrame")
 AutoBG_Targets = { EnsureOptions = function() AutoBG_Settings.Targets = AutoBG_Settings.Targets or {} end }
 AutoBG_Spy = { EnsureOptions = function() AutoBG_Settings.Spy = AutoBG_Settings.Spy or {}; return AutoBG_Settings.Spy end }

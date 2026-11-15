@@ -47,6 +47,9 @@ function Widget:Hide() self.shown = false end
 function Widget:GetFrameLevel() return 1 end
 function Widget:CreateTexture() return setmetatable({}, { __index = Widget }) end
 function Widget:CreateFontString() return setmetatable({}, { __index = Widget }) end
+-- ClassicAPI Cooldown frames: the countdown's font string and formatter.
+function Widget:GetCountdownFontString() self.numbers = self.numbers or self:CreateFontString(); return self.numbers end
+function Widget:SetCountdownFormatter(f) self.formatter = f end
 -- ClassicAPI unit buttons: attributes, and a click that resolves its verb like
 -- the engine ([mod-]typeN, then typeN); target and focus are recorded, any
 -- other click runs the frame's own OnClick.
@@ -78,8 +81,11 @@ Enum.NumericRuleFormatRounding = { Nearest = 0, Up = 1, Down = 2 }
 Enum.DurationTextBindingProperty = { RemainingDuration = 0, ElapsedDuration = 2 }
 function Widget:SetTimerDuration(d, _, direction) self.timer, self.direction = d, direction end
 function Widget:SetStatusBarColor(r, g, b) self.color = { r, g, b } end
--- AutoBG.lua, loaded before this file in the client.
-AutoBG_CLASS_COLORS = {
+-- AutoBG.lua, loaded before this file in the client: the zone and queue names.
+function AutoBG_IsArenaZone() return false end
+function AutoBG_QueueMap(map) if map == "Blood Ring" then return "Arena" end return map end
+-- The client's class colors (FrameXML Fonts.xml).
+RAID_CLASS_COLORS = {
     HUNTER = { r = 0.67, g = 0.83, b = 0.45 }, WARLOCK = { r = 0.58, g = 0.51, b = 0.79 },
     PRIEST = { r = 1, g = 1, b = 1 }, PALADIN = { r = 0.96, g = 0.55, b = 0.73 },
     MAGE = { r = 0.41, g = 0.8, b = 0.94 }, ROGUE = { r = 1, g = 0.96, b = 0.41 },
@@ -161,8 +167,9 @@ def runtime(sighting=True, clock=False):
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(BASE)
     if clock:
-        from clock_mock import CLOCK
+        from clock_mock import CLOCK, COOLDOWNS
         lua.execute(CLOCK)
+        lua.execute(COOLDOWNS)
     addon_loader.load(lua, TARGETS, "AutoBG_Targets.lua")
     for event in ("PLAYER_LOGIN", "UPDATE_BATTLEFIELD_STATUS"):
         lua.execute('AutoBG_Targets.scripts.OnEvent(AutoBG_Targets, "%s")' % event)
