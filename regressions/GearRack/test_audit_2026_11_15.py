@@ -80,10 +80,11 @@ class SavedSweep(unittest.TestCase):
         env = world("")
         env.run('''GearRackDB.schema, GearRackCharDB.schema = 1, 1
             GearRackDB.settings.BigCooldown, GearRackDB.trinketOptions.TinyTooltips = "ON", "OFF"
-            GearRackCharDB.trinkets.ItemsUsed, GearRackDB.Old = {}, {}
+            GearRackCharDB.trinkets.ItemsUsed, GearRackDB.Old, GearRackDB.settings.ShowTooltips = {}, {}, "ON"
             GearRack.NormalizeSavedData()''')
         for key in ("GearRackDB.schema", "GearRackCharDB.schema", "GearRackDB.settings.BigCooldown",
-                    "GearRackDB.trinketOptions.TinyTooltips", "GearRackCharDB.trinkets.ItemsUsed", "GearRackDB.Old"):
+                    "GearRackDB.trinketOptions.TinyTooltips", "GearRackCharDB.trinkets.ItemsUsed", "GearRackDB.Old",
+                    "GearRackDB.settings.ShowTooltips"):
             self.assertIsNone(env.eval(key), key)
         for key in ("GearRackDB.settings.Notify", "GearRackDB.trinketOptions.KeepOpen", "GearRackCharDB.trinkets.XPos",
                     "GearRackDB.eventsInitialized", "GearRackCharDB.KeepManualTrinkets"):

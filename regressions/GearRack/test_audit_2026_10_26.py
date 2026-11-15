@@ -92,14 +92,15 @@ class EnchantIconPathTests(unittest.TestCase):
 
 class TrinketSortTooltipTests(unittest.TestCase):
     """The trinket order list read trinketOptions.ShowTooltips, a key Core clears at
-    every login. Hovering a loaded trinket said "Item details not loaded yet."."""
+    every login. Hovering a loaded trinket said "Item details not loaded yet.".
+    Tooltips are always on since 2026-11-15 (the switch was on for everyone)."""
 
-    def hover(self, show_tooltips):
+    def hover(self):
         lua = runtime()
         lua.execute(r'''
             GearRackUI = { DefaultSettings = { ShowTooltips = "ON" } }
             -- Saved data from before the trinket window shared the tooltip setting.
-            GearRackDB = { settings = { ShowTooltips = "''' + show_tooltips + r'''" },
+            GearRackDB = { settings = {},
                 trinketOptions = { ShowTooltips = "ON", TooltipFollow = "OFF" } }
             GearRackCharDB = { queues = { Sort = { [0] = { "11810", 0 } } } }
         ''' + "GearRackTrinkets = { CurrentlySorting = 0, Defaults = {}, DisplayDefaults = {} }"
@@ -113,7 +114,7 @@ class TrinketSortTooltipTests(unittest.TestCase):
                 Show = function() table.insert(calls, "show") end }
             function GearRackTrinkets.AnchorTooltip() end
             function GearRackTrinkets.OnTooltip(a, b)
-                if GearRackDB.settings.ShowTooltips == "ON" then table.insert(calls, "text:" .. a .. ": " .. b) end
+                table.insert(calls, "text:" .. a .. ": " .. b)
             end
             this = { GetID = function() return 1 end }
         ''' + between(QUEUES, "function GearRackTrinkets.SortTooltip()", "function GearRackTrinkets.SortOnClick()")
@@ -121,12 +122,9 @@ class TrinketSortTooltipTests(unittest.TestCase):
         return list(lua.eval("calls").values())
 
     def test_loaded_trinket_shows_its_item_tooltip(self):
-        shown = self.hover("ON")
+        shown = self.hover()
         self.assertTrue(any(c.startswith("link:") for c in shown), shown)
         self.assertFalse(any("not loaded" in c for c in shown), shown)
-
-    def test_control_tooltips_off_shows_nothing(self):
-        self.assertEqual(self.hover("OFF"), [])
 
 
 TIMER_MOCK = r'''
