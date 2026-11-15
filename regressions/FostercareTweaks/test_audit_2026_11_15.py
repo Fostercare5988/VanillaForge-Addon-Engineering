@@ -129,5 +129,54 @@ class EventsReadTheEngineGlobals(unittest.TestCase):
                 self.assertNotIn(gone, text, path.name)
 
 
+CHAT = r'''
+NUM_CHAT_WINDOWS = 1
+ChatFrame1 = CreateFrame("ScrollingMessageFrame", "ChatFrame1")
+stockWheel = function() end
+ChatFrame1:SetScript("OnMouseWheel", stockWheel)  -- ChatFrame.xml; ChatFrame_OnLoad enables the wheel
+ChatFrameEditBox = CreateFrame("EditBox", "ChatFrameEditBox")
+function ChatFrameEditBox:SetAltArrowKeyMode(on) self.altArrows = on end
+function SetItemRef() end
+'''
+
+
+class ChatLeavesTheWheelToTheGame(unittest.TestCase):
+    """The client's chat windows scroll with the wheel (ChatFrame.lua: Shift to
+    the top or bottom, Alt four lines); Chat Tweaks replaced that handler with
+    one that dropped Alt, and needed a reload to switch."""
+
+    def world(self):
+        lua = ft_env.world(["mods/chat-tweaks.lua"], CHAT)
+        return ft_env.start(lua)
+
+    def test_the_stock_wheel_stays(self):
+        lua = self.world()
+        self.assertTrue(lua.eval("ChatFrame1.scripts.OnMouseWheel == stockWheel"))
+
+    def test_the_arrow_keys_switch_live(self):
+        lua = self.world()
+        self.assertFalse(lua.eval("ChatFrameEditBox.altArrows"))
+        lua.execute('FT.mods["Chat Tweaks"]:apply(false)')
+        self.assertTrue(lua.eval("ChatFrameEditBox.altArrows"))
+
+
+class BorderlessCastbarsLive(unittest.TestCase):
+    def test_off_puts_the_stock_art_back(self):
+        lua = ft_env.world([], r'''
+            CastingBarFrame = CreateFrame("StatusBar", "CastingBarFrame")
+            CastingBarBorder, CastingBarFlash = CreateFrame("Texture"), CreateFrame("Texture")
+            function CastingBarBorder:SetTexture(t) self.tex = t or "none" end
+            CastingBarFlash.SetTexture = CastingBarBorder.SetTexture
+            function UIParent_ManageFramePositions() end''')
+        lua.execute("function FT.RestoreFramePosition() end; function FT.RegisterFrameMover() end")
+        ft_env.wowkit.load_files(lua, ROOT, ["mods/player-castbar.lua"], "FostercareTweaks")
+        lua.execute('FostercareTweaks_Config = { ["Borderless Castbars"] = 1 }')
+        ft_env.start(lua)
+        self.assertEqual(lua.eval("CastingBarBorder.tex"), "none")
+        lua.execute('FT.mods["Borderless Castbars"]:apply(false)')
+        self.assertEqual(lua.eval("CastingBarBorder.tex"), "Interface\\CastingBar\\UI-CastingBar-Border")
+        self.assertEqual(lua.eval("CastingBarFlash.tex"), "Interface\\CastingBar\\UI-CastingBar-Flash")
+
+
 if __name__ == "__main__":
     unittest.main()

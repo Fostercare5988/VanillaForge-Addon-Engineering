@@ -136,7 +136,8 @@ class SwitchesApplyAtOnce(unittest.TestCase):
     def test_each_of_them_has_apply(self):
         code = "\n".join(source("mods/" + name) for name in ("gameplay.lua", "minimap-tweaks.lua", "chat-tweaks.lua",
                          "blue-shaman.lua", "actionbar-float.lua", "actionbar-reagents.lua"))
-        self.assertEqual(code.count("module.apply = function(self, "), 8)       # the seven, and the stance bar
+        # The seven, the stance bar and (2026-11-15) the arrow keys in chat.
+        self.assertEqual(code.count("module.apply = function(self, "), 9)
 
     def chat(self):
         lua = runtime()
