@@ -91,5 +91,15 @@ class SavedSweep(unittest.TestCase):
             self.assertIsNotNone(env.eval(key), key)
 
 
+class MountTemplates(unittest.TestCase):
+    """"Mount(Not ZG/AQ)" ran its script on every aura change; both mount templates
+    wake on ClassicAPI's PLAYER_MOUNT_DISPLAY_CHANGED, once per mount or dismount."""
+
+    def test_mount_templates_wake_on_mounting(self):
+        env = world("")
+        for name in ("Mount", "Mount(Not ZG/AQ)"):
+            self.assertEqual(env.eval('GearRackUI_DefaultEvents["%s"].trigger' % name), "PLAYER_MOUNT_DISPLAY_CHANGED", name)
+
+
 if __name__ == "__main__":
     unittest.main()
