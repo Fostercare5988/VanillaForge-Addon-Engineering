@@ -26,7 +26,7 @@ def between(text, start, end):
 
 BASE = r'''
 hooks = {}
-FT = { overwrites = {} }
+FT = { overwrites = {}, Guarded = function(f) return f end }
 FostercareTweaks = FT
 function FT:register(m) self.module = m; return m end
 function hooksecurefunc(name, f) hooks[name] = f end

@@ -99,7 +99,7 @@ class OnePlace(unittest.TestCase):
             spells = { [2983] = "Sprint", [5277] = "Evasion", [1784] = "Stealth" }
             function GetPlayerBuffID(index) return names[index] end
             function GetSpellInfo(id) return spells[id] end
-            FT = { IsAuraHidden = function(name, unit, place) return name == "Evasion" and place == "top" end }
+            FT = { IsAuraHidden = function(name, unit, place) return name == "Evasion" and place == "top" end, Guarded = function(f) return f end }
             frame = Widget()
             buttons = {}
             for i = 0, 2 do buttons[i + 1] = Widget({ buffIndex = i, shown = true }) end

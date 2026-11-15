@@ -40,7 +40,7 @@ class ExtraRowsTickerSleeps(unittest.TestCase):
             button = {}
             EA.visible[{ buttons = { button } }] = true
         ''')
-        lua.execute(slice(source("ExtraActions.lua"), "-- The 0.2 s ticker has work only", "local function SyncOwner")
+        lua.execute('FT = FT or {}; FT.Guarded = FT.Guarded or function(f) return f end\n' + slice(source("ExtraActions.lua"), "-- The 0.2 s ticker has work only", "local function SyncOwner")
                     + "\nSync, Flush, Queue = SyncTicker, FlushRefresh, QueueRefresh")
 
     def running(self):

@@ -35,6 +35,7 @@ C_DurationUtil = { CreateDuration = function() return { SetTimeSpan = function(s
 C_Timer = { After = function(_, fn) table.insert(timers, fn) end }
 FostercareTweaks_Config = {}
 FostercareTweaks = {
+    Guarded = function(f) return f end,
     register = function(self, mod) self.mods = self.mods or {}; self.mods[mod.title] = mod; return mod end,
     IsEnabled = function() return true end,
     SetEventHandler = function(frame, fn) handlers[frame] = fn end,

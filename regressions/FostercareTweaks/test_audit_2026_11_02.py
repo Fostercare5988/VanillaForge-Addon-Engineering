@@ -93,7 +93,7 @@ PARTY = r'''
     rebuilt = 0
     function UpdateButtonAll() rebuilt = rebuilt + 1 end
     function LayoutRaidGroups() end
-    FT = { NormalizeClass = function(c) return c end }
+    FT = { NormalizeClass = function(c) return c end, Guarded = function(f) return f end }
     UF = { Auras = { ResetAuraButton = function() end } }
     function UF:GetGroupDimensions() return { enabled = true } end
 '''
@@ -123,6 +123,7 @@ class PartyLeaderCrown(unittest.TestCase):
         lua.execute(WIDGETS + r'''
             timers, unitToButton = {}, {}
             C_Timer = { After = function(_, fn) timers[#timers + 1] = fn end }
+            FT = FT or {}; FT.Guarded = FT.Guarded or function(f) return f end
             UF = { UpdateGroupRoster = function() end }
             function RefreshAggro() end
         ''')
@@ -305,7 +306,7 @@ class ExtraRowsQueueOneCallback(unittest.TestCase):
             function SyncTicker() end
             C_Timer = { After = function(_, fn) callbacks[#callbacks + 1] = fn end }
         ''')
-        lua.execute(slice(source("ExtraActions.lua"), "-- One callback for every queued refresh", "local function SyncOwner")
+        lua.execute('FT = FT or {}; FT.Guarded = FT.Guarded or function(f) return f end\n' + slice(source("ExtraActions.lua"), "-- One callback for every queued refresh", "local function SyncOwner")
                     + "\nQueue = QueueRefresh")
 
     def test_a_burst_is_one_refresh_through_one_function(self):

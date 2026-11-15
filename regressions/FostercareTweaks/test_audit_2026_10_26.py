@@ -96,7 +96,7 @@ Enum = { StatusBarInterpolation = { Immediate = 0 }, StatusBarTimerDirection = {
 C_DurationUtil = { CreateDuration = function() return { SetTimeSpan = function(self, s, e) self.startTime, self.endTime = s, e end } end }
 C_Timer = { After = NOOP, NewTicker = function() return { Cancel = NOOP } end }
 FostercareTweaks_Config = { overwrites = {} }
-FT = { mods = {}, overwrites = {} }
+FT = { mods = {}, overwrites = {}, Guarded = function(f) return f end }
 FostercareTweaks = FT
 function FT:register(m) self.mods[m.title] = m; return m end
 function FT.SetEventHandler(frame, fn) handlers[frame] = fn end

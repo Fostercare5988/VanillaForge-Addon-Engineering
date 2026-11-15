@@ -33,6 +33,7 @@ timers, handler = {}, nil
 C_Timer = { After = function(_, fn) table.insert(timers, fn) end }
 function flush() local t = timers; timers = {}; for _, fn in ipairs(t) do fn() end end
 FostercareTweaks = {
+    Guarded = function(f) return f end,
     mods = {},
     register = function(self, mod) self.mods[mod.title] = mod; return mod end,
     SetEventHandler = function(_, fn) handler = fn end,

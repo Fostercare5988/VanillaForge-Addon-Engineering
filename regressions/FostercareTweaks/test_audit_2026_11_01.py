@@ -177,7 +177,7 @@ class HotPathsBuildNoTables(unittest.TestCase):
             function M:GetWidth() return self.width or 0 end
             function M:IsShown() return self.shown end
             function W(p) return setmetatable(p or {}, M) end
-            FT = {}; FostercareTweaks_Config = { unitframe_positions = {} }; Auras = {}
+            FT = { Guarded = function(f) return f end }; FostercareTweaks_Config = { unitframe_positions = {} }; Auras = {}
         ''')
         auras = source("mods/unitframes/auras.lua")
         lua.execute(slice(auras, "local function HasSavedPosition", "function Auras:AttachToTargetFrame"))
