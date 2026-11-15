@@ -405,8 +405,7 @@ class NotifyEventTests(unittest.TestCase):
             function GearRackUI_RegisterFrame_OnEvent(ev, a) table.insert(calls, ev .. ":" .. a) end
         ''' + between(EQUIPMENT, "-- enables a specific eventname", "-- disables a sepcific eventname")
           + between(EQUIPMENT, "function GearRackUI_EnableAllEvents()", "-- Suspend event watching")
-          + between(CORE, "-- Ready notices feed the alert", "function GearRack.GetInventoryCooldown(")
-          + between(EQUIPMENT, "-- Ready alert for a used item", "-- The seconds until the next shown enchant label") + r'''
+          + between(CORE, "-- Ready notices feed the alert", "function GearRack.GetInventoryCooldown(") + r'''
             GearRackUI_EnableAllEvents()
             GearRack.ItemReady("Insignia of the Horde", false)
         ''')

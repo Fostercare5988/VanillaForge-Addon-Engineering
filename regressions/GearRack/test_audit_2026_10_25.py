@@ -136,16 +136,17 @@ class SetBuilderTests(unittest.TestCase):
 
 
 class VersionTests(unittest.TestCase):
-    """GearRack stays at 1.0.0 until the owner names a new version. The TOC holds
-    it; the code reads it from there (2026-11-08), so it lives in one place."""
+    """The TOC holds the version; the code reads it from there (2026-11-08) and the
+    README names none, so a release changes one line (the 1.1.0 README said 1.0.0)."""
 
-    def test_version_is_1_0_0(self):
+    def test_the_version_lives_in_the_toc_alone(self):
+        import re
         toc = (ROOT / "GearRack.toc").read_text("utf-8")
         bootstrap = (ROOT / "src/Bootstrap.lua").read_text("utf-8")
         readme = (ROOT / "README.md").read_text("utf-8")
-        self.assertIn("## Version: 1.0.0", toc)
+        self.assertRegex(toc, r"## Version: \d+\.\d+\.\d+")
         self.assertIn('version=GetAddOnMetadata("GearRack","Version")', bootstrap)
-        self.assertNotIn("1.1.0", readme)
+        self.assertIsNone(re.search(r"\bv\d+\.\d+\.\d+\b", readme), "the README names a GearRack version")
 
 
 if __name__ == "__main__":
