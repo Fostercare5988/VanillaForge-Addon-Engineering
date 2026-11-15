@@ -10,7 +10,10 @@ FETCH = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(FETCH)
 
 TREE = ["README.md", "EVENTS.md", "docs/API.md", "docs/raw_globals.txt", "nampower/main.cpp",
-        ".github/ISSUE_TEMPLATE/bug_report.md", "Nampower.dll", "dllmain.cpp"]
+        ".github/ISSUE_TEMPLATE/bug_report.md", "Nampower.dll", "dllmain.cpp", "TODO.md",
+        "src/item/Tooltip.cpp", "src/embed/Textures/Interface/Common/Dot.blp",
+        "src/embed/AddOns/!!!ClassicAPI/!!!ClassicAPI.toc",
+        "src/embed/AddOns/!!!ClassicAPI/Settings/Blizzard_Settings.lua"]
 CONTENT = {path: ("contents of " + path).encode() for path in TREE}
 
 
@@ -29,8 +32,14 @@ class FetchUpstreamDocsTests(unittest.TestCase):
                                  wiki=lambda r, d: ("abc123", ["wiki/Home.md"]), **kwargs)
 
     def test_patterns_select_documentation_only(self):
-        self.assertEqual(FETCH.select_docs(TREE, FETCH.DOC_PATTERNS["nampower"]), ["EVENTS.md", "README.md"])
-        self.assertEqual(FETCH.select_docs(TREE, FETCH.DOC_PATTERNS["classicapi"]), ["README.md", "docs/API.md"])
+        self.assertEqual(FETCH.select_docs(TREE, FETCH.DOC_PATTERNS["nampower"]),
+                         ["EVENTS.md", "README.md", "TODO.md"])
+        # ClassicAPI: also the client's own name lists and the embedded addons' Lua,
+        # never C++ or textures.
+        self.assertEqual(FETCH.select_docs(TREE, FETCH.DOC_PATTERNS["classicapi"]),
+                         ["README.md", "TODO.md", "docs/API.md", "docs/raw_globals.txt",
+                          "src/embed/AddOns/!!!ClassicAPI/!!!ClassicAPI.toc",
+                          "src/embed/AddOns/!!!ClassicAPI/Settings/Blizzard_Settings.lua"])
         self.assertEqual(FETCH.select_docs(TREE, FETCH.DOC_PATTERNS["unitxp_sp3"]), ["README.md", "dllmain.cpp"])
 
     def test_binaries_are_never_requested(self):
@@ -42,7 +51,7 @@ class FetchUpstreamDocsTests(unittest.TestCase):
     def test_files_land_under_the_entry_folder(self):
         record = self.fetch("classicapi", {"repository": "o/r", "reference_commit": "c0ffee"})
         self.assertEqual((self.output / "classicapi" / "docs" / "API.md").read_bytes(), CONTENT["docs/API.md"])
-        self.assertEqual([f["path"] for f in record["files"]], ["README.md", "docs/API.md"])
+        self.assertEqual([f["path"] for f in record["files"]][:3], ["README.md", "TODO.md", "docs/API.md"])
         self.assertNotIn("wiki", record)
 
     def test_pinned_sha_mismatch_fails(self):

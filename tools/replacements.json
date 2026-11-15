@@ -492,6 +492,22 @@
       "better": "RAID_CLASS_COLORS[classFile] (r, g, b, hex), or C_ClassColor.GetClassColor(classFile).",
       "source": "FrameXML Fonts.xml (RAID_CLASS_COLORS); ClassicAPI docs/API.md (C_ClassColor.GetClassColor)",
       "unless": "RAID_CLASS_COLORS"
+    },
+    {
+      "id": "weapon-enchant-polled",
+      "pattern": "\\bGetWeaponEnchantInfo\\s*\\(",
+      "finding": "Reads the weapon enchant without WEAPON_ENCHANT_CHANGED: on a timer, or on UNIT_INVENTORY_CHANGED, which a renewal of the same enchant does not fire.",
+      "better": "WEAPON_ENCHANT_CHANGED (applied, renewed, removed, lost a charge) and WEAPON_SLOT_CHANGED (another weapon in the slot): read GetWeaponEnchantInfo() on both, and set one timer for the next expiry.",
+      "source": "ClassicAPI docs/API.md#weapon_enchant_changed-event",
+      "unless": "WEAPON_ENCHANT_CHANGED"
+    },
+    {
+      "id": "own-settings-page",
+      "pattern": "\\bInterfaceOptions_AddCategory\\s*\\(",
+      "finding": "Draws its own settings page and hands it to the options window as a panel.",
+      "better": "A vertical layout in the Settings window: Settings.RegisterVerticalLayoutCategory, RegisterAddOnSetting and CreateCheckbox / CreateSlider / CreateDropdown. The window draws the controls, searches them and resets them to their defaults; the addon keeps only its settings and what a change does.",
+      "source": "CLASSICAPI_MASTER_REFERENCE.md#settings-window; ClassicAPI src/embed/AddOns/!!!ClassicAPI/Settings/Blizzard_Settings.lua",
+      "unless": "RegisterVerticalLayoutCategory"
     }
   ]
 }

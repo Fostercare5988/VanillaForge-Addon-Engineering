@@ -2457,6 +2457,7 @@ EQUIPMENT_SWAP_PENDING
 EQUIPMENT_SWAP_FINISHED
 HEARTHSTONE_BOUND
 WEAPON_SLOT_CHANGED
+WEAPON_ENCHANT_CHANGED
 ```
 
 ### `WEAPON_SLOT_CHANGED` event
@@ -2632,6 +2633,9 @@ Use `/classicapi` for exact current payload order if implementation depends on i
 ## 81. Misc Events
 
 ```text
+CVAR_UPDATE
+SETTINGS_LOADED
+SETTINGS_PANEL_OPEN
 LEARNED_SPELL_IN_SKILL_LINE
 PLAYER_TOTEM_UPDATE
 SOUNDKIT_FINISHED
@@ -2995,7 +2999,11 @@ Furthermore, if an addon intentionally declares a hard enhanced-client capabilit
 This reference is written from the maintainers' own docs, fetched into
 `.private/upstream/` by `python -B tools/fetch_upstream_docs.py` at the release
 pinned in `UPSTREAM_VERSIONS.json` (the only file that names a version), and
-from the source files cited where a section says [SOURCE-VERIFIED]. Where it
+from the source files cited where a section says [SOURCE-VERIFIED]. The copy
+also holds the client's own function and method lists (`docs/raw_globals.txt`,
+`docs/raw_methods.txt`), upstream's `TODO.md`, and the Lua of the addons the
+DLL embeds (`src/embed/AddOns/`), where the Settings window and the helper
+libraries are defined. Where it
 and upstream's `docs/API.md` disagree, API.md wins (section 105).
 
 ## 104. Taking a new release
@@ -3205,15 +3213,111 @@ After the end, progress returns to 0 and `IsDone` is false; use `OnFinished`.
 `SetMaxAnimFramerate` caps the update rate. Use this instead of Lua `OnUpdate`
 for fades, slides, pulses and spins.
 
-## Interface Options
+## Settings window
 
-`InterfaceOptions_AddCategory(panel)` (with `panel.name`, and optionally `parent`,
-`okay`, `cancel`, `default`, `refresh`) and
-`InterfaceOptionsFrame_OpenToCategory(panelOrName)`. The window opens from the
-**AddOn Options** button in the game menu. Okay and Cancel call every panel's
-`okay` / `cancel`, and Escape counts as Cancel. ClassicAPI lists its own
-settings there (soft targeting, stand/dismount/form settings, expanded
-cursors, its key bindings, player cache).
+One window holds every option page: ClassicAPI's port of the modern client's
+Settings window (`SettingsPanel`). It opens from **AddOn Options** in the game
+menu; ClassicAPI's own pages are on the first tab, addon pages on the AddOns
+tab. `docs/API.md` describes only "InterfaceOptions" and "SettingsUtil". The
+rest below is read from the window's own Lua, which ships inside the DLL and is
+copied to `.private/upstream/classicapi/src/embed/AddOns/!!!ClassicAPI/`
+(`Settings/Blizzard_Settings.lua`, `Blizzard_Setting.lua`,
+`Blizzard_SettingControls.lua`; `Options/Panel.lua` is a working example).
+[SOURCE-VERIFIED] there, [UNVERIFIED - TEST FIRST] in game.
+
+**A page the window draws** (a vertical layout: label, control, tooltip,
+search and Defaults come free):
+
+```lua
+local category
+SettingsRegistrar:AddRegistrant(function()
+    local layout
+    category, layout = Settings.RegisterVerticalLayoutCategory("MyAddon")
+    local sound = Settings.RegisterAddOnSetting(category, "MyAddon_Sound", "sound", MyAddonDB,
+        Settings.VarType.Boolean, "Play a sound", true)
+    Settings.CreateCheckbox(category, sound, "Tooltip text.")
+    Settings.RegisterAddOnCategory(category)
+end)
+SlashCmdList.MYADDON = function() Settings.OpenToCategory(category:GetID()) end
+```
+
+- `SettingsRegistrar:AddRegistrant(fn)` runs `fn` once `VARIABLES_LOADED` and
+  `PLAYER_ENTERING_WORLD` have both fired (at once when they already have), so
+  the saved table exists. After all registrants, `SETTINGS_LOADED` fires once.
+- Categories: `Settings.RegisterVerticalLayoutCategory(name)` and
+  `Settings.RegisterVerticalLayoutSubcategory(parent, name)` return `category,
+  layout`. `Settings.RegisterAddOnCategory(category)` lists a top category on
+  the AddOns tab. `category:GetID()` is what `Settings.OpenToCategory(id)` and
+  `Settings.GetCategory(id)` take.
+- Settings (each returns a setting object):
+  `Settings.RegisterAddOnSetting(category, variable, key, tbl, varType, name, default)`
+  keeps the value in `tbl[key]` and writes the default there when it is `nil`;
+  `Settings.RegisterProxySetting(category, variable, varType, name, default, getValue, setValue)`
+  keeps it wherever the two functions do;
+  `Settings.RegisterCVarSetting(category, cvar, varType, name)` is a cvar.
+  `variable` must be unique across all addons: prefix it with the addon's
+  name. `varType` is `Settings.VarType.Boolean`, `.Number` or `.String`; a
+  write of another type raises an error.
+- A setting: `GetValue()`, `SetValue(value)`, `GetDefaultValue()`,
+  `SetValueToDefault()`, and `NotifyUpdate()` after the value was changed from
+  outside the window, so the control redraws. By name:
+  `Settings.GetValue(variable)`, `Settings.SetValue(variable, value)`,
+  `Settings.NotifyUpdate(variable)`.
+- Hearing a change: `setting:SetValueChangedCallback(function(setting, value) end)`
+  or `Settings.SetOnValueChangedCallback(variable, function(owner, setting, value) end, owner)`.
+  It fires on every write, Defaults included. Addon, proxy and cvar settings
+  write at once; there is no Apply step unless a setting carries
+  `Settings.CommitFlag.Apply`.
+- Controls, each returning an initializer (the row):
+  `Settings.CreateCheckbox(category, setting, tooltip)`;
+  `Settings.CreateSlider(category, setting, options, tooltip)` with
+  `options = Settings.CreateSliderOptions(min, max, step)` and
+  `options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right [, format])`
+  to show the value;
+  `Settings.CreateDropdown(category, setting, optionsFunc, tooltip)`, where
+  `optionsFunc` returns `container:GetData()` of a
+  `Settings.CreateControlTextContainer()` filled with
+  `container:Add(value, label [, tooltip])`;
+  `Settings.CreateColorSwatch(category, setting, tooltip)` on a string setting
+  that holds a hex color (`CreateColorFromHexString`).
+- Rows added with `layout:AddInitializer(row)`:
+  `CreateSettingsListSectionHeaderInitializer(text [, tooltip])`;
+  `CreateSettingsButtonInitializer(name, buttonText, onClick, tooltip, addSearchTags)`
+  (`addSearchTags` must be `true` or `false`);
+  `CreateSettingsCheckboxSliderInitializer(cbSetting, cbLabel, cbTooltip, sliderSetting, sliderOptions, sliderLabel, sliderTooltip)`;
+  `CreateSettingsCheckboxDropdownInitializer(cbSetting, cbLabel, cbTooltip, dropdownSetting, dropdownOptions, dropDownLabel, dropDownTooltip)`;
+  `CreateSettingsCheckboxWithButtonInitializer(setting, buttonText, buttonClick, evaluateState, clickRequiresSet, tooltip)`;
+  a key binding row,
+  `CreateKeybindingEntryInitializer(C_KeyBindings.GetBindingIndex(action), true)`;
+  and ClassicAPI's own number box for a setting that takes any number,
+  `Settings.CreateControlInitializer("ClassicAPISettingsNumberBoxControlTemplate", setting, nil, tooltip)`
+  (it writes on Enter or when it loses the focus).
+- A row can depend on another:
+  `row:SetParentInitializer(parentRow, function() return parentSetting:GetValue() end)`
+  indents it and greys it out while the function returns false.
+  `row:AddShownPredicate(fn)` hides it; `row:AddSearchTags(...)` adds words
+  the search finds.
+- **Defaults** needs no addon code: the button asks All Settings or These
+  Settings, writes each setting's default and fires its callback.
+- From upstream's port notes: the slider rounds to its step in single
+  precision, and a value set from a setting does not report back as a change;
+  the window cannot be moved or resized; it has no Keybindings category yet.
+
+**A page the addon draws** (a canvas): `Settings.RegisterCanvasLayoutCategory(frame, name)`,
+then `Settings.RegisterAddOnCategory(category)`. The window calls the frame's
+`OnCommit`, `OnDefault` and `OnRefresh` when it has them. The older
+`InterfaceOptions_AddCategory(panel)` makes the same kind of page:
+`panel.name` is also the category ID, `panel.parent` names a category from
+either API, `okay` runs on Close, Apply and Escape, `cancel` only when the
+window closes without a commit, `default` from the Defaults dialog, `refresh`
+when the window opens and each time the panel shows.
+`InterfaceOptionsFrame_OpenToCategory(panelOrName)` still works, and the
+`InterfaceOptionsFrame*` names are parts of the new window
+(`InterfaceOptionsFrame` is `SettingsPanel`).
+
+`C_SettingsUtil.OpenSettingsPanel([categoryID [, scrollToElementName]])` fires
+`SETTINGS_PANEL_OPEN` with both arguments, and the window opens on that event;
+`Settings.OpenToCategory` calls it.
 
 ## Spellcast events
 
@@ -3281,6 +3385,40 @@ globals. It returns nothing outside a chat event.
 - `GetCursorInfo` returns `"petaction"` and `"pet", index`. A dragged action
   or auction item returns the plain item-ID link.
 - `UnitInLineOfSight` traces like the server. `UnitIsInMyGuild` follows 4.3.4.
+- `C_Timer.NewTimer` / `NewTicker` pass their handle to the callback
+  (`function(timer) timer:Cancel() end`); `C_Timer.After` passes nothing. A
+  function that is also called another way must not take its first argument
+  for something else.
+- `OnTooltipSetItem` gets the item's GUID as `arg1` (`(self, itemGUID)`). It
+  is `nil` when no item object is behind the tooltip: loot, merchant, auction,
+  mail and link rows.
+- A GUID string given to the `C_Item` functions also finds an item in the bank
+  (while it is open), on the keyring or on the buyback list.
+  `C_Item.GetItemLocation` returns keyring, bank and equipped-bag locations.
+- `frame:SetParent(parent)` makes a shown frame visible when the parent is
+  visible, and its `OnShow` runs; before, only a frame that was visible stayed
+  so. `OnShow` and `OnHide` may reparent frames while a parent shows or hides.
+- `CVAR_UPDATE(cvarName, value)` fires for every change of a cvar `GetCVar` can
+  read: at the start of the next frame, once per cvar. Before, only
+  `SetCVar(name, value, eventName)` fired it (it still does, with `eventName`
+  as the name).
+- `LOSS_OF_CONTROL_ADDED` passes `"player"` before the effect index.
+  `AUCTION_MULTISELL_START` passes the number of auctions.
+- `C_DateAndTime.CompareCalendarTime(a, b)` returns 1 when `a` is earlier; the
+  sign was reversed.
+- `C_EncodingUtil`: `CompressString` / `DecompressString` default to Deflate
+  and no longer detect Zlib or Gzip; `CompressString` takes
+  `Enum.CompressionLevel`; `Enum.Base64Variant.UrlSafe` is `StandardUrlSafe`,
+  padded; `SerializeJSON` / `SerializeCBOR` raise an error for a function or
+  userdata unless `options.ignoreSerializationErrors` is set.
+- `UnitIsAFK` / `UnitIsDND` raise a usage error for a non-string argument.
+  `C_Item.GetItemData`: `allowableClass` and `allowableRace` are -1 for all.
+  `CopyToClipboard` returns 0 when it could not write.
+- `notInterruptible` in the cast info no longer reads the client's interrupt
+  flags (a server can patch its own): it follows whether the spell can be
+  silenced and the caster's immunity auras.
+- `C_SwingTimer`'s ranged range follows the equipped weapon (Throw, Shoot or
+  Auto Shot), not the ammo.
 
 ## New API in brief
 
@@ -3303,6 +3441,21 @@ Slider and EditBox `Enable` / `Disable` / `IsEnabled`; Frame
 `inherits="A, B"` and `CreateFrame(type, name, parent, template, id)`;
 PlayerModel / DressUpModel methods; `GetItemStats(link [, statTable])` with
 per-school spell damage.
+
+`WEAPON_ENCHANT_CHANGED` (no payload): a temporary enchant on an equipped
+weapon (poison, oil, stone, imbue) was applied, renewed or removed, or lost a
+charge; once per frame. A renewal fires nothing else. Another weapon in the
+slot fires `WEAPON_SLOT_CHANGED` instead, so listen to both and read
+`GetWeaponEnchantInfo()`; no poll is needed. Also:
+`frame:SetPassThroughButtons(...)` (the named mouse buttons click through the
+frame; hover stays); `GetCursorDelta()`; `slider:SetEnabled`;
+`C_CVar.GetCVar` / `GetCVarDefault` / `RegisterCVar`; `Enum.BindingSet`;
+`C_KeyBindings.GetBindingIndex(action)`; `C_MountJournal.GetMountFromItem(itemID)`;
+the `ModelScene` frame type (3D scenes with actors); and, in the bundled
+addon, `CvarUtil`, `BindingUtil`, `MinimalSlider`, `DropdownWithSteppers` and
+`ColorPickerFrame:SetupColorPickerAndShow`. Every function and event that
+ClassicAPI registers has an API descriptor (`/classicapi`,
+`C_APIDocumentation`).
 
 **Soft targeting** (`softenemy`, `softfriend`, `softinteract`, `any*` tokens,
 `PLAYER_SOFT_*_CHANGED`) is off unless the player sets `SoftTargetEnemy` /

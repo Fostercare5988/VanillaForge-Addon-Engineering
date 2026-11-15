@@ -2,8 +2,10 @@
 """Download the DLL maintainers' documentation at the commits pinned in UPSTREAM_VERSIONS.json.
 
 Writes .private/upstream/<name>/<path> and .private/upstream/sources.json.
-Only documentation is fetched, never binaries. Files listed in an entry's
-file_shas must match their recorded Git blob SHA. UnitXP SP3 publishes no prose
+Only documentation is fetched, never binaries. ClassicAPI's also covers the
+client's own function and method lists and the Lua of the addons the DLL embeds
+(the Settings window and the helper libraries are described nowhere else).
+Files listed in an entry's file_shas must match their recorded Git blob SHA. UnitXP SP3 publishes no prose
 docs, so its command dispatcher source stands in for them. SuperWoW documents
 its API in the GitHub wiki, which has no pinned commit: the wiki is copied at its
 current head, and that commit is recorded as unpinned.
@@ -30,9 +32,12 @@ ROOT = Path(__file__).resolve().parents[1]
 USER_AGENT = "VanillaForge-Upstream-Docs/1.0"
 TIMEOUT = 30
 
-# Repository paths that hold each component's documentation. "*" does not cross "/".
+# Repository paths that hold each component's documentation. "*" does not cross "/";
+# a pattern ending in "/**" takes the Lua, XML and TOC files at any depth below it.
+SOURCE_SUFFIXES = (".lua", ".xml", ".toc")
 DOC_PATTERNS = {
-    "classicapi": ["README.md", "docs/*.md"],
+    "classicapi": ["README.md", "TODO.md", "docs/*.md", "docs/raw_globals.txt", "docs/raw_methods.txt",
+                   "src/embed/AddOns/**"],
     "superwow": ["README.md"],
     "nampower": ["*.md"],
     "unitxp_sp3": ["README.md", "dllmain.cpp"],
@@ -50,6 +55,8 @@ def git_blob_sha(data: bytes) -> str:
 
 
 def matches(path: str, pattern: str) -> bool:
+    if pattern.endswith("/**"):
+        return path.startswith(pattern[:-2]) and path.endswith(SOURCE_SUFFIXES)
     return path.count("/") == pattern.count("/") and fnmatch.fnmatchcase(path, pattern)
 
 
