@@ -26,10 +26,23 @@ What the kit models, and the evidence:
   units after the boolean.
 * Time (`now`, `GetTime`, `step(dt)`): `step` moves the clock, runs the
   C_Timer callbacks that are due (After, NewTimer, NewTicker; Cancel and
-  IsCancelled), then OnUpdate on every visible frame with the elapsed time as
+  IsCancelled; a timer or ticker callback gets its handle, After's gets
+  nothing), then OnUpdate on every visible frame with the elapsed time as
   `arg1` and the second argument, the way the client does once per frame.
 * Chat (`chat`, `DEFAULT_CHAT_FRAME`), `SlashCmdList`, `UISpecialFrames`,
   `UIParent`, and `categories` (InterfaceOptions_AddCategory, in order).
+* The Settings window (`Settings`, `SettingsRegistrar`, `C_SettingsUtil`, the
+  row makers), as ClassicAPI's Lua for it behaves
+  (`.private/upstream/classicapi/src/embed/AddOns/!!!ClassicAPI/Settings/`):
+  registrants run when VARIABLES_LOADED and PLAYER_ENTERING_WORLD have both
+  been fired, then SETTINGS_LOADED fires; an addon setting writes its default
+  into the saved table when the key is nil; a write of the wrong type and a
+  variable registered twice are errors; every write calls the change
+  callbacks, Defaults included. Nothing is drawn. A test uses a page through
+  `settingsWindow`: `find(name)`, `row(category, name)`, `use(variable,
+  value)` (the player uses the control), `defaults([category])` (the Defaults
+  button), `enabled(row)`, `visible(row)`, `choices(row)`, `click(row)`, and
+  `opened` (the category the window was last opened to).
 * Loading (`load_files`, `toc_files`, `xml_scripts`, and `xml_frames` for the
   frames an addon's XML makes): each file runs as the
   client loads it, `(addonName, namespace)` passed to the chunk and the file
@@ -49,7 +62,6 @@ KIT = r'''
 widgets, chat, categories = {}, {}, {}
 SlashCmdList, UISpecialFrames = {}, {}
 DEFAULT_CHAT_FRAME = { AddMessage = function(_, message) chat[#chat + 1] = message end }
-function InterfaceOptions_AddCategory(panel) categories[#categories + 1] = panel end
 function hooksecurefunc() end
 
 local function flag(v) if v then return 1 end end
@@ -189,8 +201,10 @@ function receives(w, e, unit) return w.events[e] ~= nil and wants(w, e, unit) en
 -- The kit builds no garbage per call (a suite may measure the addon's): one
 -- buffer per nesting depth, an insertion sort, no closures.
 local buffers, depth = {}, 0
+local settingsEvent
 function fire(e, ...)
     local first = ...
+    settingsEvent(e)
     depth = depth + 1
     local due = buffers[depth] or {}
     buffers[depth] = due
@@ -225,13 +239,14 @@ local seq = 0
 local function schedule(seconds, fn, iterations)
     seq = seq + 1
     local t = { at = now + seconds, seq = seq, seconds = seconds, fn = fn, left = iterations }
+    t.arg = t
     function t:Cancel() self.cancelled = true end
     function t:IsCancelled() return self.cancelled and true or false end
     timers[#timers + 1] = t
     return t
 end
 C_Timer = {
-    After = function(seconds, fn) schedule(seconds, fn, 1) end,
+    After = function(seconds, fn) schedule(seconds, fn, 1).arg = nil end,
     NewTimer = function(seconds, fn) return schedule(seconds, fn, 1) end,
     NewTicker = function(seconds, fn, iterations) return schedule(seconds, fn, iterations) end,
 }
@@ -258,7 +273,7 @@ local function dueTimers()
             seq = seq + 1
             t.at, t.seq = t.at + t.seconds, seq
         end
-        t.fn(t)
+        t.fn(t.arg)
     end
 end
 runTimers = dueTimers
@@ -279,6 +294,346 @@ function GetCoinTextureString(copper)
     if s > 0 then t[#t + 1] = s .. "s" end
     if c > 0 or #t == 0 then t[#t + 1] = c .. "c" end
     return table.concat(t, " ")
+end
+
+-- The Settings window. Vertical layouts and canvases, the three kinds of
+-- setting, the rows, Defaults and opening; nothing is drawn.
+settingsWindow = { categories = {}, settings = {} }
+local window, callbacks, lastID, lastOwner = settingsWindow, {}, 0, 0
+
+local Row = {}
+Row.__index = Row
+function Row:SetParentInitializer(parent, predicate)
+    assert(parent and parent ~= self)
+    self.parent = parent
+    if predicate then self:AddModifyPredicate(predicate) end
+end
+function Row:GetParentInitializer() return self.parent end
+function Row:AddModifyPredicate(fn) self.modify[#self.modify + 1] = fn end
+function Row:AddShownPredicate(fn) self.shown[#self.shown + 1] = fn end
+function Row:AddSearchTags(...)
+    for i = 1, select("#", ...) do self.tags[#self.tags + 1] = (select(i, ...)) end
+end
+function Row:GetData() return self.data end
+function Row:GetName() return self.data.name end
+function Row:GetTooltip() return self.data.tooltip end
+function Row:GetOptions() return self.data.options end
+function Row:GetSetting() return self.data.setting end
+local function newRow(template, data)
+    return setmetatable({ template = template, data = data, modify = {}, shown = {}, tags = {} }, Row)
+end
+
+local Layout = {}
+Layout.__index = Layout
+function Layout:AddInitializer(row) self.rows[#self.rows + 1] = row end
+function Layout:GetInitializers() return self.rows end
+function Layout:GetFrame() return self.frame end
+
+local Category = {}
+Category.__index = Category
+function Category:GetID() return self.ID end
+function Category:GetName() return self.name end
+function Category:GetParentCategory() return self.parent end
+function Category:GetSubcategories() return self.subcategories end
+local function newCategory(name, parent, frame)
+    lastID = lastID + 1
+    local c = setmetatable({ name = name, ID = lastID, parent = parent, subcategories = {},
+        layout = setmetatable({ rows = {}, frame = frame }, Layout) }, Category)
+    if parent then parent.subcategories[#parent.subcategories + 1] = c end
+    return c, c.layout
+end
+local function findCategory(list, id)
+    for _, c in ipairs(list) do
+        if c.ID == id then return c end
+        local sub = findCategory(c.subcategories, id)
+        if sub then return sub end
+    end
+end
+
+local function resolve(v) if type(v) == "function" then return v() end return v end
+local Setting = {}
+Setting.__index = Setting
+function Setting:GetName() return resolve(self.name) end
+function Setting:GetVariable() return self.variable end
+function Setting:GetVariableType() return self.variableType end
+function Setting:GetValue() return self.get() end
+function Setting:GetDefaultValue() return resolve(self.default) end
+function Setting:TriggerValueChanged(value)
+    local list = callbacks[self.variable]
+    if list then
+        for i = 1, #list do
+            local cb = list[i]
+            if cb and not cb.gone then cb.fn(cb.owner, self, value) end
+        end
+    end
+end
+function Setting:SetValue(value)
+    if self.locked then return end
+    if self.get() ~= value then
+        if type(value) ~= self.variableType then
+            error(string.format("SetValue '%s' requires '%s' type, not '%s' type.",
+                tostring(self.name), self.variableType, type(value)))
+        end
+        self.locked = true
+        self.set(value)
+        self.locked = false
+    end
+    self:TriggerValueChanged(value)
+end
+function Setting:SetValueToDefault()
+    local default = self:GetDefaultValue()
+    if default == nil then return false end
+    self:SetValue(default)
+    return true
+end
+function Setting:NotifyUpdate() self:TriggerValueChanged(self.get()) end
+function Setting:SetValueChangedCallback(fn)
+    Settings.SetOnValueChangedCallback(self.variable, function(_, setting, value) fn(setting, value) end)
+end
+local function register(category, setting)
+    for _, other in ipairs(window.settings) do
+        if other.variable == setting.variable then
+            error(string.format("Setting variable '%s' was previously registered.", setting.variable))
+        end
+    end
+    setting.category = category
+    window.settings[#window.settings + 1] = setmetatable(setting, Setting)
+    return setting
+end
+local function checked(name, variable, variableType, default)
+    if variableType == nil then
+        assert(default ~= nil)
+        variableType = type(resolve(default))
+    end
+    if type(resolve(name)) ~= "string" then
+        error(string.format("'name' for variable '%s' requires string type or a function that returns a string.", tostring(variable)))
+    end
+    if type(variable) ~= "string" then error(string.format("'variable' for '%s' requires string type.", resolve(name))) end
+    if default ~= nil and type(resolve(default)) ~= variableType then
+        error(string.format("'defaultValue' argument for '%s', '%s' variable type '%s' doesn't match default value type '%s'.",
+            resolve(name), variable, variableType, type(resolve(default))))
+    end
+    return variableType
+end
+
+Settings = {
+    VarType = { Boolean = "boolean", String = "string", Number = "number" },
+    Default = { True = true, False = false },
+}
+function Settings.RegisterAddOnSetting(category, variable, key, tbl, variableType, name, default)
+    for _, v in ipairs({ variable, key, variableType, name, default }) do
+        if type(v) == "function" then error("Function values are not allowed for settings APIs") end
+    end
+    variableType = checked(name, variable, variableType, default)
+    assert(type(tbl) == "table", "'variableTbl' argument must be a table.")
+    if tbl[key] == nil then tbl[key] = default end
+    return register(category, { name = name, variable = variable, variableType = variableType, default = default,
+        get = function() return tbl[key] end, set = function(v) tbl[key] = v end })
+end
+function Settings.RegisterProxySetting(category, variable, variableType, name, default, getValue, setValue)
+    variableType = checked(name, variable, variableType, default)
+    return register(category, { name = name, variable = variable, variableType = variableType, default = default,
+        get = getValue, set = setValue })
+end
+-- A cvar as the window reads it: "1" and "0" for a boolean, a number by tonumber.
+function Settings.RegisterCVarSetting(category, cvar, variableType, name)
+    variableType = checked(name, cvar, variableType)
+    local function read(text)
+        if text == nil then return nil end
+        if variableType == "boolean" then return text == "1" end
+        if variableType == "number" then return tonumber(text) end
+        return text
+    end
+    return register(category, { name = name, variable = cvar, variableType = variableType,
+        default = function() return read(GetCVarDefault and GetCVarDefault(cvar)) end,
+        get = function() return read(GetCVar(cvar)) end,
+        set = function(v) SetCVar(cvar, variableType == "boolean" and (v and "1" or "0") or tostring(v)) end })
+end
+function Settings.GetSetting(variable)
+    for _, setting in ipairs(window.settings) do
+        if setting.variable == variable then return setting end
+    end
+end
+function Settings.GetValue(variable)
+    local setting = Settings.GetSetting(variable)
+    if setting then return setting:GetValue() end
+end
+function Settings.SetValue(variable, value)
+    local setting = Settings.GetSetting(variable)
+    if not setting then error(string.format("Setting for variable '%s' did not exist.", tostring(variable))) end
+    setting:SetValue(value)
+end
+function Settings.NotifyUpdate(variable)
+    local setting = Settings.GetSetting(variable)
+    if setting then setting:NotifyUpdate() end
+end
+function Settings.SetOnValueChangedCallback(variable, fn, owner)
+    if owner == nil then lastOwner = lastOwner + 1; owner = lastOwner end
+    local cb = { fn = fn, owner = owner }
+    callbacks[variable] = callbacks[variable] or {}
+    table.insert(callbacks[variable], cb)
+    return { Unregister = function() cb.gone = true end }
+end
+
+function Settings.RegisterVerticalLayoutCategory(name) return newCategory(name) end
+function Settings.RegisterVerticalLayoutSubcategory(parent, name) return newCategory(name, parent) end
+function Settings.RegisterCanvasLayoutCategory(frame, name) return newCategory(name, nil, frame) end
+function Settings.RegisterCanvasLayoutSubcategory(parent, frame, name) return newCategory(name, parent, frame) end
+function Settings.RegisterAddOnCategory(category)
+    category.addon = true
+    window.categories[#window.categories + 1] = category
+end
+function Settings.RegisterCategory(category) window.categories[#window.categories + 1] = category end
+function Settings.GetCategory(id) return findCategory(window.categories, id) end
+function Settings.OpenToCategory(id, scrollToElementName) C_SettingsUtil.OpenSettingsPanel(id, scrollToElementName) end
+C_SettingsUtil = {
+    OpenSettingsPanel = function(id, scrollToElementName)
+        fire("SETTINGS_PANEL_OPEN", id, scrollToElementName)
+        window.shown, window.opened = true, Settings.GetCategory(id)
+    end,
+    NotifySettingsLoaded = function() fire("SETTINGS_LOADED") end,
+}
+-- The older API makes a canvas page whose category ID is the panel's name.
+function InterfaceOptions_AddCategory(panel)
+    categories[#categories + 1] = panel
+    local parent
+    for _, c in ipairs(window.categories) do
+        if panel.parent and c.ID == panel.parent then parent = c end
+    end
+    local category = newCategory(panel.name, parent, panel)
+    category.ID, category.addon = panel.name, true
+    if not parent then window.categories[#window.categories + 1] = category end
+end
+
+local function control(template, category, setting, options, tooltip)
+    local row = Settings.CreateControlInitializer(template, setting, options, tooltip)
+    category.layout:AddInitializer(row)
+    return row
+end
+function Settings.CreateElementInitializer(template, data) return newRow(template, data) end
+function Settings.CreateControlInitializer(template, setting, options, tooltip)
+    local row = newRow(template, { setting = setting, name = setting:GetName(), options = options or {}, tooltip = tooltip })
+    row:AddSearchTags(setting:GetName())
+    return row
+end
+function Settings.CreateCheckbox(category, setting, tooltip)
+    assert(setting:GetVariableType() == "boolean")
+    return control("SettingsCheckboxControlTemplate", category, setting, nil, tooltip)
+end
+function Settings.CreateSlider(category, setting, options, tooltip)
+    assert(setting:GetVariableType() == "number" and options ~= nil)
+    return control("SettingsSliderControlTemplate", category, setting, options, tooltip)
+end
+function Settings.CreateDropdown(category, setting, options, tooltip)
+    assert(options ~= nil)
+    return control("SettingsDropdownControlTemplate", category, setting, options, tooltip)
+end
+function Settings.CreateColorSwatch(category, setting, tooltip, options)
+    return control("SettingsColorSwatchControlTemplate", category, setting, options, tooltip)
+end
+function Settings.CreateSliderOptions(minValue, maxValue, rate)
+    local options = { minValue = minValue or 0, maxValue = maxValue or 1, formatters = {} }
+    options.steps = rate and (maxValue - minValue) / rate or 100
+    function options:SetLabelFormatter(labelType, format) self.formatters[labelType] = format or true end
+    return options
+end
+function Settings.CreateControlTextContainer()
+    local container = { data = {} }
+    function container:Add(value, label, tooltip)
+        local entry = { text = label, label = label, tooltip = tooltip, value = value }
+        self.data[#self.data + 1] = entry
+        return entry
+    end
+    function container:GetData() return self.data end
+    return container
+end
+MinimalSliderWithSteppersMixin = { Label = { Left = 1, Right = 2, Top = 3, Min = 4, Max = 5 } }
+
+function CreateSettingsListSectionHeaderInitializer(name, tooltip)
+    return newRow("SettingsListSectionHeaderTemplate", { name = name, tooltip = tooltip })
+end
+function CreateSettingsButtonInitializer(name, buttonText, buttonClick, tooltip, addSearchTags)
+    assert(addSearchTags ~= nil)
+    local row = newRow("SettingButtonControlTemplate",
+        { name = name, buttonText = buttonText, buttonClick = buttonClick, tooltip = tooltip })
+    if addSearchTags then row:AddSearchTags(name, buttonText) end
+    return row
+end
+function CreateSettingsCheckboxWithButtonInitializer(setting, buttonText, buttonClick, evaluateState, clickRequiresSet, tooltip)
+    local row = Settings.CreateControlInitializer("SettingsCheckboxWithButtonControlTemplate", setting, nil, tooltip)
+    row.data.buttonText, row.data.buttonClick = buttonText, buttonClick
+    row.data.OnEvaluateState, row.data.clickRequiresSet = evaluateState, clickRequiresSet
+    return row
+end
+function CreateSettingsCheckboxSliderInitializer(cbSetting, cbLabel, cbTooltip, sliderSetting, sliderOptions, sliderLabel, sliderTooltip)
+    local row = newRow("SettingsCheckboxSliderControlTemplate", { name = cbLabel, tooltip = cbTooltip,
+        cbSetting = cbSetting, cbLabel = cbLabel, cbTooltip = cbTooltip, sliderSetting = sliderSetting,
+        sliderOptions = sliderOptions, sliderLabel = sliderLabel, sliderTooltip = sliderTooltip })
+    row:AddSearchTags(cbLabel, sliderLabel)
+    return row
+end
+function CreateSettingsCheckboxDropdownInitializer(cbSetting, cbLabel, cbTooltip, dropdownSetting, dropdownOptions, dropDownLabel, dropDownTooltip)
+    return newRow("SettingsCheckboxDropdownControlTemplate", { name = cbLabel, tooltip = cbTooltip,
+        cbSetting = cbSetting, cbLabel = cbLabel, cbTooltip = cbTooltip, dropdownSetting = dropdownSetting,
+        dropdownOptions = dropdownOptions, dropDownLabel = dropDownLabel, dropDownTooltip = dropDownTooltip })
+end
+
+-- Registrants wait for the saved variables and the world, as the window's do.
+SettingsRegistrar = { registrants = {} }
+function SettingsRegistrar:AddRegistrant(fn)
+    if self.ready then fn() else self.registrants[#self.registrants + 1] = fn end
+end
+local seen = {}
+settingsEvent = function(e)
+    if SettingsRegistrar.ready or (e ~= "VARIABLES_LOADED" and e ~= "PLAYER_ENTERING_WORLD") then return end
+    seen[e] = true
+    if seen.VARIABLES_LOADED and seen.PLAYER_ENTERING_WORLD then
+        SettingsRegistrar.ready = true
+        for _, fn in ipairs(SettingsRegistrar.registrants) do fn() end
+        C_SettingsUtil.NotifySettingsLoaded()
+    end
+end
+
+-- What a test does with a page.
+function window.find(name)
+    local function search(list)
+        for _, c in ipairs(list) do
+            if c.name == name then return c end
+            local sub = search(c.subcategories)
+            if sub then return sub end
+        end
+    end
+    return search(window.categories)
+end
+function window.row(category, name)
+    for _, row in ipairs(category.layout.rows) do
+        if row.data.name == name then return row end
+    end
+end
+local function all(list)
+    for _, fn in ipairs(list) do
+        if not fn() then return false end
+    end
+    return true
+end
+function window.enabled(row) return all(row.modify) end
+function window.visible(row) return all(row.shown) end
+function window.choices(row) return resolve(row.data.options) end
+function window.click(row) return row.data.buttonClick() end
+function window.use(variable, value) Settings.SetValue(variable, value) end
+-- The Defaults button: These Settings for a category, All Settings without one.
+function window.defaults(category)
+    for _, setting in ipairs(window.settings) do
+        if not category or setting.category == category then setting:SetValueToDefault() end
+    end
+    for _, c in ipairs(window.categories) do
+        local frame = c.layout.frame
+        if frame and (not category or c == category) then
+            -- rawget: a widget answers every capitalised name with a no-op.
+            local default = rawget(frame, "OnDefault") or rawget(frame, "default")
+            if default then default(frame) end
+        end
+    end
 end
 
 UIParent = newWidget("Frame", "UIParent")

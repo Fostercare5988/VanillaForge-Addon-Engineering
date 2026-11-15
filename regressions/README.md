@@ -41,7 +41,10 @@ source.
 Widgets, events (ClassicAPI's unit filters), time and timers, and the loader
 (TOC order, `(addonName, namespace)`, saved variables restored when the client
 does, Lua 5.0 table loops, XML frame names), written once from the docs and
-pinned by `tests/test_wowkit.py`. A harness adds only its addon's API and data,
+pinned by `tests/test_wowkit.py`; and ClassicAPI's Settings window
+(`tests/test_wowkit_settings.py`), which a test uses through `settingsWindow`
+the way a player does: `use(variable, value)`, `defaults(category)`,
+`enabled(row)`, `click(row)`, `opened`. A harness adds only its addon's API and data,
 and redefines a `Widget` method only where it records something its own way.
 The kit builds no garbage of its own, so a garbage test measures the addon.
 
