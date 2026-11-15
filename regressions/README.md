@@ -73,6 +73,7 @@ The kit builds no garbage of its own, so a garbage test measures the addon.
 | BrainwasherPro | `regressions/BrainwasherPro` | bwp_env.py |
 | EasyPoisons | `regressions/EasyPoisons` | ep_env.py |
 | !ErrorLog | `regressions/ErrorLog` | inline |
+| FostercareBars | `regressions/FostercareBars` | fb_env.py (the rebuild of ActionBarProfiles; its suite goes at release) |
 | FostercareBattleText | `regressions/FostercareBattleText` | _fbt_runtime.py |
 | FostercareNameplates | `regressions/FostercareNameplates` | fnp_env.py |
 | FostercareTweaks | `regressions/FostercareTweaks` | ft_env.py for new tests; older files inline (`BASE` in test_audit_2026_10_26.py) |
