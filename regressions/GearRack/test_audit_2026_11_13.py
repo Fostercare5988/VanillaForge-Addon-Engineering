@@ -55,6 +55,8 @@ C_Item = {
         t[k], worn[slot] = worn[slot], t[k]
         equips = equips + 1
         fire("ITEM_LOCK_CHANGED")
+        fire("PLAYER_EQUIPMENT_CHANGED", slot, worn[slot] and 1)
+        if loc.equipmentSlotIndex then fire("PLAYER_EQUIPMENT_CHANGED", loc.equipmentSlotIndex, t[k] and 1) end
         fire("UNIT_INVENTORY_CHANGED", "player")
     end,
 }
@@ -92,7 +94,7 @@ class SetsRememberTheCopy(unittest.TestCase):
         # The other copy is worn now (another poison); the set must swap to its own.
         env = world("worn[16] = item(100, '0xA'); bags[0][1] = item(100, '0xB')")
         env.run(SAVE_MAIN_HAND)
-        env.run("worn[16], bags[0][1] = bags[0][1], worn[16]; fire('UNIT_INVENTORY_CHANGED', 'player'); fire('BAG_UPDATE', 0)")
+        env.run("worn[16], bags[0][1] = bags[0][1], worn[16]; fire('PLAYER_EQUIPMENT_CHANGED', 16, 1); fire('BAG_UPDATE', 0)")
         settle(env, 0.5)
         self.assertFalse(env.eval("GearRack.IsSetEquipped('Instant')"))
         env.run("GearRack.EquipSet('Instant')")
@@ -113,7 +115,7 @@ class SetsRememberTheCopy(unittest.TestCase):
         # Instant (copy A) replaces copy B; restoring must bring B back, not A.
         env = world("worn[16] = item(100, '0xA'); bags[0][1] = item(100, '0xB')")
         env.run(SAVE_MAIN_HAND)
-        env.run("worn[16], bags[0][1] = bags[0][1], worn[16]; fire('UNIT_INVENTORY_CHANGED', 'player'); fire('BAG_UPDATE', 0)")
+        env.run("worn[16], bags[0][1] = bags[0][1], worn[16]; fire('PLAYER_EQUIPMENT_CHANGED', 16, 1); fire('BAG_UPDATE', 0)")
         settle(env, 0.5)
         env.run("GearRack.EquipSet('Instant')")
         settle(env)
@@ -239,10 +241,11 @@ class ReadyAlerts(unittest.TestCase):
         self.assertIsNone(env.eval("next(GearRackCharDB.ItemsUsed)"))
         self.assertIsNone(wake(env))
 
-    def test_saved_trinket_watch_moves_to_the_shared_watch(self):
-        # Older versions kept the trinkets' watch apart; the client restores it before login.
-        env = world(TIMED + "worn[14] = item(100, '0xT'); cooldowns[14] = { now - 10, 120 }")
-        env.run("GearRackCharDB.trinkets.ItemsUsed = { [100] = 30 }; GearRackCharDB.ItemsUsed = nil; GearRack.NormalizeSavedData()")
+    def test_the_old_trinket_watch_is_swept(self):
+        # Older versions kept the trinkets' watch apart. Every saved file holds it
+        # empty (2026-11-15), so the load sweep clears it instead of moving it.
+        env = world(TIMED + "worn[14] = item(100, '0xT')")
+        env.run("GearRackCharDB.trinkets.ItemsUsed = {}; GearRackCharDB.ItemsUsed = { [100] = 30 }; GearRack.NormalizeSavedData()")
         self.assertEqual(env.eval("GearRackCharDB.ItemsUsed[100]"), 30)
         self.assertIsNone(env.eval("GearRackCharDB.trinkets.ItemsUsed"))
 

@@ -52,5 +52,43 @@ class ReadyEvent(unittest.TestCase):
         self.assertIn("ready!", env.eval("chat[#chat]"))
 
 
+class AltControls(unittest.TestCase):
+    """A locked bar's controls stayed up to 0.75 s after Alt was let go: a ticker
+    looked at the key. They now go on ClassicAPI's MODIFIER_STATE_CHANGED."""
+
+    ALT = "alt = 1; function IsAltKeyDown() return alt end; function IsLeftAltKeyDown() return alt end; function IsRightAltKeyDown() end"
+
+    def test_controls_go_when_alt_is_let_go(self):
+        env = world(self.ALT)
+        env.run("GearRackUI_SlashHandler('lock'); this = GearRackUIInv16; GearRackUI_Inv_OnEnter()")
+        self.assertTrue(env.eval("GearRackUI_ControlFrame:IsShown()"))
+        env.run("alt = nil; fire('MODIFIER_STATE_CHANGED', 'LALT', 0)")
+        self.assertFalse(env.eval("GearRackUI_ControlFrame:IsShown()"))
+        self.assertIsNone(env.eval("GearRackEngine.TimerPool.ControlFrame"), "nothing polls the key")
+
+    def test_an_unlocked_bar_keeps_its_controls(self):
+        env = world(self.ALT)
+        env.run("GearRackUI_SlashHandler('unlock'); alt = nil; fire('MODIFIER_STATE_CHANGED', 'LALT', 0)")
+        self.assertTrue(env.eval("GearRackUI_ControlFrame:IsShown()"))
+
+
+class SavedSweep(unittest.TestCase):
+    """Retired keys were cleared one line each, and the schema number nothing read
+    was written back every login (KNOWN_PATTERNS KP-64)."""
+
+    def test_keys_nothing_owns_are_cleared_and_the_rest_kept(self):
+        env = world("")
+        env.run('''GearRackDB.schema, GearRackCharDB.schema = 1, 1
+            GearRackDB.settings.BigCooldown, GearRackDB.trinketOptions.TinyTooltips = "ON", "OFF"
+            GearRackCharDB.trinkets.ItemsUsed, GearRackDB.Old = {}, {}
+            GearRack.NormalizeSavedData()''')
+        for key in ("GearRackDB.schema", "GearRackCharDB.schema", "GearRackDB.settings.BigCooldown",
+                    "GearRackDB.trinketOptions.TinyTooltips", "GearRackCharDB.trinkets.ItemsUsed", "GearRackDB.Old"):
+            self.assertIsNone(env.eval(key), key)
+        for key in ("GearRackDB.settings.Notify", "GearRackDB.trinketOptions.KeepOpen", "GearRackCharDB.trinkets.XPos",
+                    "GearRackDB.eventsInitialized", "GearRackCharDB.KeepManualTrinkets"):
+            self.assertIsNotNone(env.eval(key), key)
+
+
 if __name__ == "__main__":
     unittest.main()

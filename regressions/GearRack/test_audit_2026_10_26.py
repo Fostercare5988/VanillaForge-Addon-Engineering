@@ -102,9 +102,9 @@ class TrinketSortTooltipTests(unittest.TestCase):
             GearRackDB = { settings = { ShowTooltips = "''' + show_tooltips + r'''" },
                 trinketOptions = { ShowTooltips = "ON", TooltipFollow = "OFF" } }
             GearRackCharDB = { queues = { Sort = { [0] = { "11810", 0 } } } }
-        ''' + between(CORE, "function GearRack.NormalizeSavedData()", "-- Narrow public queries") + r'''
+        ''' + "GearRackTrinkets = { CurrentlySorting = 0, Defaults = {}, DisplayDefaults = {} }"
+          + between(CORE, "-- The keys a saved table owns", "-- Narrow public queries") + r'''
             GearRack.NormalizeSavedData()
-            GearRackTrinkets = { CurrentlySorting = 0 }
             function FauxScrollFrame_GetOffset() return 0 end
             function GetItemInfo(id)
                 if tostring(id) == "11810" then return "Force of Will", "|cffa335ee|Hitem:11810:0:0:0|h[Force of Will]|h|r" end
@@ -229,62 +229,64 @@ class TimerOwnerTests(unittest.TestCase):
         self.assertEqual(len(lua.eval("fired")), 1)
         self.assertEqual(len(lua.eval("reported")), 1)
 
-    def test_control_frame_check_stops_on_an_unlocked_bar(self):
-        lua = self.lua()
-        lua.execute('''
-            local user = "Me"
-            GearRackDB = { bars = { Me = { Locked = "OFF" } } }
-            function IsAltKeyDown() end
-            GearRackUI_ControlFrame = { Hide = function() table.insert(fired, "hide") end }
-            GearRackUI = {}
-        ''' + between(EQUIPMENT, "function GearRackUI.ControlFrameUpdate()", "-- Only the current source") + '''
-            GearRackEngine.CreateTimer("ControlFrame", GearRackUI.ControlFrameUpdate, .75, 1)
-            GearRackEngine.StartTimer("ControlFrame")
-            Advance(10)
-        ''')
-        self.assertIsNone(lua.eval('GearRackEngine.TimerEnabled("ControlFrame")'))
-        self.assertEqual(len(lua.eval("fired")), 0)
-
 
 TRINKETS = (ROOT / "src/Trinkets.lua").read_text("utf-8")
 
 
 class InventoryEventTests(unittest.TestCase):
     """UNIT_INVENTORY_CHANGED also fires for durability, charges and ammo. Every one
-    rebuilt the trinket view and the whole bar, even when no worn item changed."""
+    rebuilt the trinket view and the whole bar, even when no worn item changed. Worn
+    items come from PLAYER_EQUIPMENT_CHANGED (2026-11-15), one slot per change."""
 
     def lua(self):
         lua = runtime()
         lua.execute(r'''
             GearRack.initialized = true
-            GearRack.EquippedItemIDs, GearRack.BagContainerIDs = {}, {}
+            GearRack.EquippedItemIDs = {}
             WORN = { [13] = 11810, [16] = 12783 }
-            function GetInventoryItemID(_, s) return WORN[s] end
+            reads = 0
+            function GetInventoryItemID(_, s) reads = reads + 1; return WORN[s] end
             function GearRack.EquippedGUID(s) return WORN[s] and ("0x4" .. s .. WORN[s]) end
             local equippedGUID = GearRack.EquippedGUID
             function GearRack.InvalidateBag() table.insert(calls, "bags") end
             function GearRack.Wake() end
             GearRackTrinkets = { UpdateWornTrinkets = function() table.insert(calls, "trinkets") end }
             GearRackEngine = {}
-        ''' + between(CORE, "local equippedSlotIDs,equippedGUIDs", "-- Global cache notifications")
+        ''' + between(CORE, "-- What each slot wears", "-- Global cache notifications")
           + between(CORE, "function GearRack.UIEvent(", "-- Measured in play"))
         return lua
 
     def test_unchanged_equipment_skips_the_views(self):
         lua = self.lua()
-        first = lua.eval('GearRack.UIEvent("UNIT_INVENTORY_CHANGED", "player")')
+        first = lua.eval('GearRack.UIEvent("PLAYER_EQUIPMENT_CHANGED", 13)')
         lua.execute("calls = {}")
-        second = lua.eval('GearRack.UIEvent("UNIT_INVENTORY_CHANGED", "player")')
+        second = lua.eval('GearRack.UIEvent("PLAYER_EQUIPMENT_CHANGED", 13)')
         self.assertTrue(first)
         self.assertFalse(second)
         self.assertEqual(list(lua.eval("calls").values()), [])
 
     def test_a_new_item_refreshes_the_views(self):
         lua = self.lua()
-        lua.eval('GearRack.UIEvent("UNIT_INVENTORY_CHANGED", "player")')
+        lua.eval('GearRack.UIEvent("PLAYER_EQUIPMENT_CHANGED", 13)')
         lua.execute("calls = {}; WORN[13] = 19406")
-        self.assertTrue(lua.eval('GearRack.UIEvent("UNIT_INVENTORY_CHANGED", "player")'))
+        self.assertTrue(lua.eval('GearRack.UIEvent("PLAYER_EQUIPMENT_CHANGED", 13)'))
         self.assertEqual(list(lua.eval("calls").values()), ["bags", "trinkets"])
+
+    def test_a_weapon_change_leaves_the_trinkets_alone(self):
+        lua = self.lua()
+        lua.eval('GearRack.UIEvent("PLAYER_EQUIPMENT_CHANGED", 16)')
+        lua.execute("calls = {}; WORN[16] = 12784")
+        self.assertTrue(lua.eval('GearRack.UIEvent("PLAYER_EQUIPMENT_CHANGED", 16)'))
+        self.assertEqual(list(lua.eval("calls").values()), ["bags"])
+
+    def test_a_poison_charge_reads_no_slot(self):
+        lua = self.lua()
+        lua.eval('GearRack.UIEvent("PLAYER_EQUIPMENT_CHANGED", 13)')
+        lua.execute("calls = {}; reads = 0")
+        for _ in range(5):
+            self.assertFalse(lua.eval('GearRack.UIEvent("UNIT_INVENTORY_CHANGED", "player")'))
+        self.assertEqual(lua.eval("reads"), 0)
+        self.assertEqual(list(lua.eval("calls").values()), [])
 
     def test_worn_trinket_spirals_redraw_only_on_change(self):
         lua = runtime()
@@ -309,12 +311,13 @@ class LeanDataTests(unittest.TestCase):
     def test_retired_saved_data_is_cleared_on_load(self):
         lua = runtime()
         lua.execute(r'''
-            GearRackUI = { DefaultSettings = {} }
+            GearRackUI = { DefaultSettings = { Notify = "ON" } }
+            GearRackTrinkets = { Defaults = { KeepOpen = "OFF" }, DisplayDefaults = {} }
             GearRackDB = { settings = { BigCooldown = "ON", CooldownNumbers = "ON", QualityBorders = "ON",
                     TinyTooltip = "OFF", Minimap = {}, Notify = "ON" },
                 trinketOptions = { CooldownCount = "ON", LargeCooldown = "ON", TinyTooltips = "OFF", KeepOpen = "OFF" },
                 sets = { ["Me of R"] = { Sets = { ["GearRackEngine-CombatQueue"] = { [1] = {} }, Tank = { icon = "x" } } } } }
-        ''' + between(CORE, "function GearRack.NormalizeSavedData()", "-- Narrow public queries")
+        ''' + between(CORE, "-- The keys a saved table owns", "-- Narrow public queries")
           + " GearRack.NormalizeSavedData()")
         for key in ("BigCooldown", "CooldownNumbers", "QualityBorders", "TinyTooltip", "Minimap"):
             self.assertIsNone(lua.eval(f"GearRackDB.settings.{key}"), key)

@@ -18,7 +18,7 @@ SETS_XML = (ROOT / "src/Sets.xml").read_text("utf-8")
 def runtime():
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(r'''
-        GearRack = { enabled = true, CharacterKey = function() return "Me" end }
+        GearRack = { enabled = true, user = "Me" }
         GearRackDB = { sets = { Me = { Sets = {
             Tank = { icon = "Interface\\Icons\\INV_Shield_06" },
             Own = { icon = "Interface\\AddOns\\GearRack\\media\\GearRack-Icon.tga" } } } } }
