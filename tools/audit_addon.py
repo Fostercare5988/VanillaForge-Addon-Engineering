@@ -21,6 +21,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path, PureWindowsPath
 
 from vanillaforge_linter import HeuristicStructuralScanner as Scanner, VanillaForgeAuditor
+from known_api import KnownAPI, check_addon
 
 LIMITS = {"files": 1024, "edges": 8192, "file_bytes": 2_000_000, "total_bytes": 32_000_000,
           "depth": 64, "sites_per_module": 500, "lint_records_per_kind": 100}
@@ -90,6 +91,9 @@ def audit(addon, toc_name=None, *, source_only=False):
               "graph_errors": [], "tests": {"status": "not_run"}}
     visited, active, total = set(), set(), 0
     auditor = VanillaForgeAuditor()
+    # Rules K1/K2 read the whole addon once; their findings join each file's errors.
+    unknown = {} if source_only else {Path(name).as_posix(): messages
+                                      for name, messages in check_addon(addon, KnownAPI()).items()}
 
     def walk(base, name, owner, depth=0):
         nonlocal total
@@ -129,6 +133,7 @@ def audit(addon, toc_name=None, *, source_only=False):
             lint = (auditor.audit_toc_file(str(path), str(addon),
                     require_target_interface=toc_name is not None or path.name.casefold() in target_tocs)[:3] if suffix == ".toc"
                     else auditor.audit_file(str(path)))
+            lint = (lint[0] + unknown.get(Path(relative).as_posix(), []), lint[1], lint[2])
             module["lint"] = {kind: {"count": len(items), "records": items[:LIMITS["lint_records_per_kind"]]}
                               for kind, items in zip(("errors", "warnings", "infos"), lint)}
         if not source_only and suffix in {".lua", ".xml"}:

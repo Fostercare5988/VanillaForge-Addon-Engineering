@@ -12,6 +12,9 @@ import re
 import argparse
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from known_api import KnownAPI, check_addon  # noqa: E402
+
 
 # Ensure standard output can print utf-8 characters on Windows consoles
 if hasattr(sys.stdout, 'reconfigure'):
@@ -310,9 +313,12 @@ class VanillaForgeAuditor:
     WARNING marks modernization hazards. The third list (infos) is kept for the
     callers' sake and is always empty: its rules were never shown and are gone.
     Supports inline suppressions: -- vanillaforge-ignore: <RULE_ID> or all.
+    With `known` (a KnownAPI), a folder scan also fails every call and event
+    that neither the client nor a DLL doc knows (rules K1 and K2).
     """
-    def __init__(self, global_ignores=None):
+    def __init__(self, global_ignores=None, known=None):
         self.global_ignores = set(r.upper() for r in (global_ignores or []))
+        self.known = known
 
     def _is_suppressed(self, line, rule_id):
         if 'ALL' in self.global_ignores or rule_id.upper() in self.global_ignores:
@@ -734,6 +740,15 @@ class VanillaForgeAuditor:
                     total_warnings += len(warns)
                     total_infos += len(infs)
 
+        # Rules K1/K2: a call or an event that neither the client nor a DLL
+        # doc knows (tools/known_api.py). It reads the whole addon, because a
+        # name one file defines is known in the others.
+        if self.known is not None:
+            for rel, messages in check_addon(dir_path, self.known, self.global_ignores).items():
+                errs, warns, infs = results.get(rel, ([], [], []))
+                results[rel] = (errs + messages, warns, infs)
+                total_errors += len(messages)
+
         return results, has_startup_guard, readme_warnings, structure_warnings, total_errors, total_warnings, total_infos
 
 
@@ -749,7 +764,8 @@ def main():
         print(f"{RED}[ERROR] Target path does not exist: {target}{RESET}")
         sys.exit(1)
 
-    auditor = VanillaForgeAuditor(global_ignores=args.ignore)
+    known = KnownAPI()
+    auditor = VanillaForgeAuditor(global_ignores=args.ignore, known=known)
 
     if os.path.isfile(target):
         print(f"\n{BOLD}{CYAN}=== Scanning File: {os.path.basename(target)} ==={RESET}\n")
@@ -787,6 +803,11 @@ def main():
             for sw in structure_warnings:
                 print(f"  {WARN_BADGE} Structure Check: {sw}")
                 total_warnings += 1
+
+        if known.loaded:
+            print(f"  {PASS_BADGE} API names: every call and event checked against the DLL docs and the client")
+        else:
+            print(f"  {INFO_BADGE} API names not checked: no doc copies (tools/fetch_upstream_docs.py, tools/extract_framexml.py)")
 
         print(f"\n{BOLD}File Diagnostics:{RESET}")
         for rel_file, (errors, warnings, infos) in results.items():
