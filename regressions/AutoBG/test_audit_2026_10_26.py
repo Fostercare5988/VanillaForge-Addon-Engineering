@@ -230,19 +230,6 @@ class FlagWatchArathiOnlyTests(unittest.TestCase):
                     '"Tester claims the Stormpike Aid Station!", "Alliance")')
         self.assertIsNone(lua.eval('AutoBG_Settings.FlagSpots'))
 
-    def test_saved_alterac_valley_spots_are_dropped_and_arathi_kept(self):
-        lua = LuaRuntime(unpack_returned_tuples=True)
-        lua.execute(test_flag_watch.SETUP)
-        lua.execute(r'''AutoBG_Settings.FlagSpots = {
-            [529] = { ["Stables"] = { y = 1200.5, x = 1167.0, n = 10 },
-                      ["Farm"] = { y = 873.4, x = 805.2, n = 10 } },
-            [30] = { ["Stormpike Aid Station"] = { y = -29.2, x = 639.7, n = 10 },
-                     ["Icewing Bunker"] = { y = -356.3, x = 202.5, n = 6 } } }''')
-        lua.execute(test_flag_watch.WATCH)
-        lua.execute('AutoBG_FlagWatch.onEvent(AutoBG_FlagWatch, "PLAYER_ENTERING_WORLD")')
-        self.assertEqual(sorted(lua.eval('AutoBG_Settings.FlagSpots[529]').keys()), ["Farm", "Stables"])
-        self.assertIsNone(lua.eval('AutoBG_Settings.FlagSpots[30]'))
-
 
 class RetiredSettingsTests(unittest.TestCase):
     def test_load_clears_preview_and_unread_settings(self):

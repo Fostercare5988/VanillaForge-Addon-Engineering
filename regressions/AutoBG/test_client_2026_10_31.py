@@ -299,30 +299,46 @@ class ArenaPetTests(unittest.TestCase):
     def health(self, lua, guid):
         lua.execute('AutoBG_ArenaPetsListener.scripts.OnEvent(AutoBG_ArenaPetsListener, "UNIT_HEALTH_GUID", "%s")' % guid)
 
+    def listed(self, lua):
+        """The pet rows on screen once the frame is drawn."""
+        lua.execute('for _, fn in ipairs(timers) do fn() end; timers = {}')
+        return lua.eval('(function() local n = 0; for i = 1, 6 do local r = _G["AutoBG_ArenaPet" .. i]; '
+                        'if r and r.shown then n = n + 1 end end; return n end)()')
+
     def test_an_enemy_pet_is_listed_with_its_owner(self):
         lua = self.setup()
         self.health(lua, "0xF140000000000001")
-        self.assertEqual(lua.eval('AutoBG_ArenaPets.Count()'), 1)
-        lua.execute('for _, fn in ipairs(timers) do fn() end')
+        self.assertEqual(self.listed(lua), 1)
         self.assertEqual(lua.eval('AutoBG_ArenaPet1.Name.text'), "Felguard |cffaaaaaaSpanthout|r")
 
     def test_a_totem_and_a_player_are_not_pets(self):
         lua = self.setup()
         self.health(lua, "0xF140000000000002")
         self.health(lua, "0x0000000000000042")
-        self.assertEqual(lua.eval('AutoBG_ArenaPets.Count()'), 0)
+        self.assertEqual(self.listed(lua), 0)
 
     def test_a_new_pet_replaces_the_old_one_of_the_same_owner(self):
         lua = self.setup()
         lua.execute('function UnitIsMinion() return true end')
         self.health(lua, "0xF140000000000001")
         self.health(lua, "0xF140000000000003")
-        self.assertEqual(lua.eval('AutoBG_ArenaPets.Count()'), 1)
+        self.assertEqual(self.listed(lua), 1)
 
     def test_nothing_is_listed_in_a_battleground(self):
         lua = self.setup(arena=False)
         self.health(lua, "0xF140000000000001")
-        self.assertEqual(lua.eval('AutoBG_ArenaPets.Count()'), 0)
+        self.assertEqual(self.listed(lua), 0)
+
+    def test_the_look_runs_only_while_a_pet_is_listed(self):
+        # 2026-11-15: it ran once a second through the whole arena, pets or not.
+        lua = self.setup()
+        before = lua.eval('#tickers')
+        self.health(lua, "0x0000000000000042")  # a player: no pet
+        self.assertEqual(lua.eval('#tickers'), before)
+        self.health(lua, "0xF140000000000001")
+        self.assertEqual(lua.eval('#tickers'), before + 1)
+        lua.execute('AutoBG_ArenaPets.SetActive(false)')
+        self.assertEqual(lua.eval('#tickers'), before)
 
     def test_the_owner_of_a_seen_pet_is_added_to_the_enemy_list(self):
         # A hunter who stays out of sight is still an enemy once his pet shows.
@@ -349,7 +365,7 @@ class ArenaPetTests(unittest.TestCase):
         lua.execute('for _, fn in ipairs(timers) do fn() end')
         self.assertEqual(lua.eval('AutoBG_ArenaPet1.Name.text'), "Wolf |cffaaaaaaSpanthout|r")
         lua.execute('petName = "Rex"; timers = {}')
-        lua.execute('AutoBG_ArenaPets.Tick()')
+        lua.execute('tickers[#tickers]()')  # the once-a-second look while a pet is listed
         lua.execute('for _, fn in ipairs(timers) do fn() end')
         self.assertEqual(lua.eval('AutoBG_ArenaPet1.Name.text'), "Rex |cffaaaaaaSpanthout|r")
 
@@ -361,7 +377,8 @@ class ArenaExtrasTests(unittest.TestCase):
     def setup(self):
         import test_targets_guid_events as tge
         from addon_loader import ROOT, load
-        lua = tge.runtime(sighting=False)
+        # The strip's ages are duration text bindings; __frame() is a drawn frame.
+        lua = tge.runtime(sighting=False, clock=True)
         lua.execute('''ARENA = "Arena"
             function AutoBG_IsArenaZone() return true end
             function GetBattlefieldStatus(i) if i == 1 then return "active", "Arena" end return "none" end
@@ -392,14 +409,14 @@ class ArenaExtrasTests(unittest.TestCase):
 
     def test_the_power_bar_follows_the_enemy_power(self):
         lua = self.setup()
-        lua.execute('AutoBG_Arena.Tick()')
+        lua.execute('__frame()')
         self.assertTrue(lua.eval('AutoBG_TargetButton1.PowerBar.shown'))
 
     def test_only_a_key_ability_gets_an_icon(self):
         lua = self.setup()
         self.event(lua, "UNIT_CASTEVENT", self.GUID, "x", "CAST", 11)
         self.event(lua, "UNIT_CASTEVENT", self.GUID, "x", "CAST", 21)
-        lua.execute('AutoBG_Arena.Tick()')
+        lua.execute('__frame()')
         self.assertEqual(lua.eval('AutoBG_TargetButton1.Strip.slots[1].Icon.texture'), "Icon21")
         self.assertFalse(lua.eval('AutoBG_TargetButton1.Strip.slots[2].shown'))
 
@@ -408,7 +425,7 @@ class ArenaExtrasTests(unittest.TestCase):
         self.event(lua, "BUFF_ADDED_OTHER", self.GUID, 1, 99, 1, 60, 0, 0)  # first sight: the unit is known
         lua.execute('NOW = 1003')
         self.event(lua, "BUFF_ADDED_OTHER", self.GUID, 1, 22, 1, 60, 0, 0)
-        lua.execute('NOW = 1005; AutoBG_Arena.Tick()')
+        lua.execute('NOW = 1005; __frame()')
         slot = 'AutoBG_TargetButton1.Strip.slots[1]'
         self.assertEqual(lua.eval(slot + '.Icon.texture'), "Icon22")
         self.assertEqual(lua.eval(slot + '.Age.text'), "2")  # seconds since: no length known yet
@@ -417,7 +434,7 @@ class ArenaExtrasTests(unittest.TestCase):
         self.assertEqual(lua.eval('AutoBG_ArenaOptions().Durations[22]'), 10)
         lua.execute('NOW = 1020')
         self.event(lua, "BUFF_ADDED_OTHER", self.GUID, 1, 22, 1, 60, 0, 0)
-        lua.execute('NOW = 1024; AutoBG_Arena.Tick()')
+        lua.execute('NOW = 1024; __frame()')
         self.assertEqual(lua.eval(slot + '.Age.text'), "6")  # 10 s long, 4 s gone
 
     def test_a_used_ability_is_grey_and_the_buff_wins_while_it_is_on(self):
@@ -425,7 +442,7 @@ class ArenaExtrasTests(unittest.TestCase):
         self.event(lua, "UNIT_CASTEVENT", self.GUID, "x", "CAST", 21)
         lua.execute('NOW = 1003')
         self.event(lua, "BUFF_ADDED_OTHER", self.GUID, 1, 21, 1, 60, 0, 0)
-        lua.execute('AutoBG_Arena.Tick()')
+        lua.execute('__frame()')
         self.assertTrue(lua.eval('AutoBG_TargetButton1.Strip.slots[1].shown'))
         self.assertFalse(lua.eval('AutoBG_TargetButton1.Strip.slots[2].shown'))
 
@@ -456,7 +473,7 @@ class ArenaExtrasTests(unittest.TestCase):
 
     def test_nothing_is_decorated_outside_an_arena(self):
         lua = self.setup()
-        lua.execute('AutoBG_Arena.Tick(); AutoBG_Arena.SetActive(false)')
+        lua.execute('__frame(); AutoBG_Arena.SetActive(false)')
         self.assertFalse(lua.eval('AutoBG_TargetButton1.Strip.shown'))
 
 

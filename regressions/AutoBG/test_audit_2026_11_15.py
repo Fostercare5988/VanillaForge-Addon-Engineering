@@ -5,7 +5,12 @@ Each test fails on the commit before its fix (tools/run_suite.py --old).
 import unittest
 from wowlua import LuaRuntime
 
+from wowlua import LuaRuntime as _Lua
+
 import test_ab_projection as projection
+import test_carrier_health as carrier
+import test_client_2026_10_31 as client
+import test_flag_watch as flag_watch
 import test_queue_types as queue_env
 import test_spirit_wave as spirit
 
@@ -109,6 +114,76 @@ class SpiritWaveEventTests(unittest.TestCase):
         spirit.fire(lua, "PLAYER_ENTERING_WORLD")
         spirit.fire(lua, "AREA_SPIRIT_HEALER_IN_RANGE")
         self.assertFalse(list(lua.eval('{AutoBG_NextSpiritWave()}').values())[1])
+
+
+
+class ArenaStripWithoutPassTests(unittest.TestCase):
+    """The arena strip ran a 0.5 s pass for the whole match to redraw its
+    ages (and made garbage doing it, /lag 2026-11-14 in Blood Ring). The ages
+    are engine-written now and the strip is drawn on events."""
+
+    def setup(self):
+        case = client.ArenaExtrasTests()
+        lua = case.setup()
+        lua.execute('__frame()')
+        return case, lua
+
+    def test_no_pass_runs_in_an_arena(self):
+        case, lua = self.setup()
+        # Targets' own tickers (sweep, scoreboard, range) are not the strip's.
+        lua.execute('made = 0; local new = C_Timer.NewTicker; C_Timer.NewTicker = function(...) made = made + 1; return new(...) end')
+        lua.execute('AutoBG_Arena.SetActive(false); AutoBG_Arena.SetActive(true); __frame()')
+        self.assertEqual(lua.eval('made'), 0)
+
+    def test_the_age_counts_by_itself(self):
+        case, lua = self.setup()
+        case.event(lua, "UNIT_CASTEVENT", case.GUID, "x", "CAST", 21)
+        lua.execute('__frame(); NOW = 1045; __frame()')
+        self.assertEqual(lua.eval('AutoBG_TargetButton1.Strip.slots[1].Age.text'), "45")
+        lua.execute('NOW = 1130; __frame()')
+        self.assertEqual(lua.eval('AutoBG_TargetButton1.Strip.slots[1].Age.text'), "2m")
+
+    def test_a_used_ability_leaves_after_five_minutes(self):
+        case, lua = self.setup()
+        case.event(lua, "UNIT_CASTEVENT", case.GUID, "x", "CAST", 21)
+        lua.execute('__frame(); NOW = 1299; __frame()')
+        self.assertTrue(lua.eval('AutoBG_TargetButton1.Strip.slots[1].shown'))
+        lua.execute('NOW = 1301; __frame()')
+        self.assertFalse(lua.eval('AutoBG_TargetButton1.Strip.slots[1].shown'))
+
+
+class CarrierPreviewTests(unittest.TestCase):
+    def test_the_preview_cards_need_no_ticker(self):
+        # The sample carriers stand still; the 0.5 s scan ran under them for nothing.
+        lua = _Lua(unpack_returned_tuples=True)
+        lua.execute(carrier.BASE.replace('function GetRealZoneText() return "Warsong Gulch" end',
+                                         'function GetRealZoneText() return "Orgrimmar" end')
+                    + '\nmade = 0; C_Timer.NewTicker = function() made = made + 1; return { Cancel = function() end } end')
+        lua.execute(carrier.FC)
+        lua.execute('AutoBG_FC_SetPreview(true); AutoBG_FC_UpdateVisibility()')
+        self.assertIn("Leafwhisper", lua.eval('AutoBG_AllianceFC.nameText.text'))
+        self.assertEqual(lua.eval('made'), 0)
+
+
+class FlagWatchSwitchTests(unittest.TestCase):
+    def runtime(self, on):
+        lua = _Lua(unpack_returned_tuples=True)
+        lua.execute(flag_watch.SETUP)
+        lua.execute('AutoBG_Settings.Targets = { FlagWatch = %s }' % ("true" if on else "false"))
+        lua.execute(flag_watch.WATCH)
+        lua.execute('AutoBG_FlagWatch.onEvent(AutoBG_FlagWatch, "PLAYER_ENTERING_WORLD")')
+        return lua
+
+    def test_switched_off_it_looks_at_no_flag(self):
+        # It looked four times a second in Arathi Basin with the warnings off.
+        self.assertIsNone(self.runtime(False).eval('tick'))
+
+    def test_switched_on_in_a_match_it_starts_looking(self):
+        lua = self.runtime(False)
+        lua.execute('AutoBG_Settings.Targets.FlagWatch = true; AutoBG_FlagWatch:Sync()')
+        self.assertIsNotNone(lua.eval('tick'))
+        lua.execute('AutoBG_Settings.Targets.FlagWatch = false; AutoBG_FlagWatch:Sync()')
+        self.assertIsNone(lua.eval('tick'))
 
 
 if __name__ == '__main__':

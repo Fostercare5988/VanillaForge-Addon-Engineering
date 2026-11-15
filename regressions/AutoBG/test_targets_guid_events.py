@@ -89,6 +89,8 @@ AutoBG_CLASS_COLORS = {
 function AutoBG_LoadPosition() end
 function AutoBG_SavePosition() end
 function AutoBG_GetEnemyCarrier() return enemyCarrier end
+-- AutoBG_Arena.lua, loaded after this file: an arena's strip hears when the rows change.
+AutoBG_Arena = { SetActive = function() end, RowsChanged = function() end, Refresh = function() end }
 C_UnitAuras = { GetAuraSlots = function() return nil, 0 end }
 function GetTime() return NOW or 1000 end
 MAX_BATTLEFIELD_QUEUES = 3

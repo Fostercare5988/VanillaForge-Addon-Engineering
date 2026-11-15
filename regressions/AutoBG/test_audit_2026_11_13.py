@@ -103,7 +103,7 @@ class RankLengthTests(unittest.TestCase):
         case.event(lua, "BUFF_REMOVED_OTHER", guid, 1, 22, 1, 60, 0, 0)  # 22 lasts 10 s
         lua.execute('NOW = 1020')
         case.event(lua, "BUFF_ADDED_OTHER", guid, 1, 23, 1, 60, 0, 0)  # the other rank
-        lua.execute('NOW = 1021; AutoBG_Arena.Tick()')
+        lua.execute('NOW = 1021; __frame()')
         # No length known for 23 yet: the seconds since it began, not 10 - 1.
         self.assertEqual(lua.eval('AutoBG_TargetButton1.Strip.slots[1].Age.text'), "1")
 
@@ -282,12 +282,12 @@ class SpyRestTests(unittest.TestCase):
 
 
 class ArenaWriteTests(unittest.TestCase):
-    """Power follows NamPower's power events; the pass rewrites nothing unchanged."""
+    """Power follows NamPower's power events; a frame with nothing new writes nothing."""
 
     def setup(self):
         case = client.ArenaExtrasTests()
         lua = case.setup()
-        lua.execute('AutoBG_Arena.Tick(); local bar = AutoBG_TargetButton1.PowerBar; bar.SetWidth = function(self, w) self.w = w end')
+        lua.execute('__frame(); local bar = AutoBG_TargetButton1.PowerBar; bar.SetWidth = function(self, w) self.w = w end')
         return case, lua
 
     def test_a_power_change_shows_at_once(self):
@@ -299,9 +299,9 @@ class ArenaWriteTests(unittest.TestCase):
     def test_a_second_pass_writes_no_icon_again(self):
         case, lua = self.setup()
         case.event(lua, "UNIT_CASTEVENT", case.GUID, "x", "CAST", 21)
-        lua.execute('AutoBG_Arena.Tick(); writes = 0; local icon = AutoBG_TargetButton1.Strip.slots[1].Icon; '
+        lua.execute('__frame(); writes = 0; local icon = AutoBG_TargetButton1.Strip.slots[1].Icon; '
                     'local set = icon.SetTexture; icon.SetTexture = function(...) writes = writes + 1; return set(...) end')
-        lua.execute('AutoBG_Arena.Tick()')
+        lua.execute('__frame()')
         self.assertEqual(lua.eval('writes'), 0)
 
 
