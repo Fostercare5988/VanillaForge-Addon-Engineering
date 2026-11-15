@@ -476,6 +476,22 @@
       "finding": "Equips gear sets by moving items through the cursor in stages, with its own lock scans, retries and timeouts.",
       "better": "C_EquipmentSet: sets saved from worn gear by item GUID, UseEquipmentSet swaps each item server-side without the cursor (bank too while open; in combat only weapons), EQUIPMENT_SWAP_PENDING/FINISHED report it. Slots 1-19 only (no ammo); a set is saved from worn gear, never from an item list. GearRack moves its engine onto it next.",
       "source": "ClassicAPI docs/API.md#c_equipmentsetuseequipmentsetsetid, #equipment_swap_finished-event"
+    },
+    {
+      "id": "spirit-healer-time-polled",
+      "pattern": "GetAreaSpiritHealerTime\\(",
+      "finding": "Reads the time to the spirit healer's wave. A lead when it is read on a ticker or every pass to follow the wave.",
+      "better": "Read it once on AREA_SPIRIT_HEALER_IN_RANGE, as the client's own popup does; the wave is periodic, so one reading syncs it.",
+      "source": "FrameXML UIParent.lua (AREA_SPIRIT_HEALER_IN_RANGE), StaticPopup.lua (AREA_SPIRIT_HEAL OnShow)",
+      "unless": "AREA_SPIRIT_HEALER_IN_RANGE"
+    },
+    {
+      "id": "class-colors-copy",
+      "pattern": "SHAMAN\\s*=\\s*\\{\\s*r\\s*=",
+      "finding": "Keeps its own table of class colors. On this client RAID_CLASS_COLORS already has Shaman in blue and a hex code per class.",
+      "better": "RAID_CLASS_COLORS[classFile] (r, g, b, hex), or C_ClassColor.GetClassColor(classFile).",
+      "source": "FrameXML Fonts.xml (RAID_CLASS_COLORS); ClassicAPI docs/API.md (C_ClassColor.GetClassColor)",
+      "unless": "RAID_CLASS_COLORS"
     }
   ]
 }
