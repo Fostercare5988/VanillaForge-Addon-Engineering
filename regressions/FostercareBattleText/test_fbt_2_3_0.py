@@ -2,8 +2,7 @@
 
 The engine filters the combat log (ClassicAPI's CombatLogAddFilter), so the
 nearby combat of others never reaches Lua; ticks of damage and healing over
-time and power gains are throttled for 3 s, like modern MSBT's
-dot/hot/powerThrottleDuration; buff and debuff stacks show their count. Each
+time and power gains were throttled for 3 s (taken out again in 2.4.1); buff and debuff stacks show their count. Each
 test fails on 2.2.0 (ccf7444). Lua model only (_fbt_runtime.py).
 """
 import unittest
@@ -59,22 +58,23 @@ class EngineFilter(unittest.TestCase):
         self.assertGreater(lua.eval("#combatFilters"), 0)
 
 
-class Throttle(unittest.TestCase):
-    def tick(self, lua, dest="0xENEMY", name="Twin", amount=50):
-        lua.execute(f'CL("SPELL_PERIODIC_DAMAGE", "0xPLAYER", "Hero", "{dest}", "{name}", 1943, "Rupture", 1, {amount}, 0, 1)')
+class EveryTick(unittest.TestCase):
+    """2.4.1, 2026-11-16: the 3 s throttle of 2.3.0 is gone; players found the
+    merged dots confusing. Each tick shows on its own. Fails on 2.4.0 (9e7d7d1)."""
 
-    def test_damage_over_time_ticks_show_once_per_three_seconds(self):
+    def tick(self, lua, amount=50):
+        lua.execute(f'CL("SPELL_PERIODIC_DAMAGE", "0xPLAYER", "Hero", "0xENEMY", "Twin", 1943, "Rupture", 1, {amount}, 0, 1)')
+
+    def test_each_damage_over_time_tick_shows_on_its_own(self):
         lua = m.runtime()
         display(lua)
         self.tick(lua)
-        lua.execute("RunTimersUpTo(0.3)")
-        self.assertEqual(texts(lua, "Outgoing"), [])
+        lua.execute("RunTimersUpTo(0.5)")
         self.tick(lua, amount=60)
-        lua.execute("RunTimers()")
+        lua.execute("RunTimersUpTo(1.0)")
         shown = texts(lua, "Outgoing")
-        self.assertEqual(len(shown), 1)
-        self.assertIn("110", shown[0])
-        self.assertIn("[2 Hits]", shown[0])
+        self.assertEqual(len(shown), 2)
+        self.assertFalse(any("Hits" in t for t in shown))
 
     def test_direct_damage_still_shows_at_once(self):
         lua = m.runtime()
@@ -83,36 +83,23 @@ class Throttle(unittest.TestCase):
         lua.execute("RunTimersUpTo(0.3)")
         self.assertEqual(len(texts(lua, "Outgoing")), 1)
 
-    def test_heal_over_time_ticks_are_throttled(self):
+    def test_heal_over_time_ticks_show_within_the_merge_delay(self):
         lua = m.runtime()
         display(lua)
-        for _ in range(2):
-            lua.execute('CL("SPELL_PERIODIC_HEAL", "0xHEALER", "Priest", "0xPLAYER", "Hero", 139, "Renew", 2, 100, 0, 0)')
+        lua.execute('CL("SPELL_PERIODIC_HEAL", "0xHEALER", "Priest", "0xPLAYER", "Hero", 139, "Renew", 2, 100, 0, 0)')
         lua.execute("RunTimersUpTo(0.3)")
-        self.assertEqual(texts(lua, "Incoming"), [])
-        lua.execute("RunTimers()")
         shown = texts(lua, "Incoming")
         self.assertEqual(len(shown), 1)
-        self.assertIn("+200", shown[0])
+        self.assertIn("+100", shown[0])
 
-    def test_power_gains_are_throttled_and_add_up(self):
+    def test_each_power_gain_shows_at_once(self):
         lua = m.runtime()
         display(lua)
         for _ in range(3):
             lua.execute('CL("SPELL_PERIODIC_ENERGIZE", "0xPLAYER", "Hero", "0xPLAYER", "Hero", 12051, "Evocation", 64, 10, 0)')
-        lua.execute("RunTimersUpTo(0.3)")
-        self.assertEqual(texts(lua, "Notification"), [])
-        lua.execute("RunTimers()")
         shown = texts(lua, "Notification")
-        self.assertEqual(len(shown), 1)
-        self.assertIn("+30 Mana", shown[0])
-
-    def test_a_world_change_drops_throttled_ticks(self):
-        lua = m.runtime()
-        display(lua)
-        self.tick(lua)
-        lua.execute('Fire("PLAYER_ENTERING_WORLD"); RunTimers()')
-        self.assertEqual(texts(lua, "Outgoing"), [])
+        self.assertEqual(len(shown), 3)
+        self.assertTrue(all("+10 Mana" in t for t in shown))
 
 
 class Stacks(unittest.TestCase):
