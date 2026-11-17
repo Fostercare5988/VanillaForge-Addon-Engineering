@@ -78,8 +78,15 @@ C_Item = {
     end,
 }
 
--- Macros (index -> {name, body}) and sets (setID -> name).
-function GetMacroInfo(index) local m = macros[index]; if m then return m.name, 'Icon', m.body end end
+-- Macros (index -> {name, body}) and sets (setID -> name). GetMacroInfo also takes a name.
+function GetMacroIndexByName(name)
+    for index = 1, 36 do if macros[index] and macros[index].name == name then return index end end
+    return 0
+end
+function GetMacroInfo(index)
+    if type(index) == 'string' then index = GetMacroIndexByName(index) end
+    local m = macros[index]; if m then return m.name, 'Icon' .. index, m.body end
+end
 function PickupMacro(index) if macros[index] then cursor = { kind = 'macro', id = index } end end
 C_EquipmentSet = {
     GetEquipmentSetID = function(name) for id, value in pairs(sets) do if value == name then return id end end end,
@@ -113,35 +120,159 @@ function pressEnter(text)
     this = nil
 end
 
--- FostercareTweaks' Extra Rows 2-7 (its ExtraActions.lua returns).
-function tweaksOn(rows)
-    local extra = { ProfileVersion = 1, rows = rows or { version = 1, rows = { [2] = { [1] = { kind = 'spell', id = 5 } } } }, log = {} }
-    function extra:GetProfile() if self.failGet then return nil, self.failGet end; return clone(self.rows) end
-    function extra:ValidateProfile(saved)
-        self.log[#self.log + 1] = 'validate after ' .. changes() .. ' changes'
-        if self.failValidate then return nil, self.failValidate end
-        return clone(saved)
-    end
-    function extra:ApplyProfile(checked)
-        self.log[#self.log + 1] = 'apply after ' .. changes() .. ' changes'
-        if self.failApply then return false, self.failApply end
-        self.applied = checked; return true
-    end
-    FostercareTweaks = { ExtraActions = extra }
-end
-
 function chatText() return table.concat(chat, '\n') end
 function bagsChanged() fire('BAG_UPDATE', 0); fire('BAG_UPDATE_DELAYED'); step(0) end
--- Every frame registered for an event, or with an OnUpdate.
-function busyFrames()
+-- The frames that listen from login on (the bars' slot events, test_at_rest pins
+-- them); busyFrames() names what any other frame listens to, and every OnUpdate.
+restFrames = {}
+function markRest() for _, w in ipairs(widgets) do if next(w.events) then restFrames[w] = true end end end
+local function listening(all)
     local out = {}
     for _, w in ipairs(widgets) do
-        for event in pairs(w.events) do out[#out + 1] = event end
+        if all or not restFrames[w] then for event in pairs(w.events) do out[#out + 1] = event end end
         if w.scripts.OnUpdate then out[#out + 1] = 'OnUpdate' end
     end
     table.sort(out)
     return table.concat(out, ',')
 end
+function busyFrames() return listening(false) end
+function allEvents() return listening(true) end
+'''
+
+BARS = r'''
+-- The action slots as the buttons read them (stock ActionButton.lua's calls;
+-- ClassicAPI's ### C_ActionBar.EnableActionRangeCheck, ### GetCursorInfo()).
+-- A slot's texture is 'tex:<kind>:<id>'; usable, cooldown and state are tables a test sets.
+usable, cooldowns, current, autoRepeat, attackSlots = {}, {}, {}, {}, {}
+rangeChecks, used, overrides, keys = {}, {}, {}, {}
+CURRENT_ACTIONBAR_PAGE, bonusOffset, playerClass, LOCK_ACTIONBAR = 1, 0, 'ROGUE', '0'
+RANGE_INDICATOR = '*dot*'
+function UnitClass() return playerClass, playerClass end
+function hooksecurefunc(name, f) if name == 'CooldownFrame_SetTimer' then hookedTimer = f end end
+function IsShiftKeyDown() return shift end
+function GetBonusBarOffset() return bonusOffset end
+local reads = {}
+function readsOf(slot) return reads[slot] or 0 end
+function HasAction(slot) return bars[slot] and 1 or nil end
+function GetActionTexture(slot)
+    reads[slot] = (reads[slot] or 0) + 1
+    local a = bars[slot]; if a then return 'tex:' .. a.kind .. ':' .. tostring(a.id) end
+end
+function GetActionText(slot) local a = bars[slot]; if a and a.kind == 'macro' then return macros[a.id].name end end
+function IsUsableAction(slot) local u = usable[slot]; if u == nil then return 1 end; if u == 'mana' then return nil, 1 end; return u end
+function GetActionCooldown(slot) local c = cooldowns[slot]; if c then return c[1], c[2], 1 end; return 0, 0, 0 end
+function IsConsumableAction(slot) local a = bars[slot]; return a and a.kind == 'item' and 1 or nil end
+function GetActionCount(slot) return C_Item.GetItemCount(bars[slot].id) end
+function IsItemAction(slot) local a = bars[slot]; return a and a.kind == 'item' and 1 or nil end
+function IsEquippedAction(slot) local a = bars[slot]; return a and a.kind == 'item' and equipment[a.id] and 1 or nil end
+function IsCurrentAction(slot) return current[slot] end
+function IsAutoRepeatAction(slot) return autoRepeat[slot] end
+function IsAttackAction(slot) return attackSlots[slot] end
+function UseAction(slot, checkCursor, onSelf) used[#used + 1] = slot end
+reagentSpells = {}
+C_ActionBar = {
+    EnableActionRangeCheck = function(slot, on) rangeChecks[slot] = (rangeChecks[slot] or 0) + (on and 1 or -1) end,
+    GetSpell = function(slot) local a = bars[slot]; return a and a.kind == 'spell' and a.id or 0 end,
+}
+function IsConsumableSpell(id) return reagentSpells[id] ~= nil end
+function IsConsumableItem(id) return 1 end
+
+-- Keys (### Override bindings) and the tooltip.
+function GetBindingKey(command) local k = keys[command]; if k then return k[1], k[2] end end
+function GetBindingText(key) return 'k' .. key end
+function SetOverrideBindingClick(owner, priority, key, name) overrides[key] = name end
+function ClearOverrideBindings() overrides = {} end
+function pressKey(key) _G[overrides[key]]:Click('LeftButton') end
+function Widget:Click(button) run(self, 'OnClick', button or 'LeftButton') end
+GameTooltip = CreateFrame('GameTooltip', 'GameTooltip')
+function GameTooltip:SetOwner(owner) self.owner = owner end
+function GameTooltip:IsOwned(f) return self.owner == f and 1 or nil end
+function GameTooltip:Hide() self.owner = nil end
+for _, m in ipairs({ 'SetAction', 'SetSpellByID', 'SetHyperlink', 'SetEquipmentSet' }) do
+    local method = m
+    GameTooltip[method] = function(self, value) self.shows = method .. ' ' .. tostring(value) end
+end
+
+-- The look: ClassicAPI's formatter, the Cooldown frame's calls recorded.
+Enum = { NumericRuleFormatRounding = { Up = 1 } }
+C_StringUtil = { CreateNumericRuleFormatter = function() return { SetBreakpoints = function() end } end }
+function Widget:SetCooldown(start, duration) self.cd = start .. '+' .. duration end
+function Widget:Clear() self.cd = nil end
+function Widget:SetNormalTexture(path) self.normalPath = path end
+function Widget:GetLeft() return self.left or 100 end
+function Widget:GetTop() return self.top or 200 end
+function Widget:GetEffectiveScale() return self.scale or 1 end
+local kitCreate = CreateFrame
+local PARTS = { Icon = 'Texture', Flash = 'Texture', HotKey = 'FontString', Count = 'FontString',
+    Name = 'FontString', Border = 'Texture', NormalTexture = 'Texture', Cooldown = 'Model' }
+function CreateFrame(kind, name, parent, template)
+    local f = kitCreate(kind, name, parent)
+    if template == 'ActionButtonTemplate' then
+        for part, partKind in pairs(PARTS) do newWidget(partKind, name .. part, f) end
+        _G[name .. 'Flash']:Hide()
+    end
+    return f
+end
+
+-- The stock bars and MainMenuBar's pieces (FrameXML ActionBarFrame.xml, MainMenuBar.xml).
+MainMenuBar = newWidget('Frame', 'MainMenuBar', UIParent)
+MainMenuBarArtFrame = newWidget('Frame', 'MainMenuBarArtFrame', MainMenuBar)
+for _, name in ipairs({ 'BonusActionBarFrame', 'MultiBarBottomLeft', 'MultiBarBottomRight', 'MultiBarLeft',
+    'MultiBarRight', 'MainMenuExpBar', 'MainMenuBarMaxLevelBar', 'ReputationWatchBar', 'ReputationWatchStatusBar',
+    'ShapeshiftBarFrame' }) do
+    newWidget('Frame', name, MainMenuBar)
+end
+for _, prefix in ipairs({ 'Action', 'BonusAction', 'MultiBarBottomLeft', 'MultiBarBottomRight', 'MultiBarLeft', 'MultiBarRight' }) do
+    for i = 1, 12 do
+        local b = newWidget('CheckButton', prefix .. 'Button' .. i, MainMenuBarArtFrame)
+        b:RegisterEvent('ACTIONBAR_SLOT_CHANGED')
+    end
+end
+for i = 0, 3 do
+    for _, name in ipairs({ 'MainMenuBarTexture', 'MainMenuXPBarTexture', 'ReputationWatchBarTexture',
+        'ReputationXPBarTexture', 'MainMenuMaxLevelBar' }) do newWidget('Texture', name .. i, MainMenuBar) end
+end
+for _, name in ipairs({ 'MainMenuBarLeftEndCap', 'MainMenuBarRightEndCap', 'MainMenuBarPageNumber' }) do
+    newWidget('Texture', name, MainMenuBarArtFrame)
+end
+for _, name in ipairs({ 'CharacterMicroButton', 'SpellbookMicroButton', 'TalentMicroButton',
+    'QuestLogMicroButton', 'SocialsMicroButton', 'WorldMapMicroButton', 'MainMenuMicroButton',
+    'HelpMicroButton', 'MainMenuBarBackpackButton', 'CharacterBag0Slot', 'CharacterBag1Slot',
+    'CharacterBag2Slot', 'CharacterBag3Slot', 'KeyRingButton', 'MainMenuBarPerformanceBarFrame',
+    'ActionBarUpButton', 'ActionBarDownButton' }) do newWidget('Button', name, MainMenuBarArtFrame) end
+
+-- What a free button calls (### C_Spell, ### C_Item, ### RunMacroText, ### C_EquipmentSet).
+casts, ranMacros, usedItems, equippedSets, spellUsable, spellRange, spellRanged = {}, {}, {}, {}, {}, {}, {}
+spellCooldowns, itemCooldowns, ranks = {}, {}, {}
+function GetSpellInfo(id) if spellDB[id] then return spellDB[id], ranks[id] or '' end end
+local READY = { 0, 0 }
+function GetSpellCooldown(slot, book) local c = spellCooldowns[spells[slot]] or READY; return c[1], c[2], 1 end
+function CastSpellByName(name) casts[#casts + 1] = name end
+function RunMacroText(text) ranMacros[#ranMacros + 1] = text end
+function GetMacroSpell(index) local m = macros[index]; if m and m.spell then return spellDB[m.spell], '', m.spell end end
+function IsUsableSpell(id) if spellUsable[id] == false then return nil, nil end; return 1 end
+function IsUsableItem(id) return C_Item.GetItemCount(id) > 0 and 1 or nil end
+function UnitExists(unit) return unit == 'target' and hasTarget and 1 or nil end
+rangeAsked = 0
+C_Spell = {
+    GetSpellTexture = function(id) return 'spellTex:' .. id end,
+    GetSpellCooldown = function(id) local c = spellCooldowns[id] or { 0, 0 }
+        return { startTime = c[1], duration = c[2], isEnabled = true } end,
+    GetSpellCastCount = function(id) return reagentSpells[id] or 0 end,
+    SpellHasRange = function(id) return spellRanged[id] == true end,
+    IsSpellInRange = function(id, unit) rangeAsked = rangeAsked + 1; return spellRange[id] end,
+}
+C_Item.GetItemIconByID = function(id) return 'itemTex:' .. id end
+C_Item.UseItemByName = function(id) usedItems[#usedItems + 1] = id end
+C_Item.ItemHasRange = function() return false end
+C_Container = { GetItemCooldown = function(id) local c = itemCooldowns[id] or { 0, 0 }; return c[1], c[2], 1 end }
+C_EquipmentSet.GetEquipmentSetInfo = function(id) return sets[id], 'setTex:' .. id end
+C_EquipmentSet.UseEquipmentSet = function(id) equippedSets[#equippedSets + 1] = sets[id]; return true end
+
+-- A button by bar and index, as the addon names it.
+function button(bar, i) return _G['FostercareBars_' .. bar .. '_' .. i] end
+function hotkeyRed(b) local c = b.hotkey.color; return c ~= nil and c[1] == 1 and c[2] == 0.1 end
+function timerCount() local n = 0 for _, t in ipairs(timers) do if not t.cancelled then n = n + 1 end end return n end
 '''
 
 GLOBALS = ("FostercareBarsDB", "FostercareBars", "ABP_GetProfileNames", "ABP_LoadProfileByName",
@@ -153,10 +284,11 @@ def load(saved="", setup="", world=True):
     `world`, the login events have fired, so the Settings page exists."""
     lua = wowkit.runtime()
     lua.execute(MOCK)
+    lua.execute(BARS)
     lua.execute(setup)
     wowkit.load_addon(lua, ROOT, "FostercareBars", saved=saved or None)
     if world:
-        lua.execute('fire("VARIABLES_LOADED") fire("PLAYER_ENTERING_WORLD")')
+        lua.execute('fire("VARIABLES_LOADED") fire("PLAYER_ENTERING_WORLD") markRest()')
     return lua
 
 

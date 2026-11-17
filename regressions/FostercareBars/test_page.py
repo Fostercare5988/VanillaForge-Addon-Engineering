@@ -25,14 +25,16 @@ def choices(lua):
 
 
 class Page(unittest.TestCase):
-    def test_the_five_rows_in_play_order(self):
+    def test_the_rows_in_play_order(self):
         lua = load(SAVED)
         names = lua.eval(f'''(function()
             local out = {{}}
             for _, r in ipairs({PAGE}.layout.rows) do out[#out + 1] = r:GetName() end
             return table.concat(out, '|')
         end)()''')
-        self.assertEqual(names, "Profile|Load|Save over it|Delete|New profile")
+        self.assertEqual(names, "Profile|Load|Save over it|Delete|New profile|Bars|Extra bars|Move bars|"
+                         "Hide Gryphons|Floating Actionbar|Reduced Actionbar Size|Reagent Counter|"
+                         "Hide Stealth / Stance Bar")
         self.assertTrue(lua.eval(f"{PAGE}.addon"), "listed on the AddOns tab")
 
     def test_the_list_holds_the_profiles_and_the_first_is_chosen(self):
@@ -100,7 +102,9 @@ class Page(unittest.TestCase):
     def test_the_choice_is_not_saved(self):
         lua = load(SAVED)
         lua.execute("settingsWindow.use('FostercareBars_Profile', 'PVP')")
-        self.assertEqual(lua.eval("(function() local n = 0 for k in pairs(FostercareBarsDB) do n = n + 1 end return n end)()"), 1)
+        self.assertEqual(lua.eval("FostercareBarsDB.profiles.PVP ~= nil"), True)
+        self.assertIsNone(lua.eval("FostercareBarsDB.Profile"))
+        self.assertIsNone(lua.eval("FostercareBarsDB.profile"))
 
     def test_fbars_opens_the_page(self):
         lua = load()
