@@ -86,13 +86,17 @@ class Attach(unittest.TestCase):
         self.lua.execute("sell(0, 2); fire('BAG_UPDATE_DELAYED')")
         self.assertTrue(slots(self.lua).startswith("icon:Linen Cloth,,"))
 
+    def test_a_lock_the_server_clears_comes_back(self):
+        self.lua.execute("rightClickBag(0, 1); locks[cloth] = nil; fire('ITEM_LOCK_CHANGED')")
+        self.assertEqual(self.lua.eval("locked(cloth)"), True)
+
     def test_closing_the_mailbox_lets_every_item_go(self):
         self.lua.execute("rightClickBag(0, 1); rightClickBag(0, 2); fire('MAIL_CLOSED')")
         self.assertEqual(self.lua.eval("locked(cloth) or locked(ore)"), False)
         self.assertFalse(slots(self.lua).startswith("icon:"))
 
     def test_bag_updates_are_heard_only_while_items_wait(self):
-        frames = "(function() for _, w in ipairs(widgets) do if w.events.BAG_UPDATE_DELAYED then return true end end return false end)()"
+        frames = "(function() for _, w in ipairs(widgets) do if w.events.BAG_UPDATE_DELAYED and w.events.ITEM_LOCK_CHANGED then return true end end return false end)()"
         self.assertEqual(self.lua.eval(frames), False)
         self.lua.execute("rightClickBag(0, 1)")
         self.assertEqual(self.lua.eval(frames), True)

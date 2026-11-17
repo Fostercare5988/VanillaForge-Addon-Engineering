@@ -93,6 +93,30 @@ class Sending(unittest.TestCase):
         self.assertEqual(self.lua.eval("#sent"), 1)
         self.assertTrue(slots(self.lua).startswith("icon:Linen Cloth,icon:Copper Ore,"))
 
+    def test_a_letter_with_no_answer_stops_the_send_and_keeps_the_items(self):
+        """Seen in play 2026-11-17: after Send, right-click did nothing; a send
+        waiting for an answer that never came refused every change silently."""
+        self.attach(1, 2)
+        form(self.lua)
+        self.lua.execute("chat = {}; click(SendMailMailButton); step(9.9)")
+        self.assertEqual(self.lua.eval("#chat"), 0)
+        self.lua.execute("step(0.2)")
+        self.assertIn("server did not answer", self.lua.eval("chatText()"))
+        self.assertEqual(self.lua.eval("attached"), None, "the item went back to its bag")
+        self.assertTrue(slots(self.lua).startswith("icon:Linen Cloth,icon:Copper Ore,"))
+        self.assertEqual(self.lua.eval("locked(cloth) and locked(ore)"), True)
+        self.lua.execute("rightClickBag(0, 1)")
+        self.assertTrue(slots(self.lua).startswith("icon:Copper Ore,,"), "right-click works again")
+        self.lua.execute("click(SendMailMailButton); deliverAll(); step(30)")
+        self.assertEqual([l["item"] for l in letters(self.lua)], ["Linen Cloth", "Copper Ore"])
+        self.assertEqual(self.lua.eval("chatText()").count("did not answer"), 1, "an answered send never times out")
+
+    def test_attaching_while_letters_go_says_so(self):
+        self.attach(1)
+        form(self.lua)
+        self.lua.execute("chat = {}; click(SendMailMailButton); rightClickBag(0, 2)")
+        self.assertIn("Wait until the letters on their way have gone.", self.lua.eval("chatText()"))
+
     def test_a_failure_while_nothing_is_sent_changes_nothing(self):
         self.attach(1, 2)
         self.lua.execute("fire('MAIL_FAILED')")
