@@ -38,6 +38,9 @@ ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 
 MOCK = r'''
 CLASSIC_API_VERSION = 12100
+-- The error handler: every error a guarded callback raises lands here (API.md, xpcall).
+luaErrors = {}
+function geterrorhandler() return function(m) luaErrors[#luaErrors + 1] = m end end
 hooked = {}
 function hooksecurefunc(name, hook)
     hooked[name] = true
@@ -192,6 +195,8 @@ for _, e in ipairs({ "MAIL_SHOW", "MAIL_INBOX_UPDATE", "MAIL_SEND_SUCCESS", "MAI
 
 -- The server's inbox: { sender, subject, money, cod, item = { name, count }, gm, returned }.
 inbox, requests, log = {}, {}, {}
+-- The server's lists are not addon Lua: no Lua 5.0 stored size.
+function drop(list, i) local v = list[i]; for j = i, #list do list[j] = list[j + 1] end; return v end
 function GetInboxNumItems() return math.min(#inbox, 50) end
 function GetInboxHeaderInfo(i)
     local m = i <= GetInboxNumItems() and inbox[i]
@@ -213,7 +218,7 @@ function CheckInbox() checks = checks + 1; requests[#requests + 1] = { "check" }
 bagsFull = false
 -- The server answers the oldest request, then the client fires MAIL_INBOX_UPDATE.
 function answer()
-    local r = table.remove(requests, 1)
+    local r = drop(requests, 1)
     if not r then return end
     local kind, m = r[1], r[2]
     local index
@@ -223,7 +228,7 @@ function answer()
         if bagsFull then return fire("UI_ERROR_MESSAGE", ERR_INV_FULL) end
         if m.max then return fire("UI_ERROR_MESSAGE", ERR_ITEM_MAX_COUNT) end
         taken[#taken + 1] = m.item[1]; m.item = nil
-    elseif kind == "delete" and index then table.remove(inbox, index) end
+    elseif kind == "delete" and index then drop(inbox, index) end
     fire("MAIL_INBOX_UPDATE")
 end
 taken = {}

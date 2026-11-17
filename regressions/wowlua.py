@@ -17,8 +17,14 @@ differences that change results are fixed here:
   (API.md, "string.gsub replacements"). The global `gsub` and `s:gsub` are the
   same function.
 * `table.setn` and `table.getn`. 5.1 throws on `setn`; the game keeps it, and
-  `getn` answers an explicit numeric `t.n` first, then the `setn` size
-  (CLASSICAPI_MASTER_REFERENCE 4.6).
+  `getn` answers an explicit numeric `t.n` first, then the stored size
+  (CLASSICAPI_MASTER_REFERENCE 4.6). A stored size whose last slot is empty is
+  healed to a border; a stored size of 0 stays 0.
+* `table.insert` and `table.remove` count with `getn` and store the new size,
+  as Lua 5.0 does; `#` reads a border and ignores the stored size. So a list
+  grown with `t[#t + 1]` and shrunk with `table.remove` stops shrinking once
+  the stored size reaches 0: `table.remove` then does nothing. Seen in play in
+  Mail, 2026-11-17 (MailTrace); KNOWN_PATTERNS KP-65.
 * The short global aliases. Upstream does not list them (they come from an
   embedded chunk, BlizzardScriptAPI.md section 3), so only aliases FrameXML
   calls as globals are given, plus ClassicAPI's documented `wipe`, `strmatch`
@@ -63,7 +69,38 @@ do
     function table.getn(t)
         local n = rawget(t, "n")
         if type(n) == "number" then return n end
-        return sizes[t] or length(t)
+        local stored = sizes[t]
+        if stored == nil then return length(t) end
+        if stored > 0 and rawget(t, stored) == nil then return length(t) end -- ClassicAPI's healing
+        return stored
+    end
+    local getn = table.getn
+    local function setn(t, n) -- luaL_setn: an explicit numeric t.n, else the stored size
+        if type(rawget(t, "n")) == "number" then rawset(t, "n", n) else sizes[t] = n end
+    end
+    -- Lua 5.0's ltablib.c, luaB_tinsert and luaB_tremove.
+    function table.insert(t, ...)
+        local n = getn(t) + 1
+        local pos, value
+        if select("#", ...) == 1 then
+            pos, value = n, ...
+        else
+            pos, value = ...
+            if pos > n then n = pos end
+        end
+        setn(t, n)
+        for i = n - 1, pos, -1 do rawset(t, i + 1, rawget(t, i)) end
+        rawset(t, pos, value)
+    end
+    function table.remove(t, pos)
+        local n = getn(t)
+        pos = pos or n
+        if n <= 0 then return end
+        setn(t, n - 1)
+        local value = rawget(t, pos)
+        for i = pos, n - 1 do rawset(t, i, rawget(t, i + 1)) end
+        rawset(t, n, nil)
+        return value
     end
 end
 

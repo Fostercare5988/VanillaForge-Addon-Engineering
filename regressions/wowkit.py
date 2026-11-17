@@ -250,6 +250,11 @@ C_Timer = {
     NewTimer = function(seconds, fn) return schedule(seconds, fn, 1) end,
     NewTicker = function(seconds, fn, iterations) return schedule(seconds, fn, iterations) end,
 }
+-- The engine's timer list is not addon Lua: removing from it must not depend
+-- on Lua 5.0's stored table size (wowlua's table.remove does).
+local function drop(list, i)
+    for j = i, #list do list[j] = list[j + 1] end
+end
 -- The earliest due timer runs first; ties in the order they were scheduled.
 local function dueTimers()
     while true do
@@ -257,7 +262,7 @@ local function dueTimers()
         for i = #timers, 1, -1 do
             local t = timers[i]
             if t.cancelled then
-                table.remove(timers, i)
+                drop(timers, i)
                 if best then best = best - 1 end
             elseif t.at <= now and (not best or t.at < timers[best].at
                     or (t.at == timers[best].at and t.seq < timers[best].seq)) then
@@ -268,7 +273,7 @@ local function dueTimers()
         local t = timers[best]
         if t.left then t.left = t.left - 1 end
         if t.left == 0 then
-            table.remove(timers, best)
+            drop(timers, best)
         else
             seq = seq + 1
             t.at, t.seq = t.at + t.seconds, seq

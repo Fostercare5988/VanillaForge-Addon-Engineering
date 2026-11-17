@@ -1215,6 +1215,25 @@ and a new saved table is one line in the owner list. A migration that moves data
 (not one that only clears) stays until no saved file holds the old form.
 `find_holes.py` lists addons that still clear keys one by one.
 
+### KP-65 --- `#` Lists Shrunk with `table.remove`
+
+**Problem:** A list grows with `t[#t + 1] = v` and shrinks with `table.remove(t, i)`.
+In the game's Lua 5.0, `table.remove` and `table.insert` count with the stored size
+(`table.getn`) and write it back (`setn`); `#` (ClassicAPI's backport) reads a border
+and never touches the stored size. Each removal lowers the stored size, each `#`
+append leaves it alone; once it reaches 0, `table.remove` removes nothing and returns
+nothing, silently. ClassicAPI's healing (CLASSICAPI_MASTER_REFERENCE 4.6) does not
+save a stored size of 0. Seen in play in Mail on 2026-11-17 (a MailTrace recording):
+the first round of attach and take-off worked, then taken-off items stayed in the
+list, shown in the bags and the mail slots at once. The test Lua used 5.1's
+`table.remove`, so no suite saw it until `regressions/wowlua.py` got 5.0's.
+
+**Preferred direction:** one form per list. Either only `#` and assignment (shift to
+remove: `for j = i, #t do t[j] = t[j + 1] end`; rebuild a short list instead of
+inserting at its front), or only `table.insert`/`table.remove`/`table.getn`.
+`table.wipe` with `#` is safe. When a suite fails after the wowlua change, the
+failing list is this kind.
+
 ------------------------------------------------------------------------
 
 ## 11. Pattern Governance
