@@ -169,7 +169,11 @@ compiles, drawing), not addon code. Fix measured problems first.
 `/err`, stutters in `/lag`, things that look wrong (user's order, 2026-11-14).
 Audits and reports write no "In-game checks" lists, and an open game check is
 not work. A guess in the code is still marked `-- UNVERIFIED:` (§1 rule 2), and
-the stutter report and error log are read at the start of every audit.
+the stutter report and error log are read at the start of every audit. When the
+player reports a fault that the files cannot explain, ask for one `/run` line that
+prints the deciding value: that is evidence, not a checklist
+(`GetBindingAction("F", true)` found FostercareBars' missing key override,
+2026-11-17).
 
 ## 4. Audit: find the holes, then close them
 
@@ -258,7 +262,10 @@ take away something players rely on.
 4. Report what changed, the test results and what players will notice. Tests
    are not in-game proof: say so when a change rests on a guess.
 5. Git: run `git status` before editing. Commit each coherent step after its
-   checks pass. Push every commit after its checks pass (user's standing order, 2026-11-01).
+   checks pass. Name the files you commit (`git add <paths>`), never `git add -A`
+   or `.`: another session may be working in the same folder (an AutoLazy
+   session's tests went into a FostercareBars commit, 2026-11-18). A rejected
+   push means pull and rebase. Push every commit after its checks pass (user's standing order, 2026-11-01).
    Force-push only to take something out of a repo's history when the user asks
    for that: bundle the repo first (`git bundle create ... --all`), push with
    `--force-with-lease`, and say what was rewritten. Never to get past a
@@ -318,4 +325,26 @@ win where they disagree:
 5. **Each addon stands alone.** No shared library addon; addons talk through
    narrow public functions.
 6. **Tests come from the spec.** A new, smaller suite replaces the old one
-   when the new addon takes over.
+   when the new addon takes over. They play a first login, not a reload: an
+   addon whose frames the client saves fills the kit's `layoutCache` (KNOWN_PATTERNS
+   KP-66), and the data includes the game's odd cases (an aura with no icon, a
+   missing saved key, empty bags, no target).
+7. **The import is part of the spec.** The spec lists everything the player
+   built or placed that the new addon carries over, and how; the one-off import
+   script is written and tested with the build and run with `--dry-run` on a
+   copy of the real saved files. Nothing the player placed by hand is left out
+   without asking.
+8. **Switch-over:** back up `WTF\Account`, copy a folder's git-ignored files
+   (CLAUDE.md) before removing it or its worktree (`git worktree remove` deletes
+   them), and make a fresh login with nothing touched the first check: a first
+   login differs from a `/reload`.
+9. **Release:** a README with the features, the DLLs it really calls and the
+   installation; the release workflow (`.github/workflows/release.yml`, one zip per
+   TOC version). A forced push does not start the workflow: run it by hand
+   (`gh workflow run release.yml`). When the user restarts the version on a fresh
+   history, bundle first and delete the old tags, which the workflow would reuse.
+
+Measured at the first checkpoint (2026-11-17): FostercareTweaks' four rebuilds
+are 3,750 lines against 7,844 and make 1.27 KB/s of garbage against 5.66
+(0.39 ms/s of CPU against 1.59). The rebuild goes on, in the order of `/lag`'s
+costs.
