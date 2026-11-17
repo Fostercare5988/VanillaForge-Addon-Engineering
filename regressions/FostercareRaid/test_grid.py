@@ -190,5 +190,16 @@ class Moving(unittest.TestCase):
         self.assertIsNone(lua.eval("(function() for _, w in ipairs(widgets) do if w.events.MODIFIER_STATE_CHANGED then return true end end end)()"))
 
 
+class FirstLogin(unittest.TestCase):
+    def test_the_grid_placed_by_hand_waits_for_the_client(self):
+        # The client puts the grid back after PLAYER_ENTERING_WORLD at a first
+        # login (FostercareBars, 2026-11-17).
+        lua = in_party(setup="layoutCache.FostercareRaidFrame = { 300, -200 }")
+        self.assertEqual(lua.eval("shown(1, 2)"), "Ann")
+        lua.execute("settingsWindow.use('FostercareRaid_scale', 1.3)")
+        lua.execute("step(0)")
+        self.assertEqual(lua.eval("grid():GetLeft()"), 300)
+
+
 if __name__ == "__main__":
     unittest.main()

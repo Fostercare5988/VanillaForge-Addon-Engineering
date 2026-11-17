@@ -99,21 +99,21 @@ class Layout(unittest.TestCase):
         self.assertFalse(lua.eval("h:IsShown()"))
         self.assertIn("Bars locked.", lua.eval("chatText()"))
 
-    def test_a_placed_bar_not_laid_out_yet_at_login_keeps_its_place_and_the_keys(self):
-        # 2026-11-17: at login the client had put back FostercareBars_extra2 but
-        # not laid it out (GetLeft nil); the layout stopped with an error before
-        # it set the keys, so F ran the game's own binding.
+    def test_a_first_login_with_every_bar_placed_by_hand(self):
+        # 2026-11-17: at a first login the client puts the bars back only after
+        # PLAYER_ENTERING_WORLD (no position yet then); the layout stopped with an
+        # error at Bars.lua:69 before it set the keys, so F ran the game's binding.
         lua = load(setup="""
             keys.MULTIACTIONBAR1BUTTON10 = { 'F' }
-            local get = CreateFrame
-            function CreateFrame(kind, name, parent, template)
-                local f = get(kind, name, parent, template)
-                if name == 'FostercareBars_extra2' then f.userPlaced = true; f.GetLeft = function() end end
-                return f
-            end""")
-        self.assertEqual(lua.eval("FostercareBars_extra2:GetScale()"), 0.9)
-        self.assertEqual(lua.eval("FostercareBars_extra2:GetNumPoints()"), 0, "the client's anchor stays")
+            for _, key in ipairs({ 'main', 'bottomleft', 'bottomright', 'right', 'left' }) do
+                layoutCache['FostercareBars_' .. key] = { 500, -600 }
+            end
+            for n = 1, 11 do layoutCache['FostercareBars_extra' .. n] = { 300, -400 } end""")
         self.assertEqual(lua.eval("overrides.F"), "FostercareBars_bottomleft_10")
+        self.assertEqual(lua.eval("FostercareBars_extra2:GetScale()"), 0.9)
+        lua.execute("step(0)")
+        self.assertEqual(lua.eval("(FostercareBars_extra2:GetPoint(1))"), "TOPLEFT", "where the client put it")
+        self.assertEqual(lua.eval("FostercareBars_extra2:GetLeft()"), 300)
 
     def test_placed_by_hand_on_keeps_a_bar_where_it_is(self):
         lua = load()

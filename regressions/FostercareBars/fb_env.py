@@ -202,15 +202,11 @@ C_SwingTimer = {
     IsTargetWithinSwingRange = function() return swingInRange end,
 }
 -- Moving a frame makes it the client's to save (layout-cache.txt).
-function Widget:StartMoving() self.userPlaced = true end
-function Widget:SetUserPlaced(on) self.userPlaced = on and true or nil end
-function Widget:IsUserPlaced() return self.userPlaced and 1 or nil end
+-- Positions, dragging and the client's saved places: the kit's (wowkit.py, "Positions").
 C_StringUtil = { CreateNumericRuleFormatter = function() return { SetBreakpoints = function() end } end }
 function Widget:SetCooldown(start, duration) self.cd = start .. '+' .. duration end
 function Widget:Clear() self.cd = nil end
 function Widget:SetNormalTexture(path) self.normalPath = path end
-function Widget:GetLeft() return self.left or 100 end
-function Widget:GetTop() return self.top or 200 end
 function Widget:GetEffectiveScale() return self.scale or 1 end
 local kitCreate = CreateFrame
 local PARTS = { Icon = 'Texture', Flash = 'Texture', HotKey = 'FontString', Count = 'FontString',

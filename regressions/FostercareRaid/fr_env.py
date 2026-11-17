@@ -38,9 +38,7 @@ function Widget:SetCooldown(start, duration) self.cooldown = { start, duration }
 function Widget:Clear() self.cooldown = nil end
 function Widget:SetHideCountdownNumbers(hide) self.hideNumbers = hide end
 function Widget:GetCountdownFontString() self.numbers = self.numbers or CreateFrame('FontString'); return self.numbers end
-function Widget:IsUserPlaced() return self.placed end
-function Widget:StartMoving() self.moving = true end
-function Widget:StopMovingOrSizing() self.moving = nil; self.placed = true end
+-- Positions, dragging and the client's saved places: the kit's (wowkit.py, "Positions").
 function IsShiftKeyDown() return shift end
 function IsControlKeyDown() return ctrl end
 

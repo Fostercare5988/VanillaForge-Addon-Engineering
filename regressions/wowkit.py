@@ -16,6 +16,15 @@ What the kit models, and the evidence:
   `/run print(UIParent:IsShown(), UIParent:IsEnabled())`). `IsVisible` also
   needs every parent shown. Show and Hide run OnShow and OnHide when the
   frame's own state changes.
+* Positions (`layoutCache`, `GetLeft`...): a frame with no anchor has no
+  position (GetLeft, GetTop, GetRight, GetBottom and GetCenter return nil), as
+  in the client. An anchored frame is at `left` and `top` (fields a test sets;
+  100 and 200 by default), UIParent 1024 x 768. `StartMoving` makes a frame
+  placed by hand (`IsUserPlaced`). A named frame in `layoutCache` (name ->
+  { x, y }, a block of layout-cache.txt) is placed by hand from its creation
+  but has no position until the first `step()`, when the client puts it back
+  at TOPLEFT x, y: at a first login the client lays the frames out after
+  PLAYER_ENTERING_WORLD (FostercareBars Bars.lua:69, 2026-11-17).
 * Events (`fire(event, ...)`): every frame registered for the event, in
   registration order, gets OnEvent with `this`, `event` and `arg1`...`arg9`
   set and `(self, event, ...)` passed (ClassicAPI's modern script arguments).
@@ -80,7 +89,32 @@ function newWidget(kind, name, parent)
         enabled = true, scripts = {}, events = {}, units = {}, points = {} }, WidgetMeta)
     if name then rawset(_G, name, w) end
     widgets[#widgets + 1] = w
+    if name and layoutCache[name] then w.userPlaced = true; restoring[#restoring + 1] = w end
     return w
+end
+
+-- Positions: none without an anchor; the client's saved places at the first frame.
+layoutCache, restoring = {}, {}
+function Widget:GetLeft() if #self.points > 0 then return self.left or 100 end end
+function Widget:GetTop() if #self.points > 0 then return self.top or 200 end end
+function Widget:GetRight() local l = self:GetLeft(); return l and l + self:GetWidth() end
+function Widget:GetBottom() local t = self:GetTop(); return t and t - self:GetHeight() end
+function Widget:GetCenter()
+    local l, t = self:GetLeft(), self:GetTop()
+    if l then return l + self:GetWidth() / 2, t - self:GetHeight() / 2 end
+end
+function Widget:IsUserPlaced() return self.userPlaced and 1 or nil end
+function Widget:SetUserPlaced(on) self.userPlaced = on and true or nil end
+function Widget:StartMoving() self.moving = true; self.userPlaced = true end
+function Widget:StopMovingOrSizing() self.moving = nil end
+local function restore()
+    for i = 1, #restoring do
+        local w, at = restoring[i], layoutCache[restoring[i].name]
+        restoring[i] = nil
+        w:ClearAllPoints()
+        w:SetPoint("TOPLEFT", UIParent, "TOPLEFT", at[1], at[2])
+        w.left, w.top = at[1], 768 + at[2]
+    end
 end
 function CreateFrame(kind, name, parent) return newWidget(kind, name, parent) end
 
@@ -285,6 +319,7 @@ runTimers = dueTimers
 function step(dt)
     dt = dt or 0
     now = now + dt
+    restore()
     dueTimers()
     for _, w in ipairs(widgets) do
         if w.scripts.OnUpdate and w:IsVisible() then runScript(w, "OnUpdate", dt) end
@@ -642,6 +677,8 @@ function window.defaults(category)
 end
 
 UIParent = newWidget("Frame", "UIParent")
+UIParent:SetPoint("TOPLEFT")
+UIParent.left, UIParent.top, UIParent.width, UIParent.height = 0, 768, 1024, 768
 '''
 
 # A name, an indexed name or a table constructor; never a call (gmatch(...) is an iterator).

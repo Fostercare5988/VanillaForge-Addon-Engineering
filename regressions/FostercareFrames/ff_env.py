@@ -38,9 +38,7 @@ function hooksecurefunc(name, hook)
 end
 
 -- Widgets: what the addon reads back.
-function Widget:IsUserPlaced() return self.placed end
-function Widget:StartMoving() self.moving = true end
-function Widget:StopMovingOrSizing() if self.moving then self.moving = nil; self.placed = true end end
+-- Positions, dragging and the client's saved places: the kit's (wowkit.py, "Positions").
 function Widget:SetCooldown(start, duration) self.cooldown = { start, duration }; hit('SetCooldown') end
 function Widget:Clear() self.cooldown = nil end
 function Widget:GetCountdownFontString() self.numbers = self.numbers or CreateFrame('FontString'); return self.numbers end
@@ -54,8 +52,6 @@ function Widget:SetText(text) self.text = text; hit('SetText') end
 function Widget:SetTexture(path) self.texture = path; hit('SetTexture') end
 function Widget:GetEffectiveScale() return 1 end
 function Widget:GetFrameLevel() return 1 end
-function Widget:GetLeft() return self.left or 700 end
-function Widget:GetTop() return self.top or 300 end
 function Widget:SetDontSavePosition(on) self.dontSave = on end
 function Widget:CreateTexture(name, layer)
     local t = newWidget('Texture', name, self)
@@ -64,7 +60,6 @@ function Widget:CreateTexture(name, layer)
     self.textures[#self.textures + 1] = t
     return t
 end
-UIParent = CreateFrame('Frame', 'UIParent'); function UIParent:GetTop() return 768 end
 
 -- Keys (ClassicAPI's left and right reads).
 shift, ctrl = false, false
@@ -278,6 +273,7 @@ function TargetDebuffButton_Update()
 end
 
 CastingBarFrame = frame('StatusBar', 'CastingBarFrame', UIParent); CastingBarFrame:Hide()
+CastingBarFrame:SetPoint('BOTTOM', UIParent, 'BOTTOM', 0, 60) -- CastingBarFrame.xml
 
 -- BuffFrame.xml / BuffFrame.lua.
 BuffFrame = frame('Frame', 'BuffFrame', UIParent)

@@ -79,6 +79,26 @@ class AtRest(unittest.TestCase):
         self.assertEqual(lua.eval("count('GetAuraSlots')"), reads)
 
 
+class FirstLogin(unittest.TestCase):
+    def test_every_frame_placed_by_hand_waits_for_the_client(self):
+        # At a first login the client puts back the frames it saved
+        # (layout-cache.txt) only after PLAYER_ENTERING_WORLD (FostercareBars,
+        # 2026-11-17): nothing may need their place before that.
+        names = ["PlayerBuffs", "PlayerDebuffs", "TargetBuffs", "TargetDebuffs", "TopBuffs", "TopDebuffs",
+                 "Enchants", "TargetCast", "Watch_target_Rupture"]
+        cache = "; ".join(f"layoutCache['FostercareFrames{n}'] = {{ 640, -300 }}" for n in names)
+        watched = ("FostercareFramesDB = { watched = { { name = 'Rupture', unit = 'target', icon = true, "
+                   "topRight = false, inRow = false, mine = true, cooldown = false } } }")
+        lua = load(saved=watched, setup=cache + "; aura('player', 'HELPFUL', { name = 'Fort', icon = 'fort' })"
+                   "; playerBuffs.HELPFUL = { { id = 1, icon = 'fort', ends = now + 600 } }; spell(1, 'Fort', 'fort')")
+        lua.execute("playerAuras(); runTimers()")
+        for n in names:
+            self.assertEqual(lua.eval(f"FostercareFrames{n}:GetNumPoints()"), 0, f"{n}: the addon left it to the client")
+        lua.execute("step(0)")
+        for n in names:
+            self.assertEqual(lua.eval(f"FostercareFrames{n}:GetLeft()"), 640, n)
+
+
 class Globals(unittest.TestCase):
     def test_only_the_listed_globals(self):
         import wowkit
