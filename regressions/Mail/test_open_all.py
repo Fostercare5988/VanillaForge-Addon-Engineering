@@ -30,23 +30,19 @@ class OpenAll(unittest.TestCase):
         self.assertEqual([m["sender"] for m in lua.eval("inbox").values()], ["Seller", "GM", "Bob"])
         self.assertEqual(lua.eval("inbox[3].read"), None, "a plain letter is not even read")
 
-    def test_one_chat_line_with_money_and_marks(self):
+    def test_one_chat_line_with_the_money(self):
         lua = load(setup='''
             mail({ sender = "Ann", money = 12345 })
-            mail({ sender = "Warsong Gulch", item = { "Warsong Gulch Mark of Honor", 3 } })
-            mail({ sender = "Alterac Valley", item = { "Alterac Valley Mark of Honor", 2 } })''')
+            mail({ sender = "Warsong Gulch", item = { "Warsong Gulch Mark of Honor", 3 } })''')
         lua.execute("chat = {}; click(MailOpenAllButton); answerAll()")
-        self.assertEqual(lua.eval("#chat"), 1)
-        line = lua.eval("chat[1]")
-        self.assertIn("Collected", line)
-        self.assertIn("marks AV 2, WSG 3", line)
+        self.assertEqual(list(lua.eval("chat").values()),
+                         ["|cffff9e38Mail:|r Collected " + lua.eval("GetCoinTextureString(12345)") + "."])
 
     def test_an_extra_update_does_not_count_twice(self):
         lua = load(setup='mail({ sender = "Ann", money = 100, item = { "Arathi Basin Mark of Honor", 1 } })')
         lua.execute("chat = {}; click(MailOpenAllButton); fire('MAIL_INBOX_UPDATE'); fire('MAIL_INBOX_UPDATE'); answerAll()")
         self.assertEqual(log(lua), ["money 1", "item 1", "delete 1"], "each request is asked once")
         line = lua.eval("chat[1]")
-        self.assertIn("marks AB 1", line)
         self.assertEqual(lua.eval("GetCoinTextureString(100)") in line, True)
         self.assertNotIn(lua.eval("GetCoinTextureString(200)"), line)
 
@@ -109,7 +105,6 @@ class OpenAll(unittest.TestCase):
             item = { "Warsong Gulch Mark of Honor", 1 } }) end''')
         lua.execute("chat = {}; click(MailOpenAllButton); answerAll()")
         self.assertEqual(lua.eval("#inbox"), 0)
-        self.assertIn("marks WSG 3", lua.eval("chat[1]"))
         self.assertIn(lua.eval("GetCoinTextureString(30)"), lua.eval("chat[1]"))
 
 

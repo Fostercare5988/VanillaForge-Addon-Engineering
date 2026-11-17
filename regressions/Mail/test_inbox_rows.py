@@ -1,5 +1,5 @@
-"""What the inbox rows and the title show (the user's answer of 2026-11-17:
-every extra kept), Mail 1.0.0."""
+"""What the inbox rows and the title show (the user's answer of 2026-11-17;
+the marks count went the same day), Mail 1.0.0."""
 import unittest
 from mail_env import load
 
@@ -44,10 +44,8 @@ class Rows(unittest.TestCase):
         self.assertEqual(self.badge(4, "Auction"), 1, "an auction subject counts too")
         self.assertEqual(self.badge(3, "Returned"), None)
 
-    def test_the_title_has_the_page_and_the_marks(self):
-        self.assertEqual(self.lua.eval("InboxTitleText:GetText()"), "Inbox [1/2] - 3 marks")
-        self.lua.execute('mail({ sender = "X", item = { "Alterac Valley Mark of Honor", 1 } }); InboxFrame_Update()')
-        self.assertEqual(self.lua.eval("InboxTitleText:GetText()"), "Inbox [1/2] - 4 marks (AV 1, WSG 3)")
+    def test_the_title_has_the_page_only(self):
+        self.assertEqual(self.lua.eval("InboxTitleText:GetText()"), "Inbox [1/2]", "no marks count (the user's order, 2026-11-17)")
 
     def test_an_empty_inbox(self):
         lua = load()

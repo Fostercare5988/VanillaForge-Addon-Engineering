@@ -3,7 +3,9 @@
 Mail 1.0.0 (2026-11-17), built from scratch. It is loaded from its TOC with
 `## LoadSavedVariablesFirst`. The model here:
 
-* `GetInboxItemID` (ClassicAPI) gives the marks their octowow.st/db IDs.
+* A bag click as OctoWoW's ContainerFrame.lua:567 has it: on the Send tab a
+  right-click puts the item in the client's one mail slot, Shift-right-click
+  uses it; elsewhere a right-click uses it. `rightClickBag(bag, slot)`.
 * The client's mail page, as FrameXML MailFrame.lua and MailFrame.xml have it
   (`.private/framexml`): the frames Mail touches, the edit boxes with their
   own scripts, and the client's MailFrame_OnEvent, InboxFrame_Update,
@@ -84,6 +86,7 @@ shift = nil
 function IsShiftKeyDown() return shift end
 function IsControlKeyDown() end
 function IsAltKeyDown() end
+function IsModifierKeyDown() return shift end
 
 -- The mail frames.
 MailFrame = frame("Frame", "MailFrame"); MailFrame:Hide()
@@ -198,13 +201,6 @@ function GetInboxItem(i)
     local m = i <= GetInboxNumItems() and inbox[i]
     if m and m.item then return m.item[1], "icon", m.item[2] or 1 end
 end
--- Item IDs of the names the tests use (the marks as octowow.st/db has them).
-ITEM_IDS = { ["Alterac Valley Mark of Honor"] = 20560, ["Warsong Gulch Mark of Honor"] = 20558,
-    ["Arathi Basin Mark of Honor"] = 20559 }
-function GetInboxItemID(i)
-    local m = i <= GetInboxNumItems() and inbox[i]
-    if m and m.item then return ITEM_IDS[m.item[1]] or 1 end
-end
 function GetInboxText(i) inbox[i].read = 1 end
 local function ask(kind, i) log[#log + 1] = kind .. " " .. i; requests[#requests + 1] = { kind, inbox[i] } end
 function TakeInboxMoney(i) ask("money", i) end
@@ -266,6 +262,24 @@ function CursorHasItem() return cursor and 1 or nil end
 function GetCursorInfo() local it = cursor and itemAt(cursor); if it then return "item", it.id, "link" end end
 used = {}
 function UseContainerItem(b, s) used[#used + 1] = b .. ":" .. s end
+function ContainerFrameItemButton_OnClick(button)
+    local b, s = this:GetParent():GetID(), this:GetID()
+    if button ~= "RightButton" then return PickupContainerItem(b, s) end
+    if MailFrame:IsShown() and SendMailFrame:IsShown() and not IsShiftKeyDown() then
+        PickupContainerItem(b, s); ClickSendMailItemButton(); ClearCursor()
+    else
+        UseContainerItem(b, s)
+    end
+end
+local bagFrames, bagButtons = {}, {}
+function rightClickBag(b, s)
+    bagFrames[b] = bagFrames[b] or CreateFrame("Frame"); bagFrames[b]:SetID(b)
+    local key = b .. ":" .. s
+    bagButtons[key] = bagButtons[key] or CreateFrame("Button", nil, bagFrames[b]); bagButtons[key]:SetID(s)
+    local was = this; this = bagButtons[key]
+    ContainerFrameItemButton_OnClick("RightButton")
+    this = was
+end
 function ClickSendMailItemButton()
     if cursor then
         local it = itemAt(cursor)

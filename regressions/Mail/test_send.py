@@ -26,7 +26,14 @@ class Sending(unittest.TestCase):
 
     def attach(self, *slots_):
         for s in slots_:
-            self.lua.execute(f"UseContainerItem(0, {s})")
+            self.lua.execute(f"rightClickBag(0, {s})")
+
+    def test_items_right_clicked_on_the_send_tab_all_go(self):
+        """Seen in play 2026-11-17 (Mail 1.0.0): sending several items did not work."""
+        form(self.lua)
+        self.attach(1, 2, 3)
+        self.lua.execute("click(SendMailMailButton); deliverAll()")
+        self.assertEqual([l["item"] for l in letters(self.lua)], ["Linen Cloth", "Copper Ore", "Jade"])
 
     def test_one_letter_per_item_with_the_item_as_subject(self):
         self.attach(1, 2)
@@ -71,7 +78,7 @@ class Sending(unittest.TestCase):
         for err in ("ERR_MAIL_TO_SELF", "ERR_PLAYER_WRONG_FACTION", "ERR_MAIL_TARGET_NOT_FOUND", "ERR_MAIL_REACHED_CAP"):
             lua = load(setup=ITEMS)
             for s in (1, 2):
-                lua.execute(f"UseContainerItem(0, {s})")
+                lua.execute(f"rightClickBag(0, {s})")
             form(lua, to="Nobody")
             lua.execute(f"click(SendMailMailButton); refuse({err}); deliverAll()")
             self.assertEqual(lua.eval("#sent"), 1, err)
@@ -117,17 +124,17 @@ class SendButton(unittest.TestCase):
 
     def test_it_needs_a_name_and_a_subject_or_an_item(self):
         form(self.lua, to="")
-        self.lua.execute("UseContainerItem(0, 1)")
+        self.lua.execute("rightClickBag(0, 1)")
         self.assertIsNone(self.enabled())
         form(self.lua, to="Bagholder")
         self.assertEqual(self.enabled(), 1)
-        self.lua.execute("UseContainerItem(0, 1)")
+        self.lua.execute("rightClickBag(0, 1)")
         self.assertIsNone(self.enabled(), "no item and no subject")
         form(self.lua, subject="Hi")
         self.assertEqual(self.enabled(), 1)
 
     def test_it_needs_the_money_for_every_letter(self):
-        self.lua.execute("UseContainerItem(0, 1); UseContainerItem(0, 2); money = 59")
+        self.lua.execute("rightClickBag(0, 1); rightClickBag(0, 2); money = 59")
         form(self.lua)
         self.assertIsNone(self.enabled())
         self.lua.execute("money = 60")
@@ -135,7 +142,7 @@ class SendButton(unittest.TestCase):
         self.assertEqual(self.lua.eval("postage"), 60)
 
     def test_it_is_off_while_letters_go(self):
-        self.lua.execute("UseContainerItem(0, 1); UseContainerItem(0, 2)")
+        self.lua.execute("rightClickBag(0, 1); rightClickBag(0, 2)")
         form(self.lua)
         self.lua.execute("click(SendMailMailButton)")
         self.assertIsNone(self.enabled())

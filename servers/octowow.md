@@ -73,7 +73,7 @@ Do not trust for this server:
   race not stated).
 - 2026-11-17, from the database (?item=N): the battleground marks are 20560
   Alterac Valley Mark of Honor, 20558 Warsong Gulch Mark of Honor and 20559
-  Arathi Basin Mark of Honor (Mail counts them).
+  Arathi Basin Mark of Honor.
 - Unverified: one spirit healer wave every 30 seconds for the whole
   battleground (as on MaNGOS cores). AutoBG's respawn bar and its dead enemy
   rows count to it.
