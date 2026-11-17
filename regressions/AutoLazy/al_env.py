@@ -1,9 +1,4 @@
-"""The rebuilt AutoLazy (3.0) on the shared game model (wowkit).
-
-The new code lives on the addon's `rebuild` branch, in a second working folder
-outside AddOns (`Interface/Rebuild/AutoLazy`), while the old AutoLazy keeps
-playing; this suite takes over `regressions/AutoLazy` at release. Run it with
-`tools/audit_addon.py "<that folder>" --run-tests --test-start regressions/AutoLazy_rebuild`.
+"""AutoLazy 1.0 (written new, 2026-11-18) on the shared game model (wowkit).
 
 The game is modelled as ClassicAPI documents it (docs/API.md) and as the
 client's FrameXML runs it: the roll strings are GlobalStrings.lua's; a chat
