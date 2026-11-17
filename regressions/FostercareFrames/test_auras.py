@@ -214,6 +214,14 @@ class TopRight(unittest.TestCase):
         self.assertFalse(lua.eval("FostercareFramesTopDebuffs:IsShown()"))
         self.assertTrue(lua.eval("FostercareFramesTopBuffs:IsShown()"))
 
+    def test_an_aura_with_no_icon_takes_no_button(self):
+        # 2026-11-17: Find Herbs (a tracking aura, no icon) was a bare grey edge.
+        lua = self.lua
+        lua.execute("table.insert(playerBuffs.HELPFUL, 1, { id = 2383 }); spell(2383, 'Find Herbs'); playerAuras(); runTimers()")
+        self.assertFalse(lua.eval("BuffButton0:IsShown()"))
+        self.assertEqual(lua.eval("topShown('HELPFUL')"), "fort aura")
+        self.assertEqual(lua.eval("(select(4, BuffButton1:GetPoint(1)))"), 0, "the next one closes up")
+
     def test_debuff_borders_are_the_stock_dispel_border(self):
         lua = self.lua
         self.assertEqual(lua.eval("BuffButton24Border:GetAlpha()"), 1)
