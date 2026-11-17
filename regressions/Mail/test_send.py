@@ -111,6 +111,17 @@ class Sending(unittest.TestCase):
         self.assertEqual([l["item"] for l in letters(self.lua)], ["Linen Cloth", "Copper Ore"])
         self.assertEqual(self.lua.eval("chatText()").count("did not answer"), 1, "an answered send never times out")
 
+    def test_an_item_left_in_the_clients_hidden_slot_does_not_spoil_the_send(self):
+        """Seen in play 2026-11-17: sends stalled. An item left in the client's
+        one (hidden) slot was swapped onto the cursor by the first letter."""
+        self.lua.execute("give(2, 1, 'Leftover', 1); PickupContainerItem(2, 1); ClickSendMailItemButton()")
+        self.attach(1, 2)
+        form(self.lua)
+        self.lua.execute("click(SendMailMailButton); deliverAll()")
+        self.assertEqual([l["item"] for l in letters(self.lua)], ["Linen Cloth", "Copper Ore"])
+        self.assertEqual(self.lua.eval("cursor"), None)
+        self.assertEqual(self.lua.eval("bags[2][1] ~= nil and not locks[bags[2][1].guid]"), True, "the leftover is back, free")
+
     def test_attaching_while_letters_go_says_so(self):
         self.attach(1)
         form(self.lua)

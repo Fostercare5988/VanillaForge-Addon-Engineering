@@ -72,6 +72,18 @@ class Attach(unittest.TestCase):
         self.lua.execute("for _, w in ipairs(widgets) do if w.parent == SendMailFrame and w.id == 5 then run(w, 'OnReceiveDrag') end end")
         self.assertTrue(slots(self.lua).startswith("icon:Copper Ore,icon:Linen Cloth,"))
 
+    def test_a_right_click_on_a_slot_takes_the_item_off_whatever_the_cursor_holds(self):
+        """Seen in play 2026-11-17: right-clicking an attached item did nothing."""
+        self.lua.execute("rightClickBag(0, 1); rightClickBag(0, 2); give(3, 1, 'Held', 1); PickupContainerItem(3, 1)")
+        self.lua.execute("for _, w in ipairs(widgets) do if w.parent == SendMailFrame and w.id == 1 then run(w, 'OnClick', 'RightButton') end end")
+        self.assertTrue(slots(self.lua).startswith("icon:Copper Ore,,"))
+        self.assertEqual(self.lua.eval("locked(cloth)"), False)
+
+    def test_opening_the_mailbox_gives_back_an_item_left_in_the_clients_slot(self):
+        self.lua.execute("fire('MAIL_CLOSED'); PickupContainerItem(0, 3 - 2); ClickSendMailItemButton(); fire('MAIL_SHOW')")
+        self.assertEqual(self.lua.eval("attached"), None)
+        self.assertEqual(self.lua.eval("cursor"), None)
+
     def test_a_left_click_on_a_slot_takes_the_item_back_to_the_cursor(self):
         self.lua.execute("rightClickBag(0, 1)")
         self.lua.execute("for _, w in ipairs(widgets) do if w.parent == SendMailFrame and w.id == 1 then run(w, 'OnClick', 'LeftButton') end end")
