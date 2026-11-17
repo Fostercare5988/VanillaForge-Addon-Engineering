@@ -1234,6 +1234,24 @@ inserting at its front), or only `table.insert`/`table.remove`/`table.getn`.
 `table.wipe` with `#` is safe. When a suite fails after the wowlua change, the
 failing list is this kind.
 
+### KP-66 --- Positions Read Before the Client Lays Frames Out
+
+**Problem:** A named frame the player moved is put back by the client from
+`layout-cache.txt`. At a first login that happens after PLAYER_ENTERING_WORLD: until
+then the frame is already placed by hand (`IsUserPlaced` is 1) but has no anchor,
+so `GetLeft`, `GetTop` and `GetCenter` return nil. After a `/reload` it does not
+happen, so the bug shows only at a fresh login. Seen in FostercareBars on
+2026-11-17: its layout did arithmetic on `GetLeft()` of a bar placed by hand
+(Bars.lua:69), stopped with an error, and never reached the line after it that set
+the key overrides, so F ran the game's own binding until a `/reload`.
+
+**Preferred direction:** never do arithmetic on a position at login without a nil
+check; a frame placed by hand keeps the client's anchor (change only its size). One
+job's error must not stop another: set keys, events and layout as separate steps,
+not one after the other in the same function. Tests: the kit's `layoutCache`
+(wowkit.py, "Positions") puts a frame back only at the first `step()`; each suite
+of an addon with saved positions has a first-login test that fills it.
+
 ------------------------------------------------------------------------
 
 ## 11. Pattern Governance
