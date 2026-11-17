@@ -190,11 +190,21 @@ function GameTooltip:IsOwned(f) return self.owner == f and 1 or nil end
 function GameTooltip:Hide() self.owner = nil end
 for _, m in ipairs({ 'SetAction', 'SetSpellByID', 'SetHyperlink', 'SetEquipmentSet' }) do
     local method = m
-    GameTooltip[method] = function(self, value) self.shows = method .. ' ' .. tostring(value) end
+    GameTooltip[method] = function(self, value) self.shows = method .. ' ' .. tostring(value); return counting[value] end
 end
 
 -- The look: ClassicAPI's formatter, the Cooldown frame's calls recorded.
-Enum = { NumericRuleFormatRounding = { Up = 1 } }
+Enum = { NumericRuleFormatRounding = { Up = 1 }, PlayerSwingType = { MainHand = 0, OffHand = 1, Ranged = 2 } }
+-- The swing range (### C_SwingTimer.EnableRangeCheck), self buffs, worn items, spells on slots.
+selfBuffs, counting = {}, {}
+C_SwingTimer = {
+    EnableRangeCheck = function(swingType, on) swingChecks = (swingChecks or 0) + (on and 1 or -1) end,
+    IsTargetWithinSwingRange = function() return swingInRange end,
+}
+-- Moving a frame makes it the client's to save (layout-cache.txt).
+function Widget:StartMoving() self.userPlaced = true end
+function Widget:SetUserPlaced(on) self.userPlaced = on and true or nil end
+function Widget:IsUserPlaced() return self.userPlaced and 1 or nil end
 C_StringUtil = { CreateNumericRuleFormatter = function() return { SetBreakpoints = function() end } end }
 function Widget:SetCooldown(start, duration) self.cd = start .. '+' .. duration end
 function Widget:Clear() self.cd = nil end
@@ -265,6 +275,16 @@ C_Spell = {
 C_Item.GetItemIconByID = function(id) return 'itemTex:' .. id end
 C_Item.UseItemByName = function(id) usedItems[#usedItems + 1] = id end
 C_Item.ItemHasRange = function() return false end
+C_Item.IsEquippedItem = function(id) return equipment[id] ~= nil end
+C_Spell.IsSelfBuff = function(id) return selfBuffs[id] == true end
+C_ActionBar.FindSpellActionButtons = function(id)
+    local out
+    for slot = 1, 120 do
+        local a = bars[slot]
+        if a and a.kind == 'spell' and a.id == id then out = out or {}; out[#out + 1] = slot end
+    end
+    return out
+end
 C_Container = { GetItemCooldown = function(id) local c = itemCooldowns[id] or { 0, 0 }; return c[1], c[2], 1 end }
 C_EquipmentSet.GetEquipmentSetInfo = function(id) return sets[id], 'setTex:' .. id end
 C_EquipmentSet.UseEquipmentSet = function(id) equippedSets[#equippedSets + 1] = sets[id]; return true end

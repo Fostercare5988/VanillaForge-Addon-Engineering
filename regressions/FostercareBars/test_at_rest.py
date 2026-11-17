@@ -47,7 +47,7 @@ class AtRest(unittest.TestCase):
         # event and arg1... are the kit's (fire() sets them); hookedTimer is the mock's.
         own = [n for n in new if n not in GLOBALS and not re.fullmatch(r"event|arg\d|hookedTimer", n)]
         for name in own:
-            self.assertTrue(re.fullmatch(r"FostercareBars_\w+?_\d+\w*|BINDING_HEADER_FOSTERCAREBARS"
+            self.assertTrue(re.fullmatch(r"FostercareBars_\w+|BINDING_HEADER_FOSTERCAREBARS"
                                          r"|BINDING_NAME_FOSTERCAREBARS_EXTRA\d+_\d+", name), name)
         self.assertEqual(sorted(set(GLOBALS) & set(new)), sorted(GLOBALS))
         popups = lua.eval("(function() local o = {} for k in pairs(StaticPopupDialogs) do o[#o + 1] = k end "

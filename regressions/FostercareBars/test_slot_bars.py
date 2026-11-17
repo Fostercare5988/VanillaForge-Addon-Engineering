@@ -144,6 +144,21 @@ class SlotBars(unittest.TestCase):
         lua.execute("equipment[50] = { id = 50 } fire('UNIT_INVENTORY_CHANGED', 'player')")
         self.assertTrue(lua.eval("button('main', 1).border:IsShown()"))
 
+    def test_a_tooltip_refreshes_only_while_it_counts_a_cooldown(self):
+        lua = load(setup="bars[1] = { kind = 'spell', id = 1 } bars[2] = { kind = 'spell', id = 2 }")
+        lua.execute("run(button('main', 2), 'OnEnter')")
+        self.assertEqual(lua.eval("GameTooltip.shows"), "SetAction 2")
+        self.assertEqual(lua.eval("timerCount()"), 0, "no cooldown in the tooltip: no refresh")
+        lua.execute("counting[1] = 1 run(button('main', 2), 'OnLeave') run(button('main', 1), 'OnEnter')")
+        self.assertEqual(lua.eval("timerCount()"), 1)
+        lua.execute("GameTooltip.shows = nil step(1)")
+        self.assertEqual(lua.eval("GameTooltip.shows"), "SetAction 1", "filled again a second later")
+        lua.execute("counting[1] = nil step(1)")
+        self.assertEqual(lua.eval("timerCount()"), 0, "the cooldown is over")
+        lua.execute("counting[1] = 1 run(button('main', 1), 'OnEnter') run(button('main', 1), 'OnLeave')")
+        self.assertEqual(lua.eval("timerCount()"), 0, "the cursor left")
+        self.assertIsNone(lua.eval("GameTooltip.owner"))
+
     def test_the_combat_events_build_no_garbage(self):
         lua = load("FostercareBarsDB = { extraBars = 4, free = { [5] = { [1] = { kind = 'spell', id = 1 } } } }",
                    "learn(1) for s = 1, 84 do bars[s] = { kind = 'spell', id = 1 } end hasTarget = true spellRanged[1] = true")

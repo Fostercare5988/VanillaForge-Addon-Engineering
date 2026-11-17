@@ -57,12 +57,14 @@ class Layout(unittest.TestCase):
             return table.concat(out, '|')
         end)()''')
         self.assertEqual(names, "Main|Shown|Size|Buttons per row|Spacing|Show empty")
-        self.assertEqual(lua.eval(f"#{LAYOUT}.layout.rows"), 16 * 6)
+        self.assertEqual(lua.eval(f"{LAYOUT}.layout.rows[7]:GetName()"), "Placed by hand")
+        self.assertEqual(lua.eval(f"#{LAYOUT}.layout.rows"), 16 * 7)
 
     def test_an_extra_bar_rows_show_while_the_bar_exists(self):
         lua = load()
-        self.assertTrue(lua.eval(f"settingsWindow.visible({LAYOUT}.layout.rows[6 * 6 + 1])"), "Extra 2")
-        self.assertFalse(lua.eval(f"settingsWindow.visible({LAYOUT}.layout.rows[7 * 6 + 1])"), "Extra 3")
+        self.assertTrue(lua.eval(f"settingsWindow.visible({LAYOUT}.layout.rows[6 * 7 + 1])"), "Extra 2")
+        self.assertFalse(lua.eval(f"settingsWindow.visible({LAYOUT}.layout.rows[7 * 7 + 1])"), "Extra 3")
+        self.assertFalse(lua.eval(f"settingsWindow.visible({LAYOUT}.layout.rows[7 * 7 + 7])"), "its Placed by hand")
 
     def test_the_rows_change_the_bar(self):
         lua = load()
@@ -78,18 +80,30 @@ class Layout(unittest.TestCase):
         self.assertEqual(lua.eval("FostercareBarsDB.bars.bottomleft.columns"), 12)
         self.assertEqual(lua.eval("FostercareBarsDB.bars.bottomleft.scale"), 0.9)
 
-    def test_move_bars_saves_where_a_bar_is_dropped(self):
+    def test_a_dragged_bar_is_the_clients_to_save_and_defaults_puts_it_back(self):
         lua = load()
-        lua.execute("settingsWindow.click(settingsWindow.row(settingsWindow.find('FostercareBars'), 'Move bars'))")
-        lua.execute("h = button('right', 1).bar.handle h:IsShown() local holder = button('right', 1).bar.holder "
-                    "holder.left, holder.top, holder.scale = 1000, 600, 0.9 run(h, 'OnDragStop')")
-        self.assertTrue(lua.eval("h:IsShown()"))
-        self.assertAlmostEqual(lua.eval("FostercareBarsDB.bars.right.x"), 900)
-        self.assertAlmostEqual(lua.eval("FostercareBarsDB.bars.right.y"), 540)
-        self.assertEqual(lua.eval("(button('right', 1).bar.holder:GetPoint(1))"), "TOPLEFT")
-        lua.execute("settingsWindow.click(settingsWindow.row(settingsWindow.find('FostercareBars'), 'Move bars'))")
+        move = "settingsWindow.click(settingsWindow.row(settingsWindow.find('FostercareBars'), 'Move bars'))"
+        lua.execute(move)
+        lua.execute("bar = button('right', 1).bar h = bar.handle run(h, 'OnDragStart') run(h, 'OnDragStop')")
+        self.assertTrue(lua.eval("bar.holder:IsUserPlaced()"), "the client saves it (layout-cache.txt)")
+        self.assertEqual(lua.eval("bar.holder:GetName()"), "FostercareBars_right")
+        self.assertIsNone(lua.eval("FostercareBarsDB.bars.right.x"), "no position of our own")
+        self.assertTrue(lua.eval("Settings.GetValue('FostercareBars_right_placed')"))
+        lua.execute("bar.holder.top = 500 settingsWindow.use('FostercareBars_right_scale', 1.8)")
+        self.assertEqual(lua.eval("(bar.holder:GetPoint(1))"), "TOPLEFT", "a new size keeps the spot")
+        self.assertAlmostEqual(lua.eval("select(5, bar.holder:GetPoint(1))"), 500 * 0.9 / 1.8)
+        lua.execute(f"settingsWindow.defaults({LAYOUT})")
+        self.assertFalse(lua.eval("bar.holder:IsUserPlaced()"))
+        self.assertEqual(lua.eval("(bar.holder:GetPoint(1))"), "RIGHT", "back in its own spot")
+        lua.execute(move)
         self.assertFalse(lua.eval("h:IsShown()"))
         self.assertIn("Bars locked.", lua.eval("chatText()"))
+
+    def test_placed_by_hand_on_keeps_a_bar_where_it_is(self):
+        lua = load()
+        lua.execute("bar = button('left', 1).bar settingsWindow.use('FostercareBars_left_placed', true)")
+        self.assertTrue(lua.eval("bar.holder:IsUserPlaced()"))
+        self.assertEqual(lua.eval("(bar.holder:GetPoint(1))"), "TOPLEFT")
 
 
 if __name__ == "__main__":

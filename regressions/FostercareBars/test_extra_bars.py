@@ -104,6 +104,41 @@ class ExtraBars(unittest.TestCase):
         lua.execute("hasTarget = nil fire('PLAYER_TARGET_CHANGED')")
         self.assertEqual(lua.eval("timerCount()"), 0)
 
+    def test_a_melee_spell_follows_the_swing_range(self):
+        saved = "FostercareBarsDB = { extraBars = 4, free = { [5] = { [1] = { kind = 'spell', id = 1766 } } } }"
+        lua = load(saved, "learn(1766, 'Kick') hasTarget = true")
+        self.assertEqual(lua.eval("swingChecks"), 1)
+        lua.execute("fire('PLAYER_SWING_RANGE_UPDATE', Enum.PlayerSwingType.MainHand, nil, 1)")
+        self.assertTrue(lua.eval("hotkeyRed(button('extra5', 1))"))
+        lua.execute("fire('PLAYER_SWING_RANGE_UPDATE', Enum.PlayerSwingType.MainHand, 1, 1)")
+        self.assertFalse(lua.eval("hotkeyRed(button('extra5', 1))"))
+        self.assertEqual(lua.eval("timerCount()"), 0, "no check of our own")
+        lua.execute("shift = true run(button('extra5', 1), 'OnClick', 'RightButton') shift = nil")
+        self.assertEqual(lua.eval("swingChecks"), 0, "off once no button needs it")
+
+    def test_a_ranged_spell_on_a_slot_follows_that_slot(self):
+        saved = "FostercareBarsDB = { extraBars = 4, free = { [5] = { [1] = { kind = 'spell', id = 2 } } } }"
+        lua = load(saved, "learn(2) spellRanged[2] = true bars[100] = { kind = 'spell', id = 2 } hasTarget = true")
+        self.assertEqual(lua.eval("button('extra5', 1).rangeSlot"), 100)
+        self.assertEqual(lua.eval("timerCount()"), 0)
+        lua.execute("fire('ACTION_RANGE_CHECK_UPDATE', 100, false, true)")
+        self.assertTrue(lua.eval("hotkeyRed(button('extra5', 1))"))
+        lua.execute("bars[100] = nil fire('ACTIONBAR_SLOT_CHANGED', 100)")
+        self.assertEqual(lua.eval("timerCount()"), 1, "off the slot: the GAP check")
+
+    def test_a_spell_on_yourself_has_no_range(self):
+        saved = "FostercareBarsDB = { extraBars = 4, free = { [5] = { [1] = { kind = 'spell', id = 3 } } } }"
+        lua = load(saved, "learn(3) selfBuffs[3] = true hasTarget = true")
+        self.assertIsNone(lua.eval("button('extra5', 1).rangeBy"))
+        self.assertIsNone(lua.eval("swingChecks"))
+
+    def test_a_worn_item_has_the_green_border(self):
+        saved = "FostercareBarsDB = { extraBars = 4, free = { [5] = { [1] = { kind = 'item', id = 50 } } } }"
+        lua = load(saved, "give(50)")
+        self.assertFalse(lua.eval("button('extra5', 1).border:IsShown()"))
+        lua.execute("equipment[50] = { id = 50 } fire('UNIT_INVENTORY_CHANGED', 'player')")
+        self.assertTrue(lua.eval("button('extra5', 1).border:IsShown()"))
+
     def test_no_free_bar_no_free_events(self):
         lua = load()
         self.assertEqual(lua.eval("busyFrames()"), "")
