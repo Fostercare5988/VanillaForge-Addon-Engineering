@@ -197,6 +197,16 @@ class TopRight(unittest.TestCase):
         self.assertEqual(lua.eval("count('SetCooldown')"), starts)
         self.assertIsNone(lua.eval("BuffButton0.scripts.OnUpdate"))
 
+    def test_refreshed_auras_make_no_new_timers(self):
+        # 2026-11-17 /lag: a timer and a closure per aura change, 0.5 KB/s.
+        lua = self.lua
+        before = lua.eval("#timers")
+        for n in range(5):
+            lua.execute(f"playerBuffs.HELPFUL[1].ends = now + 700 + {n}; playerAuras()")
+        self.assertEqual(lua.eval("#timers"), before, "the wake is already sooner")
+        lua.execute("step(700 + 4 - 31 + 0.1)")
+        self.assertIsNotNone(lua.eval("BuffButton0.scripts.OnUpdate"), "it still flashes on time")
+
     def test_a_buff_gone_before_it_flashes_wakes_nothing(self):
         lua = self.lua
         lua.execute("playerBuffs.HELPFUL = {}; playerBuffs.HARMFUL = {}; playerAuras(); step(600)")
