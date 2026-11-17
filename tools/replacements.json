@@ -440,9 +440,9 @@
     {
       "id": "bag-walk-to-pick-up-item",
       "pattern": "PickupContainerItem\\s*\\(|PickupInventoryItem\\s*\\(",
-      "unless": "\\bC_Item\\.PickupItem\\s*\\(",
+      "unless": "\\bC_Item\\.PickupItem\\s*\\(|\\bC_Item\\.GetItemLocation\\s*\\(",
       "finding": "Scans equipment and bags for an item ID to know whether it is carried and where, then picks it up by bag and slot.",
-      "better": "C_Item.GetItemCount(id) (equipped items count) and C_Item.PickupItem(id) (equipment first, then bags; a locked item stays put). Keep the walk where the bag and slot themselves matter.",
+      "better": "C_Item.GetItemCount(id) (equipped items count) and C_Item.PickupItem(id) (equipment first, then bags; a locked item stays put). Keep the walk where the bag and slot themselves matter. An addon that follows one exact copy by GUID (C_Item.GetItemLocation) picks it up at that location: PickupItem cannot tell two copies apart.",
       "source": "ClassicAPI docs/API.md#c_itemgetitemcountiteminfo-includebank-includeuses, #c_itempickupitemiteminfo"
     },
     {

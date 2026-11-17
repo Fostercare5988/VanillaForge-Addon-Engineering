@@ -1,4 +1,5 @@
-"""Open All and the right-click take (spec tests 1 to 3), Mail 1.0.0."""
+"""Open All and the right-click take (spec tests 1 to 3), Mail 1.0.0; the
+right-click on the row buttons' own OnClick since 1.0.1."""
 import unittest
 from mail_env import load
 
@@ -129,7 +130,7 @@ class RightClick(unittest.TestCase):
 
     def test_a_left_click_opens_as_before(self):
         lua = load(setup='mail({ sender = "A", money = 5 })')
-        lua.execute("arg1 = 'LeftButton'; this = MailItem1Button; InboxFrame_OnClick(1)")
+        lua.execute("leftClickRow(1)")
         self.assertEqual(lua.eval("opened"), 1)
         self.assertEqual(log(lua), [])
 

@@ -104,7 +104,7 @@ class Sending(unittest.TestCase):
         self.assertEqual(self.lua.eval("SendMailNameEditBox:GetText()"), "Bagholder")
         self.lua.execute("deliverAll()")
         self.assertEqual(self.lua.eval("MailDB[\"Y'Shaarj|Horde\"].last.Claude"), "Bagholder")
-        self.assertEqual(self.lua.eval("MailDB[\"Y'Shaarj|Horde\"].names.Bagholder"), self.lua.eval("clock"))
+        self.assertEqual(self.lua.eval("MailDB[\"Y'Shaarj|Horde\"].recent[1]"), "Bagholder")
 
 
 class SendButton(unittest.TestCase):

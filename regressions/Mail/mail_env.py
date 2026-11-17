@@ -3,6 +3,7 @@
 Mail is the rebuild of Mailroom (2026-11-17). It is loaded from its TOC with
 `## LoadSavedVariablesFirst`. The model here:
 
+* `GetInboxItemID` (ClassicAPI) gives the marks their octowow.st/db IDs.
 * The client's mail page, as FrameXML MailFrame.lua and MailFrame.xml have it
   (`.private/framexml`): the frames Mail touches, the edit boxes with their
   own scripts, and the client's MailFrame_OnEvent, InboxFrame_Update,
@@ -197,6 +198,13 @@ function GetInboxItem(i)
     local m = i <= GetInboxNumItems() and inbox[i]
     if m and m.item then return m.item[1], "icon", m.item[2] or 1 end
 end
+-- Item IDs of the names the tests use (the marks as octowow.st/db has them).
+ITEM_IDS = { ["Alterac Valley Mark of Honor"] = 20560, ["Warsong Gulch Mark of Honor"] = 20558,
+    ["Arathi Basin Mark of Honor"] = 20559 }
+function GetInboxItemID(i)
+    local m = i <= GetInboxNumItems() and inbox[i]
+    if m and m.item then return ITEM_IDS[m.item[1]] or 1 end
+end
 function GetInboxText(i) inbox[i].read = 1 end
 local function ask(kind, i) log[#log + 1] = kind .. " " .. i; requests[#requests + 1] = { kind, inbox[i] } end
 function TakeInboxMoney(i) ask("money", i) end
@@ -283,7 +291,8 @@ function refuse(err) fire("UI_ERROR_MESSAGE", err); fire("MAIL_FAILED") end
 function deliverAll() for _ = 1, 30 do local n = #sent; deliver(); if #sent == n then return end end end
 
 -- ClassicAPI's name completion ("## AutoComplete"): known names starting with the text.
-Enum = { AutoCompleteEntryFlag = { InGroup = 1, InGuild = 2, Friend = 4, InteractedWith = 16, Online = 32 } }
+Enum = { AutoCompleteEntryFlag = { InGroup = 1, InGuild = 2, Friend = 4, InteractedWith = 16, Online = 32,
+    AccountCharacter = 128 } }
 known = {}
 C_AutoComplete = { GetAutoCompleteResults = function(text, n)
     local r = {}
@@ -295,7 +304,8 @@ end }
 
 function chatText() return table.concat(chat, "\n") end
 function click(w, button) run(w, "OnClick", button or "LeftButton") end
-function rightClickRow(i) arg1 = "RightButton"; this = _G["MailItem" .. i .. "Button"]; InboxFrame_OnClick(i); arg1 = nil end
+function rightClickRow(i) InboxFrame_Update(); run(_G["MailItem" .. i .. "Button"], "OnClick", "RightButton") end
+function leftClickRow(i) InboxFrame_Update(); run(_G["MailItem" .. i .. "Button"], "OnClick", "LeftButton") end
 function busy()
     local out = {}
     for _, w in ipairs(widgets) do

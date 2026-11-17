@@ -71,6 +71,9 @@ Do not trust for this server:
   26297 (by power type) 180 s. Shadowmeld, War Stomp and Will of the Forsaken
   differ from vanilla. Custom: Spiritwalk 52926 (racial, 180 s, 12 s invisible;
   race not stated).
+- 2026-11-17, from the database (?item=N): the battleground marks are 20560
+  Alterac Valley Mark of Honor, 20558 Warsong Gulch Mark of Honor and 20559
+  Arathi Basin Mark of Honor (Mail counts them).
 - Unverified: one spirit healer wave every 30 seconds for the whole
   battleground (as on MaNGOS cores). AutoBG's respawn bar and its dead enemy
   rows count to it.

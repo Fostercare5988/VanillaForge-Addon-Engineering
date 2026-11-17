@@ -6,7 +6,7 @@ from mail_env import load, MOCK, ROOT
 
 GLOBALS = ["MailDB", "MailOpenAllButton"]
 # Client functions Mail takes over, each calling the client's own when it is not Mail's turn.
-TAKEN = ["InboxFrame_OnClick", "SendMailFrame_Update", "UseContainerItem"]
+TAKEN = ["SendMailFrame_Update", "UseContainerItem"]
 
 
 class AtRest(unittest.TestCase):

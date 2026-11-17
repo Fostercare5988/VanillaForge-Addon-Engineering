@@ -911,12 +911,12 @@ Name completion for edit boxes (API only; it draws nothing):
 ```lua
 C_AutoComplete.GetAutoCompleteResults   -- (name, numResults, cursorPosition, allowFullMatch, includeFlags, excludeFlags)
 C_AutoComplete.IsRecognizedName
-Enum.AutoCompleteEntryFlag              -- InGroup, InGuild, Friend, InteractedWith, Online, ...
+Enum.AutoCompleteEntryFlag              -- AccountCharacter, InGroup, InGuild, Friend, InteractedWith, Online, ...
 Enum.AutoCompletePriority
 ```
 
-Known names: group, guild roster (after `GuildRoster()`), friends and whispers
-since login. CVars: `autoCompleteResortNamesOnRecency`,
+Known names: your other characters on the realm (`AccountCharacter`, 1.21.1),
+group, guild roster (after `GuildRoster()`), friends and whispers since login. CVars: `autoCompleteResortNamesOnRecency`,
 `autoCompleteWhenEditingFromCenter`, `autoCompleteUseContext`.
 
 ---
