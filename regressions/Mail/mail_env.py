@@ -357,7 +357,7 @@ def slots(lua):
         local out = {}
         for _, w in ipairs(widgets) do
             if w.kind == "Button" and w.parent == SendMailFrame and w.id and w.id > 0 then
-                out[w.id] = w.normal or ""
+                out[w.id] = w.icon and w.icon.shown and w.icon.texture or ""
             end
         end
         return table.concat(out, ",")
