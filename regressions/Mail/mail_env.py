@@ -1,6 +1,6 @@
 """The Mail regressions on the shared game model (wowkit).
 
-Mail is the rebuild of Mailroom (2026-11-17). It is loaded from its TOC with
+Mail 1.0.0 (2026-11-17), built from scratch. It is loaded from its TOC with
 `## LoadSavedVariablesFirst`. The model here:
 
 * `GetInboxItemID` (ClassicAPI) gives the marks their octowow.st/db IDs.
@@ -17,7 +17,7 @@ Mail is the rebuild of Mailroom (2026-11-17). It is loaded from its TOC with
   ERR_INV_FULL.
 * Bags of items with GUIDs, as ClassicAPI documents C_Item (GetItemGUID,
   GetItemLocation, IsItemGUIDInInventory, GetItemID, GetItemIcon,
-  GetStackCount, LockItemByGUID, UnlockItem, IsLocked); a locked item cannot
+  GetStackCount, LockItem, UnlockItem, IsLocked); a locked item cannot
   be picked up; GetCursorInfo gives "item", itemID. The client's one send
   slot refuses a soulbound item.
 * `hooksecurefunc` runs the hook after the original ("## Hooks").
@@ -250,7 +250,7 @@ C_Item = {
     GetItemID = function(loc) local it = at(loc); return it and it.id end,
     GetItemIcon = function(loc) local it = at(loc); return it and "icon:" .. it.name end,
     GetStackCount = function(loc) local it = at(loc); return it and it.count or 0 end,
-    LockItemByGUID = function(guid) locks[guid] = true end,
+    LockItem = function(loc) local it = at(loc); if it then locks[it.guid] = true end end,
     UnlockItem = function(loc) local it = at(loc); if it then locks[it.guid] = nil end end,
     IsLocked = function(loc) local it = at(loc); return it and locks[it.guid] or false end,
 }

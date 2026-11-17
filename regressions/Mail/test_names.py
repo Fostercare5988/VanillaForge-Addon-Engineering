@@ -1,4 +1,4 @@
-"""Recipient names (spec test 8). Since Mail 1.0.1 (ClassicAPI 1.21.1) your
+"""Recipient names (spec test 8). Mail 1.0.0 (ClassicAPI 1.21.1). Your
 other characters come from C_AutoComplete's AccountCharacter bit; Mail keeps
 only the last ten players you mailed and each character's last recipient."""
 import unittest

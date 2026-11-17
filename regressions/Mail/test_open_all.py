@@ -1,5 +1,4 @@
-"""Open All and the right-click take (spec tests 1 to 3), Mail 1.0.0; the
-right-click on the row buttons' own OnClick since 1.0.1."""
+"""Open All and the right-click take (spec tests 1 to 3), Mail 1.0.0."""
 import unittest
 from mail_env import load
 
