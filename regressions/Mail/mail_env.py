@@ -19,7 +19,7 @@ Mail 1.0.0 (2026-11-17), built from scratch. It is loaded from its TOC with
   ERR_INV_FULL.
 * Bags of items with GUIDs, as ClassicAPI documents C_Item (GetItemGUID,
   GetItemLocation, IsItemGUIDInInventory, GetItemID, GetItemIcon,
-  GetStackCount, LockItem, UnlockItem, IsLocked); a locked item cannot
+  GetStackCount, LockItem, UnlockItem, IsLocked, IsBound, GetItemData); a locked item cannot
   be picked up; GetCursorInfo gives "item", itemID. The client's one send
   slot refuses a soulbound item.
 * `hooksecurefunc` runs the hook after the original ("## Hooks").
@@ -247,6 +247,9 @@ C_Item = {
     GetItemIcon = function(loc) local it = at(loc); return it and "icon:" .. it.name end,
     GetStackCount = function(loc) local it = at(loc); return it and it.count or 0 end,
     LockItem = function(loc) local it = at(loc); if it then locks[it.guid] = true end end,
+    IsBound = function(loc) local it = at(loc); return it and it.soulbound and true or false end,
+    GetItemData = function(loc) local it = at(loc); if it then return { isConjured = it.conjured, bindType = it.quest and 4 or 0 } end end,
+    GetItemLink = function(loc) local it = at(loc); return it and "[" .. it.name .. "]" end,
     UnlockItem = function(loc) local it = at(loc); if it then locks[it.guid] = nil end end,
     IsLocked = function(loc) local it = at(loc); return it and locks[it.guid] or false end,
 }
@@ -280,7 +283,9 @@ function rightClickBag(b, s)
     ContainerFrameItemButton_OnClick("RightButton")
     this = was
 end
+clicks = 0
 function ClickSendMailItemButton()
+    clicks = clicks + 1
     if cursor then
         local it = itemAt(cursor)
         if it.soulbound then return end -- the client refuses; it stays on the cursor

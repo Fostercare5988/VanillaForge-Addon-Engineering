@@ -39,11 +39,24 @@ class Attach(unittest.TestCase):
         self.assertEqual(self.lua.eval("attached"), None)
         self.assertEqual(self.lua.eval("#used"), 0)
 
-    def test_an_item_the_client_will_not_mail_is_refused(self):
-        self.lua.execute("rightClickBag(0, 3)")
+    def test_soulbound_conjured_and_quest_items_are_refused(self):
+        self.lua.execute('''local water = give(1, 1, "Conjured Water", 20); bags[1][1].conjured = true
+            local note = give(1, 2, "Quest Note", 1); bags[1][2].quest = true
+            chat = {}; rightClickBag(0, 3); rightClickBag(1, 1); rightClickBag(1, 2)''')
         self.assertFalse(slots(self.lua).startswith("icon:"))
         self.assertEqual(self.lua.eval("locked(ring)"), False)
         self.assertEqual(self.lua.eval("cursor"), None)
+        self.assertIn("[Bound Ring] cannot be mailed.", self.lua.eval("chatText()"))
+        self.assertIn("[Conjured Water] cannot be mailed.", self.lua.eval("chatText()"))
+
+    def test_attaching_and_taking_off_never_touch_the_clients_slot(self):
+        """Mail 1.0.0 put every item in the client's one slot and took it out
+        again to ask whether it could be mailed."""
+        self.lua.execute("clicks = 0; rightClickBag(0, 1); rightClickBag(0, 2); rightClickBag(0, 1)")
+        self.assertEqual(self.lua.eval("clicks"), 0)
+        self.assertEqual(self.lua.eval("attached"), None)
+        self.assertTrue(slots(self.lua).startswith("icon:Copper Ore,,"))
+        self.assertEqual(self.lua.eval("locked(cloth)"), False, "the item taken off is free again")
 
     def test_twenty_one_at_most(self):
         self.lua.execute('''for s = 1, 22 do give(1, s, "Ore " .. s) end
