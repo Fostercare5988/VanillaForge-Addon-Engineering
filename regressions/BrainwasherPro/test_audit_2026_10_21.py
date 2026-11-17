@@ -113,7 +113,7 @@ class LongNames(unittest.TestCase):
     LONG = "Assassination PvP Arena Burst Setup"
 
     def setUp(self):
-        self.lua = device(f"ABP_GetProfileNames = function() return {{ '{self.LONG}' }} end; "
+        self.lua = device(f"FostercareBars.GetProfileNames = function() return {{ '{self.LONG}' }} end; "
                           f"BrainwasherProDB = {{ specs = {{ [2] = {{ name = '{self.LONG}', actionProfile = '{self.LONG}' }} }} }}")
 
     def test_long_texts_are_cut_to_fit(self):
@@ -157,12 +157,12 @@ class Audit2(unittest.TestCase):
         self.assertIn("PvP", lua.eval("popups.BRAINWASHERPRO_SAVE_SPEC.text"))
 
     def test_missing_profile_is_shown_and_not_loaded(self):
-        """A deleted ActionBarProfiles profile was found out only at swap time."""
+        """A deleted FostercareBars profile was found out only at swap time."""
         lua = device("BrainwasherProDB = { specs = { [2] = { name = 'PvP', actionProfile = 'Gone' } } }")
         self.assertIn("missing", lua.eval("BrainwasherProSlot2.summary.text"))
         lua.execute('click(BrainwasherProIcon2); accept("BRAINWASHERPRO_LOAD_SPEC"); leave()')
         lua.execute('fire("CHARACTER_POINTS_CHANGED"); advance(5)')
-        self.assertEqual(lua.eval("#abpLoaded"), 0)
+        self.assertEqual(lua.eval("#barsLoaded"), 0)
         self.assertIn("no longer exists", lua.eval("table.concat(messages, '\\n')"))
 
     def test_talent_events_are_heard_only_during_a_swap(self):
@@ -172,7 +172,7 @@ class Audit2(unittest.TestCase):
         lua.execute('click(BrainwasherProIcon2); accept("BRAINWASHERPRO_LOAD_SPEC"); leave()')
         self.assertTrue(lua.eval(listening))
         lua.execute('fire("CHARACTER_POINTS_CHANGED"); advance(2)')
-        self.assertEqual(lua.eval("abpLoaded[1]"), "PvP")
+        self.assertEqual(lua.eval("barsLoaded[1]"), "PvP")
         self.assertFalse(lua.eval(listening))
 
 
@@ -197,39 +197,39 @@ class ActionBars(unittest.TestCase):
         return lua
 
     def test_profile_loads_after_the_talents_change(self):
-        """Activating a spec loads its ActionBarProfiles profile once the talents settle."""
+        """Activating a spec loads its FostercareBars profile once the talents settle."""
         lua = self.setup_swap()
         self.assertEqual(lua.eval("selected[1]"), 22)
         lua.execute('fire("CHARACTER_POINTS_CHANGED"); advance(1); fire("SPELLS_CHANGED"); advance(1)')
-        self.assertEqual(lua.eval("#abpLoaded"), 0, "must wait until the events stop")
+        self.assertEqual(lua.eval("#barsLoaded"), 0, "must wait until the events stop")
         lua.execute("advance(1)")
-        self.assertEqual(lua.eval("abpLoaded[1]"), "PvP")
-        self.assertEqual(lua.eval("#abpLoaded"), 1)
+        self.assertEqual(lua.eval("barsLoaded[1]"), "PvP")
+        self.assertEqual(lua.eval("#barsLoaded"), 1)
 
     def test_swap_seen_by_spell_events_alone(self):
         """2026-10-22 in play: the swap only unlearned and learned spells, with no
         CHARACTER_POINTS_CHANGED, so the bars never loaded."""
         lua = self.setup_swap("; talents = { 41, 10, 0 }")
         lua.execute('talents = { 32, 0, 19 }; for i = 1, 6 do fire("SPELLS_CHANGED") end; advance(2)')
-        self.assertEqual(lua.eval("abpLoaded[1]"), "PvP")
-        self.assertEqual(lua.eval("#abpLoaded"), 1)
+        self.assertEqual(lua.eval("barsLoaded[1]"), "PvP")
+        self.assertEqual(lua.eval("#barsLoaded"), 1)
 
     def test_unrelated_spell_events_do_not_load_bars(self):
         lua = self.setup_swap()
         lua.execute('fire("SPELLS_CHANGED"); advance(5)')
-        self.assertEqual(lua.eval("#abpLoaded"), 0)
+        self.assertEqual(lua.eval("#barsLoaded"), 0)
 
     def test_profile_waits_for_combat_to_end(self):
         lua = self.setup_swap()
         lua.execute('inCombat = true; fire("CHARACTER_POINTS_CHANGED"); advance(2)')
-        self.assertEqual(lua.eval("#abpLoaded"), 0)
+        self.assertEqual(lua.eval("#barsLoaded"), 0)
         lua.execute('inCombat = false; fire("PLAYER_REGEN_ENABLED")')
-        self.assertEqual(lua.eval("abpLoaded[1]"), "PvP")
+        self.assertEqual(lua.eval("barsLoaded[1]"), "PvP")
 
     def test_no_talent_change_leaves_bars_alone(self):
         lua = self.setup_swap()
         lua.execute('advance(61); fire("CHARACTER_POINTS_CHANGED"); advance(5)')
-        self.assertEqual(lua.eval("#abpLoaded"), 0)
+        self.assertEqual(lua.eval("#barsLoaded"), 0)
         self.assertIn("left as they are", lua.eval("table.concat(messages, '\\n')"))
 
     def test_edit_window_cycles_through_profiles(self):

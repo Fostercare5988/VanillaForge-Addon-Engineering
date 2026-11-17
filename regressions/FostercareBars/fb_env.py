@@ -291,7 +291,7 @@ function hotkeyRed(b) local c = b.hotkey.color; return c ~= nil and c[1] == 1 an
 function timerCount() local n = 0 for _, t in ipairs(timers) do if not t.cancelled then n = n + 1 end end return n end
 '''
 
-GLOBALS = ("FostercareBarsDB", "FostercareBars", "ABP_GetProfileNames", "ABP_LoadProfileByName",
+GLOBALS = ("FostercareBarsDB", "FostercareBars",
            "SLASH_FOSTERCAREBARS1")
 
 

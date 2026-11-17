@@ -426,7 +426,7 @@
       "pattern": "\\bGetActionText\\s*\\(",
       "unless": "\\bGetActionInfo\\s*\\(",
       "finding": "Reads what an action slot holds from SuperWoW's GetActionText type and id returns.",
-      "better": "GetActionInfo(slot): \"spell\", spellID / \"item\", itemID / \"macro\", macroSlot / \"equipmentset\", setName; nothing for an empty slot or a deleted macro. No SuperWoW needed (ActionBarProfiles 1.1.0).",
+      "better": "GetActionInfo(slot): \"spell\", spellID / \"item\", itemID / \"macro\", macroSlot / \"equipmentset\", setName; nothing for an empty slot or a deleted macro. No SuperWoW needed (FostercareBars).",
       "source": "ClassicAPI docs/API.md#getactioninfoslot"
     },
     {

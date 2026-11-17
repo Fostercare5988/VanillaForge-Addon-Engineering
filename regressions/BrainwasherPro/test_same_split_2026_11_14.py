@@ -51,7 +51,7 @@ class SameSplit(unittest.TestCase):
         lua.execute('click(BrainwasherProIcon3); accept("BRAINWASHERPRO_LOAD_SPEC"); leave()')
         self.assertIn(23, list(lua.eval("selected").values()))
         lua.execute(f'setBuild({BUILD_B}); fire("SPELLS_CHANGED"); advance(2)')
-        self.assertEqual(lua.eval("abpLoaded[1]"), "PvP")
+        self.assertEqual(lua.eval("barsLoaded[1]"), "PvP")
         lua.execute(f"talk(DEVICE, {MENU})")
         self.assertTrue(active(lua, 3))
         self.assertFalse(active(lua, 1))
@@ -79,7 +79,7 @@ class SameSplit(unittest.TestCase):
         save(lua, 3)
         save(lua, 1)
         lua.execute('click(BrainwasherProIcon3); accept("BRAINWASHERPRO_LOAD_SPEC"); leave(); advance(2)')
-        self.assertEqual(lua.eval("abpLoaded[1]"), "PvP")
+        self.assertEqual(lua.eval("barsLoaded[1]"), "PvP")
         self.assertEqual(lua.eval("BrainwasherProDB.current"), 3)
 
     def test_swap_without_events_is_seen_at_the_timeout(self):
@@ -89,7 +89,7 @@ class SameSplit(unittest.TestCase):
         save(lua, 1)
         lua.execute(f'click(BrainwasherProIcon3); accept("BRAINWASHERPRO_LOAD_SPEC"); leave()'
                     f'; setBuild({BUILD_B}); advance(61)')
-        self.assertEqual(lua.eval("abpLoaded[1]"), "PvP")
+        self.assertEqual(lua.eval("barsLoaded[1]"), "PvP")
         self.assertNotIn("left as they are", lua.eval("table.concat(messages, '\\n')"))
 
     def test_swap_without_bars_records_the_spec(self):
@@ -100,7 +100,7 @@ class SameSplit(unittest.TestCase):
                     f'; setBuild({BUILD_B}); fire("SPELLS_CHANGED"); advance(2)')
         self.assertEqual(lua.eval("BrainwasherProDB.current"), 3)
         self.assertEqual(lua.eval("BrainwasherProDB.specs[3].build"), "555555533-55-")
-        self.assertEqual(lua.eval("#abpLoaded"), 0)
+        self.assertEqual(lua.eval("#barsLoaded"), 0)
 
 
 class IconPicker(unittest.TestCase):

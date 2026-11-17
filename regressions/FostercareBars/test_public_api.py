@@ -1,6 +1,6 @@
 """What other addons call (spec K8; test 11): BrainwasherPro links talent
-specs to profiles by name. The two ABP_ names serve the old BrainwasherPro
-until it is rebuilt.
+specs to profiles by name, through the table FostercareBars only (the two
+old ABP_ names went on 2026-11-18, when BrainwasherPro moved to it).
 """
 import unittest
 from fb_env import load, profiles
@@ -25,11 +25,10 @@ class PublicAPI(unittest.TestCase):
         self.assertFalse(lua.eval("FostercareBars.LoadProfile('Nope')"))
         self.assertFalse(lua.eval("FostercareBars.LoadProfile(nil)"))
 
-    def test_the_old_names_do_the_same(self):
-        lua = load(SAVED, "learn(10)")
-        self.assertEqual(list(lua.eval("ABP_GetProfileNames()").values()), profiles(lua))
-        self.assertTrue(lua.eval("ABP_LoadProfileByName('PVE')"))
-        self.assertFalse(lua.eval("ABP_LoadProfileByName('Nope')"))
+    def test_the_old_names_are_gone(self):
+        lua = load(SAVED)
+        self.assertIsNone(lua.eval("ABP_GetProfileNames"))
+        self.assertIsNone(lua.eval("ABP_LoadProfileByName"))
 
     def test_names_work_before_the_world_is_entered(self):
         lua = load(SAVED, world=False)

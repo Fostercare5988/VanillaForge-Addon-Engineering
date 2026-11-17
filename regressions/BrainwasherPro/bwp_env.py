@@ -135,10 +135,12 @@ function deviceMenu()
     }
 end
 
--- ActionBarProfiles -------------------------------------------------------
-abpLoaded = {}
-function ABP_GetProfileNames() return { "PvE", "PvP" } end
-function ABP_LoadProfileByName(name) table.insert(abpLoaded, name); return true end
+-- FostercareBars' public table (its Profiles.lua) ------------------------
+barsLoaded = {}
+FostercareBars = {
+    GetProfileNames = function() return { "PvE", "PvP" } end,
+    LoadProfile = function(name) table.insert(barsLoaded, name); return true end,
+}
 '''
 
 
