@@ -78,6 +78,7 @@ The kit builds no garbage of its own, so a garbage test measures the addon.
 | FostercareNameplates | `regressions/FostercareNameplates` | fnp_env.py |
 | FostercareTweaks | `regressions/FostercareTweaks` | ft_env.py for new tests; older files inline (`BASE` in test_audit_2026_10_26.py) |
 | GearRack | `regressions/GearRack` | gr_env.py |
+| Mail | `regressions/Mail` | mail_env.py (the rebuild of Mailroom; the Mailroom suite goes at release) |
 | Mailroom | `regressions/Mailroom` | mailroom_env.py |
 | ThreatMeter | `regressions/ThreatMeter` | tm_env.py |
 
