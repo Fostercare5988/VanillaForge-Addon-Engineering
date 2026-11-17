@@ -86,6 +86,22 @@ class Sending(unittest.TestCase):
             self.assertEqual(lua.eval("locked(cloth) and locked(ore)"), True, err)
             self.assertTrue(slots(lua).startswith("icon:Linen Cloth,icon:Copper Ore,"), err)
 
+    def test_the_next_letter_goes_a_frame_after_the_last_ones_success(self):
+        """Mailroom sent the next letter on the next frame; inside MAIL_SEND_SUCCESS
+        the client is still finishing the last one."""
+        self.attach(1, 2)
+        form(self.lua)
+        self.lua.execute("click(SendMailMailButton); fire('MAIL_SEND_SUCCESS')")
+        self.assertEqual(self.lua.eval("#sent"), 1, "not inside the event")
+        self.lua.execute("step(0)")
+        self.assertEqual(self.lua.eval("#sent"), 2)
+
+    def test_a_failure_between_letters_does_not_stop_the_send(self):
+        self.attach(1, 2)
+        form(self.lua)
+        self.lua.execute("click(SendMailMailButton); fire('MAIL_SEND_SUCCESS'); fire('MAIL_FAILED'); step(0); deliverAll()")
+        self.assertEqual(self.lua.eval("#sent"), 2)
+
     def test_a_failure_with_no_message_stops_too(self):
         self.attach(1, 2)
         form(self.lua)

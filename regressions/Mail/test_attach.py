@@ -120,6 +120,19 @@ class Attach(unittest.TestCase):
         self.lua.execute("rightClickBag(0, 1); locks[cloth] = nil; fire('ITEM_LOCK_CHANGED')")
         self.assertEqual(self.lua.eval("locked(cloth)"), True)
 
+    def test_an_item_classicapi_cannot_place_never_blocks_a_right_click(self):
+        """Seen in play 2026-11-17: after a round of attach and take-off, right-clicks
+        did nothing and no error showed. An entry whose item GetItemLocation
+        could not place stayed in the list, invisible, and the next attach of
+        that item returned without a word."""
+        self.lua.execute('''rightClickBag(0, 1)
+            local Get = C_Item.GetItemLocation
+            C_Item.GetItemLocation = function(guid) if guid == cloth then return nil end return Get(guid) end
+            fire("BAG_UPDATE_DELAYED")
+            C_Item.GetItemLocation = Get
+            chat = {}; rightClickBag(0, 1)''')
+        self.assertTrue(slots(self.lua).startswith("icon:Linen Cloth,"), "the right-click attached it again")
+
     def test_closing_the_mailbox_lets_every_item_go(self):
         self.lua.execute("rightClickBag(0, 1); rightClickBag(0, 2); fire('MAIL_CLOSED')")
         self.assertEqual(self.lua.eval("locked(cloth) or locked(ore)"), False)

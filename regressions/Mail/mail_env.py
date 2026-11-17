@@ -306,6 +306,7 @@ function deliver()
     local letter = sent[#sent]
     if attached then local _, b, s = itemAt(attached); bags[b][s] = nil; locks[attached] = nil; attached = nil end
     fire("MAIL_SEND_SUCCESS")
+    step(0) -- the next frame
 end
 function refuse(err) fire("UI_ERROR_MESSAGE", err); fire("MAIL_FAILED") end
 function deliverAll() for _ = 1, 30 do local n = #sent; deliver(); if #sent == n then return end end end
