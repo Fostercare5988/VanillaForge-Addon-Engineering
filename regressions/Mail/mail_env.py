@@ -17,6 +17,8 @@ Mail 1.0.0 (2026-11-17), built from scratch. It is loaded from its TOC with
   `SendMail` waits until `deliver()` (MAIL_SEND_SUCCESS) or `refuse(err)`
   (UI_ERROR_MESSAGE, then MAIL_FAILED). Taking an item into full bags gives
   ERR_INV_FULL.
+* LockItem and UnlockItem fire ITEM_LOCK_CHANGED inside the call, as
+  "### C_Item.LockItem(itemLocation)" documents and play showed (2026-11-17).
 * Bags of items with GUIDs, as ClassicAPI documents C_Item (GetItemGUID,
   GetItemLocation, IsItemGUIDInInventory, GetItemID, GetItemIcon,
   GetStackCount, LockItem, UnlockItem, IsLocked, IsBound, GetItemData); a locked item cannot
@@ -246,11 +248,11 @@ C_Item = {
     GetItemID = function(loc) local it = at(loc); return it and it.id end,
     GetItemIcon = function(loc) local it = at(loc); return it and "icon:" .. it.name end,
     GetStackCount = function(loc) local it = at(loc); return it and it.count or 0 end,
-    LockItem = function(loc) local it = at(loc); if it then locks[it.guid] = true end end,
+    LockItem = function(loc) local it = at(loc); if it then locks[it.guid] = true; fire("ITEM_LOCK_CHANGED") end end,
     IsBound = function(loc) local it = at(loc); return it and it.soulbound and true or false end,
     GetItemData = function(loc) local it = at(loc); if it then return { isConjured = it.conjured, bindType = it.quest and 4 or 0 } end end,
     GetItemLink = function(loc) local it = at(loc); return it and "[" .. it.name .. "]" end,
-    UnlockItem = function(loc) local it = at(loc); if it then locks[it.guid] = nil end end,
+    UnlockItem = function(loc) local it = at(loc); if it then locks[it.guid] = nil; fire("ITEM_LOCK_CHANGED") end end,
     IsLocked = function(loc) local it = at(loc); return it and locks[it.guid] or false end,
 }
 function locked(guid) return locks[guid] == true end

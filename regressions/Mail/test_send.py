@@ -29,7 +29,9 @@ class Sending(unittest.TestCase):
             self.lua.execute(f"rightClickBag(0, {s})")
 
     def test_items_right_clicked_on_the_send_tab_all_go(self):
-        """Seen in play 2026-11-17 (Mail 1.0.0): sending several items did not work."""
+        """Seen in play 2026-11-17: sending several items did not work. 1.0.0: the
+        client's own right-click; then (MailTrace) "This item could not be
+        attached." because Mail relocked the item it had just unlocked."""
         form(self.lua)
         self.attach(1, 2, 3)
         self.lua.execute("click(SendMailMailButton); deliverAll()")

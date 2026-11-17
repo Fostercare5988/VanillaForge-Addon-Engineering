@@ -116,9 +116,20 @@ class Attach(unittest.TestCase):
         self.lua.execute("sell(0, 2); fire('BAG_UPDATE_DELAYED')")
         self.assertTrue(slots(self.lua).startswith("icon:Linen Cloth,,"))
 
-    def test_a_lock_the_server_clears_comes_back(self):
-        self.lua.execute("rightClickBag(0, 1); locks[cloth] = nil; fire('ITEM_LOCK_CHANGED')")
+    def test_a_lock_the_server_clears_comes_back_after_the_bag_update(self):
+        self.lua.execute("rightClickBag(0, 1); locks[cloth] = nil; fire('BAG_UPDATE_DELAYED')")
         self.assertEqual(self.lua.eval("locked(cloth)"), True)
+
+    def test_taking_off_after_a_round_trip_lets_the_item_go(self):
+        """Seen in play 2026-11-17 (MailTrace): in the second round each take-off
+        was unlocked and at once relocked inside the same click."""
+        self.lua.execute('''for round = 1, 2 do
+                rightClickBag(0, 1); rightClickBag(0, 2)
+                for _, w in ipairs(widgets) do if w.parent == SendMailFrame and w.id == 1 then
+                    run(w, "OnClick", "RightButton"); run(w, "OnClick", "RightButton") end end
+            end''')
+        self.assertFalse(slots(self.lua).startswith("icon:"))
+        self.assertEqual(self.lua.eval("locked(cloth) or locked(ore)"), False)
 
     def test_an_item_classicapi_cannot_place_never_blocks_a_right_click(self):
         """Seen in play 2026-11-17: after a round of attach and take-off, right-clicks
@@ -139,7 +150,7 @@ class Attach(unittest.TestCase):
         self.assertFalse(slots(self.lua).startswith("icon:"))
 
     def test_bag_updates_are_heard_only_while_items_wait(self):
-        frames = "(function() for _, w in ipairs(widgets) do if w.events.BAG_UPDATE_DELAYED and w.events.ITEM_LOCK_CHANGED and w.events.PLAYER_LOGOUT then return true end end return false end)()"
+        frames = "(function() for _, w in ipairs(widgets) do if w.events.BAG_UPDATE_DELAYED and w.events.PLAYER_LOGOUT then return true end end return false end)()"
         self.assertEqual(self.lua.eval(frames), False)
         self.lua.execute("rightClickBag(0, 1)")
         self.assertEqual(self.lua.eval(frames), True)
