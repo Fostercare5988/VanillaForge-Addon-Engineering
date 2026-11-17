@@ -67,7 +67,8 @@ The kit builds no garbage of its own, so a garbage test measures the addon.
 | Addon | Folder | Harness |
 | --- | --- | --- |
 | AutoBG | `regressions/AutoBG` | inline per test file; addon_loader.py loads files; clock_mock.py is ClassicAPI's duration text bindings, rule formatters and timers that fire by time (`__frame()` is a drawn frame) |
-| AutoLazy | `regressions/AutoLazy` | inline per test file |
+| AutoLazy | `regressions/AutoLazy` | inline per test file (1.3; gives way to `AutoLazy_rebuild` at release) |
+| AutoLazy 2.0 (the rebuild) | `regressions/AutoLazy_rebuild` | al_env.py. The new code is a worktree on `rebuild`, `Interface/Rebuild/AutoLazy`; run `tools/audit_addon.py "<that folder>" --run-tests --test-start regressions/AutoLazy_rebuild` |
 | Bagnon | `regressions/Bagnon` | bgn_env.py |
 | BrainwasherPro | `regressions/BrainwasherPro` | bwp_env.py |
 | EasyPoisons | `regressions/EasyPoisons` | ep_env.py |
