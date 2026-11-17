@@ -114,7 +114,7 @@ class Sending(unittest.TestCase):
     def test_an_item_left_in_the_clients_hidden_slot_does_not_spoil_the_send(self):
         """Seen in play 2026-11-17: sends stalled. An item left in the client's
         one (hidden) slot was swapped onto the cursor by the first letter."""
-        self.lua.execute("give(2, 1, 'Leftover', 1); PickupContainerItem(2, 1); ClickSendMailItemButton()")
+        self.lua.execute("attached = give(2, 1, 'Leftover', 1); locks[attached] = true")  # left there before Mail could see it
         self.attach(1, 2)
         form(self.lua)
         self.lua.execute("click(SendMailMailButton); deliverAll()")

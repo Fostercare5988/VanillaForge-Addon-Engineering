@@ -79,6 +79,24 @@ class Attach(unittest.TestCase):
         self.assertTrue(slots(self.lua).startswith("icon:Copper Ore,,"))
         self.assertEqual(self.lua.eval("locked(cloth)"), False)
 
+    def test_an_item_the_client_puts_in_its_own_slot_joins_the_list(self):
+        """Seen in play 2026-11-17: a second round of right-clicks did nothing; the
+        client's own right-click (ContainerFrame.lua:616: pick up, then
+        ClickSendMailItemButton) had put each stack in its hidden slot."""
+        self.lua.execute('''MailFrameTab_OnClick(2)
+            PickupContainerItem(0, 1); ClickSendMailItemButton(); ClearCursor()
+            PickupContainerItem(0, 2); ClickSendMailItemButton(); ClearCursor()''')
+        self.assertTrue(slots(self.lua).startswith("icon:Linen Cloth,icon:Copper Ore,"))
+        self.assertEqual(self.lua.eval("attached"), None, "the client's slot is empty again")
+        self.assertEqual(self.lua.eval("cursor"), None)
+        self.lua.execute("rightClickBag(0, 1)")
+        self.assertTrue(slots(self.lua).startswith("icon:Copper Ore,,"), "and right-click takes it off")
+
+    def test_logging_out_or_reloading_lets_the_greyed_items_go(self):
+        """Seen in play 2026-11-17: after /reload the stacks were still grey."""
+        self.lua.execute("rightClickBag(0, 1); rightClickBag(0, 2); fire('PLAYER_LOGOUT')")
+        self.assertEqual(self.lua.eval("locked(cloth) or locked(ore)"), False)
+
     def test_opening_the_mailbox_gives_back_an_item_left_in_the_clients_slot(self):
         self.lua.execute("fire('MAIL_CLOSED'); PickupContainerItem(0, 3 - 2); ClickSendMailItemButton(); fire('MAIL_SHOW')")
         self.assertEqual(self.lua.eval("attached"), None)
@@ -108,7 +126,7 @@ class Attach(unittest.TestCase):
         self.assertFalse(slots(self.lua).startswith("icon:"))
 
     def test_bag_updates_are_heard_only_while_items_wait(self):
-        frames = "(function() for _, w in ipairs(widgets) do if w.events.BAG_UPDATE_DELAYED and w.events.ITEM_LOCK_CHANGED then return true end end return false end)()"
+        frames = "(function() for _, w in ipairs(widgets) do if w.events.BAG_UPDATE_DELAYED and w.events.ITEM_LOCK_CHANGED and w.events.PLAYER_LOGOUT then return true end end return false end)()"
         self.assertEqual(self.lua.eval(frames), False)
         self.lua.execute("rightClickBag(0, 1)")
         self.assertEqual(self.lua.eval(frames), True)

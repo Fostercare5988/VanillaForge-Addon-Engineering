@@ -294,6 +294,7 @@ function ClickSendMailItemButton()
     fire("MAIL_SEND_INFO_UPDATE")
 end
 function GetSendMailItem() local it = attached and itemAt(attached); if it then return it.name, "icon", it.count end end
+function GetSendMailItemLink() local it = attached and itemAt(attached); if it then return "link", it.id end end
 sent = {}
 function SetSendMailMoney(c) sendMoney = c end
 function SetSendMailCOD(c) sendCOD = c end
