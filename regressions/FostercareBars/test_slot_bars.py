@@ -24,6 +24,27 @@ class SlotBars(unittest.TestCase):
         lua.execute("CURRENT_ACTIONBAR_PAGE = 1 bonusOffset = 0 fire('UPDATE_BONUS_ACTIONBAR')")
         self.assertEqual(lua.eval("button('main', 12).slot"), 12)
 
+    def test_the_games_own_binding_uses_the_same_slot(self):
+        # At a first login (2026-11-17) the override on F was not in place: the
+        # game's MULTIACTIONBAR1BUTTON10 pressed the hidden stock button, which read
+        # slot 10 (Disenchant), not 70 (Stealth). Stock MultiActionButtonUp and
+        # ActionButtonUp (FrameXML) use the button's `action`.
+        lua = load()
+        lua.execute("""
+            function Widget:GetButtonState() return self.state or 'NORMAL' end
+            function Widget:SetButtonState(s) self.state = s end
+            function MultiActionButtonUp(bar, id)
+                local b = _G[bar .. 'Button' .. id]
+                b:SetButtonState('PUSHED'); b:SetButtonState('NORMAL'); UseAction(b.action, 0)
+            end
+            function ActionButtonUp(id) UseAction(_G['ActionButton' .. id].action, 0) end
+            used = {}
+            MultiActionButtonUp('MultiBarBottomLeft', 10); MultiActionButtonUp('MultiBarRight', 1)
+            ActionButtonUp(3)
+            bonusOffset = 1 fire('UPDATE_BONUS_ACTIONBAR'); ActionButtonUp(3)""")
+        self.assertEqual(list(lua.eval("used").values()), [70, 25, 3, 75])
+        self.assertEqual(lua.eval("BonusActionButton3.action"), 75)
+
     def test_one_slot_change_redraws_one_button(self):
         lua = load()
         before = [lua.eval(f"readsOf({s})") for s in (5, 6)]
