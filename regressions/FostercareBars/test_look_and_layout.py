@@ -99,6 +99,22 @@ class Layout(unittest.TestCase):
         self.assertFalse(lua.eval("h:IsShown()"))
         self.assertIn("Bars locked.", lua.eval("chatText()"))
 
+    def test_a_placed_bar_not_laid_out_yet_at_login_keeps_its_place_and_the_keys(self):
+        # 2026-11-17: at login the client had put back FostercareBars_extra2 but
+        # not laid it out (GetLeft nil); the layout stopped with an error before
+        # it set the keys, so F ran the game's own binding.
+        lua = load(setup="""
+            keys.MULTIACTIONBAR1BUTTON10 = { 'F' }
+            local get = CreateFrame
+            function CreateFrame(kind, name, parent, template)
+                local f = get(kind, name, parent, template)
+                if name == 'FostercareBars_extra2' then f.userPlaced = true; f.GetLeft = function() end end
+                return f
+            end""")
+        self.assertEqual(lua.eval("FostercareBars_extra2:GetScale()"), 0.9)
+        self.assertEqual(lua.eval("FostercareBars_extra2:GetNumPoints()"), 0, "the client's anchor stays")
+        self.assertEqual(lua.eval("overrides.F"), "FostercareBars_bottomleft_10")
+
     def test_placed_by_hand_on_keeps_a_bar_where_it_is(self):
         lua = load()
         lua.execute("bar = button('left', 1).bar settingsWindow.use('FostercareBars_left_placed', true)")
