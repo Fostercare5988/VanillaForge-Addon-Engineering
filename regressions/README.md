@@ -76,10 +76,9 @@ The kit builds no garbage of its own, so a garbage test measures the addon.
 | FostercareBars | `regressions/FostercareBars` | fb_env.py (the rebuild of ActionBarProfiles; its suite goes at release) |
 | FostercareBattleText | `regressions/FostercareBattleText` | _fbt_runtime.py |
 | FostercareNameplates | `regressions/FostercareNameplates` | fnp_env.py |
-| FostercareFrames (new: the unit frames of old FostercareTweaks) | `regressions/FostercareFrames` | ff_env.py. The addon is in AddOns since the switch-over (2026-11-17); run `tools/audit_addon.py "<that folder>" --run-tests --test-start regressions/FostercareFrames` |
-| FostercareRaid (new: the grid of old FostercareTweaks) | `regressions/FostercareRaid` | fr_env.py. The addon is in AddOns since the switch-over (2026-11-17); run `tools/audit_addon.py "<that folder>" --run-tests --test-start regressions/FostercareRaid` |
-| FostercareTweaks | `regressions/FostercareTweaks` | ft_env.py for new tests; older files inline (`BASE` in test_audit_2026_10_26.py) |
-| FostercareTweaks 2.0 (rebuild) | `regressions/FostercareTweaks_rebuild` | ftr_env.py. The AddOns checkout is on its `rebuild` branch since the switch-over (2026-11-17); run `tools/audit_addon.py "<that folder>" --run-tests --test-start regressions/FostercareTweaks_rebuild`; it takes over `regressions/FostercareTweaks` at release |
+| FostercareFrames | `regressions/FostercareFrames` | ff_env.py |
+| FostercareRaid | `regressions/FostercareRaid` | fr_env.py |
+| FostercareTweaks | `regressions/FostercareTweaks` | ftr_env.py (1.0, the rebuild; the 1.22 suite went at its release, 2026-11-18) |
 | GearRack | `regressions/GearRack` | gr_env.py |
 | Mail | `regressions/Mail` | mail_env.py |
 | ThreatMeter | `regressions/ThreatMeter` | tm_env.py |

@@ -1,9 +1,7 @@
-"""The rebuilt FostercareTweaks (2.0) on the shared game model (wowkit).
-
-The new code lives on the addon's `rebuild` branch, in a second working folder
-outside AddOns, while the old FostercareTweaks keeps playing; this suite takes
-over `regressions/FostercareTweaks` at release. Point VANILLAFORGE_ADDON_ROOT
-at the rebuild folder (tools/audit_addon.py does when given that folder).
+"""FostercareTweaks 1.0 (the rebuild, released 2026-11-18 with a fresh
+history; the suite of the old 1.22 is gone with it) on the shared game model
+(wowkit). tools/run_suite.py and tools/audit_addon.py point
+VANILLAFORGE_ADDON_ROOT at the addon.
 
 The game is modelled as ClassicAPI documents it (docs/API.md) and as the
 client's FrameXML runs it: tooltips fire OnTooltipCleared, then
