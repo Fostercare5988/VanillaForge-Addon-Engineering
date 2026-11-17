@@ -77,6 +77,7 @@ The kit builds no garbage of its own, so a garbage test measures the addon.
 | FostercareBattleText | `regressions/FostercareBattleText` | _fbt_runtime.py |
 | FostercareNameplates | `regressions/FostercareNameplates` | fnp_env.py |
 | FostercareTweaks | `regressions/FostercareTweaks` | ft_env.py for new tests; older files inline (`BASE` in test_audit_2026_10_26.py) |
+| FostercareTweaks 2.0 (rebuild) | `regressions/FostercareTweaks_rebuild` | ftr_env.py. The addon is a worktree on its `rebuild` branch outside AddOns (`Interface/Rebuild/FostercareTweaks`), so run `tools/audit_addon.py "<that folder>" --run-tests --test-start regressions/FostercareTweaks_rebuild`; it takes over `regressions/FostercareTweaks` at release |
 | GearRack | `regressions/GearRack` | gr_env.py |
 | Mail | `regressions/Mail` | mail_env.py |
 | ThreatMeter | `regressions/ThreatMeter` | tm_env.py |
