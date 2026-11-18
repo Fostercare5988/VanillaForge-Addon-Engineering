@@ -213,6 +213,66 @@ class Window(unittest.TestCase):
         self.assertIsNone(lua.eval("usedSets[1]"))
 
 
+class Current(unittest.TestCase):
+    """From the second play (2026-11-18): the set the bar names, New, hidden sets."""
+    FULL = SETS + ('makeSet("PVE", "INV_PVE", { [1] = "0x16", [11] = "0x14", [13] = "0x11", [14] = "0x12",'
+                   ' [15] = "0x18", [16] = "0xA", [17] = "0xB", [18] = "0xC" })')
+
+    def test_the_sets_button_names_the_set_put_on_by_hand_not_a_weapons_set(self):
+        # Instant (the two bag daggers) and PVE are both worn after PVE goes on.
+        lua = load(setup=self.FULL + ' sets[1].slots[16], sets[1].slots[17] = "0xA", "0xB"')
+        lua.execute("step(0)")
+        self.assertEqual(lua.eval("GearRackSets.label.text"), "PVE", "the worn set with the most slots")
+        lua.execute("GearRack.EquipSet('PVP no stealth') step(0)")
+        self.assertEqual(lua.eval("GearRackDB.current"), "PVP no stealth")
+        self.assertEqual(lua.eval("GearRackSets.label.text"), "PVP no stealth")
+        self.assertEqual(lua.eval("GearRackSets.icon.texture"), "Interface\\Icons\\INV_P")
+        lua.execute("wear(1, '0x16') carry(0, 5, '0x17') wear(16, '0xA') carry(0, 1, '0xD')"
+                    " fire('PLAYER_EQUIPMENT_CHANGED', 1) step(0)")
+        self.assertEqual(lua.eval("GearRackSets.label.text"), "PVE", "another set is worn whole now")
+
+    def test_a_set_for_a_target_leaves_the_name_alone(self):
+        lua = load(setup=self.FULL, saved="GearRackDB = { auto = true, current = 'PVE', target = { other = 'Instant' } }")
+        lua.execute("target.enemy, target.kind = true, 'Humanoid' fire('PLAYER_TARGET_CHANGED') step(0.25) step(0)")
+        self.assertEqual(lua.eval("usedSets[1]"), "Instant")
+        self.assertEqual(lua.eval("GearRackDB.current"), "PVE")
+        self.assertEqual(lua.eval("GearRackSets.label.text"), "PVE")
+        self.assertEqual(lua.eval("GearRackSets.label.color[1]"), 0.6, "grey: PVE is not all worn now")
+
+    def test_the_window_opens_on_that_set(self):
+        lua = load(setup=self.FULL)
+        lua.execute(WINDOW)
+        lua.execute("GearRack.EquipSet('PVP no stealth') step(0) click(GearRackSets)")
+        self.assertEqual(lua.eval("GearRackSetName.text"), "PVP no stealth")
+
+    def test_new_lights_every_slot_and_empties_the_name(self):
+        lua = load(setup=self.FULL)
+        lua.execute(WINDOW)
+        lua.execute("click(GearRackSets) click(row('Instant'))")
+        self.assertTrue(lua.eval("slotButton(1).out:IsShown()"), "a slot left out has the red cross")
+        lua.execute("click(windowButton('New'))")
+        self.assertEqual(lua.eval("GearRackSetName.text"), "")
+        for slot in range(0, 20):
+            self.assertFalse(lua.eval(f"slotButton({slot}).out:IsShown()"), slot)
+        lua.execute('GearRackSetName:SetText("Fresh") click(windowButton("Save"))')
+        self.assertEqual(lua.eval('sets[C_EquipmentSet.GetEquipmentSetID("Fresh")].slots[1]'), "0x16")
+
+    def test_a_hidden_set_is_out_of_the_menu_unless_alt_is_held(self):
+        lua = load(setup=self.FULL)
+        lua.execute(WINDOW)
+        lua.execute("click(GearRackSets) click(row('Instant'))")
+        lua.execute("for _, w in ipairs(widgets) do if w.label and w.label.text and string.find(w.label.text, '^Hide')"
+                    " and w.parent == GearRackSetsWindow then hideBox = w end end hideBox:SetChecked(1) click(hideBox)")
+        self.assertTrue(lua.eval("GearRackDB.hidden.Instant"))
+        lua.execute("GearRackSetsWindow:Hide() hover(GearRackSets)")
+        self.assertEqual(lua.eval("menuItems()"), "set:PVE,set:PVP no stealth")
+        lua.execute("leave(GearRackSets) press('lalt') hover(GearRackSets)")
+        self.assertEqual(lua.eval("menuItems()"), "set:Instant,set:PVE,set:PVP no stealth")
+        lua.execute("press() leave(GearRackSets) click(GearRackSets) click(row('Instant'))"
+                    " click(windowButton('Delete')) accept() step(0)")
+        self.assertIsNone(lua.eval("GearRackDB.hidden.Instant"), "a deleted set's mark goes with it")
+
+
 class Sheet(unittest.TestCase):
     def test_hovering_a_slot_opens_its_menu_and_leaving_closes_it(self):
         lua = load()
