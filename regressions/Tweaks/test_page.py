@@ -8,7 +8,7 @@ from ftr_env import load
 
 PAGE = "settingsWindow.find('Tweaks')"
 SWITCHES = ("arrowKeys", "history", "timestamps", "classColors", "blueShaman", "minimapSquare",
-            "minimapClock", "minimapTidy", "autoStance")
+            "minimapClock", "minimapTidy")
 
 
 def rows(lua):
@@ -21,9 +21,12 @@ def rows(lua):
 
 class Page(unittest.TestCase):
     def test_the_rows_in_play_order(self):
-        self.assertEqual(rows(load()), "Chat|Arrow keys without Alt|Chat history|Timestamps|"
-                         "Names in class colours|Blue shamans|Minimap|Minimap size|Square minimap|Clock|"
-                         "Tidy minimap|World map|Map window size|Gameplay|Auto Stance")
+        # A rogue: no Auto Stance row, since it would do nothing (review 2026-11-18).
+        rogue = ("Chat|Arrow keys without Alt|Chat history|Timestamps|"
+                 "Names in class colours|Blue shamans|Minimap|Minimap size|Square minimap|Clock|"
+                 "Tidy minimap|World map|Map window size")
+        self.assertEqual(rows(load()), rogue)
+        self.assertEqual(rows(load(cls="DRUID")), rogue + "|Gameplay|Auto Stance")
 
     def test_every_switch_is_on_by_default_and_the_numbers_are_the_players(self):
         lua = load()
@@ -32,6 +35,8 @@ class Page(unittest.TestCase):
             self.assertIs(lua.eval(f"Settings.GetSetting('Tweaks_{key}'):GetDefaultValue()"), True, key)
         self.assertEqual(lua.eval("TweaksDB.minimapScale"), 1.6)
         self.assertEqual(lua.eval("TweaksDB.mapScale"), 1.65)
+        warrior = load(cls="WARRIOR")
+        self.assertIs(warrior.eval("Settings.GetSetting('Tweaks_autoStance'):GetDefaultValue()"), True)
 
     def test_a_saved_choice_is_kept(self):
         lua = load("TweaksDB = { timestamps = false, minimapScale = 1.1 }")

@@ -1,7 +1,9 @@
-"""Items (spec T1-T4, 4.7 "Tweaks"): the sell price times the stack, once;
-Shift compares a frame later and a hidden tooltip cancels; borders per quality
-on bags, bank, character and inspect (the inspected unit); Sell Junk calls
-SellAllJunkItems and is hidden with no junk.
+"""Items (spec T1-T4, 4.7 "Tweaks"): the sell price times the stack, once,
+also where there is no GUID (loot, quests, auctions); Shift compares a frame
+later and a hidden tooltip cancels; borders per quality on the character slots
+while they show and on inspect (the inspected unit); none on bags and bank,
+which Bagnon draws (review 2026-11-18); Sell Junk calls SellAllJunkItems and
+is hidden with no junk.
 """
 import unittest
 from ftr_env import load
@@ -42,6 +44,16 @@ class Prices(unittest.TestCase):
         self.assertEqual(lua.eval("GameTooltip.money"), 500)
         self.assertEqual(lua.eval("count('SetTooltipMoney')"), 1, "one money line")
 
+    def test_a_loot_stack_and_a_quest_reward_count_too(self):
+        # Review 2026-11-18: 1.0 priced one item of a looted stack, 1.22 the stack.
+        lua = items()
+        lua.execute("loot[1] = { id = 10, count = 12 }; GameTooltip:SetLootItem(1)")
+        self.assertEqual(lua.eval("GameTooltip.money"), 25 * 12)
+        lua.execute("quests.choice[2] = { id = 20, count = 3 }; GameTooltip:SetQuestLogItem('choice', 2)")
+        self.assertEqual(lua.eval("GameTooltip.money"), 3000)
+        lua.execute("quests.reward[1] = { id = 10, count = 1 }; GameTooltip:SetQuestLogItem('reward', 1)")
+        self.assertEqual(lua.eval("GameTooltip.money"), 25)
+
 
 class Compare(unittest.TestCase):
     def test_shift_compares_a_frame_later(self):
@@ -76,30 +88,29 @@ class Compare(unittest.TestCase):
 
 
 class Borders(unittest.TestCase):
-    def test_bag_slots_in_quality_colours_and_empty_grey(self):
+    def test_character_slots_while_they_show(self):
         lua = items()
-        lua.execute("bagItems[1] = 20; bagItems[2] = 10; items[20].qualityInBag = 4; ContainerFrame_Update(ContainerFrame1)")
-        self.assertEqual(lua.eval("borderOf(ContainerFrame1Item1)[1]"), 0.4)
-        self.assertEqual(lua.eval("borderOf(ContainerFrame1Item2)[1]"), 0.1, "-1 asks the item's quality")
-        self.assertEqual(lua.eval("borderOf(ContainerFrame1Item3)[1]"), 0.5, "empty: grey")
+        lua.execute("PaperDollFrame:Show(); worn[1] = 20; this = slotButton('CharacterHeadSlot', 1);"
+                    "PaperDollItemSlotButton_Update()")
+        self.assertEqual(lua.eval("borderOf(CharacterHeadSlot)[1]"), 0.4)
+        lua.execute("this = slotButton('CharacterNeckSlot', 2); PaperDollItemSlotButton_Update()")
+        self.assertEqual(lua.eval("borderOf(CharacterNeckSlot)[1]"), 0.5, "empty: grey")
+
+    def test_a_closed_window_is_drawn_when_it_opens(self):
+        # Review 2026-11-18: the game redraws every slot at each gear change, the
+        # window closed too; 1.0 read each slot's item link then.
+        lua = items()
+        lua.execute("worn[1] = 20; this = slotButton('CharacterHeadSlot', 1); PaperDollItemSlotButton_Update()")
+        self.assertIsNone(lua.eval("CharacterHeadSlot.ftBorder"))
+        lua.execute("PaperDollFrame:Show()")
+        self.assertEqual(lua.eval("borderOf(CharacterHeadSlot)[1]"), 0.4)
 
     def test_a_border_is_written_only_when_the_quality_changes(self):
         lua = items()
-        lua.execute("bagItems[1] = 20; ContainerFrame_Update(ContainerFrame1); ContainerFrame1Item1.ftBorder.border = nil;"
-                    "ContainerFrame_Update(ContainerFrame1)")
-        self.assertIsNone(lua.eval("borderOf(ContainerFrame1Item1)"))
-
-    def test_bank_shows_green_and_better(self):
-        lua = items()
-        lua.execute("bankItems[1] = 10; bankItems[2] = 20; for i = 1, 2 do this = slotButton('BankFrameItem' .. i, i);"
-                    "BankFrameItemButton_OnUpdate() end")
-        self.assertEqual(lua.eval("borderOf(BankFrameItem1)[1]"), 0.5)
-        self.assertEqual(lua.eval("borderOf(BankFrameItem2)[1]"), 0.4)
-
-    def test_character_slots(self):
-        lua = items()
-        lua.execute("worn[1] = 20; this = slotButton('CharacterHeadSlot', 1); PaperDollItemSlotButton_Update()")
-        self.assertEqual(lua.eval("borderOf(CharacterHeadSlot)[1]"), 0.4)
+        lua.execute("PaperDollFrame:Show(); worn[1] = 20; this = slotButton('CharacterHeadSlot', 1);"
+                    "PaperDollItemSlotButton_Update(); CharacterHeadSlot.ftBorder.border = nil;"
+                    "PaperDollItemSlotButton_Update()")
+        self.assertIsNone(lua.eval("borderOf(CharacterHeadSlot)"))
 
     def test_inspect_reads_the_inspected_member_and_waits_for_items(self):
         lua = items()

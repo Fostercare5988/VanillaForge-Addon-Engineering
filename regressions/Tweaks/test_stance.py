@@ -27,10 +27,12 @@ class AutoStance(unittest.TestCase):
         lua.execute("settingsWindow.use('Tweaks_autoStance', true)")
         self.assertIn("UI_ERROR_MESSAGE", lua.eval("listening()"))
 
-    def test_other_classes_never_listen(self):
+    def test_other_classes_never_listen_and_have_no_row(self):
         lua = load(setup=FORMS, cls="ROGUE")
-        lua.execute("settingsWindow.use('Tweaks_autoStance', true)")
+        self.assertIsNone(lua.eval("Settings.GetSetting('Tweaks_autoStance')"))
+        lua.execute("fire('UI_ERROR_MESSAGE', 'Must be in Berserker Stance')")
         self.assertNotIn("UI_ERROR_MESSAGE", lua.eval("listening()"))
+        self.assertEqual(lua.eval("count('CastShapeshiftForm')"), 0)
 
 
 if __name__ == "__main__":

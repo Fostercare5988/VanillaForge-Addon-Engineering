@@ -127,6 +127,24 @@ class WorldMap(unittest.TestCase):
         lua.execute("loadInspect()")
         self.assertNotIn("ADDON_LOADED", lua.eval("listening()"), "nothing else to wait for once both loaded")
 
+    def test_the_battleground_map_alone_ticks_five_times_a_second(self):
+        # Review 2026-11-18: 1.0 woke ten times a second with the battleground map
+        # open, for coordinates of a closed world map, and read its 44 buttons.
+        every = ("(function() for _, t in ipairs(timers) do if not t.cancelled and not t.left then"
+                 " return t.seconds end end end)()")
+        lua = load(setup="names.party1 = 'Ann'; classes.party1 = 'MAGE'")
+        lua.execute("mapButtons('BattlefieldMinimap'); loaded.Blizzard_BattlefieldMinimap = true;"
+                    "fire('ADDON_LOADED', 'Blizzard_BattlefieldMinimap'); BattlefieldMinimap:Hide();"
+                    "WorldMapParty1:Show(); BattlefieldMinimapParty1:Show(); BattlefieldMinimap:Show(); step(0.2)")
+        self.assertEqual(lua.eval(every), 0.2)
+        self.assertEqual(lua.eval("BattlefieldMinimapParty1.ftDot.color[1]"), 0.41)
+        self.assertIsNone(lua.eval("WorldMapParty1.ftDot"), "the closed world map is not read")
+        lua.execute("WorldMapFrame:Show()")
+        self.assertEqual(lua.eval(every), 0.1)
+        self.assertEqual(lua.eval("liveTimers()"), 2, "the clock and one ticker")
+        lua.execute("WorldMapFrame:Hide()")
+        self.assertEqual(lua.eval(every), 0.2)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -7,8 +7,9 @@ The game is modelled as ClassicAPI documents it (docs/API.md) and as the
 client's FrameXML runs it: tooltips fire OnTooltipCleared, then
 OnTooltipSetItem with the item's GUID as arg1 (### OnTooltipSet* scripts);
 SetTooltipMoney and MoneyFrame_Update record the price (FrameXML
-GameTooltip.lua); ContainerFrame_Update, BankFrameItemButton_OnUpdate and the
-paperdoll and inspect slot updates call their hooks as FrameXML does; chat
+GameTooltip.lua); loot, quest log and auction tooltips give their count third,
+as FrameXML reads it; the paperdoll and inspect slot updates call their hooks
+as FrameXML does; chat
 frames keep lines with their extra values (### smf:GetMessageInfo). The
 mocks do not prove drawing, anchoring or when the client sends events.
 """
@@ -22,7 +23,7 @@ MOCK = r'''
 CLASSIC_API_VERSION = 12100
 CLOSE = 'Close'
 SPELL_FAILED_ONLY_SHAPESHIFT = 'Must be in %s'
-NUM_CHAT_WINDOWS, MAX_CONTAINER_ITEMS, BANK_CONTAINER = 7, 36, -1
+NUM_CHAT_WINDOWS = 7
 calls = {}
 local function record(name, value) calls[name] = calls[name] or {}; table.insert(calls[name], value) end
 function count(name) return calls[name] and #calls[name] or 0 end
@@ -101,24 +102,21 @@ function GameTooltip:SetAuctionSellItem() showItem(self, auctions.sell.id) end
 auctions = {}
 function GetAuctionItemInfo(kind, index) return 'x', 'tex', auctions[index].count end
 function GetAuctionSellItemInfo() return 'x', 'tex', auctions.sell.count end
+loot, quests = {}, { choice = {}, reward = {} }
+function GameTooltip:SetLootItem(slot) showItem(self, loot[slot].id) end
+function GetLootSlotInfo(slot) return 'tex', 'x', loot[slot].count end
+function GameTooltip:SetQuestLogItem(kind, i) showItem(self, quests[kind][i].id) end
+function GetQuestLogChoiceInfo(i) return 'x', 'tex', quests.choice[i].count end
+function GetQuestLogRewardInfo(i) return 'x', 'tex', quests.reward[i].count end
 function SetTooltipMoney(frame, money) frame.money = money; record('SetTooltipMoney', money) end
 function MoneyFrame_Update(name, money) _G[string.gsub(name, 'MoneyFrame$', '')].money = money end
 function GameTooltip_ShowCompareItem(tip) record('compare', tip:GetName()); ShoppingTooltip1:Show() end
 
--- Bags, bank, character and inspect slots, as FrameXML updates them.
-bagItems, bankItems, worn, inspectWorn = {}, {}, {}, {}
-ContainerFrame1 = CreateFrame('Frame', 'ContainerFrame1'); ContainerFrame1:SetID(0); ContainerFrame1.size = 4
-for i = 1, MAX_CONTAINER_ITEMS do CreateFrame('Button', 'ContainerFrame1Item' .. i):SetID(i) end
-C_Container = { GetContainerItemInfo = function(bag, slot, buf)
-    record('GetContainerItemInfo', slot)
-    local id = bagItems[slot]; if not id then return end
-    buf.itemID, buf.quality = id, items[id] and items[id].qualityInBag or -1
-    return buf
-end }
-function ContainerFrame_Update(frame) end
-function GetContainerItemLink(bag, slot) local id = bag == BANK_CONTAINER and bankItems[slot]; return id and link(id) end
-function BankFrameItemButton_OnUpdate() end
+-- Character and inspect slots, as FrameXML updates them.
+worn, inspectWorn = {}, {}
+PaperDollFrame = CreateFrame('Frame', 'PaperDollFrame'); PaperDollFrame:Hide()
 function PaperDollItemSlotButton_Update() end
+function GetInventoryItemQuality(unit, slot) local id = worn[slot]; return id and items[id] and items[id].quality end
 function GetInventoryItemLink(unit, slot)
     local id = (unit == 'player' and worn or inspectWorn)[slot]; return id and link(id)
 end
