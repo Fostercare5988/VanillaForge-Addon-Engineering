@@ -79,6 +79,10 @@ class Pages(unittest.TestCase):
         self.assertFalse(lua.eval('settingsWindow.enabled(settingsWindow.row(target, "Beast"))'))
         lua.execute('settingsWindow.use("GearRack_auto", true)')
         self.assertTrue(lua.eval('settingsWindow.enabled(settingsWindow.row(auto, "Mounted"))'))
+        self.assertFalse(lua.eval('settingsWindow.enabled(settingsWindow.row(target, "Beast"))'),
+                         "Sets by target has its own switch, at the top of its page")
+        self.assertEqual(names(lua, "Sets by target")[0], "Sets by target")
+        lua.execute('settingsWindow.use("GearRack_byTarget", true)')
         self.assertTrue(lua.eval('settingsWindow.enabled(settingsWindow.row(target, "Any other enemy"))'))
 
     def test_a_rogue_sees_stealth_and_no_mana_row(self):
@@ -101,9 +105,9 @@ class Pages(unittest.TestCase):
         self.assertEqual(rows[4:7], ["Battle Stance", "Defensive Stance", "Berserker Stance"])
         self.assertNotIn("Low on mana", rows)
 
-    def test_sets_by_target_has_the_nine_types(self):
+    def test_sets_by_target_has_its_switch_and_the_nine_types(self):
         lua = load()
-        self.assertEqual(names(lua, "Sets by target"), ["Beast", "Demon", "Dragonkin", "Elemental", "Giant",
+        self.assertEqual(names(lua, "Sets by target"), ["Sets by target", "Beast", "Demon", "Dragonkin", "Elemental", "Giant",
                                                         "Humanoid", "Mechanical", "Undead", "Any other enemy"])
 
 

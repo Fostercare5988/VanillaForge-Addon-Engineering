@@ -143,7 +143,7 @@ class Automatic(unittest.TestCase):
 
 
 class ByTarget(unittest.TestCase):
-    ROGUE = ('GearRackDB = { auto = true, target = { Elemental = "Dissolvent", Giant = "Dissolvent", '
+    ROGUE = ('GearRackDB = { byTarget = true, target = { Elemental = "Dissolvent", Giant = "Dissolvent", '
              'Mechanical = "Dissolvent", Undead = "Dissolvent", other = "Instant" } }')
 
     def test_an_elemental_wears_dissolvent_a_humanoid_instant(self):
@@ -176,6 +176,15 @@ class ByTarget(unittest.TestCase):
         self.assertEqual(lua.eval("#usedSets"), 1)
         self.assertEqual(lua.eval("worn[16]"), "0xD")
         self.assertIsNone(lua.eval("GearRackDB.before"))
+
+    def test_its_own_switch_not_the_automatic_sets_one(self):
+        lua = load(self.ROGUE.replace("byTarget = true", "auto = true, byTarget = false"), setup=SETS)
+        self.assertNotIn("PLAYER_TARGET_CHANGED", lua.eval("allEvents()"))
+        lua.execute('settingsWindow.use("GearRack_byTarget", true)')
+        self.assertIn("PLAYER_TARGET_CHANGED", lua.eval("allEvents()"))
+        lua.execute('settingsWindow.use("GearRack_auto", false)')
+        lua.execute('target = { enemy = true, kind = "Undead" } fire("PLAYER_TARGET_CHANGED") step(0.2)')
+        self.assertEqual(lua.eval("usedSets[1]"), "Dissolvent", "Automatic sets off does not stop it")
 
 
 if __name__ == "__main__":

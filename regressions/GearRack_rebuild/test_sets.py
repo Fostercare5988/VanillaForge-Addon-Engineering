@@ -232,7 +232,7 @@ class Current(unittest.TestCase):
         self.assertEqual(lua.eval("GearRackSets.label.text"), "PVE", "another set is worn whole now")
 
     def test_a_set_for_a_target_leaves_the_name_alone(self):
-        lua = load(setup=self.FULL, saved="GearRackDB = { auto = true, current = 'PVE', target = { other = 'Instant' } }")
+        lua = load(setup=self.FULL, saved="GearRackDB = { byTarget = true, current = 'PVE', target = { other = 'Instant' } }")
         lua.execute("target.enemy, target.kind = true, 'Humanoid' fire('PLAYER_TARGET_CHANGED') step(0.25) step(0)")
         self.assertEqual(lua.eval("usedSets[1]"), "Instant")
         self.assertEqual(lua.eval("GearRackDB.current"), "PVE")
