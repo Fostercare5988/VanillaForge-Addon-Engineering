@@ -207,6 +207,16 @@ class TopRight(unittest.TestCase):
         lua.execute("step(700 + 4 - 31 + 0.1)")
         self.assertIsNotNone(lua.eval("BuffButton0.scripts.OnUpdate"), "it still flashes on time")
 
+    def test_a_duration_that_arrives_later_reaches_the_icon(self):
+        # 2026-11-18, Arathi Basin: the second Cheap Shot had no time at the top right.
+        lua = self.lua
+        lua.execute("playerBuffs.HARMFUL[2] = { id = 4, icon = 'stun' }; spell(4, 'Cheap Shot', 'stun'); playerAuras()")
+        self.assertIsNone(lua.eval("BuffButton25.cd.cooldown"), "no time known yet")
+        lua.execute("playerBuffs.HARMFUL[2].ends = now + 2; delta('player', { updatedAuraInstanceIDs = { 4 } })")
+        self.assertEqual(lua.eval("BuffButton25.cd.cooldown[2]"), 2)
+        lua.execute("playerBuffs.HARMFUL[2].ends = now + 9; delta('player', { addedAuraInstanceIDs = { 5 } })")
+        self.assertEqual(lua.eval("BuffButton25.cd.cooldown[2]"), 2, "an added aura waits for the stock update")
+
     def test_a_buff_gone_before_it_flashes_wakes_nothing(self):
         lua = self.lua
         lua.execute("playerBuffs.HELPFUL = {}; playerBuffs.HARMFUL = {}; playerAuras(); step(600)")
