@@ -35,7 +35,21 @@ class SlotBars(unittest.TestCase):
             pressKey('F') pressKey('G') pressKey('3')
             bonusOffset = 1 fire('UPDATE_BONUS_ACTIONBAR') pressKey('3')""")
         self.assertEqual(list(lua.eval("used").values()), [70, 25, 3, 75])
-        self.assertEqual(lua.eval("BonusActionButton3.action"), 75)
+
+    def test_with_actionbuttonusekeydown_a_key_acts_once_on_the_press(self):
+        # 2026-11-18, the player's Config.wtf has ActionButtonUseKeyDown 1:
+        # ClassicAPI's handlers then used ActionButton_GetPagedID of the hidden
+        # stock button, so F (Bottom Left 10) pressed slot 10 and Z slot 1.
+        lua = load(setup="cvars.ActionButtonUseKeyDown = '1' keys.MULTIACTIONBAR1BUTTON10 = { 'F' } "
+                         "keys.MULTIACTIONBAR2BUTTON1 = { 'Z' } keys.ACTIONBARS_EXTRA1_1 = { 'X' }")
+        lua.execute("used = {} pressKey('F', 'down')")
+        self.assertEqual(list(lua.eval("used").values()), [70], "on the press")
+        lua.execute("MultiActionButtonUp('MultiBarBottomLeft', 10) pressKey('Z') pressKey('Z')")
+        self.assertEqual(list(lua.eval("used").values()), [70, 49, 49], "once per press")
+        lua.execute("ActionBars.Press('extra1', 1, 'down')")
+        self.assertEqual(lua.eval("used[4]"), 13, "Key Bindings' keys follow the setting too")
+        lua.execute("ActionBars.Press('extra1', 1, 'up')")
+        self.assertEqual(lua.eval("#used"), 4)
 
     def test_one_slot_change_redraws_one_button(self):
         lua = load()

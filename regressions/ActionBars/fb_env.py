@@ -181,8 +181,21 @@ C_ActionBar = {
 function IsConsumableSpell(id) return reagentSpells[id] ~= nil end
 function IsConsumableItem(id) return 1 end
 
--- Keys and the tooltip. The game's own bindings run the stock functions
--- (FrameXML ActionButton.lua:15-46, MultiActionBars.lua:14-35), as written there.
+-- Keys and the tooltip. The game's own bindings run the stock functions as
+-- ClassicAPI replaces them (its Util/ActionButton.lua: ActionButtonUseKeyDown,
+-- the slot from ActionButton_GetPagedID, FrameXML ActionButton.lua:441).
+cvars = { ActionButtonUseKeyDown = '0' }
+function GetCVar(name) return cvars[name] end
+BOTTOMLEFT_ACTIONBAR_PAGE, BOTTOMRIGHT_ACTIONBAR_PAGE, LEFT_ACTIONBAR_PAGE, RIGHT_ACTIONBAR_PAGE = 6, 5, 4, 3
+function ActionButton_GetPagedID(button)
+    if button.isBonus and CURRENT_ACTIONBAR_PAGE == 1 then return button:GetID() + (5 + bonusOffset) * 12 end
+    local parent = button:GetParent() and button:GetParent():GetName()
+    if parent == 'MultiBarBottomLeft' then return button:GetID() + (BOTTOMLEFT_ACTIONBAR_PAGE - 1) * 12
+    elseif parent == 'MultiBarBottomRight' then return button:GetID() + (BOTTOMRIGHT_ACTIONBAR_PAGE - 1) * 12
+    elseif parent == 'MultiBarLeft' then return button:GetID() + (LEFT_ACTIONBAR_PAGE - 1) * 12
+    elseif parent == 'MultiBarRight' then return button:GetID() + (RIGHT_ACTIONBAR_PAGE - 1) * 12 end
+    return button:GetID() + (CURRENT_ACTIONBAR_PAGE - 1) * 12
+end
 function GetBindingKey(command) local k = keys[command]; if k then return k[1], k[2] end end
 function GetBindingText(key) return 'k' .. key end
 function SetOverrideBindingClick(owner, priority, key, name) overrides[key] = name end
@@ -193,9 +206,16 @@ function Widget:SetButtonState(state) self.buttonState = state end
 local function stockButton(id)
     return _G[(BonusActionBarFrame:IsShown() and 'BonusAction' or 'Action') .. 'Button' .. id]
 end
-local function down(button) if button:GetButtonState() == 'NORMAL' then button:SetButtonState('PUSHED') end end
+local function keyDown() return cvars.ActionButtonUseKeyDown == '1' end
+local function down(button)
+    if button:GetButtonState() == 'NORMAL' then button:SetButtonState('PUSHED') end
+    if keyDown() then UseAction(ActionButton_GetPagedID(button), 0) end
+end
 local function up(button, onSelf)
-    if button:GetButtonState() == 'PUSHED' then button:SetButtonState('NORMAL'); UseAction(button.action, 0, onSelf) end
+    if button:GetButtonState() == 'PUSHED' then
+        button:SetButtonState('NORMAL')
+        if not keyDown() then UseAction(ActionButton_GetPagedID(button), 0, onSelf) end
+    end
 end
 function ActionButtonDown(id) down(stockButton(id)) end
 function ActionButtonUp(id, onSelf) up(stockButton(id), onSelf) end
@@ -267,9 +287,13 @@ for _, name in ipairs({ 'BonusActionBarFrame', 'MultiBarBottomLeft', 'MultiBarBo
     'ShapeshiftBarFrame' }) do
     newWidget('Frame', name, MainMenuBar)
 end
+BonusActionBarFrame:Hide()
+-- Each stock button in its own bar frame, with its ID (ActionBarFrame.xml, MultiActionBars.xml).
 for _, prefix in ipairs({ 'Action', 'BonusAction', 'MultiBarBottomLeft', 'MultiBarBottomRight', 'MultiBarLeft', 'MultiBarRight' }) do
     for i = 1, 12 do
-        local b = newWidget('CheckButton', prefix .. 'Button' .. i, MainMenuBarArtFrame)
+        local b = newWidget('CheckButton', prefix .. 'Button' .. i, _G[prefix] or _G[prefix .. 'BarFrame'] or MainMenuBarArtFrame)
+        b:SetID(i)
+        b.isBonus = prefix == 'BonusAction' or nil
         b:RegisterEvent('ACTIONBAR_SLOT_CHANGED')
     end
 end
