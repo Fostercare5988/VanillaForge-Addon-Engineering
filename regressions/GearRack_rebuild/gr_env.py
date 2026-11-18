@@ -197,6 +197,15 @@ C_Container = { GetContainerNumFreeSlots = function(bag)
     for s = 1, bagSize[bag] do if not bags[bag][s] then n = n + 1 end end
     return n, bagFamily[bag] or 0
 end }
+-- Bag slots as C_Container.GetContainerItemInfo returns them (the poison bottles).
+function C_Container.GetContainerNumSlots(bag) return bagSize[bag] or 0 end
+function C_Container.GetContainerItemInfo(bag, slot, buf)
+    local it = bags[bag] and bags[bag][slot] and items[bags[bag][slot]]
+    if not it then return nil end
+    buf = buf or {}
+    buf.iconFileID, buf.hyperlink, buf.itemID = it.icon, it.link, it.id
+    return buf
+end
 
 -- Sets, as ### EquipmentSet describes them.
 sets, setOrder, ignoreForSave, swapping = {}, {}, {}, false
