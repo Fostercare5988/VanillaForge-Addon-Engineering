@@ -486,7 +486,7 @@ GLOBALS = ("GearRackDB", "GearRack", "SLASH_GEARRACK1", "BINDING_HEADER_GEARRACK
            "BINDING_NAME_GEARRACK_USE_TOP_TRINKET_ITEM", "BINDING_NAME_GEARRACK_USE_BOTTOM_TRINKET_ITEM",
            "GearRackGearBar", "GearRackTrinketBar", "GearRackMenu", "GearRackSetsWindow", "GearRackSetName",
            "GearRackTrinkets", "GearRackMinimapGear", "GearRackMinimapTrinkets",
-           "GearRackSheetButton", "GearRackSets", "GearRackTrinket13", "GearRackTrinket14")
+           "GearRackSets", "GearRackTrinket13", "GearRackTrinket14")
 
 
 def load(saved="", setup="", gear=True, world=True, layout=None):

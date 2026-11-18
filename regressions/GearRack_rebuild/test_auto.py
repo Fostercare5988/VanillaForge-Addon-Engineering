@@ -125,10 +125,10 @@ class Automatic(unittest.TestCase):
         lua.execute('settingsWindow.use("GearRack_auto", true) step(0)')
         self.assertEqual(lua.eval("usedSets[1]"), "Ride")
         lua.execute("player.mounted = false fire('PLAYER_MOUNT_DISPLAY_CHANGED') step(0)")
-        lua.execute("ToggleCharacter() click(GearRackSheetButton)")
+        lua.execute("click(GearRackSets)")
         lua.execute("player.mounted = true fire('PLAYER_MOUNT_DISPLAY_CHANGED') step(0)")
         self.assertEqual(lua.eval("#usedSets"), 1)
-        lua.execute("click(GearRackSheetButton) step(0)")
+        lua.execute("click(GearRackSets) step(0)")
         self.assertEqual(lua.eval("#usedSets"), 2, "the panel closed: the situation is read again")
 
     def test_only_the_events_of_rows_in_use(self):

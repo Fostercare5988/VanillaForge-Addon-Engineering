@@ -71,14 +71,14 @@ class Window(unittest.TestCase):
     def open(self, setup=SETS, saved=""):
         lua = load(setup=setup, saved=saved)
         lua.execute(WINDOW)
-        lua.execute("ToggleCharacter() click(GearRackSheetButton)")
+        lua.execute("SlashCmdList.GEARRACK('sets')")
         self.assertTrue(lua.eval("GearRackSetsWindow:IsShown()"))
         return lua
 
     def test_every_way_in_opens_it(self):
         lua = load(setup=SETS)
         for way in ("click(GearRackSets)", "click(GearRackMinimapGear)", "SlashCmdList.GEARRACK('sets')",
-                    "ToggleCharacter() click(GearRackSheetButton)"):
+                    ):
             lua.execute(way)
             self.assertTrue(lua.eval("GearRackSetsWindow:IsShown()"), way)
             lua.execute("GearRackSetsWindow:Hide()")
@@ -126,12 +126,13 @@ class Window(unittest.TestCase):
 
     def test_save_over_a_set_keeps_its_slots_and_takes_the_icon(self):
         lua = self.open()
-        lua.execute("click(row('Instant'))")
+        lua.execute("click(row('Instant')) step(0)")
         self.assertEqual(lua.eval("GearRackSetName.text"), "Instant")
+        self.assertEqual(lua.eval("worn[16]"), "0xD", "a click on a set puts it on, as 1.x did")
         for slot in range(1, 20):
             self.assertEqual(bool(lua.eval(f"slotButton({slot}).icon.desaturated")), slot not in (16, 17), slot)
         lua.execute("click(windowButton('Save'))")
-        self.assertEqual(lua.eval("sets[1].slots[16]"), "0xA")
+        self.assertEqual(lua.eval("sets[1].slots[16]"), "0xD")
         self.assertEqual(lua.eval("sets[1].slots[1]"), "ignored")
         self.assertEqual(lua.eval("sets[1].icon"), "INV_I")
         self.assertEqual(lua.eval("#setOrder"), 2)
@@ -271,6 +272,36 @@ class Current(unittest.TestCase):
         lua.execute("press() leave(GearRackSets) click(GearRackSets) click(row('Instant'))"
                     " click(windowButton('Delete')) accept() step(0)")
         self.assertIsNone(lua.eval("GearRackDB.hidden.Instant"), "a deleted set's mark goes with it")
+
+
+class SecondPlay(unittest.TestCase):
+    """The third screenshot (2026-11-18)."""
+    def test_no_button_of_ours_on_the_character_window(self):
+        lua = load()
+        self.assertIsNone(lua.eval("GearRackSheetButton"))
+        n = lua.eval("(function() local n = 0 for _, w in ipairs(widgets) do"
+                     " if w.parent == PaperDollFrame and w.kind == 'Button' and not string.find(w.name or '', '^Character') then"
+                     " n = n + 1 end end return n end)()")
+        self.assertEqual(n, 0)
+
+    def test_the_sets_menu_has_no_item_colours_left_over(self):
+        lua = load(setup=SETS)
+        lua.execute("hover(GearRackGear16) leave(GearRackGear16) hover(GearRackSets)")
+        self.assertEqual(lua.eval("menuItems()"), "set:Instant,set:PVP no stealth")
+        for i in (1, 2):
+            self.assertEqual(lua.eval(f"menuButton({i}).edge.border[1]"), 0, i)
+            self.assertIsNone(lua.eval(f"menuButton({i}).cooldown.cd"), i)
+
+    def test_a_trinket_slot_anywhere_is_left_upper_right_lower(self):
+        lua = load()
+        lua.execute(WINDOW)
+        lua.execute("ToggleCharacter() hover(CharacterTrinket1Slot)")
+        self.assertEqual(lua.eval("menuItems()"), "0x13", "the bag trinkets")
+        lua.execute("pick('0x13')")
+        self.assertEqual(lua.eval("worn[13]"), "0x13", "left-click on the lower slot's menu: the upper slot")
+        lua.execute("leave(CharacterTrinket1Slot) SlashCmdList.GEARRACK('sets') hover(slotButton(13))")
+        lua.execute("pick('0x11', 'RightButton')")
+        self.assertEqual(lua.eval("worn[14]"), "0x11", "right-click on the upper slot's menu: the lower slot")
 
 
 class Sheet(unittest.TestCase):
