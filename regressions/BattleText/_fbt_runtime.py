@@ -1,4 +1,4 @@
-"""BattleText (formerly MSBT) on the shared game model (wowkit).
+"""BattleText on the shared game model (wowkit).
 
 Loads every TOC Lua file, including the ForgeUI settings window, with mocked
 ClassicAPI globals on the kit's widgets (checked state, text, values, clicks,

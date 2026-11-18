@@ -48,9 +48,9 @@ class BigCombatIcon(unittest.TestCase):
         lua.execute(DRAW)
         e = lua.eval("FBT.CurrentProfile.EventSettings")
         if enter is not None:
-            e.MSBT_EVENTTYPE_NOTIFICATION_COMBAT_ENTER.BigIcon = enter
+            e.EVENTTYPE_NOTIFICATION_COMBAT_ENTER.BigIcon = enter
         if leave is not None:
-            e.MSBT_EVENTTYPE_NOTIFICATION_COMBAT_LEAVE.BigIcon = leave
+            e.EVENTTYPE_NOTIFICATION_COMBAT_LEAVE.BigIcon = leave
         return lua
 
     def test_default_is_text_only(self):
@@ -87,15 +87,15 @@ class BigCombatIcon(unittest.TestCase):
     def test_combat_notices_are_red_and_green(self):
         lua = m.runtime()
         d = lua.eval("FBT.DEFAULT_CONFIG.EventSettings")
-        enter = d.MSBT_EVENTTYPE_NOTIFICATION_COMBAT_ENTER.FontSettings.Color
-        leave = d.MSBT_EVENTTYPE_NOTIFICATION_COMBAT_LEAVE.FontSettings.Color
+        enter = d.EVENTTYPE_NOTIFICATION_COMBAT_ENTER.FontSettings.Color
+        leave = d.EVENTTYPE_NOTIFICATION_COMBAT_LEAVE.FontSettings.Color
         self.assertEqual((enter.r, enter.g, enter.b), (1, 0.25, 0.25))
         self.assertEqual((leave.r, leave.g, leave.b), (0.25, 1, 0.25))
 
     def test_only_those_two_events_offer_the_icon(self):
         lua = m.runtime()
         keys = sorted(lua.eval("(function() local t = {} for k in pairs(FBT.BIG_ICONS) do t[#t + 1] = k end return t end)()").values())
-        self.assertEqual(keys, ["MSBT_EVENTTYPE_NOTIFICATION_COMBAT_ENTER", "MSBT_EVENTTYPE_NOTIFICATION_COMBAT_LEAVE"])
+        self.assertEqual(keys, ["EVENTTYPE_NOTIFICATION_COMBAT_ENTER", "EVENTTYPE_NOTIFICATION_COMBAT_LEAVE"])
 
 
 if __name__ == "__main__":

@@ -86,7 +86,7 @@ class AddOnOptions(unittest.TestCase):
         lua = m.runtime()
         host(lua, 7)
         lua.execute("FBT_FilterAdd:Click()")
-        self.assertEqual(lua.eval("FBT.CurrentProfile.Suppressions.MSBT_SUPPRESSION_CUSTOM1.SearchPattern"), "New filter")
+        self.assertEqual(lua.eval("FBT.CurrentProfile.Suppressions.SUPPRESSION_CUSTOM1.SearchPattern"), "New filter")
         self.assertTrue(lua.eval("FBT_FilterRow10:IsShown()"))                   # ten filters now
         self.assertEqual(pos(lua, "FBT_FilterPager")[0], 28)                     # the pager under the list
 

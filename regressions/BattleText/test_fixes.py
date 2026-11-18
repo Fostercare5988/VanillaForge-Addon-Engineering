@@ -1,10 +1,10 @@
-"""Regressions for the six MSBT audit findings (F1-F6, 12 Oct 2026).
+"""Regressions for the six audit findings (F1-F6, 12 Oct 2026).
 
-Since MSBT 1.2.0 the settings window is ForgeUI; the tests drive it through the
+Since 1.2.0 the settings window is ForgeUI; the tests drive it through the
 _fbt_runtime widget model (clicks, checked state, text). The color picker mock
 follows the 1.12 FrameXML contract: selecting calls func, Okay calls func and
 hides, Cancel calls cancelFunc(previousValues). Not in-game proof.
-Requires VANILLAFORGE_ADDON_ROOT=<AddOns>/MikScrollingBattleText and lupa.
+Requires VANILLAFORGE_ADDON_ROOT=<AddOns>/BattleText and lupa.
 """
 import unittest
 
@@ -38,12 +38,12 @@ class NotificationFontOwner(unittest.TestCase):  # F2
         -- Stop inheriting on the Notices row: the event keeps the Notification size.
         assert(FBT_FontNormalInheritSize:GetChecked())
         FBT_FontNormalInheritSize:Click()
-        assert(FBT.CurrentProfile.EventSettings.MSBT_EVENTTYPE_NOTIFICATION_DEBUFF.FontSettings.Normal.FontSize==34)
+        assert(FBT.CurrentProfile.EventSettings.EVENTTYPE_NOTIFICATION_DEBUFF.FontSettings.Normal.FontSize==34)
         ''')
 
 
 class DisabledGameDamage(unittest.TestCase):  # F3
-    def test_disabled_msbt_keeps_native_damage_visible(self):
+    def test_disabled_keeps_native_damage_visible(self):
         l = m.runtime()
         l.execute('''
         cvars={}
@@ -64,8 +64,8 @@ class PickerProfileOwner(unittest.TestCase):  # F4
         l = m.runtime()
         l.execute('''
         FBT.CreateProfile("Second")
-        first=FBT.CurrentProfile.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE.FontSettings.Color; first.r,first.g,first.b=0.1,0.2,0.3
-        second=BattleTextDB.Profiles.Second.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE.FontSettings.Color; second.r,second.g,second.b=0.7,0.8,0.9
+        first=FBT.CurrentProfile.EventSettings.EVENTTYPE_INCOMING_DAMAGE.FontSettings.Color; first.r,first.g,first.b=0.1,0.2,0.3
+        second=BattleTextDB.Profiles.Second.EventSettings.EVENTTYPE_INCOMING_DAMAGE.FontSettings.Color; second.r,second.g,second.b=0.7,0.8,0.9
         FBT.Options.ShowTab(3); FBT_IncomingRow1Color:Click()
         assert(ColorPickerFrame:IsShown())
         ColorPickerFrame:SetColorRGB(0.4,0.5,0.6); assert(first.r==0.4 and second.r==0.7)

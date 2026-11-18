@@ -1,8 +1,8 @@
 """BattleText 2.0.0, 2026-11-03: the rename and the rewritten paths.
 
-MSBT 1.2.2 became BattleText: one namespace (BattleText,
+The 1.2.2 code became BattleText: one namespace (BattleText,
 FBT in the files) instead of MikSBT, MikCEH, MikTRO, MikSBTOpt and
-MSBT_REQUIREMENTS_MET; frames made in Lua instead of two XML files; honor and
+REQUIREMENTS_MET; frames made in Lua instead of two XML files; honor and
 skill lines matched by patterns built from their GlobalStrings; one scroll
 function for the six curves. These tests pin the moved paths. Lua model only.
 """
@@ -27,7 +27,7 @@ def texts(lua, area="Notification"):
 class Namespace(unittest.TestCase):
     def test_only_the_namespace_saved_table_and_slash_are_global(self):
         lua = m.runtime()
-        for name in ("MikSBT", "MikCEH", "MikTRO", "MikSBTOpt", "MSBT_REQUIREMENTS_MET",
+        for name in ("MikSBT", "MikCEH", "MikTRO", "MikSBTOpt", "REQUIREMENTS_MET",
                      "MCEHEventFrame", "MSBTEventFrame", "MSBTFrameIncoming"):
             self.assertIsNone(lua.eval(f"rawget(_G, '{name}')"), name)
         self.assertEqual(lua.eval("BattleText.DisplayMessage ~= nil"), True)
@@ -66,10 +66,10 @@ class ChatLines(unittest.TestCase):
 
 
 class Slash(unittest.TestCase):
-    def test_fbt_and_the_old_msbt_command(self):
+    def test_only_the_fbt_command(self):
         lua = m.runtime()
         self.assertEqual(lua.eval("SLASH_BATTLETEXT1"), "/fbt")
-        self.assertEqual(lua.eval("SLASH_BATTLETEXT2"), "/msbt")
+        self.assertIsNone(lua.eval("SLASH_BATTLETEXT2"))
         lua.execute('SlashCmdList.BATTLETEXT("")')
         self.assertTrue(lua.eval("FBT_Options:IsShown()"))
         lua.execute('SlashCmdList.BATTLETEXT("disable")')

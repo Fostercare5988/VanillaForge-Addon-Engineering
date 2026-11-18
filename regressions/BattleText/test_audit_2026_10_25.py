@@ -1,6 +1,6 @@
-"""Reproductions for the 2026-10-25 MSBT audit (.private/audit-MikScrollingBattleText-2026-10-25.md).
+"""Reproductions for the 2026-10-25 audit (.private/audit-BattleText-2026-10-25.md).
 
-Each test states the desired behaviour and fails on MSBT 1.0.1 (0802282).
+Each test states the desired behaviour and fails on the 1.0.1 code (0802282).
 Self-contained Lua model (_fbt_runtime.py); no client MPQs. Not in-game proof.
 """
 import unittest
@@ -37,7 +37,7 @@ class KillingBlows(unittest.TestCase):  # P2-1
 
 
 class SharedClientState(unittest.TestCase):  # P2-2
-    def test_enabling_msbt_leaves_combat_log_cvar_alone(self):
+    def test_enabling_leaves_combat_log_cvar_alone(self):
         lua = m.runtime()
         lua.execute('cvars={}; FBT.SetOptionUserDisabled(true); FBT.SetOptionUserDisabled(false)')
         self.assertIsNone(lua.globals().cvars["CombatLogPeriodicSpells"])
@@ -116,16 +116,16 @@ class RetiredSettings(unittest.TestCase):  # 2.0.0: the 1.x migrations are gone 
     def test_never_shown_events_are_cleared_and_defaults_filled(self):
         lua = m.runtime(saved='''
         BattleTextDB = {UserDisabled=false, CurrentProfile="Default", Profiles={Default={
-          EventSettings={MSBT_EVENTTYPE_INCOMING_RESIST={Show=true}, MSBT_EVENTTYPE_OUTGOING_REFLECT={Show=true}},
-          Suppressions={MSBT_SUPPRESSION_ROGUE_VIGOR={Enabled=false, SearchPattern="Vigor"}}}}}
+          EventSettings={EVENTTYPE_INCOMING_RESIST={Show=true}, EVENTTYPE_OUTGOING_REFLECT={Show=true}},
+          Suppressions={SUPPRESSION_ROGUE_VIGOR={Enabled=false, SearchPattern="Vigor"}}}}}
         ''')
         p = lua.globals().BattleTextDB.Profiles.Default
-        self.assertIsNone(p.EventSettings.MSBT_EVENTTYPE_INCOMING_RESIST)
-        self.assertIsNone(p.EventSettings.MSBT_EVENTTYPE_OUTGOING_REFLECT)
-        self.assertIsNotNone(p.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE)
+        self.assertIsNone(p.EventSettings.EVENTTYPE_INCOMING_RESIST)
+        self.assertIsNone(p.EventSettings.EVENTTYPE_OUTGOING_REFLECT)
+        self.assertIsNotNone(p.EventSettings.EVENTTYPE_INCOMING_DAMAGE)
         # Filters the player changed or deleted stay as they are.
-        self.assertFalse(p.Suppressions.MSBT_SUPPRESSION_ROGUE_VIGOR.Enabled)
-        self.assertIsNone(p.Suppressions.MSBT_SUPPRESSION_SHAMAN_WINDFURY)
+        self.assertFalse(p.Suppressions.SUPPRESSION_ROGUE_VIGOR.Enabled)
+        self.assertIsNone(p.Suppressions.SUPPRESSION_SHAMAN_WINDFURY)
 
 
 class PowerLoss(unittest.TestCase):  # Power Losses now has a source
@@ -159,7 +159,7 @@ class EventTriggers(unittest.TestCase):  # P3-3
         CL("SPELL_AURA_APPLIED", "0xPLAYER", "Hero", "0xPLAYER", "Hero", 8516, "Windfury Totem", 8, "BUFF")
         ''')
         self.assertEqual(lua.globals().fromChat, 0, "trigger still reads chat text")
-        self.assertEqual(list(lua.globals().fired.values()), ["MSBT_TRIGGER_WINDFURY"])
+        self.assertEqual(list(lua.globals().fired.values()), ["TRIGGER_WINDFURY"])
 
     def test_dodge_and_parry_triggers(self):
         lua = m.runtime()
@@ -185,26 +185,26 @@ class TriggerEditor(unittest.TestCase):  # P3-3, ForgeUI trigger editor
     def test_aura_trigger_edits_its_aura_name(self):
         lua = m.runtime()
         lua.execute('''
-        FBT.Options.EditTrigger("MSBT_TRIGGER_WINDFURY")
+        FBT.Options.EditTrigger("TRIGGER_WINDFURY")
         assert(FBT_TriggerAura:IsShown() and FBT_TriggerAura:GetText() == "Windfury Totem")
         assert(not FBT_TriggerThreshold:IsShown() and FBT_TriggerPattern1 == nil)
         FBT_TriggerAura:SetText("Windfury Weapon")
         FBT_TriggerSave:Click()
-        local t = FBT.CurrentProfile.Triggers.MSBT_TRIGGER_WINDFURY.TriggerSettings
+        local t = FBT.CurrentProfile.Triggers.TRIGGER_WINDFURY.TriggerSettings
         assert(t.TriggerType == 7 and t.AuraName == "Windfury Weapon" and t.SearchPatterns == nil)
-        FBT.Options.EditTrigger("MSBT_TRIGGER_LOW_HEALTH")
+        FBT.Options.EditTrigger("TRIGGER_LOW_HEALTH")
         assert(FBT_TriggerThreshold:IsShown() and not FBT_TriggerStance:IsShown())
         FBT_TriggerSave:Click()
-        assert(FBT.CurrentProfile.Triggers.MSBT_TRIGGER_LOW_HEALTH.TriggerSettings.Threshold == 40)
+        assert(FBT.CurrentProfile.Triggers.TRIGGER_LOW_HEALTH.TriggerSettings.Threshold == 40)
         ''')
 
     def test_cancel_keeps_the_saved_trigger(self):
         lua = m.runtime()
         lua.execute('''
-        FBT.Options.EditTrigger("MSBT_TRIGGER_EXECUTE")
+        FBT.Options.EditTrigger("TRIGGER_EXECUTE")
         FBT_TriggerTypeNext:Click(); FBT_TriggerAllClasses:Click()
         FBT_TriggerCancel:Click()
-        local t = FBT.CurrentProfile.Triggers.MSBT_TRIGGER_EXECUTE.TriggerSettings
+        local t = FBT.CurrentProfile.Triggers.TRIGGER_EXECUTE.TriggerSettings
         assert(t.TriggerType == 4 and t.Classes.WARRIOR and t.Threshold == 20)
         ''')
 
@@ -283,16 +283,16 @@ class SettingsWindow(unittest.TestCase):  # item 2: ForgeUI settings write the p
         lua.execute('''
         local p = FBT.CurrentProfile
         FBT.Options.ShowTab(3)
-        FBT_IncomingRow1Show:Click(); assert(p.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE.Show == false)
+        FBT_IncomingRow1Show:Click(); assert(p.EventSettings.EVENTTYPE_INCOMING_DAMAGE.Show == false)
         FBT_IncomingRow1Message:Click(); assert(FBT_InlineEdit:IsShown())
         FBT_InlineEdit:SetText("-%a!"); FBT_InlineEdit:PressEnter()
-        assert(p.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE.Message == "-%a!" and not FBT_InlineEdit:IsShown())
+        assert(p.EventSettings.EVENTTYPE_INCOMING_DAMAGE.Message == "-%a!" and not FBT_InlineEdit:IsShown())
         FBT_IncomingRow2Message:Click(); FBT_InlineEdit:SetText("lost"); FBT_InlineEdit:PressEscape()
-        assert(p.EventSettings.MSBT_EVENTTYPE_INCOMING_MISS.Message ~= "lost")
+        assert(p.EventSettings.EVENTTYPE_INCOMING_MISS.Message ~= "lost")
         FBT_IncomingRowPagerNext:Click(); assert(FBT_IncomingRow1ShowText:GetText() ~= "Melee Damage")
 
         FBT.Options.ShowTab(5); FBT_NotificationRow1Sticky:Click()
-        assert(p.EventSettings.MSBT_EVENTTYPE_NOTIFICATION_DEBUFF.IsSticky == true)
+        assert(p.EventSettings.EVENTTYPE_NOTIFICATION_DEBUFF.IsSticky == true)
 
         FBT.Options.ShowTab(7); local before = 0; for _ in pairs(p.Suppressions) do before = before + 1 end
         FBT_FilterAdd:Click(); local after = 0; for _ in pairs(p.Suppressions) do after = after + 1 end

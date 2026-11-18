@@ -11,10 +11,10 @@ import _fbt_runtime as m
 
 OLD_PROFILE = '''
 BattleTextDB = {UserDisabled = false, Profiles = {Default = {Suppressions = {
-  MSBT_SUPPRESSION_SHAMAN_MANA_SPRING = {Enabled = true, SearchPattern = "Mana Spring"},
-  MSBT_SUPPRESSION_SHAMAN_STONESKIN = {Enabled = false, SearchPattern = "Stoneskin"},
-  MSBT_SUPPRESSION_ROGUE_VIGOR = {Enabled = true, SearchPattern = "Vigor"},
-  MSBT_SUPPRESSION_CUSTOM1 = {Enabled = true, SearchPattern = "Renew"},
+  SUPPRESSION_SHAMAN_MANA_SPRING = {Enabled = true, SearchPattern = "Mana Spring"},
+  SUPPRESSION_SHAMAN_STONESKIN = {Enabled = false, SearchPattern = "Stoneskin"},
+  SUPPRESSION_ROGUE_VIGOR = {Enabled = true, SearchPattern = "Vigor"},
+  SUPPRESSION_CUSTOM1 = {Enabled = true, SearchPattern = "Renew"},
 }}}}'''
 
 
@@ -69,10 +69,10 @@ class FilterGroups(unittest.TestCase):
         group = row_of(lua, "Shaman totems")
         self.assertFalse(lua.eval(f"{group}All:GetChecked() and true or false"))  # one of two is off
         lua.execute(f"{group}All:Click()")
-        self.assertTrue(lua.eval(f"{s}.MSBT_SUPPRESSION_SHAMAN_STONESKIN.Enabled and {s}.MSBT_SUPPRESSION_SHAMAN_MANA_SPRING.Enabled"))
+        self.assertTrue(lua.eval(f"{s}.SUPPRESSION_SHAMAN_STONESKIN.Enabled and {s}.SUPPRESSION_SHAMAN_MANA_SPRING.Enabled"))
         lua.execute(f"{group}All:Click()")
-        self.assertFalse(lua.eval(f"{s}.MSBT_SUPPRESSION_SHAMAN_STONESKIN.Enabled or {s}.MSBT_SUPPRESSION_SHAMAN_MANA_SPRING.Enabled"))
-        self.assertTrue(lua.eval(f"{s}.MSBT_SUPPRESSION_ROGUE_VIGOR.Enabled"))
+        self.assertFalse(lua.eval(f"{s}.SUPPRESSION_SHAMAN_STONESKIN.Enabled or {s}.SUPPRESSION_SHAMAN_MANA_SPRING.Enabled"))
+        self.assertTrue(lua.eval(f"{s}.SUPPRESSION_ROGUE_VIGOR.Enabled"))
 
     def test_add_rename_and_delete_a_group(self):
         lua = self.filters_tab()
@@ -84,13 +84,13 @@ class FilterGroups(unittest.TestCase):
         # Each click moves the row, so find it again before the next.
         lua.execute(f"{row_of(lua, 'Vigor')}GroupNext:Click()")
         lua.execute(f"{row_of(lua, 'Vigor')}GroupNext:Click()")
-        self.assertEqual(lua.eval("FBT.CurrentProfile.Suppressions.MSBT_SUPPRESSION_ROGUE_VIGOR.Group"), "Paladin")
+        self.assertEqual(lua.eval("FBT.CurrentProfile.Suppressions.SUPPRESSION_ROGUE_VIGOR.Group"), "Paladin")
         lua.execute(f'{row_of(lua, "Paladin")}Title:Click(); FBT_InlineEdit:SetText("Rogue"); FBT_InlineEdit:PressEnter()')
-        self.assertEqual(lua.eval("FBT.CurrentProfile.Suppressions.MSBT_SUPPRESSION_ROGUE_VIGOR.Group"), "Rogue")
+        self.assertEqual(lua.eval("FBT.CurrentProfile.Suppressions.SUPPRESSION_ROGUE_VIGOR.Group"), "Rogue")
         # Deleting the group keeps its filters, with no group.
         lua.execute(f"{row_of(lua, 'Rogue')}Delete:Click()")
-        self.assertIsNone(lua.eval("FBT.CurrentProfile.Suppressions.MSBT_SUPPRESSION_ROGUE_VIGOR.Group"))
-        self.assertEqual(lua.eval("FBT.CurrentProfile.Suppressions.MSBT_SUPPRESSION_ROGUE_VIGOR.SearchPattern"), "Vigor")
+        self.assertIsNone(lua.eval("FBT.CurrentProfile.Suppressions.SUPPRESSION_ROGUE_VIGOR.Group"))
+        self.assertEqual(lua.eval("FBT.CurrentProfile.Suppressions.SUPPRESSION_ROGUE_VIGOR.SearchPattern"), "Vigor")
         self.assertEqual(lua.eval("#FBT.CurrentProfile.FilterGroups"), 1)
 
     def test_a_name_another_group_has_is_refused(self):
@@ -102,7 +102,7 @@ class FilterGroups(unittest.TestCase):
     def test_plus_adds_a_filter_to_its_group(self):
         lua = self.filters_tab()
         lua.execute(f"{row_of(lua, 'Shaman totems')}Fold:Click(); {row_of(lua, 'Shaman totems')}Add:Click()")
-        self.assertEqual(lua.eval("FBT.CurrentProfile.Suppressions.MSBT_SUPPRESSION_CUSTOM2.Group"), "Shaman totems")
+        self.assertEqual(lua.eval("FBT.CurrentProfile.Suppressions.SUPPRESSION_CUSTOM2.Group"), "Shaman totems")
         self.assertIn(("group", "Shaman totems  (3)"), rows(lua))
         self.assertIn(("filter", "New filter"), rows(lua))
 
@@ -134,8 +134,8 @@ class FilterGroups(unittest.TestCase):
     def test_a_new_profile_has_the_shaman_group(self):
         lua = m.runtime()
         self.assertEqual(lua.eval("FBT.CurrentProfile.FilterGroups[1].Name"), "Shaman totems")
-        self.assertEqual(lua.eval("FBT.CurrentProfile.Suppressions.MSBT_SUPPRESSION_SHAMAN_STONESKIN.Group"), "Shaman totems")
-        self.assertIsNone(lua.eval("FBT.CurrentProfile.Suppressions.MSBT_SUPPRESSION_ROGUE_VIGOR.Group"))
+        self.assertEqual(lua.eval("FBT.CurrentProfile.Suppressions.SUPPRESSION_SHAMAN_STONESKIN.Group"), "Shaman totems")
+        self.assertIsNone(lua.eval("FBT.CurrentProfile.Suppressions.SUPPRESSION_ROGUE_VIGOR.Group"))
 
 
 class ProfileCopyRename(unittest.TestCase):

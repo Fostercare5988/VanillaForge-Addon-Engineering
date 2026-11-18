@@ -1,6 +1,6 @@
 """Reproductions for the 2026-11-03 audit (.private/audit-BattleText-2026-11-03.md).
 
-Each test states the wanted behaviour and fails on MSBT 1.2.2 (dc1d9dd).
+Each test states the wanted behaviour and fails on the 1.2.2 code (dc1d9dd).
 Lua model only (_fbt_runtime.py); not in-game proof.
 """
 import unittest
@@ -85,7 +85,7 @@ class EventsOnlyWhenNeeded(unittest.TestCase):  # P3-2
         lua = m.runtime()
         lua.execute('''
             for _, trigger in pairs(FBT.CurrentProfile.Triggers) do trigger.EventSettings.Show = false end
-            local execute = FBT.CurrentProfile.Triggers.MSBT_TRIGGER_EXECUTE
+            local execute = FBT.CurrentProfile.Triggers.TRIGGER_EXECUTE
             execute.EventSettings.Show = true; execute.TriggerSettings.Classes = nil
             FBT.RegisterTriggers(); FBT.Combat.RegisterEvents()
         ''')

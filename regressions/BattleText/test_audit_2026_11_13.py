@@ -27,8 +27,8 @@ def texts(lua, area):
 
 class ProfilePerCharacter(unittest.TestCase):  # P2-1
     # The profile in use was one account-wide key: picking a profile on one
-    # character switched every character of the account. Modern MSBT keeps
-    # the choice per character (MSBTProfiles_SavedVarsPerChar).
+    # character switched every character of the account. The reference addon keeps
+    # the choice per character (per-character profile).
 
     def test_each_character_uses_its_own_profile(self):
         lua = m.runtime(TWO_PROFILES + 'BattleTextCharDB = {CurrentProfile = "Raid"}')
@@ -52,7 +52,7 @@ class ProfilePerCharacter(unittest.TestCase):  # P2-1
 class Overheal(unittest.TestCase):  # P2-2
     # Heals showed their whole amount: the log's overhealing (accurate for you
     # and your group, ClassicAPI API.md "COMBAT_LOG_EVENT_UNFILTERED") was
-    # dropped. Modern MSBT shows the effective heal with the overheal after it,
+    # dropped. The reference addon shows the effective heal with the overheal after it,
     # and skips heal-over-time ticks that heal nothing.
 
     def heal(self, lua, sub, amount, over, name="Lesser Heal"):
@@ -105,21 +105,21 @@ class SavedKeySweep(unittest.TestCase):  # P3-1, KNOWN_PATTERNS KP-64
         lua = m.runtime('''
         BattleTextDB = {UserDisabled = false, Junk = 1, Profiles = {Default = {
           OldSwitch = true,
-          EventSettings = {MSBT_EVENTTYPE_INCOMING_RESIST = {Show = true}, MSBT_EVENTTYPE_OLD = {Show = true}},
+          EventSettings = {EVENTTYPE_INCOMING_RESIST = {Show = true}, EVENTTYPE_OLD = {Show = true}},
           DisplaySettings = {Old = {Show = true}},
-          Triggers = {MSBT_TRIGGER_CUSTOM1 = {EventSettings = {Show = false}, TriggerSettings = {TriggerType = 1}, Extra = 1}},
-          Suppressions = {MSBT_SUPPRESSION_CUSTOM1 = {Enabled = true, SearchPattern = "Renew"}},
+          Triggers = {TRIGGER_CUSTOM1 = {EventSettings = {Show = false}, TriggerSettings = {TriggerType = 1}, Extra = 1}},
+          Suppressions = {SUPPRESSION_CUSTOM1 = {Enabled = true, SearchPattern = "Renew"}},
         }}}''')
         p = lua.eval("BattleTextDB.Profiles.Default")
         self.assertIsNone(lua.eval("BattleTextDB.Junk"))
         self.assertIsNone(p.OldSwitch)
-        self.assertIsNone(p.EventSettings.MSBT_EVENTTYPE_INCOMING_RESIST)
-        self.assertIsNone(p.EventSettings.MSBT_EVENTTYPE_OLD)
+        self.assertIsNone(p.EventSettings.EVENTTYPE_INCOMING_RESIST)
+        self.assertIsNone(p.EventSettings.EVENTTYPE_OLD)
         self.assertIsNone(p.DisplaySettings.Old)
-        self.assertEqual(p.Triggers.MSBT_TRIGGER_CUSTOM1.Extra, 1)
-        self.assertEqual(p.Suppressions.MSBT_SUPPRESSION_CUSTOM1.SearchPattern, "Renew")
+        self.assertEqual(p.Triggers.TRIGGER_CUSTOM1.Extra, 1)
+        self.assertEqual(p.Suppressions.SUPPRESSION_CUSTOM1.SearchPattern, "Renew")
         self.assertEqual(lua.eval("BattleTextDB.UserDisabled"), False)
-        self.assertEqual(p.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE.Show, True)
+        self.assertEqual(p.EventSettings.EVENTTYPE_INCOMING_DAMAGE.Show, True)
 
 
 class FontsByName(unittest.TestCase):  # P3-2
@@ -133,7 +133,7 @@ class FontsByName(unittest.TestCase):  # P3-2
                             Crit = {FontIndex = 40, OutlineIndex = 2, FontSize = 26}},
       BlizzardFontSettings = {Normal = {FontIndex = 6}},
       DisplaySettings = {Incoming = {FontSettings = {Normal = {FontIndex = 31, OutlineIndex = 0, FontSize = 0}}}},
-      EventSettings = {MSBT_EVENTTYPE_INCOMING_DAMAGE = {FontSettings = {Normal = {FontIndex = 0, OutlineIndex = 0, FontSize = 0}}}},
+      EventSettings = {EVENTTYPE_INCOMING_DAMAGE = {FontSettings = {Normal = {FontIndex = 0, OutlineIndex = 0, FontSize = 0}}}},
     }}}'''
 
     def test_saved_font_places_become_names(self):
@@ -144,13 +144,13 @@ class FontsByName(unittest.TestCase):  # P3-2
         self.assertEqual(p.BlizzardFontSettings.Normal.FontName, "Friz")
         # Simhei and "inherit" both inherit now.
         self.assertIsNone(p.DisplaySettings.Incoming.FontSettings.Normal.FontName)
-        self.assertIsNone(p.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE.FontSettings.Normal.FontName)
+        self.assertIsNone(p.EventSettings.EVENTTYPE_INCOMING_DAMAGE.FontSettings.Normal.FontName)
         self.assertIsNone(p.MasterFontSettings.Normal.FontIndex)
-        self.assertIsNone(p.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE.FontSettings.Normal.FontIndex)
+        self.assertIsNone(p.EventSettings.EVENTTYPE_INCOMING_DAMAGE.FontSettings.Normal.FontIndex)
 
     def test_text_uses_the_inherited_font(self):
         lua = m.runtime(self.SAVED)
-        path = lua.eval('FBT.GetFontPath(FBT.scrollAreas.Incoming, FBT.CurrentProfile.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE, false)')
+        path = lua.eval('FBT.GetFontPath(FBT.scrollAreas.Incoming, FBT.CurrentProfile.EventSettings.EVENTTYPE_INCOMING_DAMAGE, false)')
         self.assertTrue(path.endswith("Inter-Bold.ttf"), path)
         self.assertEqual(lua.eval('DAMAGE_TEXT_FONT'), "Fonts\\FRIZQT__.TTF")
 

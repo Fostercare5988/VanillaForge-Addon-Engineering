@@ -1,7 +1,7 @@
-"""Cleanup 2026-10-27: MSBT keeps no chat-text triggers and counts XP itself.
+"""Cleanup 2026-10-27: BattleText keeps no chat-text triggers and counts XP itself.
 
 - The Search Pattern trigger type (6) matched chat text. No character used it,
-  so it is retired with its editor, chat event list and `/msbt search`. A
+  so it is retired with its editor, chat event list and `/fbt search`. A
   default trigger still on it goes back to its default; others are removed.
 - Experience Gains comes from PLAYER_XP_UPDATE as the change in UnitXP, so
   quest and exploration XP show too (the chat line covered kills only), and a
@@ -53,7 +53,7 @@ class RetiredSearchPatternTests(unittest.TestCase):
         lua = m.runtime()
         lua.execute('''
         seen = {}
-        FBT.Options.EditTrigger("MSBT_TRIGGER_LOW_HEALTH")
+        FBT.Options.EditTrigger("TRIGGER_LOW_HEALTH")
         for i = 1, 9 do FBT_TriggerTypeNext:Click(); table.insert(seen, FBT_TriggerType.text:GetText()) end
         ''')
         names = list(lua.eval('seen').values())
