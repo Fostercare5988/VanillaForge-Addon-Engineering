@@ -146,7 +146,32 @@ def click(lua, text):
     lua.execute(f"for _, w in ipairs(widgets) do if w.text == '{text}' then w:GetScript('OnClick')() end end")
 
 
+def name(lua, button, text):
+    """The player clicks New or Rename, types `text` and presses Enter."""
+    click(lua, button)
+    lua.execute(f"AurasListGroupName:SetText('{text}'); AurasListGroupName:GetScript('OnEnterPressed')()")
+
+
 class Groups(unittest.TestCase):
+    def test_rename_a_group_general_too_and_its_auras_follow(self):
+        lua = load(saved=GROUPED, setup=MONGOOSE)
+        lua.execute("A.List()")
+        click(lua, "Rename")
+        self.assertEqual(lua.eval("AurasListGroupName:GetText()"), "General", "the old name to edit")
+        self.assertFalse(lua.eval("A.menus.group:IsShown()"), "typed over the dropdown")
+        lua.execute("AurasListGroupName:SetText('Rogue'); AurasListGroupName:GetScript('OnEnterPressed')()")
+        self.assertEqual(lua.eval("AurasDB.groups[1].name"), "Rogue")
+        self.assertEqual(lua.eval("AurasDB.watched[1].group"), "Rogue")
+        self.assertEqual(lua.eval("AurasDB.watched[2].group"), "Consumes", "another group's aura stays")
+        self.assertEqual(lua.eval("selected(A.menus.group)"), "Rogue")
+        self.assertEqual(lua.eval("A.lines[1].entry.name"), "Evasion")
+        name(lua, "Rename", "Consumes")
+        self.assertEqual(lua.eval("AurasDB.groups[1].name"), "Rogue", "a name already used")
+        lua.execute("AurasListGroupName:GetScript('OnEditFocusLost')()")
+        self.assertFalse(lua.eval("AurasListGroupName:IsShown()"), "a click elsewhere lets it go")
+        name(lua, "Rename", "Rogue")
+        self.assertFalse(lua.eval("AurasListGroupName:IsShown()"), "its own name: nothing changes")
+
     def test_a_list_from_before_groups_is_all_in_general(self):
         lua = load(saved=ROGUE_WATCH, setup="aura('player', 'HELPFUL', { name = 'Evasion', icon = 'eva' })")
         self.assertEqual(lua.eval("#AurasDB.groups"), 1)
@@ -190,14 +215,20 @@ class Groups(unittest.TestCase):
 
     def test_new_group_show_in_move_and_delete(self):
         lua = load(saved=GROUPED, setup=MONGOOSE)
-        lua.execute("A.List(); AurasListName:SetText('PvP')")
-        click(lua, "New group")
+        lua.execute("A.List()")
+        name(lua, "New", " PvP ")
         self.assertEqual(lua.eval("AurasDB.groups[3].name"), "PvP")
         self.assertEqual(lua.eval("AurasDB.groups[3].where"), "all")
         self.assertEqual(lua.eval("selected(A.menus.group)"), "PvP")
+        self.assertTrue(lua.eval("A.menus.group:IsShown()"))
+        self.assertFalse(lua.eval("AurasListGroupName:IsShown()"))
         self.assertFalse(lua.eval("A.lines[1]:IsShown()"), "a new group is empty")
-        click(lua, "New group")
-        self.assertEqual(lua.eval("AurasDB.groups[4].name"), "Group 4", "an empty box")
+        for taken in ("", "PvP", "General"):
+            name(lua, "New", taken)
+            self.assertTrue(lua.eval("AurasListGroupName:IsShown()"), f"{taken!r} is not taken")
+            lua.execute("AurasListGroupName:GetScript('OnEscapePressed')()")
+        self.assertEqual(lua.eval("#AurasDB.groups"), 3)
+        name(lua, "New", "Raid")
         lua.execute("pick(A.menus.group, 'Consumes'); pick(A.lines[1].move, 'PvP')")
         self.assertEqual(lua.eval("AurasDB.watched[2].group"), "PvP")
         self.assertTrue(lua.eval("watchIcon('player', 'Mongoose'):IsShown()"), "PvP shows everywhere")

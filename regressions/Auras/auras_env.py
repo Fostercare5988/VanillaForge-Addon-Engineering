@@ -53,7 +53,7 @@ function selected(dd)
 end
 """
 target = ff_env.target
-GLOBALS = ("AurasDB", "Auras", "SLASH_AURAS1", "AurasList", "AurasListName")
+GLOBALS = ("AurasDB", "Auras", "SLASH_AURAS1", "AurasList", "AurasListName", "AurasListGroupName")
 
 
 def load(saved="", setup="", world=True, frames=True):
