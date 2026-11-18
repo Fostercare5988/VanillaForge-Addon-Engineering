@@ -6,7 +6,7 @@ puts it back. Also what listens at rest and which globals the addon makes.
 import unittest
 from ftr_env import load
 
-PAGE = "settingsWindow.find('FostercareTweaks')"
+PAGE = "settingsWindow.find('Tweaks')"
 SWITCHES = ("arrowKeys", "history", "timestamps", "classColors", "blueShaman", "minimapSquare",
             "minimapClock", "minimapTidy", "autoStance")
 
@@ -28,21 +28,21 @@ class Page(unittest.TestCase):
     def test_every_switch_is_on_by_default_and_the_numbers_are_the_players(self):
         lua = load()
         for key in SWITCHES:
-            self.assertIs(lua.eval(f"FostercareTweaksDB.{key}"), True, key)
-            self.assertIs(lua.eval(f"Settings.GetSetting('FostercareTweaks_{key}'):GetDefaultValue()"), True, key)
-        self.assertEqual(lua.eval("FostercareTweaksDB.minimapScale"), 1.6)
-        self.assertEqual(lua.eval("FostercareTweaksDB.mapScale"), 1.65)
+            self.assertIs(lua.eval(f"TweaksDB.{key}"), True, key)
+            self.assertIs(lua.eval(f"Settings.GetSetting('Tweaks_{key}'):GetDefaultValue()"), True, key)
+        self.assertEqual(lua.eval("TweaksDB.minimapScale"), 1.6)
+        self.assertEqual(lua.eval("TweaksDB.mapScale"), 1.65)
 
     def test_a_saved_choice_is_kept(self):
-        lua = load("FostercareTweaksDB = { timestamps = false, minimapScale = 1.1 }")
-        self.assertIs(lua.eval("FostercareTweaksDB.timestamps"), False)
+        lua = load("TweaksDB = { timestamps = false, minimapScale = 1.1 }")
+        self.assertIs(lua.eval("TweaksDB.timestamps"), False)
         self.assertEqual(lua.eval("Minimap:GetScale()"), 1.1)
 
     def test_a_row_applies_at_once_and_defaults_put_it_back(self):
         lua = load()
-        lua.execute("settingsWindow.use('FostercareTweaks_minimapScale', 1.0)")
+        lua.execute("settingsWindow.use('Tweaks_minimapScale', 1.0)")
         self.assertEqual(lua.eval("Minimap:GetScale()"), 1.0)
-        lua.execute("settingsWindow.use('FostercareTweaks_arrowKeys', false)")
+        lua.execute("settingsWindow.use('Tweaks_arrowKeys', false)")
         self.assertIs(lua.eval("ChatFrameEditBox.altArrows"), True)
         lua.execute(f"settingsWindow.defaults({PAGE})")
         self.assertEqual(lua.eval("Minimap:GetScale()"), 1.6)
@@ -50,9 +50,9 @@ class Page(unittest.TestCase):
 
     def test_ft_opens_the_page(self):
         lua = load()
-        lua.execute("SlashCmdList.FOSTERCARETWEAKS('')")
-        self.assertEqual(lua.eval("settingsWindow.opened:GetName()"), "FostercareTweaks")
-        self.assertEqual(lua.eval("SLASH_FOSTERCARETWEAKS1"), "/ft")
+        lua.execute("SlashCmdList.TWEAKS('')")
+        self.assertEqual(lua.eval("settingsWindow.opened:GetName()"), "Tweaks")
+        self.assertEqual(lua.eval("SLASH_TWEAKS1"), "/ft")
 
 
 class AtRest(unittest.TestCase):
@@ -73,7 +73,7 @@ class AtRest(unittest.TestCase):
         lua = wowkit.runtime()
         lua.execute(MOCK)
         lua.execute("before = { __addon_ns = true, event = true }; for k in pairs(_G) do before[k] = true end")  # the kit's
-        wowkit.load_addon(lua, ROOT, "FostercareTweaks")
+        wowkit.load_addon(lua, ROOT, "Tweaks")
         lua.execute('fire("VARIABLES_LOADED") fire("PLAYER_ENTERING_WORLD")')
         made = lua.eval("(function() local out = {} for k in pairs(_G) do if not before[k] then out[#out + 1] = k end end"
                         " table.sort(out) return table.concat(out, ',') end)()")
@@ -87,8 +87,8 @@ class AtRest(unittest.TestCase):
         lua.execute(MOCK)
         lua.execute("CLASSIC_API_VERSION = nil")
         with self.assertRaises(Exception) as caught:
-            wowkit.load_addon(lua, ROOT, "FostercareTweaks")
-        self.assertIn("FostercareTweaks needs ClassicAPI.", str(caught.exception))
+            wowkit.load_addon(lua, ROOT, "Tweaks")
+        self.assertIn("Tweaks needs ClassicAPI.", str(caught.exception))
 
 
 if __name__ == "__main__":

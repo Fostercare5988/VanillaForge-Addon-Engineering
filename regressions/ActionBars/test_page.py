@@ -4,12 +4,12 @@ tests 13 and 14). Used through the kit's settingsWindow, as a player does.
 import unittest
 from fb_env import load, profiles
 
-SAVED = '''FostercareBarsDB = { profiles = {
+SAVED = '''ActionBarsDB = { profiles = {
     PVP = { actions = { [1] = { kind = 'spell', id = 10 } } },
     PVE = { actions = { [1] = { kind = 'spell', id = 20 } } },
 } }'''
 
-PAGE = "settingsWindow.find('FostercareBars')"
+PAGE = "settingsWindow.find('ActionBars')"
 
 
 def row(name):
@@ -40,7 +40,7 @@ class Page(unittest.TestCase):
     def test_the_list_holds_the_profiles_and_the_first_is_chosen(self):
         lua = load(SAVED)
         self.assertEqual(choices(lua), "PVE=PVE|PVP=PVP")
-        self.assertEqual(lua.eval("Settings.GetValue('FostercareBars_Profile')"), "PVE")
+        self.assertEqual(lua.eval("Settings.GetValue('ActionBars_Profile')"), "PVE")
 
     def test_without_profiles_the_three_buttons_are_greyed(self):
         lua = load()
@@ -51,66 +51,66 @@ class Page(unittest.TestCase):
 
     def test_choosing_a_profile_and_load_loads_it(self):
         lua = load(SAVED, "learn(10) learn(20)")
-        lua.execute(f"settingsWindow.use('FostercareBars_Profile', 'PVP') settingsWindow.click({row('Load')})")
+        lua.execute(f"settingsWindow.use('ActionBars_Profile', 'PVP') settingsWindow.click({row('Load')})")
         self.assertEqual(lua.eval("bars[1].id"), 10)
 
     def test_save_over_it_saves_the_bars_now(self):
         lua = load(SAVED)
         lua.execute(f"bars[1] = {{ kind = 'spell', id = 99 }} settingsWindow.click({row('Save over it')})")
-        self.assertEqual(lua.eval("FostercareBarsDB.profiles.PVE.actions[1].id"), 99)
+        self.assertEqual(lua.eval("ActionBarsDB.profiles.PVE.actions[1].id"), 99)
 
     def test_delete_asks_then_removes(self):
         lua = load(SAVED)
         lua.execute(f"settingsWindow.click({row('Delete')})")
-        self.assertEqual(lua.eval("popupShown()"), "FOSTERCAREBARS_DELETE")
+        self.assertEqual(lua.eval("popupShown()"), "ACTIONBARS_DELETE")
         self.assertEqual(lua.eval("popup.text"), 'Delete the profile "PVE"?')
         self.assertEqual(profiles(lua), ["PVE", "PVP"], "nothing goes before Yes")
         lua.execute("accept()")
         self.assertEqual(profiles(lua), ["PVP"])
-        self.assertEqual(lua.eval("Settings.GetValue('FostercareBars_Profile')"), "PVP")
+        self.assertEqual(lua.eval("Settings.GetValue('ActionBars_Profile')"), "PVP")
         self.assertIn('Deleted "PVE".', lua.eval("chatText()"))
         lua.execute(f"settingsWindow.click({row('Delete')}) accept()")
-        self.assertEqual(lua.eval("Settings.GetValue('FostercareBars_Profile')"), "")
+        self.assertEqual(lua.eval("Settings.GetValue('ActionBars_Profile')"), "")
         self.assertFalse(lua.eval(f"settingsWindow.enabled({row('Load')})"))
 
     def test_new_profile_saves_under_the_typed_name_and_chooses_it(self):
         lua = load()
         lua.execute(f"settingsWindow.click({row('New profile')})")
-        self.assertEqual(lua.eval("popupShown()"), "FOSTERCAREBARS_NEW")
+        self.assertEqual(lua.eval("popupShown()"), "ACTIONBARS_NEW")
         lua.execute("accept('')")
-        self.assertEqual(lua.eval("popupShown()"), "FOSTERCAREBARS_NEW", "an empty name is refused")
+        self.assertEqual(lua.eval("popupShown()"), "ACTIONBARS_NEW", "an empty name is refused")
         lua.execute("accept('Arena')")
         self.assertFalse(lua.eval("popupShown()"))
         self.assertEqual(profiles(lua), ["Arena"])
-        self.assertEqual(lua.eval("Settings.GetValue('FostercareBars_Profile')"), "Arena")
+        self.assertEqual(lua.eval("Settings.GetValue('ActionBars_Profile')"), "Arena")
         self.assertTrue(lua.eval(f"settingsWindow.enabled({row('Load')})"))
 
     def test_the_buttons_are_heard_when_the_choice_changes(self):
         # The window re-greys a row when its parent's setting reports a change.
         lua = load()
         lua.execute('''heard = 0
-            Settings.SetOnValueChangedCallback('FostercareBars_Profile', function() heard = heard + 1 end)
-            StaticPopup_Show('FOSTERCAREBARS_NEW') accept('Arena')''')
+            Settings.SetOnValueChangedCallback('ActionBars_Profile', function() heard = heard + 1 end)
+            StaticPopup_Show('ACTIONBARS_NEW') accept('Arena')''')
         self.assertEqual(lua.eval("heard"), 1)
 
     def test_defaults_leaves_the_choice(self):
         lua = load(SAVED)
-        lua.execute(f"settingsWindow.use('FostercareBars_Profile', 'PVP') settingsWindow.defaults({PAGE})")
-        self.assertEqual(lua.eval("Settings.GetValue('FostercareBars_Profile')"), "PVP")
+        lua.execute(f"settingsWindow.use('ActionBars_Profile', 'PVP') settingsWindow.defaults({PAGE})")
+        self.assertEqual(lua.eval("Settings.GetValue('ActionBars_Profile')"), "PVP")
         self.assertEqual(profiles(lua), ["PVE", "PVP"])
 
     def test_the_choice_is_not_saved(self):
         lua = load(SAVED)
-        lua.execute("settingsWindow.use('FostercareBars_Profile', 'PVP')")
-        self.assertEqual(lua.eval("FostercareBarsDB.profiles.PVP ~= nil"), True)
-        self.assertIsNone(lua.eval("FostercareBarsDB.Profile"))
-        self.assertIsNone(lua.eval("FostercareBarsDB.profile"))
+        lua.execute("settingsWindow.use('ActionBars_Profile', 'PVP')")
+        self.assertEqual(lua.eval("ActionBarsDB.profiles.PVP ~= nil"), True)
+        self.assertIsNone(lua.eval("ActionBarsDB.Profile"))
+        self.assertIsNone(lua.eval("ActionBarsDB.profile"))
 
     def test_fbars_opens_the_page(self):
         lua = load()
-        lua.execute("SlashCmdList.FOSTERCAREBARS('')")
-        self.assertEqual(lua.eval("settingsWindow.opened:GetName()"), "FostercareBars")
-        self.assertEqual(lua.eval("SLASH_FOSTERCAREBARS1"), "/fbars")
+        lua.execute("SlashCmdList.ACTIONBARS('')")
+        self.assertEqual(lua.eval("settingsWindow.opened:GetName()"), "ActionBars")
+        self.assertEqual(lua.eval("SLASH_ACTIONBARS1"), "/fbars")
 
 
 if __name__ == "__main__":

@@ -29,23 +29,23 @@ class Icons(unittest.TestCase):
         self.assertEqual(lua.eval("btn(1, 2).more.text"), "+2")
 
     def test_the_counts_and_sizes_from_the_page(self):
-        lua = with_auras("FostercareRaidDB = { width = 120 }")
+        lua = with_auras("RaidFramesDB = { width = 120 }")
         self.assertEqual(lua.eval("iconsOf(btn(1, 2))"), "renew@14 fort@14 poly@12 agony@12")
         self.assertEqual(lua.eval("btn(1, 2).more.text"), "")
-        lua.execute("settingsWindow.use('FostercareRaid_buffCount', 1)")
+        lua.execute("settingsWindow.use('RaidFrames_buffCount', 1)")
         self.assertEqual(lua.eval("iconsOf(btn(1, 2))"), "renew@14 poly@12 agony@12")
-        lua.execute("settingsWindow.use('FostercareRaid_debuffSize', 9)")
+        lua.execute("settingsWindow.use('RaidFrames_debuffSize', 9)")
         self.assertEqual(lua.eval("iconsOf(btn(1, 2))"), "renew@14 poly@9 agony@9")
 
     def test_switches_off_the_buffs_and_the_debuffs(self):
-        lua = with_auras("FostercareRaidDB = { width = 120 }")
-        lua.execute("settingsWindow.use('FostercareRaid_buffs', false)")
+        lua = with_auras("RaidFramesDB = { width = 120 }")
+        lua.execute("settingsWindow.use('RaidFrames_buffs', false)")
         self.assertEqual(lua.eval("iconsOf(btn(1, 2))"), "poly@12 agony@12")
-        lua.execute("settingsWindow.use('FostercareRaid_debuffs', false)")
+        lua.execute("settingsWindow.use('RaidFrames_debuffs', false)")
         self.assertEqual(lua.eval("iconsOf(btn(1, 2))"), "")
 
     def test_a_dispel_type_colours_the_border_and_a_stack_shows(self):
-        lua = with_auras("FostercareRaidDB = { width = 120 }")
+        lua = with_auras("RaidFramesDB = { width = 120 }")
         icon = "btn(1, 2).icons[3]"
         self.assertEqual(lua.eval(f"{icon}.path"), "poly")
         self.assertEqual(lua.eval(f"{icon}.c.b"), 1, "Magic is blue")
@@ -74,7 +74,7 @@ class HealCorner(unittest.TestCase):
 
     def test_off_hides_the_corner_but_keeps_the_buffs(self):
         lua = with_auras()
-        lua.execute("settingsWindow.use('FostercareRaid_hots', false)")
+        lua.execute("settingsWindow.use('RaidFrames_hots', false)")
         self.assertFalse(lua.eval("btn(1, 2).hot:IsShown()"))
         self.assertIn("renew@14", lua.eval("iconsOf(btn(1, 2))"))
 

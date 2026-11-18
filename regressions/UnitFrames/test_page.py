@@ -10,30 +10,30 @@ class Page(unittest.TestCase):
     def test_each_switch_a_checkbox_on_by_default(self):
         lua = load()
         for key in SWITCHES:
-            self.assertTrue(lua.eval(f"FostercareFramesDB.{key}"), key)
-            self.assertEqual(lua.eval(f"Settings.GetSetting('FostercareFrames_{key}'):GetDefaultValue()"), True, key)
-            name = lua.eval(f"Settings.GetSetting('FostercareFrames_{key}'):GetName()")
-            self.assertIsNotNone(lua.eval(f"settingsWindow.row(settingsWindow.find('FostercareFrames'), {name!r})"), key)
+            self.assertTrue(lua.eval(f"UnitFramesDB.{key}"), key)
+            self.assertEqual(lua.eval(f"Settings.GetSetting('UnitFrames_{key}'):GetDefaultValue()"), True, key)
+            name = lua.eval(f"Settings.GetSetting('UnitFrames_{key}'):GetName()")
+            self.assertIsNotNone(lua.eval(f"settingsWindow.row(settingsWindow.find('UnitFrames'), {name!r})"), key)
 
     def test_defaults_puts_them_back(self):
         lua = load()
         for key in SWITCHES:
-            lua.execute(f"settingsWindow.use('FostercareFrames_{key}', false)")
-        lua.execute("settingsWindow.defaults(settingsWindow.find('FostercareFrames'))")
+            lua.execute(f"settingsWindow.use('UnitFrames_{key}', false)")
+        lua.execute("settingsWindow.defaults(settingsWindow.find('UnitFrames'))")
         for key in SWITCHES:
-            self.assertTrue(lua.eval(f"FostercareFramesDB.{key}"), key)
-        self.assertTrue(lua.eval("FostercareFramesTopDebuffs:IsShown()"))
+            self.assertTrue(lua.eval(f"UnitFramesDB.{key}"), key)
+        self.assertTrue(lua.eval("UnitFramesTopDebuffs:IsShown()"))
 
     def test_a_saved_choice_is_kept(self):
-        lua = load(saved="FostercareFramesDB = { enchants = false }")
-        self.assertFalse(lua.eval("FostercareFramesDB.enchants"))
-        self.assertFalse(lua.eval("FostercareFramesEnchants:IsShown()"))
+        lua = load(saved="UnitFramesDB = { enchants = false }")
+        self.assertFalse(lua.eval("UnitFramesDB.enchants"))
+        self.assertFalse(lua.eval("UnitFramesEnchants:IsShown()"))
 
     def test_the_slash_command_opens_the_page(self):
         lua = load()
-        lua.execute("SlashCmdList.FOSTERCAREFRAMES('')")
-        self.assertEqual(lua.eval("settingsWindow.opened:GetName()"), "FostercareFrames")
-        self.assertEqual(lua.eval("SLASH_FOSTERCAREFRAMES1"), "/ffr")
+        lua.execute("SlashCmdList.UNITFRAMES('')")
+        self.assertEqual(lua.eval("settingsWindow.opened:GetName()"), "UnitFrames")
+        self.assertEqual(lua.eval("SLASH_UNITFRAMES1"), "/ffr")
 
 
 class AtRest(unittest.TestCase):
@@ -80,19 +80,19 @@ class AtRest(unittest.TestCase):
 class FirstLogin(unittest.TestCase):
     def test_every_frame_placed_by_hand_waits_for_the_client(self):
         # At a first login the client puts back the frames it saved
-        # (layout-cache.txt) only after PLAYER_ENTERING_WORLD (FostercareBars,
+        # (layout-cache.txt) only after PLAYER_ENTERING_WORLD (ActionBars,
         # 2026-11-17): nothing may need their place before that.
         names = ["PlayerBuffs", "PlayerDebuffs", "TargetBuffs", "TargetDebuffs", "TopBuffs", "TopDebuffs",
                  "Enchants", "TargetCast"]
-        cache = "; ".join(f"layoutCache['FostercareFrames{n}'] = {{ 640, -300 }}" for n in names)
+        cache = "; ".join(f"layoutCache['UnitFrames{n}'] = {{ 640, -300 }}" for n in names)
         lua = load(setup=cache + "; aura('player', 'HELPFUL', { name = 'Fort', icon = 'fort' })"
                    "; playerBuffs.HELPFUL = { { id = 1, icon = 'fort', ends = now + 600 } }; spell(1, 'Fort', 'fort')")
         lua.execute("playerAuras(); runTimers()")
         for n in names:
-            self.assertEqual(lua.eval(f"FostercareFrames{n}:GetNumPoints()"), 0, f"{n}: the addon left it to the client")
+            self.assertEqual(lua.eval(f"UnitFrames{n}:GetNumPoints()"), 0, f"{n}: the addon left it to the client")
         lua.execute("step(0)")
         for n in names:
-            self.assertEqual(lua.eval(f"FostercareFrames{n}:GetLeft()"), 640, n)
+            self.assertEqual(lua.eval(f"UnitFrames{n}:GetLeft()"), 640, n)
 
 
 class Globals(unittest.TestCase):

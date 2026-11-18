@@ -22,14 +22,14 @@ class AutoStance(unittest.TestCase):
 
     def test_off_stops_listening(self):
         lua = load(setup=FORMS, cls="DRUID")
-        lua.execute("settingsWindow.use('FostercareTweaks_autoStance', false)")
+        lua.execute("settingsWindow.use('Tweaks_autoStance', false)")
         self.assertNotIn("UI_ERROR_MESSAGE", lua.eval("listening()"))
-        lua.execute("settingsWindow.use('FostercareTweaks_autoStance', true)")
+        lua.execute("settingsWindow.use('Tweaks_autoStance', true)")
         self.assertIn("UI_ERROR_MESSAGE", lua.eval("listening()"))
 
     def test_other_classes_never_listen(self):
         lua = load(setup=FORMS, cls="ROGUE")
-        lua.execute("settingsWindow.use('FostercareTweaks_autoStance', true)")
+        lua.execute("settingsWindow.use('Tweaks_autoStance', true)")
         self.assertNotIn("UI_ERROR_MESSAGE", lua.eval("listening()"))
 
 

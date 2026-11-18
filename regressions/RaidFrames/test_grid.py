@@ -155,7 +155,7 @@ class Aggro(unittest.TestCase):
         lua = in_party()
         lua.execute("member('target', 'Ogre', 'WARRIOR', { enemy = true }); members.targettarget = members.party2")
         lua.execute("fire('PLAYER_TARGET_CHANGED')")
-        lua.execute("settingsWindow.use('FostercareRaid_aggro', false)")
+        lua.execute("settingsWindow.use('RaidFrames_aggro', false)")
         self.assertFalse(lua.eval("btn(1, 3).aggro:IsShown()"))
         self.assertIsNone(lua.eval("grid().events.PLAYER_TARGET_CHANGED"))
         self.assertIsNone(lua.eval("grid().events.UNIT_TARGET"))
@@ -193,10 +193,10 @@ class Moving(unittest.TestCase):
 class FirstLogin(unittest.TestCase):
     def test_the_grid_placed_by_hand_waits_for_the_client(self):
         # The client puts the grid back after PLAYER_ENTERING_WORLD at a first
-        # login (FostercareBars, 2026-11-17).
-        lua = in_party(setup="layoutCache.FostercareRaidFrame = { 300, -200 }")
+        # login (ActionBars, 2026-11-17).
+        lua = in_party(setup="layoutCache.RaidFramesMain = { 300, -200 }")
         self.assertEqual(lua.eval("shown(1, 2)"), "Ann")
-        lua.execute("settingsWindow.use('FostercareRaid_scale', 1.3)")
+        lua.execute("settingsWindow.use('RaidFrames_scale', 1.3)")
         lua.execute("step(0)")
         self.assertEqual(lua.eval("grid():GetLeft()"), 300)
 

@@ -135,9 +135,9 @@ function deviceMenu()
     }
 end
 
--- FostercareBars' public table (its Profiles.lua) ------------------------
+-- ActionBars' public table (its Profiles.lua) ------------------------
 barsLoaded = {}
-FostercareBars = {
+ActionBars = {
     GetProfileNames = function() return { "PvE", "PvP" } end,
     LoadProfile = function(name) table.insert(barsLoaded, name); return true end,
 }

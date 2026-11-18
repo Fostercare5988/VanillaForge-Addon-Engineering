@@ -1,4 +1,4 @@
-"""FostercareTweaks 1.0 (the rebuild, released 2026-11-18 with a fresh
+"""Tweaks 1.0 (the rebuild, released 2026-11-18 with a fresh
 history; the suite of the old 1.22 is gone with it) on the shared game model
 (wowkit). tools/run_suite.py and tools/audit_addon.py point
 VANILLAFORGE_ADDON_ROOT at the addon.
@@ -233,17 +233,17 @@ end
 function liveTimers() local n = 0; for _, t in ipairs(timers) do if not t.cancelled then n = n + 1 end end; return n end
 '''
 
-GLOBALS = ("FostercareTweaksDB", "SLASH_FOSTERCARETWEAKS1", "MinimapClock", "SetItemRef")
+GLOBALS = ("TweaksDB", "SLASH_TWEAKS1", "MinimapClock", "SetItemRef")
 
 
 def load(saved="", setup="", world=True, cls="ROGUE"):
-    """The addon loaded over `saved` (Lua that sets FostercareTweaksDB); with
+    """The addon loaded over `saved` (Lua that sets TweaksDB); with
     `world`, the login events have fired, so the page and the chat exist."""
     lua = wowkit.runtime()
     lua.execute(MOCK)
     lua.execute("classes.player = %r" % cls)
     lua.execute(setup)
-    wowkit.load_addon(lua, ROOT, "FostercareTweaks", saved=saved or None)
+    wowkit.load_addon(lua, ROOT, "Tweaks", saved=saved or None)
     if world:
         lua.execute('fire("VARIABLES_LOADED") fire("PLAYER_ENTERING_WORLD")')
     return lua

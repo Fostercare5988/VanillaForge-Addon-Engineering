@@ -1,6 +1,6 @@
 """The stock bars give way, the look switches and the Layout page
-(FostercareTweaks spec B2, B6, B8, B9, 4.1; its tests 4.7 "Every addon" and
-"Bars"). Written 2026-11-17 for FostercareBars 1.1.0.
+(Tweaks spec B2, B6, B8, B9, 4.1; its tests 4.7 "Every addon" and
+"Bars"). Written 2026-11-17 for ActionBars 1.1.0.
 """
 import unittest
 from fb_env import load
@@ -27,14 +27,14 @@ class Look(unittest.TestCase):
         self.assertFalse(lua.eval("ShapeshiftBarFrame:IsVisible()"))
         self.assertTrue(lua.eval("button('main', 1).edge:IsShown()"))
         for variable in ("hideGryphons", "floating", "shortMain", "hideStanceBar"):
-            lua.execute(f"settingsWindow.use('FostercareBars_{variable}', false)")
+            lua.execute(f"settingsWindow.use('ActionBars_{variable}', false)")
         self.assertEqual(lua.eval("MainMenuBarLeftEndCap:GetAlpha()"), 1)
         self.assertEqual(lua.eval("MainMenuBarTexture0:GetAlpha()"), 1)
         self.assertTrue(lua.eval("CharacterMicroButton:IsVisible()"))
         self.assertTrue(lua.eval("ShapeshiftBarFrame:IsVisible()"))
         self.assertFalse(lua.eval("button('main', 1).edge:IsShown()"))
         self.assertEqual(lua.eval("MainMenuExpBar:GetWidth()"), 1024)
-        lua.execute("settingsWindow.defaults(settingsWindow.find('FostercareBars'))")
+        lua.execute("settingsWindow.defaults(settingsWindow.find('ActionBars'))")
         self.assertEqual(lua.eval("MainMenuBarLeftEndCap:GetAlpha()"), 0, "Defaults puts it back")
         self.assertFalse(lua.eval("ShapeshiftBarFrame:IsVisible()"))
 
@@ -68,28 +68,28 @@ class Layout(unittest.TestCase):
 
     def test_the_rows_change_the_bar(self):
         lua = load()
-        lua.execute("settingsWindow.use('FostercareBars_bottomleft_scale', 1.2)")
+        lua.execute("settingsWindow.use('ActionBars_bottomleft_scale', 1.2)")
         self.assertEqual(lua.eval("button('bottomleft', 1).bar.holder:GetScale()"), 1.2)
-        lua.execute("settingsWindow.use('FostercareBars_bottomleft_columns', 6) "
-                    "settingsWindow.use('FostercareBars_bottomleft_spacing', 4)")
+        lua.execute("settingsWindow.use('ActionBars_bottomleft_columns', 6) "
+                    "settingsWindow.use('ActionBars_bottomleft_spacing', 4)")
         self.assertEqual(lua.eval("select(5, button('bottomleft', 7):GetPoint(1))"), -40, "the second row")
         self.assertEqual(lua.eval("button('bottomleft', 1).bar.holder:GetWidth()"), 6 * 40 - 4)
-        lua.execute("settingsWindow.use('FostercareBars_bottomleft_showEmpty', true)")
+        lua.execute("settingsWindow.use('ActionBars_bottomleft_showEmpty', true)")
         self.assertTrue(lua.eval("button('bottomleft', 1):IsShown()"))
         lua.execute(f"settingsWindow.defaults({LAYOUT})")
-        self.assertEqual(lua.eval("FostercareBarsDB.bars.bottomleft.columns"), 12)
-        self.assertEqual(lua.eval("FostercareBarsDB.bars.bottomleft.scale"), 0.9)
+        self.assertEqual(lua.eval("ActionBarsDB.bars.bottomleft.columns"), 12)
+        self.assertEqual(lua.eval("ActionBarsDB.bars.bottomleft.scale"), 0.9)
 
     def test_a_dragged_bar_is_the_clients_to_save_and_defaults_puts_it_back(self):
         lua = load()
-        move = "settingsWindow.click(settingsWindow.row(settingsWindow.find('FostercareBars'), 'Move bars'))"
+        move = "settingsWindow.click(settingsWindow.row(settingsWindow.find('ActionBars'), 'Move bars'))"
         lua.execute(move)
         lua.execute("bar = button('right', 1).bar h = bar.handle run(h, 'OnDragStart') run(h, 'OnDragStop')")
         self.assertTrue(lua.eval("bar.holder:IsUserPlaced()"), "the client saves it (layout-cache.txt)")
-        self.assertEqual(lua.eval("bar.holder:GetName()"), "FostercareBars_right")
-        self.assertIsNone(lua.eval("FostercareBarsDB.bars.right.x"), "no position of our own")
-        self.assertTrue(lua.eval("Settings.GetValue('FostercareBars_right_placed')"))
-        lua.execute("bar.holder.top = 500 settingsWindow.use('FostercareBars_right_scale', 1.8)")
+        self.assertEqual(lua.eval("bar.holder:GetName()"), "ActionBars_right")
+        self.assertIsNone(lua.eval("ActionBarsDB.bars.right.x"), "no position of our own")
+        self.assertTrue(lua.eval("Settings.GetValue('ActionBars_right_placed')"))
+        lua.execute("bar.holder.top = 500 settingsWindow.use('ActionBars_right_scale', 1.8)")
         self.assertEqual(lua.eval("(bar.holder:GetPoint(1))"), "TOPLEFT", "a new size keeps the spot")
         self.assertAlmostEqual(lua.eval("select(5, bar.holder:GetPoint(1))"), 500 * 0.9 / 1.8)
         lua.execute(f"settingsWindow.defaults({LAYOUT})")
@@ -106,18 +106,18 @@ class Layout(unittest.TestCase):
         lua = load(setup="""
             keys.MULTIACTIONBAR1BUTTON10 = { 'F' }
             for _, key in ipairs({ 'main', 'bottomleft', 'bottomright', 'right', 'left' }) do
-                layoutCache['FostercareBars_' .. key] = { 500, -600 }
+                layoutCache['ActionBars_' .. key] = { 500, -600 }
             end
-            for n = 1, 11 do layoutCache['FostercareBars_extra' .. n] = { 300, -400 } end""")
-        self.assertEqual(lua.eval("overrides.F"), "FostercareBars_bottomleft_10")
-        self.assertEqual(lua.eval("FostercareBars_extra2:GetScale()"), 0.9)
+            for n = 1, 11 do layoutCache['ActionBars_extra' .. n] = { 300, -400 } end""")
+        self.assertEqual(lua.eval("overrides.F"), "ActionBars_bottomleft_10")
+        self.assertEqual(lua.eval("ActionBars_extra2:GetScale()"), 0.9)
         lua.execute("step(0)")
-        self.assertEqual(lua.eval("(FostercareBars_extra2:GetPoint(1))"), "TOPLEFT", "where the client put it")
-        self.assertEqual(lua.eval("FostercareBars_extra2:GetLeft()"), 300)
+        self.assertEqual(lua.eval("(ActionBars_extra2:GetPoint(1))"), "TOPLEFT", "where the client put it")
+        self.assertEqual(lua.eval("ActionBars_extra2:GetLeft()"), 300)
 
     def test_placed_by_hand_on_keeps_a_bar_where_it_is(self):
         lua = load()
-        lua.execute("bar = button('left', 1).bar settingsWindow.use('FostercareBars_left_placed', true)")
+        lua.execute("bar = button('left', 1).bar settingsWindow.use('ActionBars_left_placed', true)")
         self.assertTrue(lua.eval("bar.holder:IsUserPlaced()"))
         self.assertEqual(lua.eval("(bar.holder:GetPoint(1))"), "TOPLEFT")
 

@@ -12,12 +12,12 @@ class Rows(unittest.TestCase):
                          "; aura('player', 'HARMFUL', { name = 'Rend', icon = 'rend', dispel = 'Magic' })")
         self.assertEqual(lua.eval("shownIcons('PlayerBuffs')"), "fort")
         self.assertEqual(lua.eval("shownIcons('PlayerDebuffs')"), "rend")
-        self.assertEqual(lua.eval("FostercareFramesPlayerBuffs.buttons[1].cd.cooldown[1]"), 100 + 1000 - 1800)
-        self.assertFalse(lua.eval("FostercareFramesTargetBuffs:IsShown()"), "no target")
+        self.assertEqual(lua.eval("UnitFramesPlayerBuffs.buttons[1].cd.cooldown[1]"), 100 + 1000 - 1800)
+        self.assertFalse(lua.eval("UnitFramesTargetBuffs:IsShown()"), "no target")
         lua.execute("aura('target', 'HARMFUL', { name = 'Sunder', icon = 'sunder', stacks = 3 })")
         target(lua)
         self.assertEqual(lua.eval("shownIcons('TargetDebuffs')"), "sunder")
-        self.assertEqual(lua.eval("FostercareFramesTargetDebuffs.buttons[1].count.text"), 3)
+        self.assertEqual(lua.eval("UnitFramesTargetDebuffs.buttons[1].count.text"), 3)
 
     def test_one_refresh_rewrites_one_button_and_a_new_aura_rereads_the_row(self):
         lua = load(setup="a1 = aura('player', 'HELPFUL', { name = 'A', icon = 'a', id = 1, duration = 10, expires = now + 10 })"
@@ -25,19 +25,19 @@ class Rows(unittest.TestCase):
         reads = lua.eval("count('GetAuraSlots')")
         lua.execute("a2.expires = now + 20; a2.duration = 20; delta('player', { updatedAuraInstanceIDs = { a2.instance } })")
         self.assertEqual(lua.eval("count('GetAuraSlots')") - reads, 0, "the row is not read again")
-        self.assertEqual(lua.eval("FostercareFramesPlayerBuffs.buttons[2].cd.cooldown[2]"), 20)
+        self.assertEqual(lua.eval("UnitFramesPlayerBuffs.buttons[2].cd.cooldown[2]"), 20)
         lua.execute("aura('player', 'HELPFUL', { name = 'C', icon = 'c', id = 3 }); delta('player', { addedAuraInstanceIDs = { 99 } })")
         self.assertEqual(lua.eval("shownIcons('PlayerBuffs')"), "a b c")
 
     def test_debuffs_follow_the_buffs_and_take_their_place_when_there_are_none(self):
         lua = load(setup="aura('player', 'HARMFUL', { name = 'Rend', icon = 'rend' })")
-        self.assertIs(lua.eval("select(2, FostercareFramesPlayerDebuffs:GetPoint(1)) == PlayerFrame"), True)
+        self.assertIs(lua.eval("select(2, UnitFramesPlayerDebuffs:GetPoint(1)) == PlayerFrame"), True)
         lua.execute("aura('player', 'HELPFUL', { name = 'Fort', icon = 'fort' }); delta('player', { isFullUpdate = true })")
-        self.assertIs(lua.eval("select(2, FostercareFramesPlayerDebuffs:GetPoint(1)) == FostercareFramesPlayerBuffs"), True)
+        self.assertIs(lua.eval("select(2, UnitFramesPlayerDebuffs:GetPoint(1)) == UnitFramesPlayerBuffs"), True)
 
     def test_right_click_cancels_your_buff_and_the_stock_target_auras_give_way(self):
         lua = load(setup="aura('player', 'HELPFUL', { name = 'Fort', icon = 'fort', id = 1243 })")
-        lua.execute("this = FostercareFramesPlayerBuffs.buttons[1]; this:GetScript('OnClick')()")
+        lua.execute("this = UnitFramesPlayerBuffs.buttons[1]; this:GetScript('OnClick')()")
         self.assertEqual(lua.eval("count('cancel:1243')"), 1)
         lua.execute("TargetDebuffButton_Update()")
         self.assertFalse(lua.eval("TargetFrameBuff1:IsShown() or TargetFrameDebuff16:IsShown()"))
@@ -47,18 +47,18 @@ class Rows(unittest.TestCase):
     def test_borders_buffs_dark_debuffs_in_their_dispel_colour_and_off(self):
         lua = load(setup="aura('player', 'HELPFUL', { name = 'Fort', icon = 'fort' })"
                          "; aura('player', 'HARMFUL', { name = 'Poly', icon = 'poly', dispel = 'Magic' })")
-        buff, debuff = "FostercareFramesPlayerBuffs.buttons[1]", "FostercareFramesPlayerDebuffs.buttons[1]"
+        buff, debuff = "UnitFramesPlayerBuffs.buttons[1]", "UnitFramesPlayerDebuffs.buttons[1]"
         self.assertTrue(lua.eval(f"{buff}.edge:IsShown()"))
         self.assertTrue(lua.eval(f"{debuff}.overlay:IsShown()"))
         self.assertEqual(lua.eval(f"{debuff}.overlay.color[1]"), 0.2)
-        lua.execute("settingsWindow.use('FostercareFrames_buffBorders', false); settingsWindow.use('FostercareFrames_debuffBorders', false)")
+        lua.execute("settingsWindow.use('UnitFrames_buffBorders', false); settingsWindow.use('UnitFrames_debuffBorders', false)")
         self.assertFalse(lua.eval(f"{buff}.edge:IsShown()"))
         self.assertFalse(lua.eval(f"{debuff}.overlay:IsShown()"))
 
     def test_a_row_switched_off_hides_at_once(self):
         lua = load(setup="aura('player', 'HELPFUL', { name = 'Fort', icon = 'fort' })")
-        lua.execute("settingsWindow.use('FostercareFrames_playerBuffs', false)")
-        self.assertFalse(lua.eval("FostercareFramesPlayerBuffs:IsShown()"))
+        lua.execute("settingsWindow.use('UnitFrames_playerBuffs', false)")
+        self.assertFalse(lua.eval("UnitFramesPlayerBuffs:IsShown()"))
 
 
 class TopRight(unittest.TestCase):
@@ -129,14 +129,14 @@ class TopRight(unittest.TestCase):
 
     def test_right_to_left_closing_up_and_each_area_its_switch(self):
         lua = self.lua
-        self.assertIs(lua.eval("BuffButton0:GetParent() == FostercareFramesTopBuffs"), True)
-        self.assertIs(lua.eval("BuffButton24:GetParent() == FostercareFramesTopDebuffs"), True)
+        self.assertIs(lua.eval("BuffButton0:GetParent() == UnitFramesTopBuffs"), True)
+        self.assertIs(lua.eval("BuffButton24:GetParent() == UnitFramesTopDebuffs"), True)
         self.assertEqual(lua.eval("(select(4, BuffButton1:GetPoint(1)))"), -35)
         lua.execute("table.remove(playerBuffs.HELPFUL, 1); playerAuras(); runTimers()")
         self.assertEqual(lua.eval("(select(4, BuffButton0:GetPoint(1)))"), 0)
-        lua.execute("settingsWindow.use('FostercareFrames_topDebuffs', false)")
-        self.assertFalse(lua.eval("FostercareFramesTopDebuffs:IsShown()"))
-        self.assertTrue(lua.eval("FostercareFramesTopBuffs:IsShown()"))
+        lua.execute("settingsWindow.use('UnitFrames_topDebuffs', false)")
+        self.assertFalse(lua.eval("UnitFramesTopDebuffs:IsShown()"))
+        self.assertTrue(lua.eval("UnitFramesTopBuffs:IsShown()"))
 
     def test_an_aura_with_no_icon_takes_no_button(self):
         # 2026-11-17: Find Herbs (a tracking aura, no icon) was a bare grey edge.
@@ -170,7 +170,7 @@ class TopRight(unittest.TestCase):
     def test_debuff_borders_are_the_stock_dispel_border(self):
         lua = self.lua
         self.assertEqual(lua.eval("BuffButton24Border:GetAlpha()"), 1)
-        lua.execute("settingsWindow.use('FostercareFrames_debuffBorders', false)")
+        lua.execute("settingsWindow.use('UnitFrames_debuffBorders', false)")
         self.assertEqual(lua.eval("BuffButton24Border:GetAlpha()"), 0)
 
 

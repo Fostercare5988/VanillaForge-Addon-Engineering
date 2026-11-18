@@ -14,14 +14,14 @@ def say(lua, text, frame="ChatFrame1"):
 
 
 def plain():
-    return load("FostercareTweaksDB = { timestamps = false, classColors = false }")
+    return load("TweaksDB = { timestamps = false, classColors = false }")
 
 
 class Keys(unittest.TestCase):
     def test_arrow_keys_without_alt_and_back(self):
         lua = load()
         self.assertIs(lua.eval("ChatFrameEditBox.altArrows"), False)
-        lua.execute("settingsWindow.use('FostercareTweaks_arrowKeys', false)")
+        lua.execute("settingsWindow.use('Tweaks_arrowKeys', false)")
         self.assertIs(lua.eval("ChatFrameEditBox.altArrows"), True)
 
 
@@ -69,21 +69,21 @@ class Addresses(unittest.TestCase):
 
 class Lines(unittest.TestCase):
     def test_timestamps_and_switching_them_off(self):
-        lua = load("FostercareTweaksDB = { classColors = false }")
+        lua = load("TweaksDB = { classColors = false }")
         self.assertEqual(say(lua, "hi"), "|cffcccccc[13:07:42]|r hi")
-        lua.execute("settingsWindow.use('FostercareTweaks_timestamps', false)")
+        lua.execute("settingsWindow.use('Tweaks_timestamps', false)")
         self.assertEqual(say(lua, "hi"), "hi")
 
     def test_the_combat_log_is_left_alone(self):
         self.assertEqual(say(load(), "You hit x.org for 5.", "ChatFrame2"), "You hit x.org for 5.")
 
     def test_the_sender_in_its_class_colour_by_guid(self):
-        lua = load("FostercareTweaksDB = { timestamps = false }")
+        lua = load("TweaksDB = { timestamps = false }")
         lua.execute("chatGUID = '0x1'; guids['0x1'] = { 'Bob', 'ROGUE' }")
         self.assertEqual(say(lua, PLAYER + ": hi"), "[|Hplayer:Bob:12|h|cfffff569Bob|r|h]: hi")
 
     def test_another_name_from_the_players_seen_and_an_unknown_left_alone(self):
-        lua = load("FostercareTweaksDB = { timestamps = false }")
+        lua = load("TweaksDB = { timestamps = false }")
         lua.execute("known.Ann = 'MAGE'")
         self.assertEqual(say(lua, "|Hplayer:Ann|h[Ann]|h is online"), "[|Hplayer:Ann|h|cff69ccf0Ann|r|h] is online")
         self.assertEqual(say(lua, PLAYER + ": hi"), PLAYER + ": hi")
@@ -91,7 +91,7 @@ class Lines(unittest.TestCase):
     def test_shamans_blue_and_back(self):
         lua = load()
         self.assertEqual(lua.eval("RAID_CLASS_COLORS.SHAMAN.colorStr"), "ff2459ff")
-        lua.execute("settingsWindow.use('FostercareTweaks_blueShaman', false)")
+        lua.execute("settingsWindow.use('Tweaks_blueShaman', false)")
         self.assertEqual(lua.eval("RAID_CLASS_COLORS.SHAMAN.colorStr"), "fff58cba")
         self.assertEqual(lua.eval("RAID_CLASS_COLORS.SHAMAN.r"), 0.96)
 
@@ -102,20 +102,20 @@ class History(unittest.TestCase):
         for i in range(1, 36):
             lua.execute(f"ChatFrame1:AddMessage('line {i}', 1, 1, 1)")
         lua.execute("fire('PLAYER_LOGOUT')")
-        saved = lua.eval("FostercareTweaksDB.chat[1]")
+        saved = lua.eval("TweaksDB.chat[1]")
         self.assertEqual(len(saved), 30)
         self.assertEqual(saved[1], "|cffb2b2b2line 35", "newest first, dimmed")
-        self.assertIsNone(lua.eval("FostercareTweaksDB.chat[2]"), "the combat log is not kept")
-        again = load("FostercareTweaksDB = { timestamps = false, chat = { [1] = { 'new', 'old' } } }")
+        self.assertIsNone(lua.eval("TweaksDB.chat[2]"), "the combat log is not kept")
+        again = load("TweaksDB = { timestamps = false, chat = { [1] = { 'new', 'old' } } }")
         self.assertEqual([again.eval(f"lineOf(ChatFrame1, {i})") for i in (1, 2)], ["old", "new"])
         again.execute("fire('PLAYER_LOGOUT')")
-        self.assertEqual(again.eval("FostercareTweaksDB.chat[1][1]"), "new", "a restored line is not dimmed twice")
+        self.assertEqual(again.eval("TweaksDB.chat[1][1]"), "new", "a restored line is not dimmed twice")
 
     def test_off_keeps_nothing(self):
-        lua = load("FostercareTweaksDB = { history = false, chat = { [1] = { 'old' } } }")
+        lua = load("TweaksDB = { history = false, chat = { [1] = { 'old' } } }")
         self.assertEqual(lua.eval("ChatFrame1:GetNumMessages()"), 0)
         lua.execute("fire('PLAYER_LOGOUT')")
-        self.assertIsNone(lua.eval("FostercareTweaksDB.chat"))
+        self.assertIsNone(lua.eval("TweaksDB.chat"))
 
 
 if __name__ == "__main__":

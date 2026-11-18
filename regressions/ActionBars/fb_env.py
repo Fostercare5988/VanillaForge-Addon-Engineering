@@ -1,4 +1,4 @@
-"""The FostercareBars regressions on the shared game model (wowkit).
+"""The ActionBars regressions on the shared game model (wowkit).
 
 The addon is loaded from its TOC with `## LoadSavedVariablesFirst`, so saved
 data given to `load(saved=...)` exists when its files run. Its game API is
@@ -8,7 +8,7 @@ FindSpellBookSlotByID, C_Item.GetItemCount and C_Item.PickupItem (equipment
 first, then bags; a locked item stays put), the macro calls and
 C_EquipmentSet. Popups follow the client's StaticPopup.lua: the first button
 hides the popup unless OnAccept returns true, and `data` is the fourth
-argument of StaticPopup_Show. FostercareTweaks' ExtraActions is a stand-in
+argument of StaticPopup_Show. Tweaks' ExtraActions is a stand-in
 with its documented returns. The mocks do not prove native placement, cursor
 behaviour or when the client sends events.
 """
@@ -286,23 +286,23 @@ C_EquipmentSet.GetEquipmentSetInfo = function(id) return sets[id], 'setTex:' .. 
 C_EquipmentSet.UseEquipmentSet = function(id) equippedSets[#equippedSets + 1] = sets[id]; return true end
 
 -- A button by bar and index, as the addon names it.
-function button(bar, i) return _G['FostercareBars_' .. bar .. '_' .. i] end
+function button(bar, i) return _G['ActionBars_' .. bar .. '_' .. i] end
 function hotkeyRed(b) local c = b.hotkey.color; return c ~= nil and c[1] == 1 and c[2] == 0.1 end
 function timerCount() local n = 0 for _, t in ipairs(timers) do if not t.cancelled then n = n + 1 end end return n end
 '''
 
-GLOBALS = ("FostercareBarsDB", "FostercareBars",
-           "SLASH_FOSTERCAREBARS1")
+GLOBALS = ("ActionBarsDB", "ActionBars",
+           "SLASH_ACTIONBARS1")
 
 
 def load(saved="", setup="", world=True):
-    """The addon loaded over `saved` (Lua that sets FostercareBarsDB); with
+    """The addon loaded over `saved` (Lua that sets ActionBarsDB); with
     `world`, the login events have fired, so the Settings page exists."""
     lua = wowkit.runtime()
     lua.execute(MOCK)
     lua.execute(BARS)
     lua.execute(setup)
-    wowkit.load_addon(lua, ROOT, "FostercareBars", saved=saved or None)
+    wowkit.load_addon(lua, ROOT, "ActionBars", saved=saved or None)
     if world:
         lua.execute('fire("VARIABLES_LOADED") fire("PLAYER_ENTERING_WORLD") markRest()')
     return lua
@@ -310,4 +310,4 @@ def load(saved="", setup="", world=True):
 
 def profiles(lua):
     """The saved profile names, in the addon's order."""
-    return list(lua.eval("FostercareBars.GetProfileNames()").values())
+    return list(lua.eval("ActionBars.GetProfileNames()").values())

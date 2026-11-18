@@ -18,7 +18,7 @@ class Minimap(unittest.TestCase):
         lua = load()
         self.assertEqual(lua.eval("Minimap.mask"), "Interface\\Buttons\\WHITE8X8")
         self.assertIsNone(lua.eval("MinimapBorder:GetTexture()"))
-        lua.execute("settingsWindow.use('FostercareTweaks_minimapSquare', false)")
+        lua.execute("settingsWindow.use('Tweaks_minimapSquare', false)")
         self.assertEqual(lua.eval("Minimap.mask"), "Textures\\MinimapMask")
         self.assertEqual(lua.eval("MinimapBorder:GetTexture()"), "Interface\\Minimap\\UI-Minimap-Border")
 
@@ -30,7 +30,7 @@ class Minimap(unittest.TestCase):
         self.assertEqual(lua.eval("last('zoom')"), 1)
         lua.execute("GameTimeFrame:Show()")
         self.assertFalse(lua.eval("GameTimeFrame:IsShown()"), "the game shows it again; it stays hidden")
-        lua.execute("settingsWindow.use('FostercareTweaks_minimapTidy', false)")
+        lua.execute("settingsWindow.use('Tweaks_minimapTidy', false)")
         self.assertTrue(lua.eval("MinimapZoomIn:IsShown()"))
         self.assertIs(lua.eval("Minimap.wheel"), False)
 
@@ -43,7 +43,7 @@ class Minimap(unittest.TestCase):
         self.assertEqual(lua.eval(text), "13:07", "not before the minute turns")
         lua.execute("step(1)")
         self.assertEqual(lua.eval(text), "13:08")
-        lua.execute("settingsWindow.use('FostercareTweaks_minimapClock', false); step(61)")
+        lua.execute("settingsWindow.use('Tweaks_minimapClock', false); step(61)")
         self.assertEqual(lua.eval("liveTimers()"), 0)
         self.assertFalse(lua.eval("MinimapClock:IsShown()"))
 
@@ -55,9 +55,9 @@ class Minimap(unittest.TestCase):
         lua.execute(f"local h = {handle}; run(h, 'OnMouseDown'); run(h, 'OnMouseUp')")
         lua.execute("press(false, false)")
         self.assertFalse(lua.eval("MiniMapMailFrame:IsShown()"), "no mail: the game's rule again")
-        self.assertEqual(list(lua.eval("FostercareTweaksDB.pieces.mail").values()), [700, 300])
+        self.assertEqual(list(lua.eval("TweaksDB.pieces.mail").values()), [700, 300])
         self.assertTrue(lua.eval("MiniMapMailFrame.dontSave"))
-        again = load("FostercareTweaksDB = { pieces = { mail = { 700, 300 } } }")
+        again = load("TweaksDB = { pieces = { mail = { 700, 300 } } }")
         self.assertEqual(again.eval("(function() local p, to, rel, x, y = MiniMapMailFrame:GetPoint("
                                     "#MiniMapMailFrame.points); return table.concat({ p, tostring(to == UIParent),"
                                     " rel, x, y }, ' ') end)()"), "CENTER true BOTTOMLEFT 700 300")
@@ -66,7 +66,7 @@ class Minimap(unittest.TestCase):
         lua = load()
         lua.execute("press(true, true); for _, w in ipairs(widgets) do if w.parent == MinimapZoneTextButton "
                     "then run(w, 'OnMouseDown') end end; press(false, false)")
-        self.assertIsNotNone(lua.eval("FostercareTweaksDB.pieces.zone"))
+        self.assertIsNotNone(lua.eval("TweaksDB.pieces.zone"))
 
 
 class WorldMap(unittest.TestCase):
@@ -81,13 +81,13 @@ class WorldMap(unittest.TestCase):
     def test_ctrl_wheel_changes_the_size_within_its_range(self):
         lua = load()
         lua.execute("ctrl = true; run(WorldMapFrame, 'OnMouseWheel', 1)")
-        self.assertAlmostEqual(lua.eval("FostercareTweaksDB.mapScale"), 1.7)
-        self.assertAlmostEqual(lua.eval("Settings.GetValue('FostercareTweaks_mapScale')"), 1.7)
+        self.assertAlmostEqual(lua.eval("TweaksDB.mapScale"), 1.7)
+        self.assertAlmostEqual(lua.eval("Settings.GetValue('Tweaks_mapScale')"), 1.7)
         for _ in range(10):
             lua.execute("run(WorldMapFrame, 'OnMouseWheel', 1)")
-        self.assertEqual(lua.eval("FostercareTweaksDB.mapScale"), 2)
+        self.assertEqual(lua.eval("TweaksDB.mapScale"), 2)
         lua.execute("ctrl = false; run(WorldMapFrame, 'OnMouseWheel', -1)")
-        self.assertEqual(lua.eval("FostercareTweaksDB.mapScale"), 2, "no Ctrl: the map's own wheel")
+        self.assertEqual(lua.eval("TweaksDB.mapScale"), 2, "no Ctrl: the map's own wheel")
 
     def test_coordinates_only_while_the_map_shows_and_written_on_change(self):
         lua = load()
@@ -110,9 +110,9 @@ class WorldMap(unittest.TestCase):
                     "WorldMapFrame:Show(); step(0.1)")
         self.assertEqual(lua.eval("WorldMapParty1.ftDot.color[1]"), 0.41)
         self.assertEqual(lua.eval("WorldMapParty1.ftDot:GetTexture()"),
-                         "Interface\\AddOns\\FostercareTweaks\\img\\circleparty")
+                         "Interface\\AddOns\\Tweaks\\img\\circleparty")
         self.assertEqual(lua.eval("WorldMapRaid1.ftDot:GetTexture()"),
-                         "Interface\\AddOns\\FostercareTweaks\\img\\circleraid")
+                         "Interface\\AddOns\\Tweaks\\img\\circleraid")
         self.assertEqual(lua.eval("WorldMapRaid1.ftDot.color[1]"), 1)
         lua.execute("WorldMapRaid2.name = 'Unseen'; WorldMapRaid2:Show(); step(0.2)")
         self.assertEqual(lua.eval("WorldMapRaid2.ftDot.color[2]"), 1, "an unknown class: green")

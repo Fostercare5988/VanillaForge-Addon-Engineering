@@ -1,5 +1,5 @@
 """The watched auras: icons, the time left, Only mine, a buff's cooldown after it
-ends, the list window; and the rows and top right (FostercareFrames) leaving out
+ends, the list window; and the rows and top right (UnitFrames) leaving out
 what shows here."""
 import unittest
 from auras_env import load, target
@@ -255,7 +255,7 @@ class WithoutFrames(unittest.TestCase):
         evasion = "A.lines[2].checks"
         self.assertFalse(lua.eval(f"{evasion}[2]:IsEnabled()"), "Top")
         self.assertFalse(lua.eval(f"{evasion}[3]:IsEnabled()"), "Row")
-        self.assertIn("FostercareFrames", lua.eval(f"{evasion}[3].tip"))
+        self.assertIn("UnitFrames", lua.eval(f"{evasion}[3].tip"))
         self.assertTrue(lua.eval(f"{evasion}[1]:IsEnabled()"), "Icon")
 
     def test_the_icons_work_alone(self):

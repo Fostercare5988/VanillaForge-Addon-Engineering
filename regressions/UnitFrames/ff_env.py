@@ -1,8 +1,8 @@
-"""FostercareFrames 1.0 (a rebuild: the unit frames of the old FostercareTweaks)
+"""UnitFrames 1.0 (a rebuild: the unit frames of the old Tweaks)
 on the shared game model (wowkit).
 
-The addon lives outside AddOns while the old FostercareTweaks plays
-(`Interface/Rebuild/FostercareFrames`); point VANILLAFORGE_ADDON_ROOT at it
+The addon lives outside AddOns while the old Tweaks plays
+(`Interface/Rebuild/UnitFrames`); point VANILLAFORGE_ADDON_ROOT at it
 (tools/audit_addon.py does when given that folder).
 
 The stock frames are modelled from the client's FrameXML (.private/framexml):
@@ -325,7 +325,7 @@ end
 
 -- Reading back.
 function shownIcons(rowName)
-    local row, out = _G['FostercareFrames' .. rowName], {}
+    local row, out = _G['UnitFrames' .. rowName], {}
     for _, b in ipairs(row.buttons) do if b:IsShown() then out[#out + 1] = b.icon.texture end end
     return table.concat(out, ' ')
 end
@@ -357,20 +357,20 @@ function watchIcon(x, name) return _G['AurasWatch_' .. x .. '_' .. string.gsub(n
 F = nil
 '''
 
-GLOBALS = ("FostercareFramesDB", "SLASH_FOSTERCAREFRAMES1", "FostercareFramesTargetCast",
-           "FostercareFramesPlayerBuffs", "FostercareFramesPlayerDebuffs", "FostercareFramesTargetBuffs",
-           "FostercareFramesTargetDebuffs", "FostercareFramesTopBuffs", "FostercareFramesTopDebuffs",
-           "FostercareFramesEnchants", "FostercareFrames")
+GLOBALS = ("UnitFramesDB", "SLASH_UNITFRAMES1", "UnitFramesTargetCast",
+           "UnitFramesPlayerBuffs", "UnitFramesPlayerDebuffs", "UnitFramesTargetBuffs",
+           "UnitFramesTargetDebuffs", "UnitFramesTopBuffs", "UnitFramesTopDebuffs",
+           "UnitFramesEnchants", "UnitFrames")
 
 
 def load(saved="", setup="", world=True):
-    """The addon over `saved` (Lua that sets FostercareFramesDB), as the rogue
+    """The addon over `saved` (Lua that sets UnitFramesDB), as the rogue
     Claude logs in with no target; with `world`, the login events have fired."""
     lua = wowkit.runtime()
     lua.execute(MOCK)
     lua.execute("unit('player', 'Claude', 'ROGUE')")
     lua.execute(setup)
-    wowkit.load_addon(lua, ROOT, "FostercareFrames", saved=saved or None)
+    wowkit.load_addon(lua, ROOT, "UnitFrames", saved=saved or None)
     lua.execute("F = __addon_ns")
     if world:
         lua.execute('fire("VARIABLES_LOADED") fire("PLAYER_ENTERING_WORLD") runTimers()')

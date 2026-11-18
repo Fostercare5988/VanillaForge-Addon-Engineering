@@ -113,7 +113,7 @@ class LongNames(unittest.TestCase):
     LONG = "Assassination PvP Arena Burst Setup"
 
     def setUp(self):
-        self.lua = device(f"FostercareBars.GetProfileNames = function() return {{ '{self.LONG}' }} end; "
+        self.lua = device(f"ActionBars.GetProfileNames = function() return {{ '{self.LONG}' }} end; "
                           f"BrainwasherProDB = {{ specs = {{ [2] = {{ name = '{self.LONG}', actionProfile = '{self.LONG}' }} }} }}")
 
     def test_long_texts_are_cut_to_fit(self):
@@ -157,7 +157,7 @@ class Audit2(unittest.TestCase):
         self.assertIn("PvP", lua.eval("popups.BRAINWASHERPRO_SAVE_SPEC.text"))
 
     def test_missing_profile_is_shown_and_not_loaded(self):
-        """A deleted FostercareBars profile was found out only at swap time."""
+        """A deleted ActionBars profile was found out only at swap time."""
         lua = device("BrainwasherProDB = { specs = { [2] = { name = 'PvP', actionProfile = 'Gone' } } }")
         self.assertIn("missing", lua.eval("BrainwasherProSlot2.summary.text"))
         lua.execute('click(BrainwasherProIcon2); accept("BRAINWASHERPRO_LOAD_SPEC"); leave()')
@@ -197,7 +197,7 @@ class ActionBars(unittest.TestCase):
         return lua
 
     def test_profile_loads_after_the_talents_change(self):
-        """Activating a spec loads its FostercareBars profile once the talents settle."""
+        """Activating a spec loads its ActionBars profile once the talents settle."""
         lua = self.setup_swap()
         self.assertEqual(lua.eval("selected[1]"), 22)
         lua.execute('fire("CHARACTER_POINTS_CHANGED"); advance(1); fire("SPELLS_CHANGED"); advance(1)')

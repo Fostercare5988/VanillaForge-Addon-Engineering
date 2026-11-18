@@ -22,7 +22,7 @@ class ClassColours(unittest.TestCase):
         self.assertEqual(lua.eval("fill(TargetFrame)"), "hidden")
         target(lua, "Ann", "PRIEST")
         lua.execute("TargetFrame_CheckFaction(); unit('party1', 'Bob', 'MAGE'); PartyMemberFrame_UpdateMember()")
-        lua.execute("settingsWindow.use('FostercareFrames_classColors', false)")
+        lua.execute("settingsWindow.use('UnitFrames_classColors', false)")
         self.assertEqual(lua.eval("fill(TargetFrame)"), "hidden")
         self.assertEqual(lua.eval("PartyMemberFrame1Name.color[1]"), 1, "the stock yellow")
 
@@ -109,7 +109,7 @@ class TargetCastBar(unittest.TestCase):
         lua = load()
         target(lua, "Ann", "MAGE")
         self.cast(lua)
-        bar = "FostercareFramesTargetCast"
+        bar = "UnitFramesTargetCast"
         self.assertTrue(lua.eval(f"{bar}:IsShown()"))
         self.assertEqual(lua.eval(f"{bar}.text.text"), "Frostbolt")
         self.assertEqual(lua.eval(f"{bar}.barColor[1]"), 1)
@@ -124,27 +124,27 @@ class TargetCastBar(unittest.TestCase):
         target(lua, "Ann", "MAGE")
         lua.execute("casts.party1 = { name = 'Heal', start = now * 1000, finish = (now + 3) * 1000 }")
         lua.execute("fire('UNIT_SPELLCAST_START', 'party1')")
-        self.assertFalse(lua.eval("FostercareFramesTargetCast:IsShown()"))
+        self.assertFalse(lua.eval("UnitFramesTargetCast:IsShown()"))
         self.cast(lua, channel=True)
-        self.assertEqual(lua.eval("FostercareFramesTargetCast.timer[2]"), 1)
+        self.assertEqual(lua.eval("UnitFramesTargetCast.timer[2]"), 1)
         lua.execute("step(3.1)")
-        self.assertFalse(lua.eval("FostercareFramesTargetCast:IsShown()"))
+        self.assertFalse(lua.eval("UnitFramesTargetCast:IsShown()"))
 
     def test_off_listens_to_nothing(self):
         lua = load()
-        lua.execute("settingsWindow.use('FostercareFrames_targetCastbar', false)")
+        lua.execute("settingsWindow.use('UnitFrames_targetCastbar', false)")
         self.assertIsNone(lua.eval("listener('UNIT_SPELLCAST_START')"))
         target(lua, "Ann", "MAGE")
         self.cast(lua)
-        self.assertFalse(lua.eval("FostercareFramesTargetCast:IsShown()"))
+        self.assertFalse(lua.eval("UnitFramesTargetCast:IsShown()"))
 
     def test_lower_while_the_target_of_target_shows(self):
         lua = load()
         target(lua, "Ann", "MAGE")
         self.cast(lua)
-        self.assertEqual(lua.eval("(select(5, FostercareFramesTargetCast:GetPoint(1)))"), -4)
+        self.assertEqual(lua.eval("(select(5, UnitFramesTargetCast:GetPoint(1)))"), -4)
         lua.execute("unit('targettarget', 'Bob', 'MAGE'); fire('UNIT_TARGET', 'target')")
-        self.assertEqual(lua.eval("(select(5, FostercareFramesTargetCast:GetPoint(1)))"), -24)
+        self.assertEqual(lua.eval("(select(5, UnitFramesTargetCast:GetPoint(1)))"), -24)
 
 
 class OwnCastBar(unittest.TestCase):
@@ -157,8 +157,8 @@ class OwnCastBar(unittest.TestCase):
         lua.execute("CastingBarFrame.left, CastingBarFrame.top = 767, 181")
         lua.execute("press(false, false)")
         self.assertFalse(lua.eval("CastingBarFrame:IsShown()"), "hidden again: no cast")
-        self.assertEqual(lua.eval("FostercareFramesDB.castbar[1]"), 767)
-        self.assertEqual(lua.eval("FostercareFramesDB.castbar[2]"), 181 - 768)
+        self.assertEqual(lua.eval("UnitFramesDB.castbar[1]"), 767)
+        self.assertEqual(lua.eval("UnitFramesDB.castbar[2]"), 181 - 768)
         lua.execute("UIParent_ManageFramePositions()")
         self.assertEqual(lua.eval("(select(3, CastingBarFrame:GetPoint(1)))"), "TOPLEFT")
         self.assertEqual(lua.eval("(select(5, CastingBarFrame:GetPoint(1)))"), 181 - 768)
@@ -188,7 +188,7 @@ class EnergyTicks(unittest.TestCase):
         self.assertIsNone(lua.eval("tickLine().scripts.OnUpdate"))
         lua.execute("PlayerFrame:Show()")
         self.assertIsNotNone(lua.eval("tickLine().scripts.OnUpdate"))
-        lua.execute("settingsWindow.use('FostercareFrames_energyTicks', false)")
+        lua.execute("settingsWindow.use('UnitFrames_energyTicks', false)")
         self.assertIsNone(lua.eval("tickLine().scripts.OnUpdate"))
 
     def test_rage_shows_no_line(self):

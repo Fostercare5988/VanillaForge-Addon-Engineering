@@ -1,8 +1,8 @@
-"""FostercareRaid 1.0 (a rebuild: the grid of the old FostercareTweaks) on the
+"""RaidFrames 1.0 (a rebuild: the grid of the old Tweaks) on the
 shared game model (wowkit).
 
-The addon lives outside AddOns while the old FostercareTweaks plays
-(`Interface/Rebuild/FostercareRaid`); point VANILLAFORGE_ADDON_ROOT at it
+The addon lives outside AddOns while the old Tweaks plays
+(`Interface/Rebuild/RaidFrames`); point VANILLAFORGE_ADDON_ROOT at it
 (tools/audit_addon.py does when given that folder).
 
 The game is modelled as ClassicAPI documents it (docs/API.md): unit events
@@ -182,9 +182,9 @@ function GroupFrame_OnEvent() hit('GroupFrame:' .. event); if event == 'PLAYER_E
 GroupFrame:SetScript('OnEvent', function() GroupFrame_OnEvent() end)
 
 -- Reading back.
-function btn(g, k) return _G['FostercareRaidG' .. g .. 'M' .. k] end
+function btn(g, k) return _G['RaidFramesG' .. g .. 'M' .. k] end
 function shown(g, k) local b = btn(g, k); return b and b:IsShown() and b.nameText.text or nil end
-function grid() return FostercareRaidFrame end
+function grid() return RaidFramesMain end
 function unitsOf(e) local u = grid().units[e]; return u and table.concat(u, ',') or (grid().events[e] and 'all') end
 function iconsOf(b)
     local out = {}
@@ -200,19 +200,19 @@ end
 R = nil
 '''
 
-GLOBALS = ("FostercareRaidDB", "FostercareRaidFrame", "SLASH_FOSTERCARERAID1",
+GLOBALS = ("RaidFramesDB", "RaidFramesMain", "SLASH_RAIDFRAMES1",
            "GroupFrame_Toggle", "GroupFrame_Update", "GroupFrame_UpdateLayout")
 
 
 def load(saved="", setup="", world=True):
-    """The addon over `saved` (Lua that sets FostercareRaidDB), as the player
+    """The addon over `saved` (Lua that sets RaidFramesDB), as the player
     Claude logs in solo; with `world`, the login events have fired and their
     roster pass has run."""
     lua = wowkit.runtime()
     lua.execute(MOCK)
     lua.execute("member('player', 'Claude', 'ROGUE')")
     lua.execute(setup)
-    wowkit.load_addon(lua, ROOT, "FostercareRaid", saved=saved or None)
+    wowkit.load_addon(lua, ROOT, "RaidFrames", saved=saved or None)
     lua.execute("R = __addon_ns")
     if world:
         lua.execute('fire("VARIABLES_LOADED") fire("PLAYER_ENTERING_WORLD") runTimers()')

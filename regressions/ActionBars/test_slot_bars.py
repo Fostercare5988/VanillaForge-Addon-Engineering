@@ -1,6 +1,6 @@
-"""The bars on action slots (FostercareTweaks spec B1, B4, B5, B7; its tests
+"""The bars on action slots (Tweaks spec B1, B4, B5, B7; its tests
 4.7 "Bars"): each bar shows its slots, the main bar pages, and each event
-redraws only what it names. Written 2026-11-17 for FostercareBars 1.1.0.
+redraws only what it names. Written 2026-11-17 for ActionBars 1.1.0.
 """
 import unittest
 from fb_env import load
@@ -67,7 +67,7 @@ class SlotBars(unittest.TestCase):
     def test_a_hidden_bar_gives_its_range_checks_back(self):
         lua = load()
         self.assertEqual(lua.eval("rangeChecks[25]"), 1)
-        lua.execute("settingsWindow.use('FostercareBars_right_shown', false)")
+        lua.execute("settingsWindow.use('ActionBars_right_shown', false)")
         self.assertEqual(lua.eval("rangeChecks[25]"), 0)
         self.assertFalse(lua.eval("button('right', 1).bar.holder:IsShown()"))
 
@@ -112,8 +112,8 @@ class SlotBars(unittest.TestCase):
     def test_the_stock_keys_press_our_buttons(self):
         lua = load(setup="keys.ACTIONBUTTON3 = { '3' } keys.MULTIACTIONBAR3BUTTON1 = { 'F', 'G' } "
                          "bars[3] = { kind = 'spell', id = 1 }")
-        self.assertEqual(lua.eval("overrides['3']"), "FostercareBars_main_3")
-        self.assertEqual(lua.eval("overrides['G']"), "FostercareBars_right_1")
+        self.assertEqual(lua.eval("overrides['3']"), "ActionBars_main_3")
+        self.assertEqual(lua.eval("overrides['G']"), "ActionBars_right_1")
         lua.execute("pressKey('3')")
         self.assertEqual(lua.eval("used[1]"), 3)
         self.assertEqual(lua.eval("button('main', 3).hotkey.text"), "k3")
@@ -121,14 +121,14 @@ class SlotBars(unittest.TestCase):
     def test_new_keys_are_taken_when_the_bindings_change(self):
         lua = load()
         lua.execute("keys.ACTIONBUTTON1 = { 'Q' } fire('UPDATE_BINDINGS')")
-        self.assertEqual(lua.eval("overrides['Q']"), "FostercareBars_main_1")
+        self.assertEqual(lua.eval("overrides['Q']"), "ActionBars_main_1")
 
     def test_an_extra_bar_key_from_key_bindings(self):
-        lua = load(setup="bars[13] = { kind = 'spell', id = 1 } keys.FOSTERCAREBARS_EXTRA1_1 = { 'Z' }")
-        self.assertEqual(lua.eval("BINDING_NAME_FOSTERCAREBARS_EXTRA1_1"), "Extra 1 Button 1")
-        lua.execute("FostercareBars.Press('extra1', 1, 'down')")
+        lua = load(setup="bars[13] = { kind = 'spell', id = 1 } keys.ACTIONBARS_EXTRA1_1 = { 'Z' }")
+        self.assertEqual(lua.eval("BINDING_NAME_ACTIONBARS_EXTRA1_1"), "Extra 1 Button 1")
+        lua.execute("ActionBars.Press('extra1', 1, 'down')")
         self.assertEqual(lua.eval("#used"), 0, "the key acts when it is released")
-        lua.execute("FostercareBars.Press('extra1', 1, 'up')")
+        lua.execute("ActionBars.Press('extra1', 1, 'up')")
         self.assertEqual(lua.eval("used[1]"), 13)
         self.assertEqual(lua.eval("button('extra1', 1).hotkey.text"), "kZ")
 
@@ -156,7 +156,7 @@ class SlotBars(unittest.TestCase):
         self.assertEqual(lua.eval("button('main', 2).count.text"), 3)
         lua.execute("reagentSpells[1] = 2 fire('BAG_UPDATE_DELAYED')")
         self.assertEqual(lua.eval("button('main', 1).count.text"), 2)
-        lua.execute("settingsWindow.use('FostercareBars_reagents', false)")
+        lua.execute("settingsWindow.use('ActionBars_reagents', false)")
         self.assertEqual(lua.eval("button('main', 1).count.text"), "")
 
     def test_an_equipped_item_has_the_green_border(self):
@@ -181,7 +181,7 @@ class SlotBars(unittest.TestCase):
         self.assertIsNone(lua.eval("GameTooltip.owner"))
 
     def test_the_combat_events_build_no_garbage(self):
-        lua = load("FostercareBarsDB = { extraBars = 4, free = { [5] = { [1] = { kind = 'spell', id = 1 } } } }",
+        lua = load("ActionBarsDB = { extraBars = 4, free = { [5] = { [1] = { kind = 'spell', id = 1 } } } }",
                    "learn(1) for s = 1, 84 do bars[s] = { kind = 'spell', id = 1 } end hasTarget = true spellRanged[1] = true")
         grown = lua.eval('''(function()
             local changes = { { slot = 3, usable = true, noMana = false } }
