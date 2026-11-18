@@ -115,6 +115,7 @@ C_DurationUtil = { CreateDuration = function() return { SetTimeSpan = function(s
 spells, book, cooldowns, base = {}, {}, {}, {}
 function spell(id, name, icon) local s = { name = name, icon = icon, id = id }; spells[id] = s; spells[name] = s; return s end
 function GetSpellInfo(x)
+    hit('GetSpellInfo')
     local s = spells[x]
     if s then return s.name, '', s.icon, 0, false, 0, 0, 0, 0, s.id end
 end
@@ -176,7 +177,7 @@ function GetPlayerBuff(id, filter)
     if not b then return -1, nil end
     return (filter == 'HARMFUL' and 100 or 0) + id, b.permanent and 1 or nil
 end
-function GetPlayerBuffTexture(i) return pb(i).icon end
+function GetPlayerBuffTexture(i) hit('GetPlayerBuffTexture'); return pb(i).icon end
 function GetPlayerBuffApplications(i) return pb(i).stacks or 0 end
 function GetPlayerBuffDispelType(i) return i >= 0 and pb(i) and pb(i).dispel end
 function GetPlayerBuffTimeLeft(i) return pb(i).ends and pb(i).ends - now or 0 end
@@ -304,7 +305,7 @@ function BuffButton_Update()
     this.buffIndex, this.untilCancelled = buffIndex, untilCancelled
     if buffIndex < 0 then this:Hide(); return end
     this:SetAlpha(1.0); this:Show()
-    _G[this:GetName() .. 'Icon']:SetTexture(GetPlayerBuffTexture(buffIndex))
+    _G[this:GetName() .. 'Icon']:SetTexture(pb(buffIndex).icon) -- GetPlayerBuffTexture, not counted as ours
 end
 function BuffButtons_UpdatePositions() end
 function BuffFrame_Enchant_OnUpdate()

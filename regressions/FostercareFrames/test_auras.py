@@ -259,6 +259,17 @@ class TopRight(unittest.TestCase):
         self.assertEqual(lua.eval("topShown('HELPFUL')"), "fort aura")
         self.assertEqual(lua.eval("(select(4, BuffButton1:GetPoint(1)))"), 0, "the next one closes up")
 
+    def test_an_aura_change_reads_each_spells_name_and_icon_once(self):
+        # /lag 2026-11-18: 0.13 KB/s from the BuffButton_Update hook, the strings
+        # of these two reads made anew for every shown button at every change.
+        lua = self.lua
+        lua.execute("playerAuras()")
+        reads = lua.eval("count('GetSpellInfo') + count('GetPlayerBuffTexture')")
+        for _ in range(3):
+            lua.execute("playerAuras()")
+        self.assertEqual(lua.eval("count('GetSpellInfo') + count('GetPlayerBuffTexture')"), reads)
+        self.assertEqual(lua.eval("topShown('HELPFUL')"), "fort aura")
+
     def test_debuff_borders_are_the_stock_dispel_border(self):
         lua = self.lua
         self.assertEqual(lua.eval("BuffButton24Border:GetAlpha()"), 1)
