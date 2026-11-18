@@ -259,6 +259,16 @@ class TopRight(unittest.TestCase):
         self.assertEqual(lua.eval("topShown('HELPFUL')"), "fort aura")
         self.assertEqual(lua.eval("(select(4, BuffButton1:GetPoint(1)))"), 0, "the next one closes up")
 
+    def test_the_icon_draws_above_its_border(self):
+        # 2026-11-18: the mount and Find Herbs showed as bare grey squares. The stock
+        # icon and count are on BACKGROUND (BuffFrame.xml:9-18), the edge too, and the
+        # client draws one layer in no fixed order.
+        lua = self.lua
+        for b in ("BuffButton0", "BuffButton24", "TempEnchant1"):
+            self.assertEqual(lua.eval(f"{b}.edge.layer"), "BACKGROUND")
+            self.assertEqual(lua.eval(f"{b}Icon.layer"), "ARTWORK", b)
+            self.assertEqual(lua.eval(f"{b}Count.layer"), "OVERLAY", b)
+
     def test_an_aura_change_reads_each_spells_name_and_icon_once(self):
         # /lag 2026-11-18: 0.13 KB/s from the BuffButton_Update hook, the strings
         # of these two reads made anew for every shown button at every change.

@@ -53,6 +53,7 @@ function Widget:SetTexture(path) self.texture = path; hit('SetTexture') end
 function Widget:GetEffectiveScale() return 1 end
 function Widget:GetFrameLevel() return 1 end
 function Widget:SetDontSavePosition(on) self.dontSave = on end
+function Widget:SetDrawLayer(layer) self.layer = layer end
 function Widget:CreateTexture(name, layer)
     local t = newWidget('Texture', name, self)
     t.layer = layer
@@ -290,6 +291,7 @@ local function buffButton(name, id, filter)
     for _, part in ipairs({ 'Icon', 'Duration', 'Count', 'Border' }) do
         _G[name .. part] = part == 'Icon' and b:CreateTexture(name .. part) or b:CreateFontString(name .. part)
     end
+    _G[name .. 'Icon'].layer, _G[name .. 'Count'].layer = 'BACKGROUND', 'BACKGROUND' -- BuffFrame.xml:9-18
     return b
 end
 for i = 0, 39 do
