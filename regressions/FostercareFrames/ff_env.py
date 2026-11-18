@@ -54,6 +54,7 @@ function Widget:GetEffectiveScale() return 1 end
 function Widget:GetFrameLevel() return 1 end
 function Widget:SetDontSavePosition(on) self.dontSave = on end
 function Widget:SetDrawLayer(layer) self.layer = layer end
+function Widget:SetEnabled(on) if on then self:Enable() else self:Disable() end end -- API.md button:SetEnabled
 function Widget:CreateTexture(name, layer)
     local t = newWidget('Texture', name, self)
     t.layer = layer

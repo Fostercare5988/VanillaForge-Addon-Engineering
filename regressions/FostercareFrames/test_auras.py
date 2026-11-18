@@ -145,6 +145,18 @@ class Watched(unittest.TestCase):
 
 
 class WatchList(unittest.TestCase):
+    def test_cd_is_dimmed_for_a_spell_with_no_cooldown_of_its_own(self):
+        # 2026-11-18: Slice and Dice had CD ticked, a switch that can show nothing.
+        lua = load(saved=ROGUE_WATCH, setup="spell(5171, 'Slice and Dice', 'snd'); book[5171] = 30"
+                                             "; spell(5277, 'Evasion', 'eva'); book[5277] = 12; base[5277] = 300000")
+        lua.execute("F.WatchList()")
+        snd, evasion = "F.lines[1].checks[5]", "F.lines[2].checks[5]"
+        self.assertFalse(lua.eval(f"{snd}:IsEnabled()"))
+        self.assertLess(lua.eval(f"{snd}:GetAlpha()"), 1)
+        self.assertIn("no cooldown", lua.eval(f"{snd}.tip"))
+        self.assertTrue(lua.eval(f"{evasion}:IsEnabled()"))
+        self.assertEqual(lua.eval(f"{evasion}:GetAlpha()"), 1)
+
     def test_add_by_name_or_id_switch_and_remove(self):
         lua = load(setup="spell(5277, 'Evasion', 'eva')")
         lua.execute("FostercareFramesWatchName:SetText(' 5277 '); FostercareFramesWatchList:Show()")
