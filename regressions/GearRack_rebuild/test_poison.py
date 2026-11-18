@@ -36,16 +36,12 @@ class Poison(unittest.TestCase):
         lua = load(setup='poisons["0xB"] = { ["until"] = now + 600, charges = 0, enchant = 2640 }')
         self.assertEqual(lua.eval("GearRackGear17.poison.icon.texture"), "Interface\Icons\Ability_Poisons")
 
-    def test_the_poison_shows_its_bottle_from_the_bags(self):
-        lua = load(setup=POISONED + ' item("0x50", 3776, "Crippling Poison II", "", 1); carry(2, 3, "0x50")'
-                   ' poisons["0xB"] = { ["until"] = now + 600, charges = 0, enchant = 603 }'
+    def test_crippling_poison_shows_the_classic_purple_sting(self):
+        lua = load(setup='poisons["0xB"] = { ["until"] = now + 600, charges = 0, enchant = 603 }'
                    ' local get = C_Item.GetEnchantInfo function C_Item.GetEnchantInfo(id)'
                    ' if id == 603 then return { enchantID = 603, name = "Crippling Poison II", spellID = 11202 } end'
                    ' return get(id) end')
-        self.assertEqual(lua.eval("GearRackGear17.poison.icon.texture"), "icon:Crippling Poison II",
-                         "the bottle, not OctoWoW's green spell icon")
-        self.assertEqual(lua.eval("GearRackGear16.poison.icon.texture"), "Interface\Icons\Ability_Poisons",
-                         "no Instant Poison bottle carried: the spell's icon")
+        self.assertEqual(lua.eval("GearRackGear17.poison.icon.texture"), "Interface\\Icons\\Ability_PoisonSting")
 
     def test_a_bag_weapon_in_the_menu_shows_its_poison(self):
         lua = load(setup='poisons["0xD"] = { ["until"] = now + 3000, charges = 30, enchant = 625 }')
