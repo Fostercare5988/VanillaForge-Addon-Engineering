@@ -81,7 +81,8 @@ class Events(unittest.TestCase):
         self.assertEqual(lua.eval("listening(grid())"), "PARTY_MEMBERS_CHANGED,PLAYER_ENTERING_WORLD,RAID_ROSTER_UPDATE")
         self.assertEqual(lua.eval("liveTimers and liveTimers() or #timers"), 0)
         self.assertIsNone(lua.eval("(function() for _, w in ipairs(widgets) do "
-                                   "if w.scripts.OnUpdate and string.find(w.name or '', '^Fostercare') then return w.name end end end)()"))
+                                   "if w.scripts.OnUpdate then return tostring(w.name) end end end)()"),
+                          "no frame of ours runs a script every frame")
 
     def test_an_event_of_one_member_draws_only_that_member(self):
         lua = in_party()
@@ -176,11 +177,11 @@ class Moving(unittest.TestCase):
         lua = in_party()
         handle = "(function() for _, w in ipairs(widgets) do if w.parent == grid() and w.strata == nil and w.scripts.OnMouseDown then return w end end end)()"
         lua.execute(f"H = {handle}")
-        lua.execute("shift, ctrl = 1, 1; fire('MODIFIER_STATE_CHANGED')")
+        lua.execute("press(1, 1)")
         self.assertTrue(lua.eval("H:IsShown()"))
         lua.execute("run(H, 'OnMouseDown')")
         self.assertTrue(lua.eval("grid().moving"))
-        lua.execute("shift = nil; fire('MODIFIER_STATE_CHANGED')")
+        lua.execute("press(nil, 1)")
         self.assertFalse(lua.eval("H:IsShown()"))
         self.assertIsNone(lua.eval("grid().moving"))
         self.assertTrue(lua.eval("grid():IsUserPlaced()"))

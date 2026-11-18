@@ -249,7 +249,7 @@ class Groups(unittest.TestCase):
 
 
 class WithoutFrames(unittest.TestCase):
-    def test_top_and_row_dim_without_fostercareframes(self):
+    def test_top_and_row_dim_without_unitframes(self):
         lua = load(saved=ROGUE_WATCH, frames=False)
         lua.execute("A.List()")
         evasion = "A.lines[2].checks"

@@ -39,8 +39,21 @@ function Widget:Clear() self.cooldown = nil end
 function Widget:SetHideCountdownNumbers(hide) self.hideNumbers = hide end
 function Widget:GetCountdownFontString() self.numbers = self.numbers or CreateFrame('FontString'); return self.numbers end
 -- Positions, dragging and the client's saved places: the kit's (wowkit.py, "Positions").
-function IsShiftKeyDown() return shift end
-function IsControlKeyDown() return ctrl end
+-- The merged reads lag MODIFIER_STATE_CHANGED; the left and right ones do not
+-- (CLASSICAPI_MASTER_REFERENCE, "Modifier event state ordering").
+local was
+function IsShiftKeyDown() if was then return was.shift end return shift end
+function IsControlKeyDown() if was then return was.ctrl end return ctrl end
+function IsLeftShiftKeyDown() return shift end
+function IsRightShiftKeyDown() return nil end
+function IsLeftControlKeyDown() return ctrl end
+function IsRightControlKeyDown() return nil end
+function press(s, c)
+    was = { shift = shift, ctrl = ctrl }
+    shift, ctrl = s, c
+    fire('MODIFIER_STATE_CHANGED', s and 'LSHIFT' or 'LCTRL', s and 1 or 0)
+    was = nil
+end
 
 -- Units: token -> member. `who` resolves a token to a member's name.
 members = {}

@@ -50,9 +50,21 @@ function Widget:SetFrameLevel() end
 for _, side in ipairs({ 'Left', 'Right', 'Top', 'Bottom' }) do Widget['Get' .. side] = function() return 100 end end
 function Widget:GetEffectiveScale() return self.scale or 1 end
 function MouseIsOver(frame) return frame.hovered end
-function IsShiftKeyDown() return shift and 1 or nil end
-function IsControlKeyDown() return ctrl and 1 or nil end
-function press(s, c) shift, ctrl = s, c; fire('MODIFIER_STATE_CHANGED', s and 'LSHIFT' or 'LCTRL', s and 1 or 0) end
+-- The merged reads lag MODIFIER_STATE_CHANGED; the left and right ones do not
+-- (CLASSICAPI_MASTER_REFERENCE, "Modifier event state ordering").
+local was
+function IsShiftKeyDown() if was then return was.shift and 1 or nil end return shift and 1 or nil end
+function IsControlKeyDown() if was then return was.ctrl and 1 or nil end return ctrl and 1 or nil end
+function IsLeftShiftKeyDown() return shift and 1 or nil end
+function IsRightShiftKeyDown() return nil end
+function IsLeftControlKeyDown() return ctrl and 1 or nil end
+function IsRightControlKeyDown() return nil end
+function press(s, c)
+    was = { shift = shift, ctrl = ctrl }
+    shift, ctrl = s, c
+    fire('MODIFIER_STATE_CHANGED', s and 'LSHIFT' or 'LCTRL', s and 1 or 0)
+    was = nil
+end
 
 -- Items: id -> { price, quality }; GUID -> stack.
 items, stacks = {}, {}
