@@ -141,7 +141,19 @@ function GetItemCooldown(id)
 end
 casting = nil -- the end of a cast, in GetTime() seconds
 C_Spell = { CastingInfo = function() if casting then return "Cast", "Cast", 1, 0, casting * 1000 end end,
-    ChannelInfo = function() end }
+    ChannelInfo = function() end,
+    GetSpellTexture = function(id) return id == 11340 and "Interface\\Icons\\Ability_Poisons" or nil end }
+-- Temporary enchants (### C_Item.GetItemTempEnchantInfo): guid -> { until = time, charges, enchant }.
+poisons = {}
+function C_Item.GetItemTempEnchantInfo(loc)
+    local guid = C_Item.GetItemGUID(loc)
+    local p = guid and poisons[guid]
+    if not p then return false end
+    return true, math.max(0, (p["until"] - now) * 1000), p.charges, p.enchant
+end
+function C_Item.GetEnchantInfo(id) return { enchantID = id, name = "Instant Poison VI", spellID = id == 625 and 11340 or nil } end
+targeting = false
+function SpellIsTargeting() return targeting end
 Minimap = newWidget("Minimap", "Minimap", UIParent)
 Minimap:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -20, -20)
 Minimap.left, Minimap.top = 800, 700
