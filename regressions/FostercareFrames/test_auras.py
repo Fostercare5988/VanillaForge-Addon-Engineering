@@ -47,6 +47,8 @@ class Rows(unittest.TestCase):
         self.assertEqual(lua.eval("count('cancel:1243')"), 1)
         lua.execute("TargetDebuffButton_Update()")
         self.assertFalse(lua.eval("TargetFrameBuff1:IsShown() or TargetFrameDebuff16:IsShown()"))
+        # Review 2026-11-18: they were drawn at every target aura change, then hidden.
+        self.assertIsNone(lua.eval("TargetFrame.events.UNIT_AURA"))
 
     def test_borders_buffs_dark_debuffs_in_their_dispel_colour_and_off(self):
         lua = load(setup="aura('player', 'HELPFUL', { name = 'Fort', icon = 'fort' })"
@@ -103,21 +105,36 @@ class Watched(unittest.TestCase):
         self.assertTrue(lua.eval("watchIcon('target', 'Expose Armor'):IsShown()"))
 
     def test_a_buff_that_ends_shows_its_spells_cooldown_greyed_until_ready(self):
-        lua = load(saved=ROGUE_WATCH, setup="spell(5277, 'Evasion', 'eva'); book[5277] = 12"
+        lua = load(saved=ROGUE_WATCH, setup="spell(5277, 'Evasion', 'eva'); book[5277] = 12; base[5277] = 300000"
                                              "; a = aura('player', 'HELPFUL', { name = 'Evasion', icon = 'eva', duration = 15, expires = now + 15 })")
         icon = "watchIcon('player', 'Evasion')"
         self.assertTrue(lua.eval(f"{icon}:IsShown()"))
         lua.execute("auras.player.HELPFUL = {}; cooldowns[12] = { now, 300 }; delta('player', { removedAuraInstanceIDs = { a.instance } })")
         self.assertTrue(lua.eval(f"{icon}:IsShown()"))
-        self.assertTrue(lua.eval(f"{icon}.texture.grey"))
+        self.assertTrue(lua.eval(f"{icon}.icon.grey"))
         self.assertEqual(lua.eval(f"{icon}.cd.cooldown[2]"), 300)
         lua.execute(f"cooldowns[12] = nil; {icon}.cd:GetScript('OnCooldownDone')()")
         self.assertFalse(lua.eval(f"{icon}:IsShown()"))
 
     def test_the_global_cooldown_is_not_shown(self):
-        lua = load(saved=ROGUE_WATCH, setup="spell(5277, 'Evasion', 'eva'); book[5277] = 12")
+        lua = load(saved=ROGUE_WATCH, setup="spell(5277, 'Evasion', 'eva'); book[5277] = 12; base[5277] = 300000")
         lua.execute("cooldowns[12] = { now, 1 }; fire('SPELL_UPDATE_COOLDOWN')")
         self.assertFalse(lua.eval("watchIcon('player', 'Evasion'):IsShown()"))
+
+    def test_a_spell_with_no_cooldown_of_its_own_is_not_read_at_each_cast(self):
+        # Review 2026-11-18: every cast read Slice and Dice's cooldown, which it has not.
+        lua = load(saved=ROGUE_WATCH, setup="spell(5171, 'Slice and Dice', 'snd'); book[5171] = 30")
+        reads = lua.eval("count('GetSpellCooldown')")
+        for _ in range(3):
+            lua.execute("fire('SPELL_UPDATE_COOLDOWN')")
+        self.assertEqual(lua.eval("count('GetSpellCooldown')"), reads)
+        self.assertFalse(lua.eval("watchIcon('player', 'Slice and Dice'):IsShown()"))
+
+    def test_an_aura_finds_its_entry_by_name_or_by_spell_id(self):
+        lua = load(saved=ROGUE_WATCH, setup="aura('player', 'HELPFUL', { name = 'SnD', icon = 'snd', id = 5171 })"
+                                             "; aura('player', 'HELPFUL', { name = 'Evasion', icon = 'eva', id = 26669 })")
+        self.assertTrue(lua.eval("watchIcon('player', 'Slice and Dice'):IsShown()"), "by spell ID")
+        self.assertTrue(lua.eval("watchIcon('player', 'Evasion'):IsShown()"), "by name, any rank")
 
     def test_ctrl_shift_shows_the_icons_to_be_moved(self):
         lua = load(saved=ROGUE_WATCH)
@@ -263,8 +280,12 @@ class Enchants(unittest.TestCase):
         self.assertEqual(lua.eval("TempEnchant2.edge.color[1]"), 0.4, "an epic weapon")
         self.assertIsNone(lua.eval("TemporaryEnchantFrame.scripts.OnUpdate"))
         reads = lua.eval("count('GetContainerItemInfo')")
+        lua.execute("playerBuffs.HELPFUL[1] = { id = 1, icon = 'fort' }; playerAuras(); runTimers()")
+        lua.execute("BuffButton0:ClearAllPoints(); BuffButton0:SetPoint('CENTER', UIParent, 'CENTER', 7, 7)")
         lua.execute("fire('WEAPON_ENCHANT_CHANGED')")
         self.assertEqual(lua.eval("count('GetContainerItemInfo')"), reads, "the poison's icon is known")
+        # Review 2026-11-18: each poison charge re-anchored every buff and debuff button.
+        self.assertEqual(lua.eval("(select(4, BuffButton0:GetPoint(1)))"), 7, "a charge moves only the enchants")
         lua.execute("step(1800 - 31 + 0.1)")
         self.assertIsNotNone(lua.eval("TemporaryEnchantFrame.scripts.OnUpdate"), "it flashes")
         lua.execute("enchant[16], enchant[17] = nil, nil; fire('WEAPON_ENCHANT_CHANGED')")

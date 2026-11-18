@@ -110,15 +110,17 @@ Enum = { NumericRuleFormatRounding = { Up = 1 }, StatusBarInterpolation = { Imme
 C_StringUtil = { CreateNumericRuleFormatter = function() return { SetBreakpoints = function(self, b) self.breakpoints = b end } end }
 C_DurationUtil = { CreateDuration = function() return { SetTimeSpan = function(self, a, b) self.span = { a, b } end } end }
 
--- Spells: spells[id or name] = { name, icon, id }; book[id] = slot; cooldowns[slot] = { start, duration }.
-spells, book, cooldowns = {}, {}, {}
+-- Spells: spells[id or name] = { name, icon, id }; book[id] = slot; cooldowns[slot] = { start, duration };
+-- base[id] = the spell's own cooldown in ms (GetSpellBaseCooldown; 0 for the global one only).
+spells, book, cooldowns, base = {}, {}, {}, {}
 function spell(id, name, icon) local s = { name = name, icon = icon, id = id }; spells[id] = s; spells[name] = s; return s end
 function GetSpellInfo(x)
     local s = spells[x]
     if s then return s.name, '', s.icon, 0, false, 0, 0, 0, 0, s.id end
 end
 function FindSpellBookSlotByID(id) if book[id] then return book[id], 'spell' end end
-function GetSpellCooldown(slot) local c = cooldowns[slot]; if c then return c[1], c[2], 1 end; return 0, 0, 1 end
+function GetSpellBaseCooldown(id) return base[id] or (spells[id] and 0 or nil) end
+function GetSpellCooldown(slot) hit('GetSpellCooldown'); local c = cooldowns[slot]; if c then return c[1], c[2], 1 end; return 0, 0, 1 end
 casts = {}
 C_Spell = {
     UnitCastingInfo = function(x) local c = casts[x]; if c and not c.channel then
@@ -212,6 +214,7 @@ function GameTooltip:SetUnitAura(x, i, f) self.aura = { x, i, f } end
 local function frame(kind, name, parent) return CreateFrame(kind, name, parent) end
 PlayerFrame = frame('Frame', 'PlayerFrame', UIParent)
 TargetFrame = frame('Frame', 'TargetFrame', UIParent); TargetFrame:Hide()
+TargetFrame:RegisterEvent('UNIT_AURA') -- TargetFrame.lua:28; it only draws the stock auras
 TargetFrameNameBackground = TargetFrame:CreateTexture('TargetFrameNameBackground')
 TargetPortrait = TargetFrame:CreateTexture('TargetPortrait')
 TargetRaidTargetIcon = TargetFrame:CreateTexture('TargetRaidTargetIcon')
