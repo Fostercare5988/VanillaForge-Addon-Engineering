@@ -108,13 +108,18 @@ auras = {}
 local function list(u, f) auras[u] = auras[u] or { HELPFUL = {}, HARMFUL = {} }; return auras[u][f] end
 function aura(u, f, t) local l = list(u, f); l[#l + 1] = t; t.instance = t.instance or (#l + (f == 'HARMFUL' and 100 or 0)); return t end
 C_UnitAuras = {
+    -- RAID on debuffs: only those you can dispel (an aura's `yours`).
     GetAuraSlots = function(u, f, max, token, out)
-        hit('GetAuraSlots')
-        local l = list(u, f or 'HELPFUL')
-        for i = 1, #l do out[i] = (f == 'HARMFUL' and 1000 or 0) + i end
-        for i = #l + 1, #out do out[i] = nil end
-        out.n = #l
-        return nil, #l
+        f = f or 'HELPFUL'
+        local harmful, raid = string.find(f, 'HARMFUL') ~= nil, string.find(f, 'RAID') ~= nil
+        if not raid then hit('GetAuraSlots') end
+        local l, n = list(u, harmful and 'HARMFUL' or 'HELPFUL'), 0
+        for i = 1, #l do
+            if not raid or l[i].yours then n = n + 1; out[n] = (harmful and 1000 or 0) + i end
+        end
+        for i = n + 1, #out do out[i] = nil end
+        out.n = n
+        return nil, n
     end,
     UnitAuraBySlot = function(u, slot)
         local a = list(u, slot > 1000 and 'HARMFUL' or 'HELPFUL')[slot % 1000]

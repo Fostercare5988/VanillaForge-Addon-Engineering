@@ -1,6 +1,6 @@
 """Icons inside each member and the heal-over-time corner (spec R4-R5, 4.7
 "Raid"): icon counts and sizes from the page; heals and your own first,
-dispellable debuffs first; +N for what did not fit; one delta rewrites its
+the debuffs you can dispel first (as Grid2 and VuhDo); +N for what did not fit; one delta rewrites its
 own record without reading the member again.
 """
 import unittest
@@ -11,13 +11,13 @@ RENEW, FORT, CURSE, POISON = 139, 1243, 980, 3034
 
 def with_auras(saved="", setup=""):
     """Ann (party1) with Fortitude, then Renew (a heal over time), then two
-    debuffs: a plain one first, then a Magic one."""
+    debuffs: a plain one first, then a Magic one that you can dispel."""
     return in_party(saved, setup + """
         spellFx[139] = { 8 }; spellFx[1243] = { 29 }
         aura('party1', 'HELPFUL', { id = 1243, icon = 'fort' })
         aura('party1', 'HELPFUL', { id = 139, icon = 'renew', duration = 15, expires = 110, source = 'party2' })
         aura('party1', 'HARMFUL', { id = 980, icon = 'agony' })
-        aura('party1', 'HARMFUL', { id = 3034, icon = 'poly', dispel = 'Magic', stacks = 3 })
+        aura('party1', 'HARMFUL', { id = 3034, icon = 'poly', dispel = 'Magic', stacks = 3, yours = true })
     """)
 
 
@@ -27,6 +27,13 @@ class Icons(unittest.TestCase):
         self.assertEqual(lua.eval("iconsOf(btn(1, 2))"), "renew@14 poly@12",
                          "58 wide: one debuff and the one buff kept room for")
         self.assertEqual(lua.eval("btn(1, 2).more.text"), "+2")
+
+    def test_a_debuff_you_cannot_dispel_keeps_the_games_order(self):
+        # The user, 2026-11-18: debuffs you can remove first, as Grid2 and
+        # VuhDo; a dispel type alone is not enough (the RAID filter, ### Filter parsing).
+        lua = with_auras("RaidFramesDB = { width = 120 }", "")
+        lua.execute("auras.party1.HARMFUL[2].yours = nil; delta('party1', { isFullUpdate = true })")
+        self.assertEqual(lua.eval("iconsOf(btn(1, 2))"), "renew@14 fort@14 agony@12 poly@12")
 
     def test_the_counts_and_sizes_from_the_page(self):
         lua = with_auras("RaidFramesDB = { width = 120 }")
