@@ -25,6 +25,11 @@ differences that change results are fixed here:
   grown with `t[#t + 1]` and shrunk with `table.remove` stops shrinking once
   the stored size reaches 0: `table.remove` then does nothing. Seen in play in
   Mail, 2026-11-17 (MailTrace); KNOWN_PATTERNS KP-65.
+* `ipairs`. Lua 5.0's luaB_ipairs has two forms: with one argument the
+  `for` loop's, with a second argument (even nil) one step, returning
+  `n + 1, t[n + 1]`. So `for _, v in ipairs(f())` breaks when `f` returns two
+  values: the loop gets a number as its function ("attempt to call a number
+  value"). Seen in play in GearRack, 2026-11-18 (`ipairs(GR.Sets())`).
 * The short global aliases. Upstream does not list them (they come from an
   embedded chunk, BlizzardScriptAPI.md section 3), so only aliases FrameXML
   calls as globals are given, plus ClassicAPI's documented `wipe`, `strmatch`
@@ -101,6 +106,15 @@ do
         for i = pos, n - 1 do rawset(t, i, rawget(t, i + 1)) end
         rawset(t, n, nil)
         return value
+    end
+end
+
+do -- Lua 5.0's luaB_ipairs: a second argument makes it the one-step form.
+    local loop = ipairs
+    function ipairs(t, ...)
+        if select("#", ...) == 0 then return loop(t) end
+        local n = (tonumber((...)) or 0) + 1
+        return n, rawget(t, n)
     end
 end
 
