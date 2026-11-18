@@ -132,6 +132,91 @@ class WatchList(unittest.TestCase):
         self.assertFalse(lua.eval("watchIcon('target', 'Blind'):IsShown()"))
 
 
+GROUPED = """AurasDB = {
+  groups = { { name = 'General', where = 'all' }, { name = 'Consumes', where = 'raid' } },
+  watched = {
+    { name = 'Evasion', unit = 'player', group = 'General', icon = true, topRight = false, inRow = false, mine = false, cooldown = false },
+    { name = 'Mongoose', unit = 'player', group = 'Consumes', icon = true, topRight = false, inRow = false, mine = false, cooldown = false },
+} }"""
+MONGOOSE = ("aura('player', 'HELPFUL', { name = 'Mongoose', icon = 'mong', duration = 3600, expires = now + 3600 })"
+            "; playerBuffs.HELPFUL = { { id = 17538, icon = 'mong', ends = now + 3600 } }; spell(17538, 'Mongoose', 'mong')")
+
+
+def click(lua, text):
+    lua.execute(f"for _, w in ipairs(widgets) do if w.text == '{text}' then w:GetScript('OnClick')() end end")
+
+
+class Groups(unittest.TestCase):
+    def test_a_list_from_before_groups_is_all_in_general(self):
+        lua = load(saved=ROGUE_WATCH, setup="aura('player', 'HELPFUL', { name = 'Evasion', icon = 'eva' })")
+        self.assertEqual(lua.eval("#AurasDB.groups"), 1)
+        self.assertEqual(lua.eval("AurasDB.groups[1].name"), "General")
+        self.assertEqual(lua.eval("AurasDB.watched[4].group"), "General")
+        self.assertTrue(lua.eval("watchIcon('player', 'Evasion'):IsShown()"))
+
+    def test_a_group_shows_only_where_it_is_set_to(self):
+        lua = load(saved=GROUPED, setup=MONGOOSE)
+        lua.execute("playerAuras()")
+        icon = "watchIcon('player', 'Mongoose')"
+        self.assertIsNone(lua.eval(icon), "out in the world: not watched")
+        self.assertEqual(lua.eval("topShown('HELPFUL')"), "mong", "the game's own buffs keep it")
+        lua.execute("instanceType = 'raid'; fire('PLAYER_ENTERING_WORLD'); playerAuras()")
+        self.assertTrue(lua.eval(f"{icon}:IsShown()"))
+        self.assertEqual(lua.eval("topShown('HELPFUL')"), "")
+        lua.execute("instanceType = 'pvp'; fire('PLAYER_ENTERING_WORLD'); playerAuras()")
+        self.assertFalse(lua.eval(f"{icon}:IsShown()"))
+        self.assertEqual(lua.eval("topShown('HELPFUL')"), "mong")
+
+    def test_a_loading_screen_to_the_same_kind_of_place_rebuilds_nothing(self):
+        lua = load(saved=GROUPED)
+        lua.execute("rebuilds = 0; local r = A.Rebuild; A.Rebuild = function() rebuilds = rebuilds + 1; r() end")
+        lua.execute("fire('PLAYER_ENTERING_WORLD')")
+        self.assertEqual(lua.eval("rebuilds"), 0)
+
+    def test_the_list_shows_one_group_and_adds_to_it(self):
+        lua = load(saved=GROUPED, setup="spell(5277, 'Evasion', 'eva')")
+        lua.execute("A.List()")
+        self.assertEqual(lua.eval("selected(A.menus.group)"), "General")
+        self.assertEqual(lua.eval("selected(A.menus.place)"), "Everywhere")
+        self.assertTrue(lua.eval("A.lines[1]:IsShown()"))
+        self.assertFalse(lua.eval("A.lines[2]:IsShown()"), "Mongoose is in Consumes")
+        self.assertIn("not here", lua.eval("menu(A.menus.group)[2].text"))
+        lua.execute("pick(A.menus.group, 'Consumes')")
+        self.assertEqual(lua.eval("A.lines[1].entry.name"), "Mongoose")
+        lua.execute("AurasListName:SetText('Flask of the Titans')")
+        click(lua, "Add your buff")
+        self.assertEqual(lua.eval("AurasDB.watched[3].group"), "Consumes")
+        self.assertTrue(lua.eval("A.lines[2]:IsShown()"))
+
+    def test_new_group_show_in_move_and_delete(self):
+        lua = load(saved=GROUPED, setup=MONGOOSE)
+        lua.execute("A.List(); AurasListName:SetText('PvP')")
+        click(lua, "New group")
+        self.assertEqual(lua.eval("AurasDB.groups[3].name"), "PvP")
+        self.assertEqual(lua.eval("AurasDB.groups[3].where"), "all")
+        self.assertEqual(lua.eval("selected(A.menus.group)"), "PvP")
+        self.assertFalse(lua.eval("A.lines[1]:IsShown()"), "a new group is empty")
+        click(lua, "New group")
+        self.assertEqual(lua.eval("AurasDB.groups[4].name"), "Group 4", "an empty box")
+        lua.execute("pick(A.menus.group, 'Consumes'); pick(A.lines[1].move, 'PvP')")
+        self.assertEqual(lua.eval("AurasDB.watched[2].group"), "PvP")
+        self.assertTrue(lua.eval("watchIcon('player', 'Mongoose'):IsShown()"), "PvP shows everywhere")
+        lua.execute("pick(A.menus.group, 'PvP'); pick(A.menus.place, 'Off')")
+        self.assertEqual(lua.eval("AurasDB.groups[3].where"), "off")
+        self.assertFalse(lua.eval("watchIcon('player', 'Mongoose'):IsShown()"))
+        click(lua, "Delete")
+        self.assertEqual(lua.eval("AurasDB.watched[2].group"), "General", "its auras join the first group")
+        self.assertEqual(lua.eval("#AurasDB.groups"), 3)
+        self.assertTrue(lua.eval("watchIcon('player', 'Mongoose'):IsShown()"))
+        for _ in range(2):
+            click(lua, "Delete")
+        self.assertEqual(lua.eval("#AurasDB.groups"), 1)
+        lua.execute("A.List(); A.List()")
+        delete = "(function() for _, w in ipairs(widgets) do if w.text == 'Delete' then return w end end end)()"
+        self.assertFalse(lua.eval(f"{delete}:IsEnabled()"), "the last group stays")
+        self.assertFalse(lua.eval("A.lines[1].move:IsShown()"), "nowhere to move to")
+
+
 class WithoutFrames(unittest.TestCase):
     def test_top_and_row_dim_without_fostercareframes(self):
         lua = load(saved=ROGUE_WATCH, frames=False)

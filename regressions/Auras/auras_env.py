@@ -17,7 +17,37 @@ import ff_env  # noqa: E402
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
 FRAMES = ROOT.parent / "FostercareFrames"
-MOCK = ff_env.MOCK
+# Where you are (GetInstanceInfo's instanceType; a test sets `instanceType` and
+# fires PLAYER_ENTERING_WORLD, as a loading screen does). The dropdowns as
+# ClassicAPI's menu system builds them (Menu/DropdownButton.lua): SetupMenu keeps
+# the generator; `menu(dd)` runs it and gives the radios and buttons, `pick(dd,
+# text)` chooses the one whose text starts with `text`, `selected(dd)` the text
+# of the checked radio.
+MOCK = ff_env.MOCK + r"""
+instanceType = 'none'
+function GetInstanceInfo() return 'Kalimdor', instanceType end
+function Widget:SetupMenu(generator) self.generator = generator end
+function menu(dd)
+    local items = {}
+    local root = {}
+    function root:CreateRadio(text, isSelected, setSelected, data)
+        items[#items + 1] = { text = text, checked = isSelected(data), pick = function() setSelected(data) end }
+    end
+    function root:CreateButton(text, onClick) items[#items + 1] = { text = text, pick = onClick } end
+    function root:CreateTitle() end
+    dd.generator(dd, root)
+    return items
+end
+function pick(dd, text)
+    for _, item in ipairs(menu(dd)) do
+        if string.sub(item.text, 1, #text) == text then return item.pick() end
+    end
+    error('no menu item ' .. text)
+end
+function selected(dd)
+    for _, item in ipairs(menu(dd)) do if item.checked then return item.text end end
+end
+"""
 target = ff_env.target
 GLOBALS = ("AurasDB", "Auras", "SLASH_AURAS1", "AurasList", "AurasListName")
 
