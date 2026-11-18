@@ -353,14 +353,14 @@ function fill(f)
         if t.layer == 'BORDER' then return t:IsShown() and tostring(t.color[1]) or 'hidden' end
     end
 end
-function watchIcon(x, name) return _G['FostercareFramesWatch_' .. x .. '_' .. string.gsub(name, '[^%w]', '')] end
+function watchIcon(x, name) return _G['AurasWatch_' .. x .. '_' .. string.gsub(name, '[^%w]', '')] end
 F = nil
 '''
 
 GLOBALS = ("FostercareFramesDB", "SLASH_FOSTERCAREFRAMES1", "FostercareFramesTargetCast",
            "FostercareFramesPlayerBuffs", "FostercareFramesPlayerDebuffs", "FostercareFramesTargetBuffs",
            "FostercareFramesTargetDebuffs", "FostercareFramesTopBuffs", "FostercareFramesTopDebuffs",
-           "FostercareFramesEnchants", "FostercareFramesWatchList", "FostercareFramesWatchName")
+           "FostercareFramesEnchants", "FostercareFrames")
 
 
 def load(saved="", setup="", world=True):

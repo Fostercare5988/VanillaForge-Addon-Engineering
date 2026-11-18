@@ -29,13 +29,11 @@ class Page(unittest.TestCase):
         self.assertFalse(lua.eval("FostercareFramesDB.enchants"))
         self.assertFalse(lua.eval("FostercareFramesEnchants:IsShown()"))
 
-    def test_the_slash_command_opens_the_page_and_its_button_the_list(self):
+    def test_the_slash_command_opens_the_page(self):
         lua = load()
         lua.execute("SlashCmdList.FOSTERCAREFRAMES('')")
         self.assertEqual(lua.eval("settingsWindow.opened:GetName()"), "FostercareFrames")
         self.assertEqual(lua.eval("SLASH_FOSTERCAREFRAMES1"), "/ffr")
-        lua.execute("settingsWindow.click(settingsWindow.row(settingsWindow.find('FostercareFrames'), 'Watched auras'))")
-        self.assertTrue(lua.eval("FostercareFramesWatchList:IsShown()"))
 
 
 class AtRest(unittest.TestCase):
@@ -67,7 +65,7 @@ class AtRest(unittest.TestCase):
             "UNIT_SPELLCAST_INTERRUPTIBLE", "UNIT_SPELLCAST_NOT_INTERRUPTIBLE",
             "PLAYER_ENTERING_WORLD", "PLAYER_DEAD", "PLAYER_ALIVE", "PLAYER_UNGHOST", "UI_SCALE_CHANGED",
             "SPELL_ENERGIZE_ON_SELF", "UNIT_DISPLAYPOWER", "UNIT_POWER_UPDATE",                  # energy ticks
-            "UNIT_AURA_DELTA", "SPELL_UPDATE_COOLDOWN", "SPELLS_CHANGED",                        # auras
+            "UNIT_AURA_DELTA",                                                                   # auras
             "WEAPON_ENCHANT_CHANGED", "WEAPON_SLOT_CHANGED",                                     # enchants
         })
 
@@ -85,11 +83,9 @@ class FirstLogin(unittest.TestCase):
         # (layout-cache.txt) only after PLAYER_ENTERING_WORLD (FostercareBars,
         # 2026-11-17): nothing may need their place before that.
         names = ["PlayerBuffs", "PlayerDebuffs", "TargetBuffs", "TargetDebuffs", "TopBuffs", "TopDebuffs",
-                 "Enchants", "TargetCast", "Watch_target_Rupture"]
+                 "Enchants", "TargetCast"]
         cache = "; ".join(f"layoutCache['FostercareFrames{n}'] = {{ 640, -300 }}" for n in names)
-        watched = ("FostercareFramesDB = { watched = { { name = 'Rupture', unit = 'target', icon = true, "
-                   "topRight = false, inRow = false, mine = true, cooldown = false } } }")
-        lua = load(saved=watched, setup=cache + "; aura('player', 'HELPFUL', { name = 'Fort', icon = 'fort' })"
+        lua = load(setup=cache + "; aura('player', 'HELPFUL', { name = 'Fort', icon = 'fort' })"
                    "; playerBuffs.HELPFUL = { { id = 1, icon = 'fort', ends = now + 600 } }; spell(1, 'Fort', 'fort')")
         lua.execute("playerAuras(); runTimers()")
         for n in names:
@@ -113,8 +109,7 @@ class Globals(unittest.TestCase):
                   "TextStatusBar_UpdateTextString", "TargetFrame_CheckDead", "SetRaidTarget",
                   "UIParent_ManageFramePositions", "TargetDebuffButton_Update", "BuffButton_Update",
                   "BuffButtons_UpdatePositions"}
-        made = {n for n in after - before if n not in ("F", "__addon_ns", "this", "event") and not n.startswith("arg")
-                and not n.startswith("FostercareFramesWatch_")}
+        made = {n for n in after - before if n not in ("F", "__addon_ns", "this", "event") and not n.startswith("arg")}
         self.assertEqual(made, set(GLOBALS))
         self.assertEqual({n for n in hooked if lua.eval(f"{n} ~= nil")}, hooked)
 

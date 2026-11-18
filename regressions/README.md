@@ -67,6 +67,7 @@ The kit builds no garbage of its own, so a garbage test measures the addon.
 | Addon | Folder | Harness |
 | --- | --- | --- |
 | AutoBG | `regressions/AutoBG` | inline per test file; addon_loader.py loads files; clock_mock.py is ClassicAPI's duration text bindings, rule formatters and timers that fire by time (`__frame()` is a drawn frame) |
+| Auras | `regressions/Auras` | auras_env.py (loads FostercareFrames beside it) |
 | AutoLazy | `regressions/AutoLazy` | al_env.py (1.0, written new; the 1.3 suite went at its release, 2026-11-18) |
 | Bagnon | `regressions/Bagnon` | bgn_env.py |
 | BrainwasherPro | `regressions/BrainwasherPro` | bwp_env.py |
