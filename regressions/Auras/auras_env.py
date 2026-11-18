@@ -20,13 +20,17 @@ FRAMES = ROOT.parent / "FostercareFrames"
 # Where you are (GetInstanceInfo's instanceType; a test sets `instanceType` and
 # fires PLAYER_ENTERING_WORLD, as a loading screen does). The dropdowns as
 # ClassicAPI's menu system builds them (Menu/DropdownButton.lua): SetupMenu keeps
-# the generator; `menu(dd)` runs it and gives the radios and buttons, `pick(dd,
+# the generator and, on a shown dropdown, runs it and asks each radio whether it
+# is selected at once (DropdownButton.lua:254, the Auras error of 2026-11-18); `menu(dd)` runs it and gives the radios and buttons, `pick(dd,
 # text)` chooses the one whose text starts with `text`, `selected(dd)` the text
 # of the checked radio.
 MOCK = ff_env.MOCK + r"""
 instanceType = 'none'
 function GetInstanceInfo() return 'Kalimdor', instanceType end
-function Widget:SetupMenu(generator) self.generator = generator end
+function Widget:SetupMenu(generator)
+    self.generator = generator
+    if self:IsShown() then menu(self) end
+end
 function menu(dd)
     local items = {}
     local root = {}
