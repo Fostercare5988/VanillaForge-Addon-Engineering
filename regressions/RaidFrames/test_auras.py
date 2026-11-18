@@ -95,6 +95,30 @@ class Deltas(unittest.TestCase):
         lua.execute("table.remove(auras.party1.HARMFUL, 2); delta('party1', { removedAuraInstanceIDs = { 102 } })")
         self.assertEqual(lua.eval("iconsOf(btn(1, 2))"), "renew@14 agony@12")
 
+    def test_a_debuff_in_a_buff_slot_is_refreshed_too(self):
+        # Review 2026-11-18: its AuraData says harmful (### AuraData table
+        # shape, isHarmful), but it was read with the buffs.
+        lua = with_auras("RaidFramesDB = { width = 120 }")
+        lua.execute("""
+            local get = C_UnitAuras.GetAuraDataByAuraInstanceID
+            C_UnitAuras.GetAuraDataByAuraInstanceID = function(u, id, buf)
+                local d = get(u, id, buf); if d then d.isHelpful = false end; return d
+            end
+            auras.party1.HELPFUL[2].expires = 125
+            delta('party1', { updatedAuraInstanceIDs = { 2 } })
+        """)
+        self.assertEqual(lua.eval("btn(1, 2).icons[1].cd.cooldown[1]"), 110)
+
+    def test_the_plus_moves_when_the_shown_buffs_change_but_not_its_number(self):
+        # Review 2026-11-18: the place was kept with the number.
+        lua = with_auras()
+        self.assertEqual(lua.eval("btn(1, 2).more.text"), "+2")
+        x = lua.eval("(select(4, btn(1, 2).more:GetPoint()))")
+        lua.execute("auras.party1.HELPFUL = {}; for i = 5, 7 do aura('party1', 'HARMFUL', { id = i, icon = 'x' }) end")
+        lua.execute("delta('party1', { isFullUpdate = true })")
+        self.assertEqual(lua.eval("btn(1, 2).more.text"), "+2", "no buff, five debuffs: three shown...")
+        self.assertNotEqual(lua.eval("(select(4, btn(1, 2).more:GetPoint()))"), x, "...and the +2 where the buff was")
+
     def test_another_members_delta_is_not_ours(self):
         lua = with_auras()
         lua.execute("calls.GetAuraSlots = 0; delta('nameplate1', { isFullUpdate = true })")

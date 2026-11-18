@@ -29,7 +29,26 @@ class Roster(unittest.TestCase):
         self.assertEqual(lua.eval("shown(3, 1)"), "Ann")
         self.assertEqual(lua.eval("(select(4, btn(3, 1):GetPoint()))"), 2 * (58 + 2))
         self.assertEqual(lua.eval("(select(5, btn(1, 2):GetPoint()))"), -(35 + 3))
-        self.assertEqual(lua.eval("grid():GetWidth()"), 8 * 60 - 2)
+        self.assertEqual(lua.eval("grid():GetWidth()"), 3 * 60 - 2,
+                         "as wide as the last group in use (review 2026-11-18): the handle covers no empty columns")
+
+    def test_a_pass_with_nothing_changed_registers_and_lays_out_nothing(self):
+        # Review 2026-11-18: /lag in Arathi Basin named the roster pass the
+        # largest maker of garbage and CPU of all addons (1.40 KB/s, 1.37 ms/s).
+        lua = in_raid(load(), [("Claude", "ROGUE", 1), ("Ann", "PRIEST", 2), ("Bob", "MAGE", 1)])
+        lua.execute("""
+            local rue, scale, point = Widget.RegisterUnitEvent, Widget.SetScale, Widget.SetPoint
+            function Widget:RegisterUnitEvent(...) calls.RUE = (calls.RUE or 0) + 1; return rue(self, ...) end
+            function Widget:SetScale(s) calls.Scale = (calls.Scale or 0) + 1; return scale(self, s) end
+            function Widget:SetPoint(...) calls.Point = (calls.Point or 0) + 1; return point(self, ...) end
+            fire('RAID_ROSTER_UPDATE'); runTimers()
+        """)
+        self.assertEqual(lua.eval("count('RUE')"), 0)
+        self.assertEqual(lua.eval("count('Scale') + count('Point')"), 0)
+        lua.execute("member('raid4', 'Cid', 'DRUID'); raid[4] = { group = 2 }; fire('RAID_ROSTER_UPDATE'); runTimers()")
+        self.assertEqual(lua.eval("unitsOf('UNIT_HEALTH')"), "raid1,raid2,raid3,raid4", "a new member is listened to")
+        lua.execute("settingsWindow.use('RaidFrames_aggro', false)")
+        self.assertIsNone(lua.eval("grid().events.UNIT_TARGET"), "a page row registers again")
 
     def test_a_roster_change_rebuilds_only_the_changed_buttons(self):
         lua = in_party()
