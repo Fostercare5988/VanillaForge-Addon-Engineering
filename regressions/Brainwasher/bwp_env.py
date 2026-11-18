@@ -1,4 +1,4 @@
-"""The BrainwasherPro regressions on the shared game model (wowkit).
+"""The Brainwasher regressions on the shared game model (wowkit).
 
 Loads the files the selected addon's TOC lists, in order. One option list
 drives both gossip shapes: the stock GossipTitleButtonN widgets (1.5) and
@@ -149,6 +149,6 @@ def load(setup=""):
     lua.execute(MOCK)
     lua.execute(setup)
     lua.execute("addonNS = {}; __addon_ns = addonNS")
-    wowkit.load_files(lua, ROOT, wowkit.toc_files(ROOT), "BrainwasherPro")
-    lua.execute('fire("ADDON_LOADED", "BrainwasherPro"); advance(0)')
+    wowkit.load_files(lua, ROOT, wowkit.toc_files(ROOT), "Brainwasher")
+    lua.execute('fire("ADDON_LOADED", "Brainwasher"); advance(0)')
     return lua

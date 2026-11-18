@@ -97,7 +97,7 @@ the addon's existing convention. Details: CLASSICAPI_MASTER_REFERENCE.md §4.
 - **Start from a modern addon, not the 2006 one.** ClassicAPI aims to run
   Classic Era addons "with little or no change" (its README), so a modern addon
   that does the job is the design to build towards, and its code may be ported
-  when its license allows (credit its authors, as EasyPoisons credits Horyoshi).
+  when its license allows (no credit lines in our addons: user's order, 2026-11-18).
   A new addon starts by looking for one. It was still written for another client:
   every function, event, argument and widget method it calls must be in the DLL
   docs (§1 rule 4), its Lua must run on 5.0 with the backports, its game data

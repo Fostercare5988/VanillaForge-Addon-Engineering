@@ -25,7 +25,7 @@ function UnitName() return playerName end
 function GetRealmName() return "Y'Shaarj" end
 function UnitClass() return "Rogue", playerClass end
 function GetMoney() return money end
-function GetAddOnMetadata(_, key) if key == "Version" then return "test" end if key == "Author" then return "Horyoshi" end end
+function GetAddOnMetadata(_, key) if key == "Version" then return "test" end if key == "Author" then return "Fostercare5988" end end
 
 -- Widgets ----------------------------------------------------------------
 local setText = Widget.SetText
