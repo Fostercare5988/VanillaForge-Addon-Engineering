@@ -42,6 +42,7 @@ function clearChat() for i = #chat, 1, -1 do chat[i] = nil end end
 
 -- Items: copies by GUID; worn by slot, bags by bag and slot.
 items, worn, bags, locked, refuse = {}, {}, { [0] = {}, {}, {}, {}, {} }, {}, {}
+cooldowns = {} -- guid -> { start, duration }
 bagSize = { [0] = 16, 16, 16, 16, 16 }
 function item(guid, id, name, equipLoc, quality, extra)
     local it = { guid = guid, id = id, name = name, equipLoc = equipLoc, quality = quality or 2,
@@ -54,7 +55,7 @@ end
 function wear(slot, guid) worn[slot] = guid end
 function carry(bag, slot, guid) bags[bag][slot] = guid end
 local function where(guid)
-    for s = 1, 19 do if worn[s] == guid then return "worn", s end end
+    for s = 0, 19 do if worn[s] == guid then return "worn", s end end
     for b = 0, 4 do for s = 1, bagSize[b] do if bags[b][s] == guid then return b, s end end end
 end
 local function at(loc)
@@ -109,21 +110,57 @@ C_Item = {
     GetItemLink = function(loc) local g = at(loc); return g and items[g].link end,
     GetItemInfoInstant = function(link) local it = byLink(link); return it.id, "", "", it.equipLoc end,
     EquipItemByName = function(guid, slot)
-        equips[#equips + 1] = guid .. ">" .. slot
-        if not slot or locked[guid] then return end
+        equips[#equips + 1] = tostring(guid) .. ">" .. tostring(slot)
+        if not slot then -- the cursor path, by item ID: ammo goes to slot 0
+            for b = 0, 4 do for s = 1, bagSize[b] do
+                local it = bags[b][s] and items[bags[b][s]]
+                if it and it.id == guid and it.equipLoc == "INVTYPE_AMMO" then
+                    bags[b][s], worn[0] = worn[0], it.guid
+                    return
+                end
+            end end
+            return
+        end
+        if locked[guid] then return end
         move(guid, slot)
     end,
+    GetItemCount = function(id)
+        local n = 0
+        for _, it in pairs(items) do if it.id == id and where(it.guid) then n = n + 1 end end
+        return n
+    end,
+    GetItemSpell = function(id) for _, it in pairs(items) do if it.id == id then return it.spell end end end,
+    GetItemIconByID = function(id) for _, it in pairs(items) do if it.id == id then return it.icon end end end,
+    GetItemNameByID = function(id) for _, it in pairs(items) do if it.id == id then return it.name end end end,
 }
+-- A trinket's cooldown by item ID (### GetItemCooldown), from any copy that has one;
+-- `use` marks an item with a use (enable 1), as the client's third return.
+function GetItemCooldown(id)
+    for guid, c in pairs(cooldowns) do if items[guid].id == id then return c[1], c[2], 1 end end
+    return 0, 0, 0
+end
+casting = nil -- the end of a cast, in GetTime() seconds
+C_Spell = { CastingInfo = function() if casting then return "Cast", "Cast", 1, 0, casting * 1000 end end,
+    ChannelInfo = function() end }
+Minimap = newWidget("Minimap", "Minimap", UIParent)
+Minimap:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -20, -20)
+Minimap.left, Minimap.top = 800, 700
+Minimap:SetSize(140, 140)
+cursorX, cursorY = 0, 0
+function GetCursorPosition() return cursorX, cursorY end
+function Widget:SetDesaturated(on) self.desaturated = on and true or nil end
+function Widget:SetHyperlink(link) self.shows = link end
+function Widget:GetEffectiveScale() return 1 end
 C_PlayerInfo = { CanUseItem = function(link) return not byLink(link).unusable end }
 function CanDualWield() return dualWield end
 function GetInventoryItemTexture(_, slot) return worn[slot] and items[worn[slot]].icon end
 function GetInventoryItemQuality(_, slot) return worn[slot] and items[worn[slot]].quality end
 function GetInventoryItemLink(_, slot) return worn[slot] and items[worn[slot]].link end
-cooldowns = {} -- guid -> { start, duration }
+-- enable is 1 for an item with a use (`use` in its extras), cooling down or not.
 function GetInventoryItemCooldown(_, slot)
     local c = worn[slot] and cooldowns[worn[slot]]
     if c then return c[1], c[2], 1 end
-    return 0, 0, 0
+    return 0, 0, worn[slot] and items[worn[slot]].use and 1 or 0
 end
 function GetContainerItemCooldown(bag, slot)
     local c = bags[bag][slot] and cooldowns[bags[bag][slot]]
@@ -172,6 +209,7 @@ local function inPlace(set, s)
     return worn[s] == v
 end
 C_EquipmentSet = {
+    GetNumEquipmentSets = function() return #setOrder end,
     GetEquipmentSetIDs = function() local t = {}; for i, id in ipairs(setOrder) do t[i] = id end; return t end,
     GetEquipmentSetID = function(name) for _, id in ipairs(setOrder) do if sets[id].name == name then return id end end end,
     GetEquipmentSetInfo = function(id)
@@ -318,7 +356,7 @@ function ChatFrameEditBox:Insert(text) inserted[#inserted + 1] = text end
 -- The tooltip: SetInventoryItem returns hasItem, hasCooldown (PaperDollFrame.lua:733).
 GameTooltip = newWidget("GameTooltip", "GameTooltip", UIParent)
 tipFills = 0
-function GameTooltip:SetOwner(owner) self.owner = owner; self.lines = {} end
+function GameTooltip:SetOwner(owner, anchor) self.owner, self.anchor = owner, anchor; self.lines = {} end
 function GameTooltip:IsOwned(f) return self.owner == f and 1 or nil end
 function GameTooltip:Hide() self.owner = nil end
 function GameTooltip:SetText(text) self.lines = { text } end
@@ -446,7 +484,8 @@ dualWield = true
 
 GLOBALS = ("GearRackDB", "GearRack", "SLASH_GEARRACK1", "BINDING_HEADER_GEARRACK",
            "BINDING_NAME_GEARRACK_USE_TOP_TRINKET_ITEM", "BINDING_NAME_GEARRACK_USE_BOTTOM_TRINKET_ITEM",
-           "GearRackGearBar", "GearRackTrinketBar", "GearRackMenu", "GearRackSetsPanel", "GearRackSetName",
+           "GearRackGearBar", "GearRackTrinketBar", "GearRackMenu", "GearRackSetsWindow", "GearRackSetName",
+           "GearRackTrinkets", "GearRackMinimapGear", "GearRackMinimapTrinkets",
            "GearRackSheetButton", "GearRackSets", "GearRackTrinket13", "GearRackTrinket14")
 
 

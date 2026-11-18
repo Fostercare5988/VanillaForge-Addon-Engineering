@@ -48,10 +48,10 @@ class Menu(unittest.TestCase):
 
     def test_an_open_menu_follows_the_bags(self):
         lua = load()
-        lua.execute("hover(GearRackTrinket13)")
-        self.assertEqual(lua.eval("menuItems()"), "0x12,0x13,off")
-        lua.execute("bags[0][3] = nil fire('BAG_UPDATE_DELAYED')")
-        self.assertEqual(lua.eval("menuItems()"), "0x12,off")
+        lua.execute("hover(GearRackGear16)")
+        self.assertEqual(lua.eval("menuItems()"), "0xE,0xD,0xB,0xF1,0xF2,off")
+        lua.execute("bags[0][1] = nil fire('BAG_UPDATE_DELAYED')")
+        self.assertEqual(lua.eval("menuItems()"), "0xE,0xB,0xF1,0xF2,off")
 
     def test_a_bar_menu_is_a_narrow_column_above_the_button(self):
         lua = load()
@@ -62,9 +62,9 @@ class Menu(unittest.TestCase):
         self.assertEqual(lua.eval("{ menuButton(1):GetPoint(1) }")[4], 4)
         self.assertEqual(lua.eval("{ menuButton(1):GetPoint(1) }")[5], 4)
         self.assertEqual(lua.eval("{ menuButton(3):GetPoint(1) }")[5], 44)
-        # The trinket bar stands upright: three trinkets are one line away from it.
+        # The trinket bar stands upright: its drawer is one line away from it.
         lua.execute("leave(GearRackGear16) hover(GearRackTrinket13)")
-        self.assertEqual(lua.eval("GearRackMenu:GetWidth()"), 4 * 2 + 3 * 40 - 4)
+        self.assertEqual(lua.eval("GearRackMenu:GetWidth()"), 4 * 2 + 36)
         self.assertEqual(lua.eval("GearRackMenu:GetHeight()"), 4 * 2 + 36)
 
     def test_a_menu_opens_away_from_the_screen_edge(self):

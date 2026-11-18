@@ -11,10 +11,17 @@ makeSet("PVP no stealth", "INV_P", only({ [1] = "0x17", [16] = "0xD" }))
 '''
 
 
-def panel_rows(lua):
-    return lua.eval('''(function() local t = {} for _, w in ipairs(widgets) do
-        if w.parent == GearRackSetsPanel and w.id and w.shown and w.setName then t[#t + 1] = w.text.text end
-        end return table.concat(t, ",") end)()''')
+WINDOW = r'''
+function rows() local t = {} for _, w in ipairs(widgets) do
+    if w.parent == GearRackSetsWindow and w.setName and w.shown then t[#t + 1] = w.text.text end
+    end return table.concat(t, ",") end
+function windowButton(text) for _, w in ipairs(widgets) do
+    if w.parent == GearRackSetsWindow and w.template == "UIPanelButtonTemplate" and w.text == text then return w end end end
+function slotButton(slot) for _, w in ipairs(widgets) do
+    if w.parent == GearRackSetsWindow and w.slot == slot and w.way then return w end end end
+function row(name) for _, w in ipairs(widgets) do
+    if w.parent == GearRackSetsWindow and w.setName == name and w.shown then return w end end end
+'''
 
 
 class Sets(unittest.TestCase):
@@ -59,75 +66,151 @@ class Sets(unittest.TestCase):
         self.assertEqual(lua.eval("usedSets[1]"), "Instant")
 
 
-class Panel(unittest.TestCase):
-    def open(self, setup=SETS):
-        lua = load(setup=setup)
-        lua.execute("GR_open = SlashCmdList.GEARRACK ToggleCharacter() GearRackSheetButton:Show() click(GearRackSheetButton)")
-        self.assertTrue(lua.eval("GearRackSetsPanel:IsShown()"))
+class Window(unittest.TestCase):
+    """K17 and K22: the Gear sets window."""
+    def open(self, setup=SETS, saved=""):
+        lua = load(setup=setup, saved=saved)
+        lua.execute(WINDOW)
+        lua.execute("ToggleCharacter() click(GearRackSheetButton)")
+        self.assertTrue(lua.eval("GearRackSetsWindow:IsShown()"))
         return lua
 
-    def test_the_sets_by_name(self):
-        lua = self.open()
-        self.assertEqual(panel_rows(lua), "Instant,PVP no stealth")
+    def test_every_way_in_opens_it(self):
+        lua = load(setup=SETS)
+        for way in ("click(GearRackSets)", "click(GearRackMinimapGear)", "SlashCmdList.GEARRACK('sets')",
+                    "ToggleCharacter() click(GearRackSheetButton)"):
+            lua.execute(way)
+            self.assertTrue(lua.eval("GearRackSetsWindow:IsShown()"), way)
+            lua.execute("GearRackSetsWindow:Hide()")
+        self.assertIn("GearRackSetsWindow", lua.eval("table.concat(UISpecialFrames, ',')"), "Escape closes it")
+        lua.execute("click(GearRackMinimapGear, 'RightButton')")
+        self.assertEqual(lua.eval("settingsWindow.opened.name"), "GearRack")
 
-    def test_save_with_a_new_name_leaves_out_the_unticked_slots(self):
+    def test_twenty_slots_and_the_sets_by_name(self):
         lua = self.open()
-        lua.execute("CharacterHeadSlot_tick = nil")
-        lua.execute('''for _, w in ipairs(widgets) do
-            if w.template == "UICheckButtonTemplate" and w.parent == CharacterHeadSlot then w:SetChecked(nil) end end''')
-        lua.execute('GearRackSetName:SetText("Tank")')
-        lua.execute('for _, w in ipairs(widgets) do if w.template == "UIPanelButtonTemplate" and w.text == "Save" then click(w) end end')
+        self.assertEqual(lua.eval("rows()"), "Instant,PVP no stealth")
+        n = lua.eval("(function() local n = 0 for s = 0, 19 do if slotButton(s) then n = n + 1 end end return n end)()")
+        self.assertEqual(n, 20)
+        self.assertEqual(lua.eval("slotButton(1).icon.texture"), "icon:Headband")
+        self.assertEqual(lua.eval("slotButton(4).icon.texture"), "slotTex:ShirtSlot", "the shirt, empty")
+
+    def test_the_worn_set_is_shown_at_opening_and_its_buttons_work(self):
+        lua = self.open(SETS + 'wear(16, "0xD") carry(0, 1, "0xA") wear(17, "0xE") carry(0, 2, "0xB")')
+        self.assertEqual(lua.eval("GearRackSetName.text"), "Instant")
+        self.assertTrue(lua.eval("windowButton('Equip'):IsEnabled()"))
+        self.assertTrue(lua.eval("windowButton('Delete'):IsEnabled()"))
+        self.assertIsNone(lua.eval("slotButton(16).icon.desaturated"), "the set saves the weapons")
+        self.assertTrue(lua.eval("slotButton(1).icon.desaturated"), "and leaves the head out")
+
+    def test_equip_and_delete_follow_the_name(self):
+        lua = self.open()
+        self.assertEqual(lua.eval("GearRackSetName.text or ''"), "")
+        self.assertFalse(lua.eval("windowButton('Equip'):IsEnabled()"))
+        self.assertFalse(lua.eval("windowButton('Save'):IsEnabled()"))
+        lua.execute('GearRackSetName:SetText("PVP no stealth") run(GearRackSetName, "OnTextChanged")')
+        self.assertTrue(lua.eval("windowButton('Equip'):IsEnabled()"))
+        self.assertTrue(lua.eval("windowButton('Save'):IsEnabled()"))
+        lua.execute("click(windowButton('Equip'))")
+        self.assertEqual(lua.eval("usedSets[1]"), "PVP no stealth")
+
+    def test_save_with_a_new_name_leaves_out_the_dark_slots(self):
+        lua = self.open()
+        lua.execute("click(slotButton(1))")  # the head goes dark
+        self.assertTrue(lua.eval("slotButton(1).icon.desaturated"))
+        lua.execute('GearRackSetName:SetText("Tank") click(windowButton("Save"))')
         lua.execute('id = C_EquipmentSet.GetEquipmentSetID("Tank")')
         self.assertEqual(lua.eval("sets[id].slots[1]"), "ignored")
         self.assertEqual(lua.eval("sets[id].slots[16]"), "0xA")
         self.assertIsNone(lua.eval("next(ignoreForSave)"), "the ignore state is cleared again")
-        self.assertEqual(panel_rows(lua), "Instant,PVP no stealth,Tank")
+        self.assertEqual(lua.eval("rows()"), "Instant,PVP no stealth,Tank")
 
     def test_save_over_a_set_keeps_its_slots_and_takes_the_icon(self):
         lua = self.open()
-        lua.execute('for _, w in ipairs(widgets) do if w.parent == GearRackSetsPanel and w.id == 1 then click(w) end end')
+        lua.execute("click(row('Instant'))")
         self.assertEqual(lua.eval("GearRackSetName.text"), "Instant")
-        lua.execute('''for _, w in ipairs(widgets) do
-            if w.template == "UICheckButtonTemplate" then assert(w:GetChecked() == ((w.parent == CharacterMainHandSlot
-            or w.parent == CharacterSecondaryHandSlot) and 1 or nil)) end end''')
-        lua.execute('for _, w in ipairs(widgets) do if w.template == "UIPanelButtonTemplate" and w.text == "Save" then click(w) end end')
+        for slot in range(1, 20):
+            self.assertEqual(bool(lua.eval(f"slotButton({slot}).icon.desaturated")), slot not in (16, 17), slot)
+        lua.execute("click(windowButton('Save'))")
         self.assertEqual(lua.eval("sets[1].slots[16]"), "0xA")
         self.assertEqual(lua.eval("sets[1].slots[1]"), "ignored")
         self.assertEqual(lua.eval("sets[1].icon"), "INV_I")
         self.assertEqual(lua.eval("#setOrder"), 2)
 
+    def test_the_ammo_is_saved_with_the_set_and_put_on_after_it(self):
+        lua = self.open(SETS + 'item("0x30", 3030, "Jagged Arrow", "INVTYPE_AMMO", 1) wear(0, "0x30")'
+                        ' item("0x31", 3031, "Rough Arrow", "INVTYPE_AMMO", 1) carry(2, 1, "0x31")')
+        self.assertEqual(lua.eval("slotButton(0).icon.texture"), "icon:Jagged Arrow")
+        lua.execute('GearRackSetName:SetText("Hunt") click(windowButton("Save"))')
+        self.assertEqual(lua.eval("GearRackDB.ammo.Hunt"), 3030)
+        lua.execute('click(row("Instant")) click(slotButton(0))')  # Instant held no ammo: lit again now
+        self.assertIsNone(lua.eval("slotButton(0).icon.desaturated"))
+        lua.execute("click(slotButton(0)) click(windowButton('Save'))")
+        self.assertIsNone(lua.eval("GearRackDB.ammo.Instant"))
+        lua.execute('bags[2][1] = "0x30" worn[0] = "0x31" GearRack.EquipSet("Hunt")')
+        self.assertEqual(lua.eval("worn[0]"), "0x30", "the set's arrows go on after it")
+        lua.execute('click(row("Hunt")) click(windowButton("Delete")) accept() step(0)')
+        self.assertIsNone(lua.eval("GearRackDB.ammo.Hunt"), "a deleted set's ammo goes with it")
+
+    def test_hovering_a_slot_opens_its_menu_away_from_the_window(self):
+        lua = self.open()
+        lua.execute("hover(slotButton(11))")  # a ring, in the right column
+        self.assertEqual(lua.eval("menuItems()"), "0x15,off")
+        self.assertEqual(lua.eval("(select(3, GearRackMenu:GetPoint(1)))"), "TOPRIGHT")
+        self.assertTrue(lua.eval("GameTooltip.owner == slotButton(11)"))
+        lua.execute("pick('0x15')")
+        self.assertEqual(lua.eval("worn[11]"), "0x15", "the menu puts the item on")
+        lua.execute("leave(slotButton(11)) hover(slotButton(0))")
+        self.assertFalse(lua.eval("GearRackMenu:IsShown()"), "the ammo has no menu")
+
     def test_delete_asks_first(self):
         lua = self.open()
-        lua.execute('for _, w in ipairs(widgets) do if w.parent == GearRackSetsPanel and w.id == 2 then click(w) end end')
-        lua.execute('for _, w in ipairs(widgets) do if w.template == "UIPanelButtonTemplate" and w.text == "Delete" then click(w) end end')
+        lua.execute("click(row('PVP no stealth')) click(windowButton('Delete'))")
         self.assertEqual(lua.eval("popup.text"), 'Delete the set "PVP no stealth"?')
         self.assertIsNotNone(lua.eval("sets[2]"))
         lua.execute("accept() step(0)")
         self.assertIsNone(lua.eval("sets[2]"))
-        self.assertEqual(panel_rows(lua), "Instant")
+        self.assertEqual(lua.eval("rows()"), "Instant")
 
     def test_a_row_drags_the_set(self):
         lua = self.open()
-        lua.execute('for _, w in ipairs(widgets) do if w.parent == GearRackSetsPanel and w.id == 2 then run(w, "OnDragStart") end end')
+        lua.execute('run(row("PVP no stealth"), "OnDragStart")')
         self.assertEqual(lua.eval("cursorSet"), "PVP no stealth")
 
     def test_a_long_name_is_refused_before_the_call(self):
         lua = self.open()
-        lua.execute('GearRackSetName:SetText(string.rep("x", 32))')
-        lua.execute('for _, w in ipairs(widgets) do if w.template == "UIPanelButtonTemplate" and w.text == "Save" then click(w) end end')
+        lua.execute('GearRackSetName:SetText(string.rep("x", 32)) click(windowButton("Save"))')
         self.assertIn("up to 31 letters", lua.eval("chatText()"))
         self.assertEqual(lua.eval("#setOrder"), 2)
 
     def test_the_picker_lists_the_worn_icons_first(self):
         lua = self.open()
-        lua.execute('''for _, w in ipairs(widgets) do if w.parent == GearRackSetsPanel and w.kind == "Button"
-            and w.texture then run(w, "OnClick") end end''')
+        lua.execute('''for _, w in ipairs(widgets) do if w.parent == GearRackSetsWindow and w.kind == "Button"
+            and w.texture and not w.slot and not w.template then run(w, "OnClick") end end''')
         lua.execute('''first = nil for _, w in ipairs(widgets) do
-            if w.parent and w.parent.parent == GearRackSetsPanel and w.icon and not first then first = w end end''')
+            if w.parent and w.parent.parent == GearRackSetsWindow and w.icon and not first then first = w end end''')
         self.assertEqual(lua.eval("first.icon"), "icon:Headband")
         lua.execute("click(first)")
-        lua.execute('GearRackSetName:SetText("New") for _, w in ipairs(widgets) do if w.template == "UIPanelButtonTemplate" and w.text == "Save" then click(w) end end')
+        lua.execute('GearRackSetName:SetText("New") click(windowButton("Save"))')
         self.assertEqual(lua.eval('sets[C_EquipmentSet.GetEquipmentSetID("New")].icon'), "icon:Headband")
+
+    def test_a_long_list_scrolls_with_the_wheel(self):
+        lua = self.open(SETS + 'for i = 1, 14 do makeSet("Z" .. string.format("%02d", i), "INV_Z", {}) end')
+        self.assertEqual(lua.eval("select(2, string.gsub(rows(), ',', ''))") + 1, 13)
+        lua.execute('for i = 1, 5 do run(GearRackSetsWindow, "OnMouseWheel", -1) end')  # three steps to the end
+        self.assertIn("Z14", lua.eval("rows()"))
+        self.assertNotIn("Instant", lua.eval("rows()"))
+
+    def test_the_ammo_of_a_gone_set_is_cleared_at_login_but_not_before_sets_are_read(self):
+        lua = load(setup=SETS, saved="GearRackDB = { ammo = { Instant = 2512, Gone = 2512 } }")
+        self.assertEqual(lua.eval("GearRackDB.ammo.Instant"), 2512)
+        self.assertIsNone(lua.eval("GearRackDB.ammo.Gone"))
+        lua = load(saved="GearRackDB = { ammo = { Gone = 2512 } }")
+        self.assertEqual(lua.eval("GearRackDB.ammo.Gone"), 2512, "no sets read: nothing is cleared")
+
+    def test_nothing_changes_by_itself_while_it_shows(self):
+        lua = self.open(saved="GearRackDB = { auto = true, when = { mounted = 'Instant' } }")
+        lua.execute("player.mounted = true fire('PLAYER_MOUNT_DISPLAY_CHANGED') step(0)")
+        self.assertIsNone(lua.eval("usedSets[1]"))
 
 
 class Sheet(unittest.TestCase):

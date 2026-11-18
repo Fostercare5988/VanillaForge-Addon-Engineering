@@ -16,15 +16,28 @@ class Pages(unittest.TestCase):
     def test_the_gearrack_page(self):
         lua = load()
         self.assertEqual(names(lua, "GearRack"), ["Bars", "Gear bar", "Trinket bar", "Key 41", "Key 42",
-                                                  "Alerts", "Ready alert", "Sets", "Gear sets"])
+                                                  "Alerts", "Ready alert", "Windows", "Gear sets", "Trinkets",
+                                                  "Minimap buttons"])
 
-    def test_slash_gr_opens_the_page_and_the_button_opens_the_panel(self):
+    def test_slash_gr_opens_the_page_and_the_buttons_open_the_windows(self):
         lua = load()
         lua.execute("SlashCmdList.GEARRACK('')")
         self.assertEqual(lua.eval("settingsWindow.opened.name"), "GearRack")
         lua.execute('settingsWindow.click(settingsWindow.row(settingsWindow.find("GearRack"), "Gear sets"))')
-        self.assertTrue(lua.eval("CharacterFrame:IsShown()"))
-        self.assertTrue(lua.eval("GearRackSetsPanel:IsVisible()"))
+        self.assertTrue(lua.eval("GearRackSetsWindow:IsVisible()"))
+        lua.execute('settingsWindow.click(settingsWindow.row(settingsWindow.find("GearRack"), "Trinkets"))')
+        self.assertTrue(lua.eval("GearRackTrinkets:IsVisible()"))
+        lua.execute("SlashCmdList.GEARRACK('sets') SlashCmdList.GEARRACK('trinkets')")
+        self.assertFalse(lua.eval("GearRackSetsWindow:IsShown()"))
+        self.assertFalse(lua.eval("GearRackTrinkets:IsShown()"))
+
+    def test_the_minimap_switch_hides_and_shows_both_buttons(self):
+        lua = load()
+        self.assertTrue(lua.eval("GearRackMinimapGear:IsShown() and GearRackMinimapTrinkets:IsShown()"))
+        lua.execute('settingsWindow.use("GearRack_minimap", false)')
+        self.assertFalse(lua.eval("GearRackMinimapGear:IsShown() or GearRackMinimapTrinkets:IsShown()"))
+        lua.execute("settingsWindow.defaults()")
+        self.assertTrue(lua.eval("GearRackMinimapGear:IsShown()"))
 
     def test_a_bar_dropdown_acts_at_once(self):
         lua = load()
