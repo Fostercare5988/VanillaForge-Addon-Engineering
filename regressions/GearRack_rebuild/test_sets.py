@@ -276,6 +276,23 @@ class Current(unittest.TestCase):
 
 class SecondPlay(unittest.TestCase):
     """The third screenshot (2026-11-18)."""
+    def test_twenty_of_twenty_with_no_ammo_worn_stays_lit(self):
+        lua = load(setup=SETS)
+        lua.execute(WINDOW)
+        lua.execute('SlashCmdList.GEARRACK("sets") click(windowButton("New")) GearRackSetName:SetText("All") click(windowButton("Save"))')
+        self.assertEqual(lua.eval("GearRackDB.ammo.All"), 0, "the ammo slot is saved, empty")
+        self.assertFalse(lua.eval("slotButton(0).out:IsShown()"), "no red cross after Save")
+        lua.execute('GearRack.EquipSet("All") step(0)')
+        self.assertNotIn(">nil", lua.eval("table.concat(equips, ',')"), "no ammo to put on")
+
+    def test_the_set_list_has_no_worn_ticks(self):
+        lua = load(setup=SETS)
+        lua.execute(WINDOW)
+        lua.execute('SlashCmdList.GEARRACK("sets")')
+        n = lua.eval("(function() local n = 0 for _, w in ipairs(widgets) do"
+                     " if type(w.texture) == 'string' and string.find(w.texture, 'CheckBox%-Check') then n = n + 1 end end return n end)()")
+        self.assertEqual(n, 0)
+
     def test_no_button_of_ours_on_the_character_window(self):
         lua = load()
         self.assertIsNone(lua.eval("GearRackSheetButton"))
