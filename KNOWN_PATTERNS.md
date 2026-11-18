@@ -350,7 +350,7 @@ justifies it.
 A vararg function is a hidden table: Lua 5.0 builds one for every call of a
 `function(...)`, whether the body reads `arg` or `...` (ClassicAPI
 docs/LuaCAPI.md, `adjust_varargs`). Event and script wrappers, which run for
-every event, take fixed parameters (FostercareTweaks `FT.SetEventHandler`,
+every event, take fixed parameters (Tweaks `FT.SetEventHandler`,
 2026-10-26: two tables per event).
 
 Consumers in one synchronous refresh can share an authoritative snapshot.
@@ -1188,7 +1188,7 @@ anchors under every combination of the options.
 **Problem:** A callback run in `pcall` whose error is printed to chat, or caught and raised
 again with `error(err)`, never reaches the error handler with its stack. `!ErrorLog` shows
 nothing, or a line in the catching file instead of the failing one. GearRack's timer owner
-printed every timer error to chat (2026-11-08); FostercareTweaks' `WithButton` and
+printed every timer error to chat (2026-11-08); Tweaks' `WithButton` and
 FostercareNameplates' module start do the same kind.
 ClassicAPI's own `C_Timer` is one too: it runs each callback in `pcall` and drops the
 error (API.md, C_Timer.After), so a broken timer callback never reaches `!ErrorLog`.
@@ -1196,7 +1196,7 @@ error (API.md, C_Timer.After), so a broken timer callback never reaches `!ErrorL
 **Preferred direction:** `xpcall(func, geterrorhandler())` (ClassicAPI API.md): the handler
 gets the error inside the failing call, with its stack, and the caller still restores its
 state or stops the failing timer from `xpcall`'s first return. For `C_Timer`, make each callback once
-with a guard (FostercareTweaks `FT.Guarded`: `function() xpcall(fn, geterrorhandler()) end`),
+with a guard (Tweaks `FT.Guarded`: `function() xpcall(fn, geterrorhandler()) end`),
 never a new closure per call. Keep `pcall` with a chat
 line only for player-written code (macro-like scripts), where the message is the point.
 
@@ -1204,13 +1204,13 @@ line only for player-written code (macro-like scripts), where the message is the
 
 **Problem:** Each retired switch gets a line at load that sets its saved key to `nil`.
 The line is forgotten, or removed in a later cleanup before every character has
-logged in, and the key stays in saved files for good. FostercareTweaks removed its
+logged in, and the key stays in saved files for good. Tweaks removed its
 "Auto Dismount" line on 2026-11-08; eight characters still held the key on 11-13.
 The lines also pile up as migrations nobody dares to delete.
 
 **Preferred direction:** one sweep at load, after every module has registered: clear
 each saved key that no switch, number, choice or named saved table owns
-(FostercareTweaks Core.lua, `SAVED_TABLES`). A retired key then goes on its own,
+(Tweaks Core.lua, `SAVED_TABLES`). A retired key then goes on its own,
 and a new saved table is one line in the owner list. A migration that moves data
 (not one that only clears) stays until no saved file holds the old form.
 `find_holes.py` lists addons that still clear keys one by one.
@@ -1240,7 +1240,7 @@ failing list is this kind.
 `layout-cache.txt`. At a first login that happens after PLAYER_ENTERING_WORLD: until
 then the frame is already placed by hand (`IsUserPlaced` is 1) but has no anchor,
 so `GetLeft`, `GetTop` and `GetCenter` return nil. After a `/reload` it does not
-happen, so the bug shows only at a fresh login. Seen in FostercareBars on
+happen, so the bug shows only at a fresh login. Seen in ActionBars on
 2026-11-17: its layout did arithmetic on `GetLeft()` of a bar placed by hand
 (Bars.lua:69), stopped with an error, and never reached the line after it that set
 the key overrides, so F ran the game's own binding until a `/reload`.

@@ -172,7 +172,7 @@ not work. A guess in the code is still marked `-- UNVERIFIED:` (§1 rule 2), and
 the stutter report and error log are read at the start of every audit. When the
 player reports a fault that the files cannot explain, ask for one `/run` line that
 prints the deciding value: that is evidence, not a checklist
-(`GetBindingAction("F", true)` found FostercareBars' missing key override,
+(`GetBindingAction("F", true)` found ActionBars' missing key override,
 2026-11-17).
 
 ## 4. Audit: find the holes, then close them
@@ -187,7 +187,7 @@ python -B tools/find_holes.py "<addon folder>"
 It needs `python -B tools/fetch_upstream_docs.py` and
 `python -B tools/extract_framexml.py --client "<client>" --all` once. Its
 findings are leads; read the code before acting. So are earlier audits: what
-they kept, and why, is asked again, not inherited (FostercareTweaks' Vendor Values
+they kept, and why, is asked again, not inherited (Tweaks' Vendor Values
 was kept for a reason the docs contradict). Each reason an audit keeps something
 cites its evidence (a doc section, a FrameXML file:line, a measurement), so the
 next audit checks it instead of trusting it. Then answer every question
@@ -215,7 +215,7 @@ below, in this order, and write the answers in `.private/audit-<Addon>-<date>.md
    will change? Cheap is not a reason to keep one: fix the shape, then the cost
    (§2). The game's own code counts too where the addon takes its frames over:
    the hole finder lists the FrameXML OnUpdates on frames the addon touches
-   (FostercareTweaks' 72 action buttons, 2026-11-13). Also garbage built on hot
+   (Tweaks' 72 action buttons, 2026-11-13). Also garbage built on hot
    paths (Lua 5.0 collects in one full pass).
 7. **What do players see and use?** Their settings, errors and stutters; what is
    confusing in the settings window. An option every character leaves alone, or
@@ -264,7 +264,7 @@ take away something players rely on.
 5. Git: run `git status` before editing. Commit each coherent step after its
    checks pass. Name the files you commit (`git add <paths>`), never `git add -A`
    or `.`: another session may be working in the same folder (an AutoLazy
-   session's tests went into a FostercareBars commit, 2026-11-18). A rejected
+   session's tests went into a ActionBars commit, 2026-11-18). A rejected
    push means pull and rebase. Push every commit after its checks pass (user's standing order, 2026-11-01).
    Force-push only to take something out of a repo's history when the user asks
    for that: bundle the repo first (`git bundle create ... --all`), push with
@@ -344,7 +344,7 @@ win where they disagree:
    (`gh workflow run release.yml`). When the user restarts the version on a fresh
    history, bundle first and delete the old tags, which the workflow would reuse.
 
-Measured at the first checkpoint (2026-11-17): FostercareTweaks' four rebuilds
+Measured at the first checkpoint (2026-11-17): Tweaks' four rebuilds
 are 3,750 lines against 7,844 and make 1.27 KB/s of garbage against 5.66
 (0.39 ms/s of CPU against 1.59). The rebuild goes on, in the order of `/lag`'s
 costs.
