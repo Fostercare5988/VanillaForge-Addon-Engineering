@@ -141,30 +141,30 @@ class Sheet(unittest.TestCase):
         lua.execute("leave(CharacterFinger0Slot)")
         self.assertFalse(lua.eval("GearRackMenu:IsShown()"))
 
-    def test_alt_shows_the_overlays_and_alt_click_adds_or_removes_a_slot(self):
+    def test_alt_click_adds_a_slot_at_the_end_or_takes_it_off(self):
         lua = load()
-        lua.execute("press('lalt')")
-        self.assertIsNone(lua.eval("next(GearRackGearBar) and nil"))
-        lua.execute("ToggleCharacter() press('ralt')")
-        lua.execute('''for _, w in ipairs(widgets) do
-            if w.parent == CharacterBackSlot and w.tint then back = w end
-            if w.parent == CharacterMainHandSlot and w.tint then main = w end end''')
-        self.assertTrue(lua.eval("back:IsVisible()"))
-        self.assertEqual(lua.eval("main.tint.color[1]"), 0.2)  # on the bar
-        lua.execute("click(back)")
+        lua.execute("ToggleCharacter() press('lalt') click(CharacterBackSlot)")
         self.assertEqual(lua.eval("GearRackDB.slots[4]"), 15)
         self.assertEqual(lua.eval("GearRackGearBar:GetWidth()"), 5 * 40 - 4)
-        lua.execute("click(main)")
+        self.assertIn("is on the gear bar", lua.eval("chatText()"))
+        lua.execute("press('ralt') click(CharacterMainHandSlot)")
         self.assertEqual(lua.eval("GearRackDB.slots[1]"), 17)
-        lua.execute("press()")
-        self.assertFalse(lua.eval("back:IsShown()"))
+        self.assertIn("is off the gear bar", lua.eval("chatText()"))
+        self.assertIsNone(lua.eval("stockClicks[1]"), "an Alt+click never picks the item up")
 
-    def test_nothing_happens_with_the_window_closed(self):
+    def test_a_click_without_alt_is_the_slots_own(self):
         lua = load()
-        lua.execute("press('lalt')")
-        self.assertFalse(lua.eval('''(function() for _, w in ipairs(widgets) do
-            if w.tint and w.shown then return true end end return false end)()'''))
+        lua.execute("ToggleCharacter() press() click(CharacterBackSlot, 'RightButton')")
+        self.assertEqual(lua.eval("stockClicks[1]"), "15:RightButton")
+        self.assertEqual(lua.eval("#GearRackDB.slots"), 3)
 
+    def test_character_menus_open_right_and_the_weapons_down(self):
+        lua = load()
+        for slot, point in (("Head", "TOPLEFT"), ("Finger0", "TOPLEFT"), ("MainHand", "TOPLEFT")):
+            lua.execute(f"hover(Character{slot}Slot)")
+            self.assertEqual(lua.eval("(select(3, GearRackMenu:GetPoint(1)))"),
+                             "BOTTOMLEFT" if slot == "MainHand" else "TOPRIGHT", slot)
+            lua.execute(f"leave(Character{slot}Slot)")
 
 if __name__ == "__main__":
     unittest.main()

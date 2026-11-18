@@ -269,6 +269,7 @@ function IsRightControlKeyDown() return mods.rctrl end
 function IsLeftAltKeyDown() return mods.lalt end
 function IsRightAltKeyDown() return mods.ralt end
 function IsShiftKeyDown() return mods.lshift or mods.rshift end
+function IsAltKeyDown() return mods.lalt or mods.ralt end
 function press(...)
     mods = {}
     for i = 1, select("#", ...) do mods[select(i, ...)] = 1 end
@@ -343,7 +344,9 @@ for id, name in ipairs(SLOT_FRAMES) do
     b:SetID(id)
     b:SetScript("OnEnter", function() PaperDollItemSlotButton_OnEnter() end)
     b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    b:SetScript("OnClick", function() stockClicks[#stockClicks + 1] = this:GetID() .. ":" .. tostring(arg1) end)
 end
+stockClicks = {}
 function PaperDollItemSlotButton_OnEnter() GameTooltip:SetOwner(this, "ANCHOR_RIGHT") end
 function ToggleCharacter() CharacterFrame:Show() end
 function hooksecurefunc(name, f)

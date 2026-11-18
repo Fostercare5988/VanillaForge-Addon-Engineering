@@ -53,6 +53,20 @@ class Menu(unittest.TestCase):
         lua.execute("bags[0][3] = nil fire('BAG_UPDATE_DELAYED')")
         self.assertEqual(lua.eval("menuItems()"), "0x12,off")
 
+    def test_a_bar_menu_is_a_narrow_column_above_the_button(self):
+        lua = load()
+        lua.execute("hover(GearRackGear16)")  # six items: two wide, three high
+        self.assertEqual(lua.eval("GearRackMenu:GetWidth()"), 4 * 2 + 40 + 36)
+        self.assertEqual(lua.eval("GearRackMenu:GetHeight()"), 4 * 2 + 3 * 40 - 4)
+        # The first item sits right above the button, the next beside it, then up.
+        self.assertEqual(lua.eval("{ menuButton(1):GetPoint(1) }")[4], 4)
+        self.assertEqual(lua.eval("{ menuButton(1):GetPoint(1) }")[5], 4)
+        self.assertEqual(lua.eval("{ menuButton(3):GetPoint(1) }")[5], 44)
+        # The trinket bar stands upright: three trinkets are one line away from it.
+        lua.execute("leave(GearRackGear16) hover(GearRackTrinket13)")
+        self.assertEqual(lua.eval("GearRackMenu:GetWidth()"), 4 * 2 + 3 * 40 - 4)
+        self.assertEqual(lua.eval("GearRackMenu:GetHeight()"), 4 * 2 + 36)
+
     def test_a_menu_opens_away_from_the_screen_edge(self):
         lua = load()
         lua.execute("hover(GearRackGear16)")  # a bar across, in the lower half
