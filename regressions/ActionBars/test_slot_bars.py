@@ -29,19 +29,11 @@ class SlotBars(unittest.TestCase):
         # game's MULTIACTIONBAR1BUTTON10 pressed the hidden stock button, which read
         # slot 10 (Disenchant), not 70 (Stealth). Stock MultiActionButtonUp and
         # ActionButtonUp (FrameXML) use the button's `action`.
-        lua = load()
-        lua.execute("""
-            function Widget:GetButtonState() return self.state or 'NORMAL' end
-            function Widget:SetButtonState(s) self.state = s end
-            function MultiActionButtonUp(bar, id)
-                local b = _G[bar .. 'Button' .. id]
-                b:SetButtonState('PUSHED'); b:SetButtonState('NORMAL'); UseAction(b.action, 0)
-            end
-            function ActionButtonUp(id) UseAction(_G['ActionButton' .. id].action, 0) end
-            used = {}
-            MultiActionButtonUp('MultiBarBottomLeft', 10); MultiActionButtonUp('MultiBarRight', 1)
-            ActionButtonUp(3)
-            bonusOffset = 1 fire('UPDATE_BONUS_ACTIONBAR'); ActionButtonUp(3)""")
+        lua = load(setup="keys.MULTIACTIONBAR1BUTTON10 = { 'F' } keys.MULTIACTIONBAR3BUTTON1 = { 'G' } "
+                         "keys.ACTIONBUTTON3 = { '3' }")
+        lua.execute("""used = {}
+            pressKey('F') pressKey('G') pressKey('3')
+            bonusOffset = 1 fire('UPDATE_BONUS_ACTIONBAR') pressKey('3')""")
         self.assertEqual(list(lua.eval("used").values()), [70, 25, 3, 75])
         self.assertEqual(lua.eval("BonusActionButton3.action"), 75)
 
@@ -112,16 +104,33 @@ class SlotBars(unittest.TestCase):
     def test_the_stock_keys_press_our_buttons(self):
         lua = load(setup="keys.ACTIONBUTTON3 = { '3' } keys.MULTIACTIONBAR3BUTTON1 = { 'F', 'G' } "
                          "bars[3] = { kind = 'spell', id = 1 }")
-        self.assertEqual(lua.eval("overrides['3']"), "ActionBars_main_3")
-        self.assertEqual(lua.eval("overrides['G']"), "ActionBars_right_1")
-        lua.execute("pressKey('3')")
-        self.assertEqual(lua.eval("used[1]"), 3)
+        lua.execute("pressKey('3', 'down')")
+        self.assertEqual(lua.eval("button('main', 3):GetButtonState()"), "PUSHED", "ours shows the press")
+        self.assertEqual(lua.eval("#used"), 0, "the key acts when it is released")
+        lua.execute("ActionButtonUp(3) pressKey('G')")
+        self.assertEqual(list(lua.eval("used").values()), [3, 25])
+        self.assertEqual(lua.eval("button('main', 3):GetButtonState()"), "NORMAL")
         self.assertEqual(lua.eval("button('main', 3).hotkey.text"), "k3")
+        self.assertEqual(lua.eval("button('right', 1).hotkey.text"), "kF")
+
+    def test_shift_and_the_cursor_do_not_change_what_a_key_does(self):
+        # Claude's Shift+6 has no binding, so the game runs 6's with Shift held
+        # (### Keys with modifiers); a Shift-click picks the action up. Stock
+        # ActionButtonUp uses the slot, never placing what is on the cursor.
+        lua = load(setup="keys.ACTIONBUTTON7 = { '6' } bars[7] = { kind = 'spell', id = 1 } "
+                         "bars[9] = { kind = 'spell', id = 2 }")
+        lua.execute("shift = true pressKey('6') shift = nil")
+        self.assertEqual(lua.eval("used[1]"), 7, "Shift+6 casts")
+        self.assertEqual(lua.eval("bars[7].id"), 1, "and leaves the button where it is")
+        self.assertIsNone(lua.eval("cursor"))
+        lua.execute("cursor = { kind = 'spell', id = 2, book = 2 } pressKey('6')")
+        self.assertEqual(lua.eval("usedCheckCursor"), 0, "the cursor is not dropped on the slot")
+        self.assertEqual(lua.eval("next(overrides)"), None, "the game's own bindings")
 
     def test_new_keys_are_taken_when_the_bindings_change(self):
         lua = load()
         lua.execute("keys.ACTIONBUTTON1 = { 'Q' } fire('UPDATE_BINDINGS')")
-        self.assertEqual(lua.eval("overrides['Q']"), "ActionBars_main_1")
+        self.assertEqual(lua.eval("button('main', 1).hotkey.text"), "kQ")
 
     def test_an_extra_bar_key_from_key_bindings(self):
         lua = load(setup="bars[13] = { kind = 'spell', id = 1 } keys.ACTIONBARS_EXTRA1_1 = { 'Z' }")
@@ -131,6 +140,11 @@ class SlotBars(unittest.TestCase):
         lua.execute("ActionBars.Press('extra1', 1, 'up')")
         self.assertEqual(lua.eval("used[1]"), 13)
         self.assertEqual(lua.eval("button('extra1', 1).hotkey.text"), "kZ")
+        # A key bound in Lua sees Shift held (### Modifier keys during a binding).
+        lua.execute("shift = true ActionBars.Press('extra1', 1, 'down') ActionBars.Press('extra1', 1, 'up') shift = nil")
+        self.assertEqual(lua.eval("used[2]"), 13, "SHIFT-Z casts too")
+        self.assertEqual(lua.eval("bars[13].id"), 1, "nothing picked up")
+        self.assertEqual(lua.eval("usedCheckCursor"), 0)
 
     def test_drag_and_drop_with_the_action_bar_lock(self):
         lua = load(setup="bars[1] = { kind = 'spell', id = 1 }")
@@ -162,8 +176,16 @@ class SlotBars(unittest.TestCase):
     def test_an_equipped_item_has_the_green_border(self):
         lua = load(setup="bars[1] = { kind = 'item', id = 50 }")
         self.assertFalse(lua.eval("button('main', 1).border:IsShown()"))
-        lua.execute("equipment[50] = { id = 50 } fire('UNIT_INVENTORY_CHANGED', 'player')")
+        lua.execute("equipment[50] = { id = 50 } fire('PLAYER_EQUIPMENT_CHANGED', 16, true)")
         self.assertTrue(lua.eval("button('main', 1).border:IsShown()"))
+
+    def test_an_inventory_change_redraws_counts_not_borders(self):
+        # UNIT_INVENTORY_CHANGED also fires for each durability point and charge;
+        # the stock button redraws then (ActionButton.lua:325): a thrown stack.
+        lua = load(setup="bars[1] = { kind = 'item', id = 50 } give(50, 3)")
+        lua.execute("equipment[50] = { id = 50 } fire('UNIT_INVENTORY_CHANGED', 'player')")
+        self.assertFalse(lua.eval("button('main', 1).border:IsShown()"), "only PLAYER_EQUIPMENT_CHANGED")
+        self.assertEqual(lua.eval("button('main', 1).count.text"), 4)
 
     def test_a_tooltip_refreshes_only_while_it_counts_a_cooldown(self):
         lua = load(setup="bars[1] = { kind = 'spell', id = 1 } bars[2] = { kind = 'spell', id = 2 }")

@@ -136,8 +136,29 @@ class ExtraBars(unittest.TestCase):
         saved = "ActionBarsDB = { extraBars = 4, free = { [5] = { [1] = { kind = 'item', id = 50 } } } }"
         lua = load(saved, "give(50)")
         self.assertFalse(lua.eval("button('extra5', 1).border:IsShown()"))
-        lua.execute("equipment[50] = { id = 50 } fire('UNIT_INVENTORY_CHANGED', 'player')")
+        lua.execute("equipment[50] = { id = 50 } fire('PLAYER_EQUIPMENT_CHANGED', 16, true)")
         self.assertTrue(lua.eval("button('extra5', 1).border:IsShown()"))
+
+    def test_a_key_with_shift_uses_a_free_button(self):
+        # A key bound in Lua sees Shift held (### Modifier keys during a binding):
+        # a Shift-click would take the button off the bar.
+        saved = "ActionBarsDB = { extraBars = 4, free = { [5] = { [1] = { kind = 'spell', id = 3 } } } }"
+        lua = load(saved, "learn(3, 'Blind')")
+        lua.execute("shift = true ActionBars.Press('extra5', 1, 'down') ActionBars.Press('extra5', 1, 'up') "
+                    "ActionBars.Press('extra5', 2, 'up') shift = nil")
+        self.assertEqual(lua.eval("casts[1]"), "Blind")
+        self.assertEqual(lua.eval("ActionBarsDB.free[5][1].id"), 3, "still on the bar")
+        self.assertIsNone(lua.eval("cursor"))
+
+    def test_an_item_with_none_left_is_not_dragged_away(self):
+        # Nothing can put it on the cursor, so dragging it off would delete it.
+        saved = "ActionBarsDB = { extraBars = 4, free = { [5] = { [1] = { kind = 'item', id = 50 } } } }"
+        lua = load(saved)
+        lua.execute("run(button('extra5', 1), 'OnDragStart')")
+        self.assertEqual(lua.eval("ActionBarsDB.free[5][1].id"), 50)
+        lua.execute("give(50) run(button('extra5', 1), 'OnDragStart')")
+        self.assertIsNone(lua.eval("ActionBarsDB.free[5][1]"), "with one in the bags it moves")
+        self.assertEqual(lua.eval("cursor.id"), 50)
 
     def test_no_free_bar_no_free_events(self):
         lua = load()

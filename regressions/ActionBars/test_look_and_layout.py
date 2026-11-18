@@ -47,6 +47,14 @@ class Look(unittest.TestCase):
         lua.execute("hookedTimer(model, 0, 0, 0)")
         self.assertIsNone(lua.eval("model.fbNumbers.cd"))
 
+    def test_a_sweep_gets_its_numbers_only_when_a_cooldown_runs(self):
+        # Bagnon clears every bag slot's sweep when the bags open: no frame each.
+        lua = load()
+        lua.execute("bag = CreateFrame('Model') hookedTimer(bag, 0, 0, 0) hookedTimer(nil, 0, 0, 0)")
+        self.assertIsNone(lua.eval("bag.fbNumbers"))
+        lua.execute("native = CreateFrame('Cooldown') hookedTimer(native, 100, 10, 1)")
+        self.assertFalse(lua.eval("native.fbNumbers"), "a native Cooldown counts down by itself")
+
 
 class Layout(unittest.TestCase):
     def test_a_section_per_bar_with_its_five_rows(self):
@@ -109,7 +117,8 @@ class Layout(unittest.TestCase):
                 layoutCache['ActionBars_' .. key] = { 500, -600 }
             end
             for n = 1, 11 do layoutCache['ActionBars_extra' .. n] = { 300, -400 } end""")
-        self.assertEqual(lua.eval("overrides.F"), "ActionBars_bottomleft_10")
+        lua.execute("used = {} pressKey('F')")
+        self.assertEqual(lua.eval("used[1]"), 70, "F presses Bottom Left 10")
         self.assertEqual(lua.eval("ActionBars_extra2:GetScale()"), 0.9)
         lua.execute("step(0)")
         self.assertEqual(lua.eval("(ActionBars_extra2:GetPoint(1))"), "TOPLEFT", "where the client put it")

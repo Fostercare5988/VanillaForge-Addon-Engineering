@@ -148,7 +148,11 @@ rangeChecks, used, overrides, keys = {}, {}, {}, {}
 CURRENT_ACTIONBAR_PAGE, bonusOffset, playerClass, LOCK_ACTIONBAR = 1, 0, 'ROGUE', '0'
 RANGE_INDICATOR = '*dot*'
 function UnitClass() return playerClass, playerClass end
-function hooksecurefunc(name, f) if name == 'CooldownFrame_SetTimer' then hookedTimer = f end end
+function hooksecurefunc(name, f)
+    if name == 'CooldownFrame_SetTimer' then hookedTimer = f; return end
+    local old = _G[name]
+    _G[name] = function(a, b, c) local r = old(a, b, c); f(a, b, c); return r end
+end
 function IsShiftKeyDown() return shift end
 function GetBonusBarOffset() return bonusOffset end
 local reads = {}
@@ -168,7 +172,7 @@ function IsEquippedAction(slot) local a = bars[slot]; return a and a.kind == 'it
 function IsCurrentAction(slot) return current[slot] end
 function IsAutoRepeatAction(slot) return autoRepeat[slot] end
 function IsAttackAction(slot) return attackSlots[slot] end
-function UseAction(slot, checkCursor, onSelf) used[#used + 1] = slot end
+function UseAction(slot, checkCursor, onSelf) used[#used + 1] = slot; usedCheckCursor = checkCursor end
 reagentSpells = {}
 C_ActionBar = {
     EnableActionRangeCheck = function(slot, on) rangeChecks[slot] = (rangeChecks[slot] or 0) + (on and 1 or -1) end,
@@ -177,13 +181,48 @@ C_ActionBar = {
 function IsConsumableSpell(id) return reagentSpells[id] ~= nil end
 function IsConsumableItem(id) return 1 end
 
--- Keys (### Override bindings) and the tooltip.
+-- Keys and the tooltip. The game's own bindings run the stock functions
+-- (FrameXML ActionButton.lua:15-46, MultiActionBars.lua:14-35), as written there.
 function GetBindingKey(command) local k = keys[command]; if k then return k[1], k[2] end end
 function GetBindingText(key) return 'k' .. key end
 function SetOverrideBindingClick(owner, priority, key, name) overrides[key] = name end
 function ClearOverrideBindings() overrides = {} end
-function pressKey(key) _G[overrides[key]]:Click('LeftButton') end
 function Widget:Click(button) run(self, 'OnClick', button or 'LeftButton') end
+function Widget:GetButtonState() return self.buttonState or 'NORMAL' end
+function Widget:SetButtonState(state) self.buttonState = state end
+local function stockButton(id)
+    return _G[(BonusActionBarFrame:IsShown() and 'BonusAction' or 'Action') .. 'Button' .. id]
+end
+local function down(button) if button:GetButtonState() == 'NORMAL' then button:SetButtonState('PUSHED') end end
+local function up(button, onSelf)
+    if button:GetButtonState() == 'PUSHED' then button:SetButtonState('NORMAL'); UseAction(button.action, 0, onSelf) end
+end
+function ActionButtonDown(id) down(stockButton(id)) end
+function ActionButtonUp(id, onSelf) up(stockButton(id), onSelf) end
+function MultiActionButtonDown(bar, id) down(_G[bar .. 'Button' .. id]) end
+function MultiActionButtonUp(bar, id, onSelf) up(_G[bar .. 'Button' .. id], onSelf) end
+local MULTI = { 'MultiBarBottomLeft', 'MultiBarBottomRight', 'MultiBarRight', 'MultiBarLeft' }
+-- A key press: its binding's down half, then (unless only `half` is 'down') the up
+-- half. An override wins over the saved binding (### Override bindings); a CLICK
+-- one clicks its button on release (### Direct-action bindings, "AnyUp").
+function pressKey(key, half)
+    if overrides[key] then
+        if half ~= 'down' then _G[overrides[key]]:Click('LeftButton') end
+        return
+    end
+    for command, k in pairs(keys) do
+        if k[1] == key or k[2] == key then
+            local id = tonumber(string.match(command, '^ACTIONBUTTON(%d+)$'))
+            local m, mid = string.match(command, '^MULTIACTIONBAR(%d)BUTTON(%d+)$')
+            if id then
+                ActionButtonDown(id); if half ~= 'down' then ActionButtonUp(id) end
+            elseif m then
+                MultiActionButtonDown(MULTI[tonumber(m)], tonumber(mid))
+                if half ~= 'down' then MultiActionButtonUp(MULTI[tonumber(m)], tonumber(mid)) end
+            end
+        end
+    end
+end
 GameTooltip = CreateFrame('GameTooltip', 'GameTooltip')
 function GameTooltip:SetOwner(owner) self.owner = owner end
 function GameTooltip:IsOwned(f) return self.owner == f and 1 or nil end
