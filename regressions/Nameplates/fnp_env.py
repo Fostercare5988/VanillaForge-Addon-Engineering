@@ -1,4 +1,4 @@
-"""The FostercareNameplates regressions on the shared game model (wowkit).
+"""The Nameplates regressions on the shared game model (wowkit).
 
 Loads the addon with wowkit.load_addon, which restores the saved table when
 the client does (before the files with `## LoadSavedVariablesFirst: 1`). Native nameplate rendering, real event
@@ -139,7 +139,7 @@ def load(saved=None, prelude=""):
     lua = wowkit.runtime()
     lua.execute(BASE)
     lua.execute(prelude)
-    restore = "FostercareNameplates_Config = %s" % saved if saved else None
-    wowkit.load_addon(lua, ROOT, "FostercareNameplates", restore)
+    restore = "Nameplates_Config = %s" % saved if saved else None
+    wowkit.load_addon(lua, ROOT, "Nameplates", restore)
     lua.execute('fire("VARIABLES_LOADED")')
     return lua

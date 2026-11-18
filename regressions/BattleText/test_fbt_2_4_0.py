@@ -1,4 +1,4 @@
-"""FostercareBattleText 2.4.0, 2026-11-13: filter groups; copy and rename profiles.
+"""BattleText 2.4.0, 2026-11-13: filter groups; copy and rename profiles.
 
 A player asked for groups of filters that fold, and for profiles that can be
 copied and renamed. Groups only order the Filters tab: every enabled filter
@@ -10,7 +10,7 @@ import unittest
 import _fbt_runtime as m
 
 OLD_PROFILE = '''
-FostercareBattleTextDB = {UserDisabled = false, Profiles = {Default = {Suppressions = {
+BattleTextDB = {UserDisabled = false, Profiles = {Default = {Suppressions = {
   MSBT_SUPPRESSION_SHAMAN_MANA_SPRING = {Enabled = true, SearchPattern = "Mana Spring"},
   MSBT_SUPPRESSION_SHAMAN_STONESKIN = {Enabled = false, SearchPattern = "Stoneskin"},
   MSBT_SUPPRESSION_ROGUE_VIGOR = {Enabled = true, SearchPattern = "Vigor"},
@@ -155,7 +155,7 @@ class ProfileCopyRename(unittest.TestCase):
         lua.execute('''
           FBT.CurrentProfile.UseStickyCrits = false
           FBT_ProfileName:SetText("Raid"); FBT_ProfileCopy:Click()''')
-        p = "FostercareBattleTextDB.Profiles"
+        p = "BattleTextDB.Profiles"
         self.assertEqual(lua.eval(f"{p}.Raid.UseStickyCrits"), False)
         # A copy, not the same tables: changing one leaves the other.
         lua.execute(f"{p}.Raid.DisplaySettings.Incoming.ScrollHeight = 111")
@@ -168,9 +168,9 @@ class ProfileCopyRename(unittest.TestCase):
         lua.execute('FBT_ProfileName:SetText("Raid"); FBT_ProfileCopy:Click()')
         lua.execute(f'{self.profile_row(lua, "Raid")}Use:Click()')
         lua.execute(f'{self.profile_row(lua, "Raid")}Rename:Click(); FBT_InlineEdit:SetText("Dungeons"); FBT_InlineEdit:PressEnter()')
-        self.assertIsNone(lua.eval("FostercareBattleTextDB.Profiles.Raid"))
+        self.assertIsNone(lua.eval("BattleTextDB.Profiles.Raid"))
         self.assertEqual(lua.eval("FBT.CurrentProfileName()"), "Dungeons")
-        self.assertEqual(lua.eval("FBT.CurrentProfile == FostercareBattleTextDB.Profiles.Dungeons"), True)
+        self.assertEqual(lua.eval("FBT.CurrentProfile == BattleTextDB.Profiles.Dungeons"), True)
         self.profile_row(lua, "Dungeons")
 
     def test_default_and_taken_names_are_kept(self):
@@ -178,14 +178,14 @@ class ProfileCopyRename(unittest.TestCase):
         lua.execute('FBT_ProfileName:SetText("Raid"); FBT_ProfileCopy:Click()')
         self.assertFalse(lua.eval(f'{self.profile_row(lua, "Default")}Rename:IsEnabled() and true or false'))
         lua.execute(f'{self.profile_row(lua, "Raid")}Rename:Click(); FBT_InlineEdit:SetText("Default"); FBT_InlineEdit:PressEnter()')
-        self.assertEqual(lua.eval("type(FostercareBattleTextDB.Profiles.Raid)"), "table")
+        self.assertEqual(lua.eval("type(BattleTextDB.Profiles.Raid)"), "table")
 
     def test_another_character_follows_a_rename(self):
         # Renamed on one character; another still has the old name saved.
         lua = m.runtime('''
-          FostercareBattleTextDB = {UserDisabled = false, Profiles = {Default = {}, Dungeons = {UseStickyCrits = false}},
+          BattleTextDB = {UserDisabled = false, Profiles = {Default = {}, Dungeons = {UseStickyCrits = false}},
             Renamed = {Raid = "Dungeons"}}
-          FostercareBattleTextCharDB = {CurrentProfile = "Raid"}''')
+          BattleTextCharDB = {CurrentProfile = "Raid"}''')
         self.assertEqual(lua.eval("FBT.CurrentProfileName()"), "Dungeons")
         self.assertEqual(lua.eval("FBT.CurrentProfile.UseStickyCrits"), False)
 

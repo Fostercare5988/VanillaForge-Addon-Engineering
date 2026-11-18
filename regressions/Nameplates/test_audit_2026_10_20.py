@@ -1,7 +1,7 @@
-"""Reproductions for the 2026-10-20 FostercareNameplates audit
-(.private/audit-FostercareNameplates-2026-10-20.md).
+"""Reproductions for the 2026-10-20 Nameplates audit
+(.private/audit-Nameplates-2026-10-20.md).
 
-Each test fails on FostercareNameplates 1.0.0 for the reason in its docstring.
+Each test fails on Nameplates 1.0.0 for the reason in its docstring.
 Lua 5.1 with generic mocks; native plates and engine timing stay in-game checks.
 """
 import unittest
@@ -13,15 +13,15 @@ class AuditReproductions(unittest.TestCase):
         """P2-1: Lifecycle.lua reads the saved master switch at file scope, before
         the client restores SavedVariables, so a saved 0 still claims every plate."""
         lua = load("{ nameplatesEnabled = 0, overwrites = {}, settingsVersion = 1 }")
-        self.assertFalse(lua.eval("FostercareNameplates.nameplatesEnabled"))
-        self.assertFalse(lua.eval("FostercareNameplates.OwnsNameplates() and true or false"))
+        self.assertFalse(lua.eval("Nameplates.nameplatesEnabled"))
+        self.assertFalse(lua.eval("Nameplates.OwnsNameplates() and true or false"))
         self.assertIsNone(lua.eval('FNPLibNameplate.events.NAME_PLATE_UNIT_ADDED'))
 
     def test_p2_saved_module_choice_reaches_initialize(self):
         """P2-1: Core.lua keeps a local alias of the pre-restore table, so Initialize
         reads defaults, not the saved module choice, when deciding what to enable."""
         lua = load('{ ["Nameplate Castbar"] = 0, overwrites = {}, settingsVersion = 1 }')
-        self.assertEqual(lua.eval('FostercareNameplates_Config["Nameplate Castbar"]'), 0)
+        self.assertEqual(lua.eval('Nameplates_Config["Nameplate Castbar"]'), 0)
         self.assertIsNone(lua.eval('rawget(_G, "FNPNameplateCastEvents")'))
 
     def test_p2_guid_lookup_uses_guid_api(self):
@@ -36,7 +36,7 @@ class AuditReproductions(unittest.TestCase):
             C_NamePlate.GetNamePlateForGUID = function(g) if g == "0xF1" then return plate end end
         ''')
         lua.execute('plate.fnpUnitGUID = "0xF1"')
-        self.assertEqual(lua.eval("FostercareNameplates.GetNameplateUnit(plate)"), "0xF1")
+        self.assertEqual(lua.eval("Nameplates.GetNameplateUnit(plate)"), "0xF1")
 
     def test_p3_plate_binding_is_not_polled(self):
         """P3-1: every plate re-validated its GUID binding every frame, then twice a second.
@@ -52,8 +52,8 @@ class AuditReproductions(unittest.TestCase):
         lua.execute('''
             plate = nativePlate("0xF1", "nameplate1")
             for _, title in ipairs({ "Nameplate Details", "Nameplate Castbar", "Nameplate Class Colors" }) do
-                FostercareNameplates_Config[title] = 0
-                FostercareNameplates.mods[title]:enable()
+                Nameplates_Config[title] = 0
+                Nameplates.mods[title]:enable()
             end
             calls = {}; runFrames(plate, 60)
         ''')
@@ -64,7 +64,7 @@ class AuditReproductions(unittest.TestCase):
         lua = load()
         lua.execute('''
             plate = nativePlate("0xF1", "nameplate1"); calls = {}
-            FostercareNameplates.Nameplates:Auras(plate, "0xF1")
+            Nameplates.Nameplates:Auras(plate, "0xF1")
         ''')
         self.assertIsNone(lua.eval('calls["UnitAura HARMFUL|PLAYER"]'))
         self.assertEqual(lua.eval('calls.GetAuraSlots'), 1)
@@ -80,16 +80,16 @@ class AuditReproductions(unittest.TestCase):
         lua = load()
         lua.execute('''
             plate = nativePlate("0xF1", "nameplate1"); calls = {}
-            FostercareNameplates.Nameplates.pending = {}
+            Nameplates.Nameplates.pending = {}
             FNPOpt_nameplate_scale:SetValue(1.5)
             FNPOpt_nameplate_scale.scripts.OnValueChanged()
         ''')
-        self.assertIsNone(lua.eval('next(FostercareNameplates.Nameplates.pending)'))
+        self.assertIsNone(lua.eval('next(Nameplates.Nameplates.pending)'))
 
 
 FADE = '''
     plate = nativePlate("0xF1", "nameplate1")
-    function fade(key) FostercareNameplates.SetOverride(key, 1); FostercareNameplates.Nameplates:ApplyConfiguration() end
+    function fade(key) Nameplates.SetOverride(key, 1); Nameplates.Nameplates:ApplyConfiguration() end
 '''
 
 
@@ -144,7 +144,7 @@ class UnitFilters(unittest.TestCase):
 
     def test_opacity_setting_applies(self):
         lua = load(prelude='units["0xF1"] = { type = 8 }')
-        lua.execute(FADE + 'FostercareNameplates.SetOverride("nameplate_fade_alpha", 0.5); fade("nameplate_fade_critters")')
+        lua.execute(FADE + 'Nameplates.SetOverride("nameplate_fade_alpha", 0.5); fade("nameplate_fade_critters")')
         self.assertEqual(self.alpha(lua), 0.5)
 
 

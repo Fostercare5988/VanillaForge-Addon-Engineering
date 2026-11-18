@@ -1,4 +1,4 @@
-"""FostercareNameplates enemy cooldown rows (audit 2026-10-26, reworked 2026-11-03).
+"""Nameplates enemy cooldown rows (audit 2026-10-26, reworked 2026-11-03).
 
 2026-10-26: every 0.2 s each enemy with observed cooldowns was redrawn (settings
 lookups, unit checks, the text and a plate layout). Fixed in 1.4.3.
@@ -56,7 +56,7 @@ class CooldownRow(unittest.TestCase):
     def test_a_finished_estimate_leaves_the_row(self):
         self.lua.execute("now = now + 120; this = icon.sweep; icon.sweep.scripts.OnCooldownDone()")
         self.assertFalse(self.lua.eval("plate.fnpEnemyCooldowns.shown"))
-        self.assertIsNone(self.lua.eval("FostercareNameplates.NameplateCooldowns.states['0xF1']"))
+        self.assertIsNone(self.lua.eval("Nameplates.NameplateCooldowns.states['0xF1']"))
 
     def test_casts_without_a_cooldown_ask_about_no_unit(self):
         self.lua.execute('''

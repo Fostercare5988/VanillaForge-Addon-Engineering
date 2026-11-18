@@ -1,4 +1,4 @@
-"""FostercareNameplates plate layout, from play on 2026-10-21 and 10-22.
+"""Nameplates plate layout, from play on 2026-10-21 and 10-22.
 
 - Logout: Details.lua:87 "attempt to call method `SetWidth' (a nil value)" from
   Shutdown, after the client had freed the plate's raid mark.
@@ -49,7 +49,7 @@ class OwnLevel(unittest.TestCase):
     def level(self, saved="{ overwrites = { nameplate_scale = 0.6 }, settingsVersion = 1 }"):
         lua = load(saved, prelude=LEVEL)
         plate_with_regions(lua)
-        lua.execute('FostercareNameplates.Nameplates:Level(plate, "0xF1")')
+        lua.execute('Nameplates.Nameplates:Level(plate, "0xF1")')
         return lua
 
     def test_level_drawn_inside_bar(self):
@@ -74,7 +74,7 @@ class OwnLevel(unittest.TestCase):
         """1.2.0 called PlaceLevel from LayoutExtras above its local definition:
         "attempt to call global `PlaceLevel'" on every target change."""
         lua = self.level()
-        lua.execute('FostercareNameplates.Nameplates:Select(plate, true)')
+        lua.execute('Nameplates.Nameplates:Select(plate, true)')
         self.assertTrue(lua.eval('plate.fnpIsTarget'))
 
     def test_native_level_never_moved_or_refonted(self):
@@ -87,7 +87,7 @@ class OwnLevel(unittest.TestCase):
 
     def test_skull_level(self):
         lua = self.level()
-        lua.execute('levels["0xF1"] = -1; FostercareNameplates.Nameplates:Level(plate, "0xF1")')
+        lua.execute('levels["0xF1"] = -1; Nameplates.Nameplates:Level(plate, "0xF1")')
         self.assertEqual(lua.eval('plate.fnpLevel.fnpText'), "??")
 
     def test_setting_off_restores_native(self):

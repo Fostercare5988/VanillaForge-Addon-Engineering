@@ -1,4 +1,4 @@
-"""FostercareNameplates class colors ask about a non-player once (2026-10-30).
+"""Nameplates class colors ask about a non-player once (2026-10-30).
 
 An NPC has no class, so the unresolved-identity retry asked UnitIsPlayer again
 every 0.5 s for as long as its plate stood. Fails on 1.4.4.

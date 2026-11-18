@@ -1,7 +1,7 @@
 """!ErrorLog names the event after a pause and saves its own numbers (1.7.1, 2026-11-12).
 
 The first run with the longest pause (1.7.0) put every Stratholme stutter
-between two FostercareTweaks hooks that ran outside any timed script: the
+between two Tweaks hooks that ran outside any timed script: the
 game's own handlers around them were not being timed, so the XML pass at login
 had wrapped little or nothing in the real client. Each slow frame now also
 keeps its longest pause between two events (hooks do not split it), and the
@@ -51,7 +51,7 @@ class EventPause(unittest.TestCase):
             event = "PLAYER_LOGOUT"; driver.scripts.OnEvent()
         """)
         self.assertEqual(lua.eval("db.seconds"), 100)
-        self.assertAlmostEqual(lua.eval("db.cpu.FostercareTweaks"), 1.5)
+        self.assertAlmostEqual(lua.eval("db.cpu.Tweaks"), 1.5)
         self.assertAlmostEqual(lua.eval("db.cpu['Game UI and XML']"), 0.05)
         self.assertEqual(lua.eval("db.xml.scripts"), 1) # the target frame's OnEvent
         self.assertEqual(lua.eval("db.xml.error"), None)

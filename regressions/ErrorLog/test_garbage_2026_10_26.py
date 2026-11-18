@@ -103,7 +103,7 @@ class GarbagePerAddon(unittest.TestCase):
         self.assertIn("worst one held a garbage collection", text)
 
     def test_handlers_ranked_by_new_memory(self):
-        # 2026-11-14: 18 of 19 collections started in FostercareTweaks at
+        # 2026-11-14: 18 of 19 collections started in Tweaks at
         # 4.6 KB/s, and the report could not say which of its handlers.
         text = self.report()
         self.assertIn("The handlers that make the most:", text)

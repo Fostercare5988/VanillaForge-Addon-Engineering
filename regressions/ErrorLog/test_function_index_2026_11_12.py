@@ -1,7 +1,7 @@
 """!ErrorLog leaves the game's frame lookup alone (1.8.1, 2026-11-12).
 
 1.8.0 replaced the __index function every frame shares, to time XML scripts.
-In game, with the profiler on, FostercareTweaks could not be clicked, Mailroom
+In game, with the profiler on, Tweaks could not be clicked, Mailroom
 never appeared and AutoLazy did nothing, with no Lua error; /lag off fixed all
 three at once. The profiler measured 0 XML scripts on this client anyway.
 

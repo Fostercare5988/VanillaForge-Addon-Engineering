@@ -42,7 +42,7 @@ class NativeAuraTimers(unittest.TestCase):
             sets = 0
         ''')
         lua.execute('''
-            NP = FostercareNameplates.Nameplates
+            NP = Nameplates.Nameplates
             NP.settings.own, NP.settings.cc, NP.settings.buffs, NP.settings.auraSize, NP.settings.auraCount = false, true, false, 20, 3
             plate = nativePlate("0xF1", "nameplate1")
             NP:Auras(plate, "0xF1")

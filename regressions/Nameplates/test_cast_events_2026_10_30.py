@@ -1,4 +1,4 @@
-"""FostercareNameplates enemy cooldowns hear NamPower's cast events (2026-10-30).
+"""Nameplates enemy cooldowns hear NamPower's cast events (2026-10-30).
 
 SuperWoW's UNIT_CASTEVENT also fires on every melee swing near the player; the
 cooldown row only needs finished casts and channel starts. Fails on 1.4.4.

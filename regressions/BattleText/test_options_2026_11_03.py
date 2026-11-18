@@ -1,8 +1,8 @@
-"""AddOn Options, 2026-11-03 (FostercareBattleText 2.1.0).
+"""AddOn Options, 2026-11-03 (BattleText 2.1.0).
 
 The settings window keeps its two columns; every page is also a category under
-FostercareBattleText in Game Menu > AddOn Options, one column at full size
-(ForgeLayout.lua, as FostercareTweaks 1.15). Pattern: FostercareTweaks
+BattleText in Game Menu > AddOn Options, one column at full size
+(ForgeLayout.lua, as Tweaks 1.15). Pattern: Tweaks
 test_settings_2026_10_25.py, SettingsWindow. Looks stay in-game checks.
 """
 import unittest
@@ -23,9 +23,9 @@ def host(lua, index):
 class AddOnOptions(unittest.TestCase):
     def test_every_page_is_a_category_under_the_addon(self):
         lua = m.runtime()
-        self.assertEqual(lua.eval("categories[1].name"), "FostercareBattleText")
+        self.assertEqual(lua.eval("categories[1].name"), "BattleText")
         self.assertEqual([lua.eval(f"categories[{i}].name") for i in range(2, 10)], LABELS)
-        self.assertTrue(all(lua.eval(f"categories[{i}].parent") == "FostercareBattleText" for i in range(2, 10)))
+        self.assertTrue(all(lua.eval(f"categories[{i}].parent") == "BattleText" for i in range(2, 10)))
         self.assertIsNone(lua.eval("categories[10]"))
 
     def test_a_category_borrows_its_page_and_gives_it_back(self):
@@ -100,7 +100,7 @@ class AddOnOptions(unittest.TestCase):
 
     def test_the_entry_opens_the_window(self):
         lua = m.runtime()
-        lua.execute("FostercareBattleTextOptionsOpen.scripts.OnClick()")
+        lua.execute("BattleTextOptionsOpen.scripts.OnClick()")
         self.assertTrue(lua.eval("FBT_Options:IsShown()"))
 
 

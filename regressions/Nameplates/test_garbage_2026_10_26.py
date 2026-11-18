@@ -1,4 +1,4 @@
-"""FostercareNameplates garbage on the per-frame and event paths (audit 2026-10-26).
+"""Nameplates garbage on the per-frame and event paths (audit 2026-10-26).
 
 Lupa is Lua 5.1. In the client's Lua 5.0 every call of a function with `...` in
 its parameter list builds an `arg` table (ClassicAPI docs, GetAuraSlots fill
@@ -53,8 +53,8 @@ def load(lua50):
         if lua50:
             source = VARARG.sub(lambda m: m.group(1) + ' local __arg = { n = select("#", ...), ... };', source)
         return source
-    wowkit.load_addon(lua, fnp_env.ROOT, "FostercareNameplates",
-                      "FostercareNameplates_Config = { overwrites = { nameplate_health_target = 0 } }",
+    wowkit.load_addon(lua, fnp_env.ROOT, "Nameplates",
+                      "Nameplates_Config = { overwrites = { nameplate_health_target = 0 } }",
                       rewrite=arg_tables)
     lua.execute('fire("VARIABLES_LOADED")')
     lua.execute(SCENE)
@@ -92,10 +92,10 @@ class EventWork(unittest.TestCase):
         self.assertIsNotNone(self.lua.eval('calls.UnitCastingInfo'))
 
     def test_other_tokens_of_the_unit_are_skipped(self):
-        self.lua.execute('FostercareNameplates.Nameplates.pending = {}; fire("UNIT_HEALTH", "target")')
-        self.assertIsNone(self.lua.eval('next(FostercareNameplates.Nameplates.pending)'))
+        self.lua.execute('Nameplates.Nameplates.pending = {}; fire("UNIT_HEALTH", "target")')
+        self.assertIsNone(self.lua.eval('next(Nameplates.Nameplates.pending)'))
         self.lua.execute('fire("UNIT_HEALTH", "nameplate1")')
-        self.assertIsNotNone(self.lua.eval('next(FostercareNameplates.Nameplates.pending)'))
+        self.assertIsNotNone(self.lua.eval('next(Nameplates.Nameplates.pending)'))
 
 
 if __name__ == "__main__":

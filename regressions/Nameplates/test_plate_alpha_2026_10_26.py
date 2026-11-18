@@ -1,4 +1,4 @@
-"""FostercareNameplates plate alpha under ClassicAPI 1.17.8 (2026-10-26).
+"""Nameplates plate alpha under ClassicAPI 1.17.8 (2026-10-26).
 
 1.17.8 makes GetAlpha on a default plate return the drawn byte (n/255), and the
 nameplateSelectedAlpha / nameplateNotSelectedAlpha CVars replace a plate write
@@ -21,7 +21,7 @@ PLATE = '''
         elseif byte == 127 then byte = math.floor(cvars.notSelected * 255 + 0.5) end
         self.alpha = byte / 255
     end
-    function fade(key) FostercareNameplates.SetOverride(key, 1); FostercareNameplates.Nameplates:ApplyConfiguration() end
+    function fade(key) Nameplates.SetOverride(key, 1); Nameplates.Nameplates:ApplyConfiguration() end
 '''
 
 

@@ -1,6 +1,6 @@
-"""FostercareBattleText 2.0.0, 2026-11-03: the rename and the rewritten paths.
+"""BattleText 2.0.0, 2026-11-03: the rename and the rewritten paths.
 
-MSBT 1.2.2 became FostercareBattleText: one namespace (FostercareBattleText,
+MSBT 1.2.2 became BattleText: one namespace (BattleText,
 FBT in the files) instead of MikSBT, MikCEH, MikTRO, MikSBTOpt and
 MSBT_REQUIREMENTS_MET; frames made in Lua instead of two XML files; honor and
 skill lines matched by patterns built from their GlobalStrings; one scroll
@@ -30,20 +30,20 @@ class Namespace(unittest.TestCase):
         for name in ("MikSBT", "MikCEH", "MikTRO", "MikSBTOpt", "MSBT_REQUIREMENTS_MET",
                      "MCEHEventFrame", "MSBTEventFrame", "MSBTFrameIncoming"):
             self.assertIsNone(lua.eval(f"rawget(_G, '{name}')"), name)
-        self.assertEqual(lua.eval("FostercareBattleText.DisplayMessage ~= nil"), True)
-        self.assertEqual(lua.eval("type(FostercareBattleTextDB.Profiles.Default)"), "table")
+        self.assertEqual(lua.eval("BattleText.DisplayMessage ~= nil"), True)
+        self.assertEqual(lua.eval("type(BattleTextDB.Profiles.Default)"), "table")
 
     def test_without_classicapi_nothing_loads(self):
         lua = m.wowkit.runtime()
         lua.execute(m.BOOT)
         lua.execute("CLASSIC_API_VERSION = nil")
         load = lua.eval('''function(source, name)
-          local chunk = assert(loadstring(source, "@" .. name)); chunk("FostercareBattleText", NS)
+          local chunk = assert(loadstring(source, "@" .. name)); chunk("BattleText", NS)
         end''')
         lua.execute("NS = {}")
         for name in m.toc_lua_files():
             load(m.wowkit.lua50((m.ROOT / name).read_text("utf-8-sig")), name)
-        self.assertIsNone(lua.eval("FostercareBattleText"))
+        self.assertIsNone(lua.eval("BattleText"))
         self.assertIsNone(lua.eval("NS.Combat"))
         self.assertIn("ClassicAPI", lua.eval("chat[1]"))
 
@@ -68,16 +68,16 @@ class ChatLines(unittest.TestCase):
 class Slash(unittest.TestCase):
     def test_fbt_and_the_old_msbt_command(self):
         lua = m.runtime()
-        self.assertEqual(lua.eval("SLASH_FOSTERCAREBATTLETEXT1"), "/fbt")
-        self.assertEqual(lua.eval("SLASH_FOSTERCAREBATTLETEXT2"), "/msbt")
-        lua.execute('SlashCmdList.FOSTERCAREBATTLETEXT("")')
+        self.assertEqual(lua.eval("SLASH_BATTLETEXT1"), "/fbt")
+        self.assertEqual(lua.eval("SLASH_BATTLETEXT2"), "/msbt")
+        lua.execute('SlashCmdList.BATTLETEXT("")')
         self.assertTrue(lua.eval("FBT_Options:IsShown()"))
-        lua.execute('SlashCmdList.FOSTERCAREBATTLETEXT("disable")')
-        self.assertTrue(lua.eval("FostercareBattleTextDB.UserDisabled"))
+        lua.execute('SlashCmdList.BATTLETEXT("disable")')
+        self.assertTrue(lua.eval("BattleTextDB.UserDisabled"))
         self.assertEqual(lua.eval("cvars.CombatDamage"), "1")
         self.assertEqual(lua.eval("next(FBT.Combat.frame.events)"), None)
-        lua.execute('SlashCmdList.FOSTERCAREBATTLETEXT("ENABLE")')
-        self.assertFalse(lua.eval("FostercareBattleTextDB.UserDisabled"))
+        lua.execute('SlashCmdList.BATTLETEXT("ENABLE")')
+        self.assertFalse(lua.eval("BattleTextDB.UserDisabled"))
         self.assertEqual(lua.eval("cvars.CombatDamage"), "0")
 
 

@@ -1,7 +1,7 @@
-"""FostercareNameplates audit, 2026-11-13.
+"""Nameplates audit, 2026-11-13.
 
 Each class names what the old code did. They fail on 1.7.1 (`0c24a6e`):
-`tools/run_suite.py FostercareNameplates test_audit_2026_11_13.py --old 0c24a6e`.
+`tools/run_suite.py Nameplates test_audit_2026_11_13.py --old 0c24a6e`.
 """
 import unittest
 from fnp_env import load
@@ -44,7 +44,7 @@ class ModuleStart(unittest.TestCase):
         """The cooldowns read NamPower's spell records and events; the guard
         checked only ClassicAPI and SuperWoW."""
         lua = load(prelude="GetNampowerVersion = nil")
-        self.assertIsNone(lua.eval("FostercareNameplates"))
+        self.assertIsNone(lua.eval("Nameplates"))
         self.assertIn("NamPower", lua.eval('table.concat(chat, "\\n")'))
 
 
@@ -54,7 +54,7 @@ class SavedKeys(unittest.TestCase):
         lua = load('''{ nameplatesEnabled = 1, ["Nameplate Castbar"] = 1, ["Old Feature"] = 1,
             nameplate_layout_version = 1,
             overwrites = { nameplate_scale = 0.9, nameplate_old = 1, nameplate_uninterruptible = 0 } }''')
-        config = "FostercareNameplates_Config"
+        config = "Nameplates_Config"
         self.assertIsNone(lua.eval(config + '["Old Feature"]'))
         self.assertIsNone(lua.eval(config + ".nameplate_layout_version"))
         self.assertIsNone(lua.eval(config + ".overwrites.nameplate_old"))
@@ -206,11 +206,11 @@ class CooldownFrames(unittest.TestCase):
         ''')
         lua.execute('''
             plate = nativePlate("0xF1", "nameplate1")
-            FostercareNameplates.NameplateCooldowns.enabled = true
+            Nameplates.NameplateCooldowns.enabled = true
             GetSpellRecField = function(_, f) if f == "recoveryTime" then return 60000 elseif f == "name" then return "Blink" end return 1 end
             GetSpellIconTexture = function() return "tex" end
             UnitIsPlayer = function() return 1 end
-            FostercareNameplates.NameplateCooldowns:Observe("0xF1", 1953)
+            Nameplates.NameplateCooldowns:Observe("0xF1", 1953)
         ''')
         self.assertTrue(lua.eval("plate.fnpAuras ~= nil and plate.fnpEnemyCooldowns ~= nil"))
         self.assertEqual(lua.eval("#templates"), 0)

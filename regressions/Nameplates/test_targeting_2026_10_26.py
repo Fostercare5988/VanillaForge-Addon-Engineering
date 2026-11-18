@@ -1,4 +1,4 @@
-"""FostercareNameplates "Targeting you" label, from play on 2026-10-26.
+"""Nameplates "Targeting you" label, from play on 2026-10-26.
 
 The player's screenshot (AV, Commander Randolph): the plate said "Targeting
 you" while the target-of-target frame showed the commander on another player.

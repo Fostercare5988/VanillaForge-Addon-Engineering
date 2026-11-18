@@ -1,4 +1,4 @@
-"""FostercareNameplates, notes from play up to 2026-10-25.
+"""Nameplates, notes from play up to 2026-10-25.
 
 - "Nameplate hp blinking all the time": the health text flickered. A plate
   that got a unit was hidden and redrawn a frame later, and the font was set
@@ -40,7 +40,7 @@ class HealthTextFlicker(unittest.TestCase):
             label.GetFont = function() return STANDARD_TEXT_FONT, 8.9999, "OUTLINE" end
             sets = 0
             label.SetFont = function() sets = sets + 1 end
-            for _ = 1, 5 do FostercareNameplates.Nameplates:Health(plate, "0xF1") end
+            for _ = 1, 5 do Nameplates.Nameplates:Health(plate, "0xF1") end
         ''')
         self.assertEqual(lua.eval('sets'), 0)
 

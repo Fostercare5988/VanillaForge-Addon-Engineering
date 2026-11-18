@@ -1,4 +1,4 @@
-"""Reproductions for the 2026-11-03 audit (.private/audit-FostercareBattleText-2026-11-03.md).
+"""Reproductions for the 2026-11-03 audit (.private/audit-BattleText-2026-11-03.md).
 
 Each test states the wanted behaviour and fails on MSBT 1.2.2 (dc1d9dd).
 Lua model only (_fbt_runtime.py); not in-game proof.

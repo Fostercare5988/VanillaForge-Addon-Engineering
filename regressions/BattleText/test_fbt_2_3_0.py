@@ -1,4 +1,4 @@
-"""FostercareBattleText 2.3.0, 2026-11-13: what modern MSBT does that 2.2.0 did not.
+"""BattleText 2.3.0, 2026-11-13: what modern MSBT does that 2.2.0 did not.
 
 The engine filters the combat log (ClassicAPI's CombatLogAddFilter), so the
 nearby combat of others never reaches Lua; ticks of damage and healing over

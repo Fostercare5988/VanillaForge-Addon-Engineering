@@ -1,7 +1,7 @@
-"""FostercareNameplates settings in AddOn Options, 2026-11-03 (1.7.0).
+"""Nameplates settings in AddOn Options, 2026-11-03 (1.7.0).
 
-Like FostercareTweaks 1.15: the /fnp window keeps two columns, and each of its
-four pages is also a category under FostercareNameplates in Game Menu > AddOn
+Like Tweaks 1.15: the /fnp window keeps two columns, and each of its
+four pages is also a category under Nameplates in Game Menu > AddOn
 Options, one column at full size (ForgeLayout.lua, UI.Book). A page lives in one
 place at a time. The live preview moves with the page: top of the right column
 in the window, top of the page in AddOn Options. Fails on 1.6.0, which had one
@@ -12,7 +12,7 @@ import unittest
 import fnp_env
 
 LABELS = ["General", "Text & auras", "Target", "Casts"]
-OPEN = "FostercareNameplatesSettingsGUI:Show(); FostercareNameplatesSettingsGUI.scripts.OnShow()"
+OPEN = "NameplatesSettingsGUI:Show(); NameplatesSettingsGUI.scripts.OnShow()"
 
 # The 1.6.0 window: page, x, y of every named control (switches 2 below their line,
 # sliders at their bar). The layout keeps them within a few pixels.
@@ -65,16 +65,16 @@ class AddOnOptions(unittest.TestCase):
 
     def test_every_page_is_a_category_under_the_addon(self):
         lua = self.lua
-        self.assertEqual(lua.eval("categories[1].name"), "FostercareNameplates")
+        self.assertEqual(lua.eval("categories[1].name"), "Nameplates")
         self.assertIsNone(lua.eval("categories[1].parent"))
         self.assertEqual([lua.eval("categories[%d].name" % i) for i in range(2, 6)], LABELS)
-        self.assertTrue(all(lua.eval("categories[%d].parent" % i) == "FostercareNameplates" for i in range(2, 6)))
+        self.assertTrue(all(lua.eval("categories[%d].parent" % i) == "Nameplates" for i in range(2, 6)))
 
     def test_a_category_borrows_its_page_and_gives_it_back(self):
         lua = self.lua
         lua.execute(OPEN)
         self.host(2)                                                    # Text & auras
-        self.assertFalse(lua.eval("FostercareNameplatesSettingsGUI:IsShown()"))
+        self.assertFalse(lua.eval("NameplatesSettingsGUI:IsShown()"))
         self.assertTrue(lua.eval("FNPOptPage2.parent == host.holder and FNPOptPage2:IsShown()"))
         self.assertEqual(lua.eval("host.holder.width"), 360)
         # One column: the right column's auras move under the left column's marks.
@@ -82,9 +82,9 @@ class AddOnOptions(unittest.TestCase):
         self.assertLess(lua.eval("FNPOpt_nameplate_own_auras.points[1][5]"),
                         lua.eval("FNPOpt_nameplate_raidmark_size.points[1][5]"))
         lua.execute("FNPOpt_nameplate_level:SetChecked(false); FNPOpt_nameplate_level.scripts.OnClick()")
-        self.assertEqual(lua.eval("FostercareNameplates_Config.overwrites.nameplate_level"), 0)   # it works there
+        self.assertEqual(lua.eval("Nameplates_Config.overwrites.nameplate_level"), 0)   # it works there
         lua.execute("host.scripts.OnHide(host)")
-        self.assertTrue(lua.eval("FNPOptPage2.parent == FostercareNameplatesSettingsGUI"))
+        self.assertTrue(lua.eval("FNPOptPage2.parent == NameplatesSettingsGUI"))
         self.assertFalse(lua.eval("FNPOptPage2:IsShown()"))
         lua.execute(OPEN)
         self.assertTrue(lua.eval("FNPOptPage2:IsShown()"))                # back in the window, same tab
@@ -144,14 +144,14 @@ class AddOnOptions(unittest.TestCase):
 
     def test_the_window_closes_addon_options(self):
         lua = self.lua
-        lua.execute("InterfaceOptionsFrame.shown = true; FostercareNameplatesSettingsGUI:Hide(); SlashCmdList.FOSTERCARENAMEPLATES()")
+        lua.execute("InterfaceOptionsFrame.shown = true; NameplatesSettingsGUI:Hide(); SlashCmdList.NAMEPLATES()")
         self.assertFalse(lua.eval("InterfaceOptionsFrame:IsShown()"))
-        self.assertTrue(lua.eval("FostercareNameplatesSettingsGUI:IsShown()"))
+        self.assertTrue(lua.eval("NameplatesSettingsGUI:IsShown()"))
 
     def test_the_entry_opens_the_window(self):
         lua = self.lua
-        lua.execute("GameMenuFrame.shown = true; FostercareNameplatesSettingsGUI:Hide(); FostercareNameplatesOptionsOpen.scripts.OnClick(FostercareNameplatesOptionsOpen)")
-        self.assertTrue(lua.eval("FostercareNameplatesSettingsGUI:IsShown()"))
+        lua.execute("GameMenuFrame.shown = true; NameplatesSettingsGUI:Hide(); NameplatesOptionsOpen.scripts.OnClick(NameplatesOptionsOpen)")
+        self.assertTrue(lua.eval("NameplatesSettingsGUI:IsShown()"))
         self.assertFalse(lua.eval("GameMenuFrame:IsShown()"))
 
 

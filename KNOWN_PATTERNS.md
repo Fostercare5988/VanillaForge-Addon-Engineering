@@ -1112,19 +1112,19 @@ actual client timing.
 **Problem:** In the client's Lua 5.0, every call of a function with `...` in its
 parameter list builds an `arg` table (ClassicAPI docs, `GetAuraSlots` fill form).
 A generic `function(...)` wrapper on OnUpdate, OnEvent or a hooked script does this
-on every frame or event. FostercareNameplates' plate OnUpdate wrapper made about
+on every frame or event. Nameplates' plate OnUpdate wrapper made about
 320 KB/s with 40 plates (2026-10-26). Lupa runs Lua 5.1, which does not show it.
 
 **Preferred direction:** Give hot handlers and helpers fixed parameters
 (`function(a1, a2, ..., a10)`) and forward them explicitly. To measure in lupa, inject
 `local __arg = { n = select("#", ...), ... }` into each vararg function in memory
-(`regressions/FostercareNameplates/test_garbage_2026_10_26.py`).
+(`regressions/Nameplates/test_garbage_2026_10_26.py`).
 
 ### KP-59 --- Events This Client Does Not Have
 
 **Problem:** Modern event names (`UNIT_TARGET`, `UI_SCALE_CHANGED`) can be registered
 without an error and then never fire, so code waiting for them keeps a stale state.
-FostercareNameplates' "Targeting you" label waited for `UNIT_TARGET` from its first
+Nameplates' "Targeting you" label waited for `UNIT_TARGET` from its first
 release (2026-10-26).
 
 **Preferred direction:** Before relying on an event, find it in the extracted FrameXML
@@ -1189,7 +1189,7 @@ anchors under every combination of the options.
 again with `error(err)`, never reaches the error handler with its stack. `!ErrorLog` shows
 nothing, or a line in the catching file instead of the failing one. GearRack's timer owner
 printed every timer error to chat (2026-11-08); Tweaks' `WithButton` and
-FostercareNameplates' module start do the same kind.
+Nameplates' module start do the same kind.
 ClassicAPI's own `C_Timer` is one too: it runs each callback in `pcall` and drops the
 error (API.md, C_Timer.After), so a broken timer callback never reaches `!ErrorLog`.
 

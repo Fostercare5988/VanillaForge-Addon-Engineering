@@ -115,11 +115,11 @@ class Reputation(unittest.TestCase):  # P3-4
 class RetiredSettings(unittest.TestCase):  # 2.0.0: the 1.x migrations are gone with the data they moved
     def test_never_shown_events_are_cleared_and_defaults_filled(self):
         lua = m.runtime(saved='''
-        FostercareBattleTextDB = {UserDisabled=false, CurrentProfile="Default", Profiles={Default={
+        BattleTextDB = {UserDisabled=false, CurrentProfile="Default", Profiles={Default={
           EventSettings={MSBT_EVENTTYPE_INCOMING_RESIST={Show=true}, MSBT_EVENTTYPE_OUTGOING_REFLECT={Show=true}},
           Suppressions={MSBT_SUPPRESSION_ROGUE_VIGOR={Enabled=false, SearchPattern="Vigor"}}}}}
         ''')
-        p = lua.globals().FostercareBattleTextDB.Profiles.Default
+        p = lua.globals().BattleTextDB.Profiles.Default
         self.assertIsNone(p.EventSettings.MSBT_EVENTTYPE_INCOMING_RESIST)
         self.assertIsNone(p.EventSettings.MSBT_EVENTTYPE_OUTGOING_REFLECT)
         self.assertIsNotNone(p.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE)
@@ -303,9 +303,9 @@ class SettingsWindow(unittest.TestCase):  # item 2: ForgeUI settings write the p
         assert(p.DisplaySettings.Incoming.AnimationStyle == 1)
 
         FBT.Options.ShowTab(8); FBT_ProfileName:SetText("Raid"); FBT_ProfileCreate:Click()
-        assert(FostercareBattleTextDB.Profiles.Raid and FostercareBattleTextCharDB.CurrentProfile == "Default")
+        assert(BattleTextDB.Profiles.Raid and BattleTextCharDB.CurrentProfile == "Default")
         for i = 1, 10 do local row = getglobal("FBT_ProfileRow" .. i); if row.name == "Raid" then getglobal("FBT_ProfileRow" .. i .. "Delete"):Click() end end
-        assert(FostercareBattleTextDB.Profiles.Raid == nil)
+        assert(BattleTextDB.Profiles.Raid == nil)
         ''')
 
 

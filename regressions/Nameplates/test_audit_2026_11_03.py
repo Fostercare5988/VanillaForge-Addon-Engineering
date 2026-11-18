@@ -1,4 +1,4 @@
-"""FostercareNameplates audit, 2026-11-03.
+"""Nameplates audit, 2026-11-03.
 
 With plate details turned off, every settings change (a castbar slider, for
 example) ran the details shutdown again on every plate: it cleared the plate,
@@ -15,8 +15,8 @@ class DisabledDetails(unittest.TestCase):
         lua.execute('''
             plate = nativePlate("0xF1", "nameplate1")
             plate:SetAlpha(0.5)
-            FostercareNameplates.Nameplates:ApplyConfiguration()
-            FostercareNameplates.Nameplates:ApplyConfiguration(true)
+            Nameplates.Nameplates:ApplyConfiguration()
+            Nameplates.Nameplates:ApplyConfiguration(true)
         ''')
         self.assertEqual(lua.eval("plate:GetAlpha()"), 0.5)
 
@@ -25,11 +25,11 @@ class DisabledDetails(unittest.TestCase):
         lua.execute('''
             plate = nativePlate("0xF1", "nameplate1")
             plate:SetAlpha(0.3)
-            FostercareNameplates_Config["Nameplate Details"] = 0
-            FostercareNameplates.Nameplates:ApplyConfiguration()
+            Nameplates_Config["Nameplate Details"] = 0
+            Nameplates.Nameplates:ApplyConfiguration()
         ''')
         self.assertEqual(lua.eval("plate:GetAlpha()"), 1)
-        lua.execute('plate:SetAlpha(0.5); FostercareNameplates.Nameplates:ApplyConfiguration()')
+        lua.execute('plate:SetAlpha(0.5); Nameplates.Nameplates:ApplyConfiguration()')
         self.assertEqual(lua.eval("plate:GetAlpha()"), 0.5)
 
 
@@ -75,7 +75,7 @@ class HealthText(unittest.TestCase):
         lua.execute('''
             plate = nativePlate("0xF1", "nameplate1")
             calls = {}
-            for _ = 1, 5 do FostercareNameplates.Nameplates:Health(plate, "0xF1") end
+            for _ = 1, 5 do Nameplates.Nameplates:Health(plate, "0xF1") end
         ''')
         self.assertIsNone(lua.eval("calls.Abbreviate"))
         self.assertEqual(lua.eval("plate.fnpHealth.fnpText"), "50")
@@ -100,15 +100,15 @@ class RetiredOptions(unittest.TestCase):
         lua = load('{ overwrites = { nameplate_uninterruptible = 0 } }', self.PRELUDE)
         lua.execute('plate = nativePlate("0xF1", "nameplate1"); fire("UNIT_SPELLCAST_START", "nameplate1")')
         self.assertEqual(lua.eval("plate.fnpCastbar.red"), 0.65)
-        self.assertIsNone(lua.eval("FostercareNameplates_Config.overwrites.nameplate_uninterruptible"))
+        self.assertIsNone(lua.eval("Nameplates_Config.overwrites.nameplate_uninterruptible"))
         self.assertIsNone(lua.eval('rawget(_G, "FNPOpt_nameplate_uninterruptible")'))
 
     def test_slash_command_toggles_the_window(self):
         lua = load()
-        lua.execute("FostercareNameplatesSettingsGUI:Hide(); SlashCmdList.FOSTERCARENAMEPLATES()")
-        self.assertTrue(lua.eval("FostercareNameplatesSettingsGUI:IsShown()"))
-        lua.execute("SlashCmdList.FOSTERCARENAMEPLATES()")
-        self.assertFalse(lua.eval("FostercareNameplatesSettingsGUI:IsShown()"))
+        lua.execute("NameplatesSettingsGUI:Hide(); SlashCmdList.NAMEPLATES()")
+        self.assertTrue(lua.eval("NameplatesSettingsGUI:IsShown()"))
+        lua.execute("SlashCmdList.NAMEPLATES()")
+        self.assertFalse(lua.eval("NameplatesSettingsGUI:IsShown()"))
 
 
 if __name__ == "__main__":

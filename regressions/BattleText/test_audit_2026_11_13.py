@@ -1,4 +1,4 @@
-"""Reproductions for the 2026-11-13 audit (.private/audit-FostercareBattleText-2026-11-13.md).
+"""Reproductions for the 2026-11-13 audit (.private/audit-BattleText-2026-11-13.md).
 
 Each bug test states the wanted behaviour and fails on 2.1.0 (44b0d6e).
 Lua model only (_fbt_runtime.py); not in-game proof.
@@ -8,7 +8,7 @@ import unittest
 import _fbt_runtime as m
 
 TWO_PROFILES = '''
-FostercareBattleTextDB = {UserDisabled = false, Profiles = {Default = {}, Raid = {}}}
+BattleTextDB = {UserDisabled = false, Profiles = {Default = {}, Raid = {}}}
 '''
 
 
@@ -31,22 +31,22 @@ class ProfilePerCharacter(unittest.TestCase):  # P2-1
     # the choice per character (MSBTProfiles_SavedVarsPerChar).
 
     def test_each_character_uses_its_own_profile(self):
-        lua = m.runtime(TWO_PROFILES + 'FostercareBattleTextCharDB = {CurrentProfile = "Raid"}')
-        self.assertEqual(lua.eval("FBT.CurrentProfile == FostercareBattleTextDB.Profiles.Raid"), True)
+        lua = m.runtime(TWO_PROFILES + 'BattleTextCharDB = {CurrentProfile = "Raid"}')
+        self.assertEqual(lua.eval("FBT.CurrentProfile == BattleTextDB.Profiles.Raid"), True)
         lua.execute('FBT.SelectProfile("Default")')
-        self.assertEqual(lua.eval("FostercareBattleTextCharDB.CurrentProfile"), "Default")
+        self.assertEqual(lua.eval("BattleTextCharDB.CurrentProfile"), "Default")
         # Nothing account-wide changes, so another character keeps its choice.
-        self.assertIsNone(lua.eval("FostercareBattleTextDB.CurrentProfile"))
+        self.assertIsNone(lua.eval("BattleTextDB.CurrentProfile"))
 
     def test_the_old_account_choice_becomes_this_characters(self):
-        lua = m.runtime(TWO_PROFILES + 'FostercareBattleTextDB.CurrentProfile = "Raid"')
-        self.assertEqual(lua.eval("FostercareBattleTextCharDB.CurrentProfile"), "Raid")
-        self.assertEqual(lua.eval("FBT.CurrentProfile == FostercareBattleTextDB.Profiles.Raid"), True)
-        self.assertIsNone(lua.eval("FostercareBattleTextDB.CurrentProfile"))
+        lua = m.runtime(TWO_PROFILES + 'BattleTextDB.CurrentProfile = "Raid"')
+        self.assertEqual(lua.eval("BattleTextCharDB.CurrentProfile"), "Raid")
+        self.assertEqual(lua.eval("FBT.CurrentProfile == BattleTextDB.Profiles.Raid"), True)
+        self.assertIsNone(lua.eval("BattleTextDB.CurrentProfile"))
 
     def test_a_deleted_profile_falls_back_to_default(self):
-        lua = m.runtime(TWO_PROFILES + 'FostercareBattleTextCharDB = {CurrentProfile = "Gone"}')
-        self.assertEqual(lua.eval("FostercareBattleTextCharDB.CurrentProfile"), "Default")
+        lua = m.runtime(TWO_PROFILES + 'BattleTextCharDB = {CurrentProfile = "Gone"}')
+        self.assertEqual(lua.eval("BattleTextCharDB.CurrentProfile"), "Default")
 
 
 class Overheal(unittest.TestCase):  # P2-2
@@ -103,22 +103,22 @@ class SavedKeySweep(unittest.TestCase):  # P3-1, KNOWN_PATTERNS KP-64
 
     def test_keys_no_default_owns_are_cleared(self):
         lua = m.runtime('''
-        FostercareBattleTextDB = {UserDisabled = false, Junk = 1, Profiles = {Default = {
+        BattleTextDB = {UserDisabled = false, Junk = 1, Profiles = {Default = {
           OldSwitch = true,
           EventSettings = {MSBT_EVENTTYPE_INCOMING_RESIST = {Show = true}, MSBT_EVENTTYPE_OLD = {Show = true}},
           DisplaySettings = {Old = {Show = true}},
           Triggers = {MSBT_TRIGGER_CUSTOM1 = {EventSettings = {Show = false}, TriggerSettings = {TriggerType = 1}, Extra = 1}},
           Suppressions = {MSBT_SUPPRESSION_CUSTOM1 = {Enabled = true, SearchPattern = "Renew"}},
         }}}''')
-        p = lua.eval("FostercareBattleTextDB.Profiles.Default")
-        self.assertIsNone(lua.eval("FostercareBattleTextDB.Junk"))
+        p = lua.eval("BattleTextDB.Profiles.Default")
+        self.assertIsNone(lua.eval("BattleTextDB.Junk"))
         self.assertIsNone(p.OldSwitch)
         self.assertIsNone(p.EventSettings.MSBT_EVENTTYPE_INCOMING_RESIST)
         self.assertIsNone(p.EventSettings.MSBT_EVENTTYPE_OLD)
         self.assertIsNone(p.DisplaySettings.Old)
         self.assertEqual(p.Triggers.MSBT_TRIGGER_CUSTOM1.Extra, 1)
         self.assertEqual(p.Suppressions.MSBT_SUPPRESSION_CUSTOM1.SearchPattern, "Renew")
-        self.assertEqual(lua.eval("FostercareBattleTextDB.UserDisabled"), False)
+        self.assertEqual(lua.eval("BattleTextDB.UserDisabled"), False)
         self.assertEqual(p.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE.Show, True)
 
 
@@ -128,7 +128,7 @@ class FontsByName(unittest.TestCase):  # P3-2
     # Simhei (a 9.7 MB Chinese font no profile used) has left the list.
 
     SAVED = '''
-    FostercareBattleTextDB = {UserDisabled = false, Profiles = {Default = {
+    BattleTextDB = {UserDisabled = false, Profiles = {Default = {
       MasterFontSettings = {Normal = {FontIndex = 37, OutlineIndex = 2, FontSize = 20},
                             Crit = {FontIndex = 40, OutlineIndex = 2, FontSize = 26}},
       BlizzardFontSettings = {Normal = {FontIndex = 6}},
@@ -138,7 +138,7 @@ class FontsByName(unittest.TestCase):  # P3-2
 
     def test_saved_font_places_become_names(self):
         lua = m.runtime(self.SAVED)
-        p = lua.eval("FostercareBattleTextDB.Profiles.Default")
+        p = lua.eval("BattleTextDB.Profiles.Default")
         self.assertEqual(p.MasterFontSettings.Normal.FontName, "Inter Bold")
         self.assertEqual(p.MasterFontSettings.Crit.FontName, "Roboto Mono")
         self.assertEqual(p.BlizzardFontSettings.Normal.FontName, "Friz")

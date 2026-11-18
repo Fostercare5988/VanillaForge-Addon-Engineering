@@ -52,10 +52,10 @@ class DisabledGameDamage(unittest.TestCase):  # F3
         FBT.Options.Toggle(); FBT.Options.Toggle()
         assert(cvars.CombatDamage=="1", "opening settings hid native damage")
         assert(FBT.CurrentProfile.ShowGameDamage==false, "saved preference changed")
-        FBT.Options.ShowTab(1); FBT_Enabled:Click(); assert(not FostercareBattleTextDB.UserDisabled and cvars.CombatDamage=="0")
+        FBT.Options.ShowTab(1); FBT_Enabled:Click(); assert(not BattleTextDB.UserDisabled and cvars.CombatDamage=="0")
         FBT_ShowGameDamage:Click(); assert(cvars.CombatDamage=="1")
         FBT_ShowGameDamage:Click(); assert(cvars.CombatDamage=="0")
-        FBT_Enabled:Click(); assert(FostercareBattleTextDB.UserDisabled and cvars.CombatDamage=="1")
+        FBT_Enabled:Click(); assert(BattleTextDB.UserDisabled and cvars.CombatDamage=="1")
         ''')
 
 
@@ -65,7 +65,7 @@ class PickerProfileOwner(unittest.TestCase):  # F4
         l.execute('''
         FBT.CreateProfile("Second")
         first=FBT.CurrentProfile.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE.FontSettings.Color; first.r,first.g,first.b=0.1,0.2,0.3
-        second=FostercareBattleTextDB.Profiles.Second.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE.FontSettings.Color; second.r,second.g,second.b=0.7,0.8,0.9
+        second=BattleTextDB.Profiles.Second.EventSettings.MSBT_EVENTTYPE_INCOMING_DAMAGE.FontSettings.Color; second.r,second.g,second.b=0.7,0.8,0.9
         FBT.Options.ShowTab(3); FBT_IncomingRow1Color:Click()
         assert(ColorPickerFrame:IsShown())
         ColorPickerFrame:SetColorRGB(0.4,0.5,0.6); assert(first.r==0.4 and second.r==0.7)
@@ -76,7 +76,7 @@ class PickerProfileOwner(unittest.TestCase):  # F4
         l.execute('''
         FBT.Options.ShowTab(8)
         for i=1,10 do local row=getglobal("FBT_ProfileRow"..i); if row.name=="Second" then getglobal("FBT_ProfileRow"..i.."Use"):Click() end end
-        assert(FostercareBattleTextCharDB.CurrentProfile=="Second")
+        assert(BattleTextCharDB.CurrentProfile=="Second")
         ''')
 
     def test_profile_load_retires_picker_and_restores_owner(self):
@@ -115,11 +115,11 @@ class PickerProfileOwner(unittest.TestCase):  # F4
 
 class ExternalColorUnits(unittest.TestCase):  # F5
     def test_public_display_takes_0_255_colors(self):
-        # FostercareBattleText.DisplayMessage, the public call, takes 0-255 channels.
+        # BattleText.DisplayMessage, the public call, takes 0-255 channels.
         l = m.runtime()
         l.execute('''
         local function find(t) for i=1,20 do local f=FBT.scrollAreas.Notification.Slots[i].FontObject; if f.text==t then return f.color end end end
-        FostercareBattleText.DisplayMessage("mid",FBT.DISPLAYTYPE_NOTIFICATION,false,0.2*255,0.5*255,0.8*255); local c=find("mid")
+        BattleText.DisplayMessage("mid",FBT.DISPLAYTYPE_NOTIFICATION,false,0.2*255,0.5*255,0.8*255); local c=find("mid")
         assert(c and math.abs(c[1]-0.2)<1e-9 and math.abs(c[2]-0.5)<1e-9 and math.abs(c[3]-0.8)<1e-9, "wrong units")
         FBT.DisplayMessage("default",FBT.DISPLAYTYPE_NOTIFICATION,false); c=find("default")
         assert(c[1]==1 and c[2]==1 and c[3]==1, "default white")

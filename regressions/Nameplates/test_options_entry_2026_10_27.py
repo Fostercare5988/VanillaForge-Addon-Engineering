@@ -1,4 +1,4 @@
-"""FostercareNameplates is listed in ClassicAPI's AddOn Options, 2026-10-27.
+"""Nameplates is listed in ClassicAPI's AddOn Options, 2026-10-27.
 
 ClassicAPI lists panels given to InterfaceOptions_AddCategory under AddOn
 Options in the game menu (docs/API.md, InterfaceOptions). The entry's button
@@ -15,16 +15,16 @@ class OptionsEntry(unittest.TestCase):
         lua = fnp_env.load()
         lua.execute(r'''
             entry = nil
-            for _, p in ipairs(categories) do if p.name == "FostercareNameplates" then entry = p end end
+            for _, p in ipairs(categories) do if p.name == "Nameplates" then entry = p end end
             hidden = {}
             InterfaceOptionsFrame = { IsShown = function() return true end, Hide = function() hidden.options = true end }
             GameMenuFrame = { IsShown = function() return true end }
             function HideUIPanel(f) if f == GameMenuFrame then hidden.menu = true end end
-            FostercareNameplatesSettingsGUI:Hide()
+            NameplatesSettingsGUI:Hide()
         ''')
         self.assertTrue(lua.eval("entry ~= nil and entry.parent == nil"))
-        lua.execute("FostercareNameplatesOptionsOpen.scripts.OnClick(FostercareNameplatesOptionsOpen)")
-        self.assertTrue(lua.eval("FostercareNameplatesSettingsGUI:IsShown()"))
+        lua.execute("NameplatesOptionsOpen.scripts.OnClick(NameplatesOptionsOpen)")
+        self.assertTrue(lua.eval("NameplatesSettingsGUI:IsShown()"))
         self.assertTrue(lua.eval("hidden.options and hidden.menu"))
 
 

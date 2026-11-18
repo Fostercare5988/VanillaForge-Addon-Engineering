@@ -31,7 +31,7 @@ end
 '''
 
 SCENE = r'''
-NP = FostercareNameplates.Nameplates
+NP = Nameplates.Nameplates
 NP.settings.own, NP.settings.cc, NP.settings.buffs = true, true, false
 local function Icon(id, shown) return { spellID = id, IsShown = function() return shown end } end
 plate = { fnpOwnTotal = 2, fnpCCID = nil, fnpAuras = { icons = { Icon(100, true), Icon(101, true), Icon(300, false) } } }

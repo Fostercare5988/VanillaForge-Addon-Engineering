@@ -88,7 +88,7 @@ LOAD = r"""
     gameHandler = function() clockv = clockv + 5; TargetFrame_Update() end
     target:SetScript("OnEvent", gameHandler)
     -- An addon follows TargetFrame_Update with a slow hook.
-    stack = "Interface\\AddOns\\FostercareTweaks\\mods\\x.lua:117: in function"
+    stack = "Interface\\AddOns\\Tweaks\\mods\\x.lua:117: in function"
     hooksecurefunc("TargetFrame_Update", function() clockv = clockv + 150 end)
     stack = "Interface\\AddOns\\!ErrorLog\\Profiler.lua:1: in function"
     event = "PLAYER_LOGIN"; driver.scripts.OnEvent()
@@ -125,7 +125,7 @@ class BlindSpots(unittest.TestCase):
         lua = load()
         lua.execute(DEATH)
         top = lua.eval("db.hitches[1].top")
-        self.assertIn("FostercareTweaks 150.0 ms over 1 calls (worst x.lua:117 hook TargetFrame_Update)", top)
+        self.assertIn("Tweaks 150.0 ms over 1 calls (worst x.lua:117 hook TargetFrame_Update)", top)
         self.assertIn("Game UI and XML 5.0 ms over 1 calls (worst TargetFrame OnEvent)", top)
         self.assertEqual(lua.eval("db.hitches[1].lua"), 155)
 
@@ -166,7 +166,7 @@ class BlindSpots(unittest.TestCase):
         lua = load()
         lua.execute(r"""
             function GetNumAddOns() return 3 end
-            local names = { "MikScrollingBattleText", "FostercareNameplates", "Bagnon" }
+            local names = { "MikScrollingBattleText", "Nameplates", "Bagnon" }
             function GetAddOnInfo(i) return names[i] end
             local function setBy(path)
                 stack = path
@@ -176,7 +176,7 @@ class BlindSpots(unittest.TestCase):
                 return f.scripts.OnEvent
             end
             msbt = setBy("...dOns\\MikScrollingBattleText\\MikCombatEventHelper.lua:536: in function `OnLoad'")
-            fnp = setBy("...stercareNameplates\\modules\\VeryLongModuleName_Plates.lua:12: in function")
+            fnp = setBy("...ameplates\\modules\\VeryLongModuleName_Plates.lua:12: in function")
             game = setBy("...ameXML\\ChatFrame.lua:40: in function")
             now = now + 10; clockv = 0; tick()
             msbt(); fnp(); game()
@@ -185,7 +185,7 @@ class BlindSpots(unittest.TestCase):
         lua.execute("ErrorLog.OpenStutters()")
         text = lua.eval("text")
         self.assertIn("MikScrollingBattleText", text)
-        self.assertIn("FostercareNameplates", text)
+        self.assertIn("Nameplates", text)
         self.assertNotIn("ameXML", text)
 
 if __name__ == "__main__":

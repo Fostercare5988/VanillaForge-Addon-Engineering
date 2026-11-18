@@ -1,19 +1,19 @@
-"""FostercareBattleText (formerly MSBT) on the shared game model (wowkit).
+"""BattleText (formerly MSBT) on the shared game model (wowkit).
 
 Loads every TOC Lua file, including the ForgeUI settings window, with mocked
 ClassicAPI globals on the kit's widgets (checked state, text, values, clicks,
 show/hide scripts). It needs no client MPQs. Not in-game proof.
 
-Requires VANILLAFORGE_ADDON_ROOT=<AddOns>/FostercareBattleText and lupa.
+Requires VANILLAFORGE_ADDON_ROOT=<AddOns>/BattleText and lupa.
 """
 from pathlib import Path
 import os
 import wowkit
 
 ROOT = Path(os.environ.get("VANILLAFORGE_ADDON_ROOT", "")).resolve()
-TOC = "FostercareBattleText.toc"
+TOC = "BattleText.toc"
 if not (ROOT / TOC).is_file():
-    raise RuntimeError("Set VANILLAFORGE_ADDON_ROOT to the FostercareBattleText folder")
+    raise RuntimeError("Set VANILLAFORGE_ADDON_ROOT to the BattleText folder")
 
 CORE_SKIP = set()
 
@@ -216,7 +216,7 @@ COMBATLOG_FILTER_ME=0x511; COMBATLOG_FILTER_MINE=0x4511; COMBATLOG_FILTER_MY_PET
 def runtime(saved=None):
     """Boot the addon like the client: TOC files, ADDON_LOADED, PEW.
 
-    saved: optional Lua source that sets FostercareBattleTextDB before ADDON_LOADED.
+    saved: optional Lua source that sets BattleTextDB before ADDON_LOADED.
     """
     lua = wowkit.runtime()
     lua.execute(BOOT)
@@ -224,16 +224,16 @@ def runtime(saved=None):
     load_file = lua.eval('''function(source, name)
       ADDON_NS = ADDON_NS or {}
       local chunk = assert(loadstring(source, "@" .. name))
-      chunk("FostercareBattleText", ADDON_NS)
+      chunk("BattleText", ADDON_NS)
     end''')
     for name in toc_lua_files():
         load_file(wowkit.lua50((ROOT / name).read_text("utf-8-sig")), name)
     # The namespace, as tests and /run see it.
-    lua.execute("FBT = FostercareBattleText")
+    lua.execute("FBT = BattleText")
     if saved is not None:
         lua.execute(saved)
     lua.execute('''
-    Fire("ADDON_LOADED","FostercareBattleText")
+    Fire("ADDON_LOADED","BattleText")
     Fire("PLAYER_ENTERING_WORLD")
     -- Record what reaches the display layer; keep the real handler reachable.
     sent={}; RealCombatEventsHandler=FBT.CombatEventsHandler
