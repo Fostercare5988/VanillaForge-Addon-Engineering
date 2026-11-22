@@ -11,7 +11,7 @@
 > - World of Warcraft 1.12.1, Build 5875, `Interface: 11200`
 > - ClassicAPI, the latest release (pinned in UPSTREAM_VERSIONS.json)
 > - SuperWoW v2.2+
-> - NamPower v4.6.2+
+> - NamPower 4.6.1 (brues branch)
 > - UnitXP SP3 v89+
 > - DXVK runtime
 > - VanillaFixes / compatible DLL loader where required
@@ -294,23 +294,13 @@ here only if it is broadly reusable.
 
 ## 6. NamPower
 
-**Baseline:** v4.6.2+\
+**Baseline:** 4.6.1 (brues branch)\
 **Role:** casting/queueing and a large native API surface.
 
 NamPower is required in the canonical environment; it becomes an addon API
 dependency only when the addon consumes its capabilities.
 
-[SOURCE-VERIFIED] The [v4.6.3 release](https://github.com/Emyrk/nampower/releases/tag/v4.6.3)
-filters invalid zero-ID dispel callbacks. Its
-[version constants](https://github.com/Emyrk/nampower/blob/fb70e44a2c9f2c8a6e97ef42ec5cac31c773ddba/nampower/main.hpp#L28-L30)
-remain `4, 6, 2`, which `GetNampowerVersion()` returns. Thus that runtime tuple
-cannot distinguish v4.6.2 from release v4.6.3. Match the official release asset
-identity in `UPSTREAM_VERSIONS.json`, then verify loading in the current session;
-do not reject the v4.6.3 binary solely for reporting `4.6.2`.
-
-The source reference `ff41d48e4b53b313e46489330ad92c0a820cabac` additionally
-contains an [unreleased null-caster crash fix](https://github.com/Emyrk/nampower/commit/ff41d48e4b53b313e46489330ad92c0a820cabac).
-Reading that source does not establish that the released DLL contains the fix.
+[SOURCE-VERIFIED] The only NamPower is the [brues branch of brues-code/nampower](https://github.com/brues-code/nampower/tree/brues), version 4.6.1 (its [version constants](https://github.com/brues-code/nampower/blob/99d8d36c75d994b879ee030e699e15ae08b94ec2/nampower/main.hpp#L28-L30), which `GetNampowerVersion()` returns). No other fork or release is used or documented here; the pinned commit is in `UPSTREAM_VERSIONS.json`.
 
 Current upstream documentation contains separate:
 
@@ -366,7 +356,7 @@ which returns:
 major, minor, patch
 ```
 
-The pinned [script reference](https://github.com/Emyrk/nampower/blob/ff41d48e4b53b313e46489330ad92c0a820cabac/SCRIPTS.md)
+The pinned [script reference](https://github.com/brues-code/nampower/blob/99d8d36c75d994b879ee030e699e15ae08b94ec2/SCRIPTS.md)
 also documents:
 
 ```lua
@@ -387,7 +377,7 @@ For event-driven addon design:
    state unless reconciliation is actually needed
 3. document which component owns the state
 
-[SOURCE-VERIFIED] NamPower's [aura-event contract](https://github.com/Emyrk/nampower/blob/ff41d48e4b53b313e46489330ad92c0a820cabac/EVENTS.md#buffdebuff-events)
+[SOURCE-VERIFIED] NamPower's [aura-event contract](https://github.com/brues-code/nampower/blob/99d8d36c75d994b879ee030e699e15ae08b94ec2/EVENTS.md#buffdebuff-events)
 uses `arg7` as state: `0` added, `1` removed, `2` modified. A `BUFF_REMOVED_*`
 or `DEBUFF_REMOVED_*` event with state `2` means a stack decrease, not aura
 expiration. `arg2` is the 1-based visible Lua slot (or `0` for a hidden aura);

@@ -42,23 +42,23 @@
     }
   },
   "nampower": {
-    "minimum_version": "4.6.2",
-    "repository": "Emyrk/nampower",
-    "reference_commit": "ff41d48e4b53b313e46489330ad92c0a820cabac",
+    "minimum_version": "4.6.1",
+    "repository": "brues-code/nampower",
+    "branch": "brues",
+    "reference_commit": "99d8d36c75d994b879ee030e699e15ae08b94ec2",
     "file_shas": {
-      "README.md": "9d5d18268ebe7bd552069206d343ffc993bc7bdf",
+      "README.md": "ac68a5b0a51952a512c3703feaf0fc8b21845779",
       "SCRIPTS.md": "ca4b56093a9cbeafc64eeff67d9ef142e8922966",
       "EVENTS.md": "86377537ae978af67d8a90ead3cc6d0496b945cd",
       "DBC_FIELDS.md": "56056436d01626b17c0f193256d5990152d06ab9",
       "UNIT_FIELDS.md": "bf4f91b3bc0e93e1761a731357549729b44e5a76",
-      "nampower/main.hpp": "812a2700347d3c043c592828e6e04f7c04017372",
+      "nampower/main.hpp": "7853765ea122762f18188fa2f84504cf59fa44fd",
       "nampower/misc_scripts.cpp": "a70ccf42e5102f4c6e61e8455481dc322dbb2a06",
-      "nampower/spellevents.cpp": "a900881150988cd97717176ad18bfcb59e4eae66"
+      "nampower/spellevents.cpp": "e4b8085414a63e948006ef7248ceb70b9e0595c7"
     },
-    "minimum_version_scope": "framework environment, not every addon dependency guard; newer stable release provenance does not raise this floor",
-    "reference_version": "4.6.3",
-    "runtime_version": "4.6.2",
-    "reference_commit_scope": "current source includes an unreleased null-caster fix after the v4.6.3 release; release provenance describes the shipped binary separately",
+    "minimum_version_scope": "the brues branch of brues-code/nampower is the only NamPower; no other fork or release is used",
+    "reference_version": "4.6.1",
+    "runtime_version": "4.6.1",
     "tracked_files": [
       "README.md",
       "SCRIPTS.md",
@@ -68,26 +68,6 @@
       "nampower/main.hpp",
       "nampower/misc_scripts.cpp",
       "nampower/spellevents.cpp"
-    ],
-    "release_provenance": {
-      "tag": "v4.6.3",
-      "commit": "fb70e44a2c9f2c8a6e97ef42ec5cac31c773ddba",
-      "published_at": "2026-09-03T20:04:07Z",
-      "dll_asset_id": 543277931,
-      "dll_size_bytes": 829952,
-      "dll_sha256": "96af1722ee6b1a76cbb11e59e452fe54a83f54a3da80ae24f9c7571a0a6392fe",
-      "runtime_version": "4.6.2"
-    },
-    "supported_release_provenance": [
-      {
-        "tag": "v4.6.2",
-        "commit": "11dddf3b9da8855081b9ea05965478bf8af386cf",
-        "published_at": "2026-06-15T00:20:39Z",
-        "dll_asset_id": 447669378,
-        "dll_size_bytes": 829952,
-        "dll_sha256": "b869f3a3b37114dbf12b299da05f913e25e9274fc903b7b3e62ab81ae0fb1bec",
-        "runtime_version": "4.6.2"
-      }
     ]
   },
   "unitxp_sp3": {

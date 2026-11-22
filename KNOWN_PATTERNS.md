@@ -796,7 +796,7 @@ comparison.
 
 The verified SuperWoW `"2.2"` value is parsed with `tonumber(SUPERWOW_VERSION)`;
 do not apply ClassicAPI's integer encoding. Release and runtime versions can also
-differ: NamPower release v4.6.3 still reports `4, 6, 2`, and UnitXP's version
+differ: UnitXP's version
 command returns a PE timestamp rather than `90`. Use the provider-specific
 [identity evidence](ENGINE_REFERENCE.md#6-nampower), not one generic comparison.
 
