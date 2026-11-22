@@ -3,7 +3,7 @@
 The handler used debugstack(2), which starts inside the engine's error
 machinery. GetErrorCallstackHeight names the level of the code that raised the
 error, so the saved stack begins there. ClassicAPI's error window is the
-previous handler; it opens only with /err popup on. Runs ErrorLog.lua under Lua
+previous handler; it never opens (the user's order, 2026-11-22). Runs ErrorLog.lua under Lua
 5.1 with a recording debugstack; real stacks stay an in-game check.
 """
 from pathlib import Path
@@ -42,9 +42,10 @@ function seterrorhandler(fn) reported = fn end
 
 
 class ErrorStack(unittest.TestCase):
-    def setUp(self):
+    def setUp(self, saved=""):
         self.lua = LuaRuntime(unpack_returned_tuples=True)
         self.lua.execute(BASE)
+        self.lua.execute(saved)
         self.lua.execute('''
             local create = CreateFrame
             loaders = {}
@@ -72,11 +73,15 @@ class ErrorStack(unittest.TestCase):
         self.lua.execute('reported("same"); reported("same"); reported("same")')
         self.assertEqual(self.lua.eval("#asked"), 1)
 
-    def test_the_classicapi_window_opens_only_with_popup_on(self):
+    def test_the_classicapi_window_never_opens(self):
         self.lua.execute('reported("quiet")')
         self.assertEqual(self.lua.eval("shown"), 0)
-        self.lua.execute('SlashCmdList.ERRORLOG("popup"); reported("loud")')
-        self.assertEqual(self.lua.eval("shown"), 1)
+
+    def test_the_retired_popup_switch_is_cleared_and_ignored(self):
+        self.setUp('ErrorLog_DB = { errors = {}, session = 3, popup = true }')
+        self.lua.execute('reported("loud")')
+        self.assertEqual(self.lua.eval("shown"), 0)
+        self.assertIsNone(self.lua.eval("ErrorLog_DB.popup"))
 
 
 if __name__ == "__main__":
