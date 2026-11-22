@@ -236,6 +236,8 @@ def describe_tests(label, tests):
         return text
     if tests["status"] == "failed" and tests.get("problems"):
         return text + f" ({tests['problems']} failures/errors, {tests['tests_run']} run)"
+    if tests["status"] == "failed" and not tests.get("tests_run"):
+        return text + " (none ran: the suite did not load; see output_tail)"
     return text + f" ({tests['tests_run']})"
 
 
@@ -299,6 +301,10 @@ def main(argv=None):
             report["tests"]["source_verification"] = verification
             if verification["status"] != "unchanged":
                 report["tests"]["status"] = "invalidated"
+            # The summary's last word: a failed run is never "ok" (an Auras suite that
+            # could not import read "tests failed (0) ... status ok", 2026-11-22).
+            if report["status"] == "ok" and report["tests"]["status"] != "passed":
+                report["status"] = "tests_" + report["tests"]["status"]
         output = json.dumps(report, indent=2, ensure_ascii=True) + "\n"
         if args.output:
             # Explicit tests may change the output path or its parent symlinks.

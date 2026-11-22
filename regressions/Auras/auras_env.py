@@ -12,7 +12,7 @@ import os
 import sys
 import wowkit
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "UnitFrames"))
+sys.path.append(str(Path(__file__).resolve().parents[1] / "UnitFrames"))  # after this suite: its test_page wins
 import ff_env  # noqa: E402
 
 ROOT = Path(os.environ["VANILLAFORGE_ADDON_ROOT"])
@@ -26,6 +26,21 @@ FRAMES = ROOT.parent / "UnitFrames"
 # of the checked radio.
 MOCK = ff_env.MOCK + r"""
 instanceType = 'none'
+-- The loss-of-control effects on you (### C_LossOfControl): `loc[i]` as
+-- GetActiveLossOfControlData gives it, a new table per read.
+loc = {}
+C_LossOfControl = {
+    GetActiveLossOfControlDataCount = function() return #loc end,
+    GetActiveLossOfControlData = function(i)
+        local d = loc[i]
+        if not d then return nil end
+        local t = {}
+        for k, v in pairs(d) do t[k] = v end
+        return t
+    end,
+}
+C_Spell.GetSchoolString = function(mask) return ({ [4] = 'Fire', [16] = 'Frost' })[mask] end
+LOSS_OF_CONTROL_DISPLAY_INTERRUPT_SCHOOL = '%s Locked'
 function GetInstanceInfo() return 'Kalimdor', instanceType end
 function Widget:SetupMenu(generator)
     self.generator = generator

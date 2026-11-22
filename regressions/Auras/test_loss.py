@@ -2,26 +2,11 @@
 when the last ends; a root (displayType 0) shows nothing; the option off
 registers no event. A first login: no frame until the first effect.
 
-The kit should model (stubbed here in LOSS): C_LossOfControl (count and data,
-a new table per read, in ClassicAPI's order), C_Spell.GetSchoolString and the
-LOSS_OF_CONTROL_DISPLAY_* global strings."""
+C_LossOfControl is modelled in auras_env (MOCK), since every login meets it."""
 import unittest
 from auras_env import load
 
 LOSS = """
-loc = {}
-C_LossOfControl = {
-    GetActiveLossOfControlDataCount = function() return #loc end,
-    GetActiveLossOfControlData = function(i)
-        local d = loc[i]
-        if not d then return nil end
-        local t = {}
-        for k, v in pairs(d) do t[k] = v end
-        return t
-    end,
-}
-C_Spell.GetSchoolString = function(mask) return ({ [4] = 'Fire', [16] = 'Frost' })[mask] end
-LOSS_OF_CONTROL_DISPLAY_INTERRUPT_SCHOOL = '%s Locked'
 function effect(kind, text, priority, displayType, tex, duration, school)
     return { locType = kind, displayText = text, iconTexture = tex, priority = priority, displayType = displayType,
              startTime = now, duration = duration, lockoutSchool = school or 0 }
