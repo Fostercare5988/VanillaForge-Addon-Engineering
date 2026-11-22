@@ -343,7 +343,7 @@
       "id": "lua-unit-token-filter",
       "pattern": "string\\.find\\(\\s*\\w+\\s*,\\s*\"\\^(nameplate|party|raid|target|focus)",
       "finding": "Drops unit events for other tokens in Lua, after the handler already ran for every token naming the unit.",
-      "better": "frame:RegisterUnitEvent(event, units...); for plates, the nameplate1..N tokens (grow the list when a plate takes a higher slot: FostercareNameplates FNP.RegisterPlateEvent).",
+      "better": "frame:RegisterUnitEvent(event, units...); for plates, nameplate1 to nameplate150 in one call (the call takes that whole range since 1.23.1; no growing list).",
       "source": "ClassicAPI docs/API.md#frameregisteruniteventevent-units"
     },
     {
