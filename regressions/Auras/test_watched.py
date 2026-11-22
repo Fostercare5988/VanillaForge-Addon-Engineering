@@ -50,6 +50,56 @@ class Watched(unittest.TestCase):
         self.assertEqual(lua.eval("shownIcons('TargetDebuffs')"), "rup")
         self.assertTrue(lua.eval("watchIcon('target', 'Expose Armor'):IsShown()"))
 
+    def test_grey_keeps_a_missing_aura_on_screen_greyed_with_its_last_picture(self):
+        lua = load(saved="""AurasDB = { watched = {
+            { name = 'Juju Power', unit = 'player', icon = true, grey = true, cooldown = false, topRight = false, inRow = false, mine = false } } }""",
+                   setup="a = aura('player', 'HELPFUL', { name = 'Juju Power', icon = 'juju', duration = 1800, expires = now + 1800 })")
+        icon = "watchIcon('player', 'Juju Power')"
+        self.assertFalse(lua.eval(f"{icon}.icon.grey"))
+        lua.execute("auras.player.HELPFUL = {}; delta('player', { removedAuraInstanceIDs = { a.instance } })")
+        self.assertTrue(lua.eval(f"{icon}:IsShown()"))
+        self.assertTrue(lua.eval(f"{icon}.icon.grey"))
+        self.assertEqual(lua.eval("AurasDB.watched[1].texture"), "juju")
+
+    def test_a_moved_icon_saves_its_spot_in_the_addons_own_settings(self):
+        lua = load(saved=ROGUE_WATCH)
+        lua.execute("local i = watchIcon('target', 'Rupture'); i:ClearAllPoints(); i:SetPoint('CENTER', UIParent, 'CENTER', 120, -40)"
+                    "; i.handle:GetScript('OnMouseDown')(); i.handle:GetScript('OnMouseUp')()")
+        # the kit's centre maths differs from the game's: only that it is saved
+        self.assertIsNotNone(lua.eval("AurasDB.watched[4].x"))
+        self.assertIsNotNone(lua.eval("AurasDB.watched[4].y"))
+
+    def test_glow_bar_size_and_the_warning_follow_the_aura(self):
+        lua = load(saved="""AurasDB = { watched = {
+            { name = 'Juju Power', unit = 'player', icon = true, glow = 'red', warn = 5, size = 48, bar = true,
+              cooldown = false, topRight = false, inRow = false, mine = false } } }""",
+                   setup="a = aura('player', 'HELPFUL', { name = 'Juju Power', icon = 'juju', duration = 30, expires = now + 30 })")
+        icon = "watchIcon('player', 'Juju Power')"
+        self.assertEqual(lua.eval(f"{icon}:GetWidth()"), 48)
+        self.assertTrue(lua.eval(f"{icon}.glow:IsShown()"))
+        self.assertTrue(lua.eval(f"{icon}.glowPulse.playing"))
+        self.assertTrue(lua.eval(f"{icon}.bar:IsShown()"))
+        self.assertEqual(lua.eval(f"{icon}.span.length"), 30)
+        self.assertFalse(lua.eval(f"{icon}.pulsing"), "30 s left: no warning yet")
+        lua.execute("now = now + 26; runTimers()")
+        self.assertTrue(lua.eval(f"{icon}.pulse.playing"), "4 s left: the warning")
+        lua.execute("auras.player.HELPFUL = {}; delta('player', { removedAuraInstanceIDs = { a.instance } })")
+        self.assertFalse(lua.eval(f"{icon}.glow:IsShown()"))
+        self.assertFalse(lua.eval(f"{icon}.bar:IsShown()"))
+        self.assertFalse(lua.eval(f"{icon}.pulse.playing"))
+
+    def test_the_details_of_a_picked_line_set_glow_pulse_and_size(self):
+        lua = load(saved=ROGUE_WATCH)
+        lua.execute("A.List()")
+        self.assertEqual(lua.eval("selected(A.menus.glow)"), "Off", "the first line is picked")
+        lua.execute("pick(A.menus.glow, 'Green'); pick(A.menus.warn, '10'); pick(A.menus.size, 'Large')")
+        self.assertEqual(lua.eval("AurasDB.watched[1].glow"), "green")
+        self.assertEqual(lua.eval("AurasDB.watched[1].warn"), 10)
+        self.assertEqual(lua.eval("AurasDB.watched[1].size"), 48)
+        self.assertEqual(lua.eval("watchIcon('player', 'Slice and Dice'):GetWidth()"), 48)
+        lua.execute("pick(A.menus.glow, 'Off')")
+        self.assertIsNone(lua.eval("AurasDB.watched[1].glow"))
+
     def test_a_buff_that_ends_shows_its_spells_cooldown_greyed_until_ready(self):
         lua = load(saved=ROGUE_WATCH, setup="spell(5277, 'Evasion', 'eva'); book[5277] = 12; base[5277] = 300000"
                                              "; a = aura('player', 'HELPFUL', { name = 'Evasion', icon = 'eva', duration = 15, expires = now + 15 })")
@@ -179,11 +229,21 @@ class Groups(unittest.TestCase):
         self.assertEqual(lua.eval("AurasDB.watched[4].group"), "General")
         self.assertTrue(lua.eval("watchIcon('player', 'Evasion'):IsShown()"))
 
+    def test_place_icons_shows_an_icon_of_a_group_that_is_off_here_and_hides_it_after(self):
+        lua = load(saved=GROUPED, setup=MONGOOSE)
+        lua.execute("playerAuras()")
+        icon = "watchIcon('player', 'Mongoose')"
+        lua.execute(f"A.Place()")
+        self.assertTrue(lua.eval(f"{icon}.handle:IsShown()"))
+        self.assertTrue(lua.eval(f"{icon}:IsShown()"))
+        lua.execute(f"A.Place()")
+        self.assertFalse(lua.eval(f"{icon}:IsShown()"))
+
     def test_a_group_shows_only_where_it_is_set_to(self):
         lua = load(saved=GROUPED, setup=MONGOOSE)
         lua.execute("playerAuras()")
         icon = "watchIcon('player', 'Mongoose')"
-        self.assertIsNone(lua.eval(icon), "out in the world: not watched")
+        self.assertFalse(lua.eval(f"{icon}:IsShown()"), "out in the world: not watched (the icon waits for Place icons)")
         self.assertEqual(lua.eval("topShown('HELPFUL')"), "mong", "the game's own buffs keep it")
         lua.execute("instanceType = 'raid'; fire('PLAYER_ENTERING_WORLD'); playerAuras()")
         self.assertTrue(lua.eval(f"{icon}:IsShown()"))

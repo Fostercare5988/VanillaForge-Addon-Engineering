@@ -26,6 +26,24 @@ FRAMES = ROOT.parent / "UnitFrames"
 # of the checked radio.
 MOCK = ff_env.MOCK + r"""
 instanceType = 'none'
+-- Animation groups, a bar's timer and duration objects (ClassicAPI): enough to see
+-- that a group plays, a bar has its time span.
+function Widget:CreateAnimationGroup()
+    local g = { playing = false }
+    function g:SetLooping() end
+    function g:Play() self.playing = true end
+    function g:Stop() self.playing = false end
+    function g:CreateAnimation() return setmetatable({}, { __index = function() return function() end end }) end
+    return g
+end
+function Widget:SetTimerDuration(duration) self.timer = duration end
+Enum.StatusBarInterpolation = Enum.StatusBarInterpolation or { Immediate = 0 }
+Enum.StatusBarTimerDirection = Enum.StatusBarTimerDirection or { ElapsedTime = 0, RemainingTime = 1 }
+C_DurationUtil = { CreateDuration = function()
+    local d = {}
+    function d:SetTimeFromStart(start, length) self.start, self.length = start, length end
+    return d
+end }
 -- The loss-of-control effects on you (### C_LossOfControl): `loc[i]` as
 -- GetActiveLossOfControlData gives it, a new table per read.
 loc = {}
