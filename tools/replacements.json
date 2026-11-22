@@ -508,6 +508,46 @@
       "better": "A vertical layout in the Settings window: Settings.RegisterVerticalLayoutCategory, RegisterAddOnSetting and CreateCheckbox / CreateSlider / CreateDropdown. The window draws the controls, searches them and resets them to their defaults; the addon keeps only its settings and what a change does.",
       "source": "CLASSICAPI_MASTER_REFERENCE.md#settings-window; ClassicAPI src/embed/AddOns/!!!ClassicAPI/Settings/Blizzard_Settings.lua",
       "unless": "RegisterVerticalLayoutCategory"
+    },
+    {
+      "id": "reactive-spell-by-hand",
+      "pattern": "\\b(Overpower|Riposte|Revenge|Counterattack|Mongoose Bite|Execute|Hammer of Wrath)\\b",
+      "unless": "IsSpellReactiveReady",
+      "finding": "Guesses when a reactive spell is ready: a dodge or parry in the combat log, or the target's health under 20%. It cannot see the window close, nor that the dodge was on another unit.",
+      "better": "C_Spell.IsSpellReactiveReady(spell) gives isReady and comboTargetGUID from the spell record (combo point, aura state on you, target under 20%), in any stance; SPELL_UPDATE_USABLE fires when an input changes. Compare comboTargetGUID with UnitGUID(\"target\") for Overpower.",
+      "source": "ClassicAPI docs/API.md#c_spellisspellreactivereadyspell (1.23.1)"
+    },
+    {
+      "id": "visibility-polled",
+      "pattern": "\\bUnitIsVisible\\s*\\(|\\bUnitExists\\s*\\([^)]*guid",
+      "unless": "\"UNIT_VISIBILITY_CHANGED\"",
+      "finding": "Asks whether a unit is still in view, usually from a ticker over the units it tracks by GUID.",
+      "better": "UNIT_VISIBILITY_CHANGED (unitTarget, isVisible) at the end of the frame, once per unit; frame:RegisterGUIDEvent(event, ...guids) gets it (and UNIT_HEALTH and the other unit events) for units with no token. Read UnitIsVisible once at PLAYER_ENTERING_WORLD: a loading screen fires nothing.",
+      "source": "ClassicAPI docs/API.md#unit_visibility_changed-event, #frameregisterguideventevent-guids (1.23.1)"
+    },
+    {
+      "id": "roster-event-pair",
+      "pattern": "\"PARTY_MEMBERS_CHANGED\"|\"RAID_ROSTER_UPDATE\"",
+      "unless": "\"GROUP_ROSTER_UPDATE\"",
+      "finding": "Listens to PARTY_MEMBERS_CHANGED and RAID_ROSTER_UPDATE (many per frame while a raid fills), or to only one of them and misses the other kind of group.",
+      "better": "GROUP_ROSTER_UPDATE: no payload, once per frame in which the members changed, for party and raid, also on join and leave. GROUP_JOINED / GROUP_LEFT for the moment itself; neither fires on a reload (read IsInGroup).",
+      "source": "ClassicAPI docs/API.md#group_roster_update-event, #group_joined--group_formed--group_left-events (1.23.1)"
+    },
+    {
+      "id": "combat-state-event-pair",
+      "pattern": "\"PLAYER_REGEN_DISABLED\"",
+      "unless": "\"PLAYER_IN_COMBAT_CHANGED\"",
+      "finding": "Listens to PLAYER_REGEN_DISABLED and PLAYER_REGEN_ENABLED to follow the player's combat state.",
+      "better": "PLAYER_IN_COMBAT_CHANGED (inCombat) fires just before either, one event with the state. Keep PLAYER_REGEN_ENABLED alone where it only waits for combat to end.",
+      "source": "ClassicAPI docs/API.md#player_in_combat_changed-event (1.23.1)"
+    },
+    {
+      "id": "chat-class-colour-by-hand",
+      "pattern": "\\|Hplayer:",
+      "unless": "SetChatColorNameByClass",
+      "finding": "Rewrites each chat line to colour the sender's name by class.",
+      "better": "SetChatColorNameByClass(chatType, true) for each chat type (CHANNEL1 to CHANNEL10 too): the chat frame colours the [Name] link itself, saved with the character's chat colours. It colours only a sender whose class the client knows: compare coverage before dropping our lookup.",
+      "source": "ClassicAPI docs/API.md#setchatcolornamebyclasschattype-colornamebyclass (1.23.1)"
     }
   ]
 }
