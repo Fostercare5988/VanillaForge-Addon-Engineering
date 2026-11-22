@@ -59,7 +59,7 @@ class AtRest(unittest.TestCase):
             return out end)()""").values())
         self.assertEqual(events, {
             "MODIFIER_STATE_CHANGED",                                     # the handles
-            "PLAYER_TARGET_CHANGED", "RAID_ROSTER_UPDATE", "UNIT_TARGET", "UNIT_HEALTH",  # target of target
+            "PLAYER_TARGET_CHANGED", "GROUP_ROSTER_UPDATE", "UNIT_TARGET", "UNIT_HEALTH",  # target of target
             "UNIT_SPELLCAST_START", "UNIT_SPELLCAST_STOP", "UNIT_SPELLCAST_INTERRUPTED",   # target cast bar
             "UNIT_SPELLCAST_CHANNEL_START", "UNIT_SPELLCAST_CHANNEL_STOP",
             "UNIT_SPELLCAST_INTERRUPTIBLE", "UNIT_SPELLCAST_NOT_INTERRUPTIBLE",

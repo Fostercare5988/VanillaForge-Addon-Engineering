@@ -213,3 +213,24 @@ class EnergyTicks(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class GroupChange(unittest.TestCase):
+    def test_a_party_member_joining_updates_the_target_of_target(self):
+        # The kit does not model GROUP_ROSTER_UPDATE or SHOW_TARGET_OF_TARGET_STATE: the
+        # stock update is replaced here by one that shows it only while in a group.
+        lua = load()
+        target(lua, "Ann", "PRIEST")
+        lua.execute("""
+            inGroup = false
+            function TargetofTarget_Update()
+                hit('TargetofTarget_Update')
+                if inGroup then TargetofTargetFrame:Show() else TargetofTargetFrame:Hide() end
+            end
+            unit('targettarget', 'Bob', 'MAGE'); fire('UNIT_TARGET', 'target')
+        """)
+        self.assertFalse(lua.eval("TargetofTargetFrame:IsShown()"))
+        lua.execute("inGroup = true; fire('GROUP_ROSTER_UPDATE')")
+        self.assertTrue(lua.eval("TargetofTargetFrame:IsShown()"))
+        lua.execute("inGroup = false; fire('GROUP_ROSTER_UPDATE')")
+        self.assertFalse(lua.eval("TargetofTargetFrame:IsShown()"))
