@@ -74,7 +74,8 @@ function UnitHealthMax(u) hit('UnitHealthMax'); return m(u) and m(u).max or 0 en
 function UnitHealthMissing(u) local x = m(u); return x and x.max - x.hp or 0 end
 function UnitMana(u) return m(u) and m(u).mana or 0 end
 function UnitManaMax(u) return m(u) and m(u).maxMana or 0 end
-function UnitPowerType(u) return m(u) and m(u).power or 0 end
+local TOKENS = { [0] = 'MANA', 'RAGE', 'FOCUS', 'ENERGY' }
+function UnitPowerType(u) local p = m(u) and m(u).power or 0; return p, TOKENS[p] end
 function UnitIsConnected(u) return m(u) and m(u).online and 1 or nil end
 function UnitIsDead(u) return m(u) and m(u).dead and 1 or nil end
 function UnitIsGhost(u) return m(u) and m(u).ghost and 1 or nil end
@@ -100,7 +101,7 @@ end
 function joinParty(...)
     party = { ... }
     for i, name in ipairs(party) do member('party' .. i, name, 'PRIEST') end
-    fire('PARTY_MEMBERS_CHANGED'); runTimers()
+    fire('GROUP_ROSTER_UPDATE'); runTimers()
 end
 
 -- Auras: auras[token] = { HELPFUL = { ... }, HARMFUL = { ... } } in the game's order.
@@ -253,6 +254,6 @@ def in_raid(lua, groups):
             member('raid' .. i, r[1], r[2]); raid[i] = { group = r[3] }; inRange['raid' .. i] = true
         end
         members.raid1 = members.player; members.player.name = 'Claude'
-        fire('RAID_ROSTER_UPDATE'); runTimers()
+        fire('GROUP_ROSTER_UPDATE'); runTimers()
     """ % rows)
     return lua

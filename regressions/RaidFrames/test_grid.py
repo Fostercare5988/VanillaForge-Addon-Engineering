@@ -41,11 +41,11 @@ class Roster(unittest.TestCase):
             function Widget:RegisterUnitEvent(...) calls.RUE = (calls.RUE or 0) + 1; return rue(self, ...) end
             function Widget:SetScale(s) calls.Scale = (calls.Scale or 0) + 1; return scale(self, s) end
             function Widget:SetPoint(...) calls.Point = (calls.Point or 0) + 1; return point(self, ...) end
-            fire('RAID_ROSTER_UPDATE'); runTimers()
+            fire('GROUP_ROSTER_UPDATE'); runTimers()
         """)
         self.assertEqual(lua.eval("count('RUE')"), 0)
         self.assertEqual(lua.eval("count('Scale') + count('Point')"), 0)
-        lua.execute("member('raid4', 'Cid', 'DRUID'); raid[4] = { group = 2 }; fire('RAID_ROSTER_UPDATE'); runTimers()")
+        lua.execute("member('raid4', 'Cid', 'DRUID'); raid[4] = { group = 2 }; fire('GROUP_ROSTER_UPDATE'); runTimers()")
         self.assertEqual(lua.eval("unitsOf('UNIT_HEALTH')"), "raid1,raid2,raid3,raid4", "a new member is listened to")
         lua.execute("settingsWindow.use('RaidFrames_aggro', false)")
         self.assertIsNone(lua.eval("grid().events.UNIT_TARGET"), "a page row registers again")
@@ -59,21 +59,34 @@ class Roster(unittest.TestCase):
         self.assertEqual([lua.eval(f"shown(1, {k})") for k in (1, 2, 3, 4)], ["Claude", "Ann", None, None])
         self.assertIsNone(lua.eval("btn(1, 3):GetAttribute('unit')"))
 
-    def test_a_burst_of_roster_events_is_one_pass(self):
+    def test_one_roster_event_is_one_pass_at_once(self):
+        # GROUP_ROSTER_UPDATE comes once per frame (ClassicAPI): no timer in between.
         lua = in_party()
         lua.execute("calls.UnitInRange = 0; party = { 'Ann', 'Bob', 'Cid' }; member('party3', 'Cid', 'MAGE')")
-        lua.execute("for i = 1, 5 do fire('PARTY_MEMBERS_CHANGED') end")
-        self.assertIsNone(lua.eval("shown(1, 4)"), "the pass waits for the next frame")
-        lua.execute("runTimers()")
+        lua.execute("fire('GROUP_ROSTER_UPDATE')")
         self.assertEqual(lua.eval("shown(1, 4)"), "Cid")
         self.assertEqual(lua.eval("count('UnitInRange')"), 1)
+        self.assertEqual(lua.eval("#timers"), 0, "no timer left for the roster")
+
+    def test_the_old_roster_events_are_not_listened_to(self):
+        lua = in_party()
+        lua.execute("party = { 'Ann' }; fire('PARTY_MEMBERS_CHANGED'); fire('RAID_ROSTER_UPDATE'); runTimers()")
+        self.assertEqual(lua.eval("shown(1, 3)"), "Bob", "only GROUP_ROSTER_UPDATE draws the roster")
+
+    def test_a_burst_of_leader_and_loading_events_is_one_pass(self):
+        lua = in_party()
+        lua.execute("calls.UnitInRange = 0; members.player.leader = true")
+        lua.execute("for i = 1, 5 do fire('PARTY_LEADER_CHANGED'); fire('PLAYER_ENTERING_WORLD') end")
+        self.assertFalse(lua.eval("btn(1, 1).crown:IsShown()"), "the pass waits for the next frame")
+        lua.execute("runTimers()")
+        self.assertTrue(lua.eval("btn(1, 1).crown:IsShown()"))
 
     def test_class_colour_from_the_roster_or_the_player_cache(self):
         lua = in_raid(load(), [("Claude", "ROGUE", 1), ("Ann", "PRIEST", 1)])
         self.assertEqual(lua.eval("btn(1, 2).health.c.name"), "PRIEST")
         lua = load()
         lua.execute("known.Ann = 'DRUID'; party = { 'Ann' }; members.party1 = { name = 'Ann', online = true, hp = 1, max = 1 }")
-        lua.execute("fire('PARTY_MEMBERS_CHANGED'); runTimers()")
+        lua.execute("fire('GROUP_ROSTER_UPDATE'); runTimers()")
         self.assertEqual(lua.eval("btn(1, 2).health.c.name"), "DRUID")
 
     def test_the_crown_on_the_leader(self):
@@ -97,7 +110,7 @@ class Events(unittest.TestCase):
 
     def test_at_rest_solo_only_the_roster_events(self):
         lua = load()
-        self.assertEqual(lua.eval("listening(grid())"), "PARTY_MEMBERS_CHANGED,PLAYER_ENTERING_WORLD,RAID_ROSTER_UPDATE")
+        self.assertEqual(lua.eval("listening(grid())"), "GROUP_ROSTER_UPDATE,PLAYER_ENTERING_WORLD")
         self.assertEqual(lua.eval("liveTimers and liveTimers() or #timers"), 0)
         self.assertIsNone(lua.eval("(function() for _, w in ipairs(widgets) do "
                                    "if w.scripts.OnUpdate then return tostring(w.name) end end end)()"),
@@ -140,6 +153,25 @@ class Health(unittest.TestCase):
         lua.execute("fire('UNIT_DISPLAYPOWER', 'party1')")
         self.assertEqual(lua.eval("btn(1, 2).power:GetValue()"), 40)
         self.assertEqual(lua.eval("btn(1, 2).power.c.g"), 1, "energy's colour")
+
+
+    def test_another_power_than_the_bars_changes_nothing(self):
+        # ClassicAPI 1.23.1: the player's combo points fire UNIT_POWER_UPDATE with "COMBO_POINTS".
+        lua = in_party()
+        lua.execute("members.player.power = 3; fire('UNIT_DISPLAYPOWER', 'player')")
+        lua.execute("members.player.mana = 10; fire('UNIT_POWER_UPDATE', 'player', 'COMBO_POINTS')")
+        self.assertNotEqual(lua.eval("btn(1, 1).power:GetValue()"), 10, "no redraw for combo points")
+        lua.execute("fire('UNIT_POWER_UPDATE', 'player', 'ENERGY')")
+        self.assertEqual(lua.eval("btn(1, 1).power:GetValue()"), 10)
+
+    def test_a_bar_is_written_only_when_its_number_changes(self):
+        lua = in_party()
+        lua.execute("calls.SetValue = 0; local sv = Widget.SetValue; "
+                    "function Widget:SetValue(v) calls.SetValue = calls.SetValue + 1; return sv(self, v) end")
+        lua.execute("fire('UNIT_POWER_UPDATE', 'party1', 'MANA'); fire('UNIT_MAXPOWER', 'party1', 'MANA')")
+        self.assertEqual(lua.eval("count('SetValue')"), 0)
+        lua.execute("members.party1.mana = 5; fire('UNIT_POWER_UPDATE', 'party1', 'MANA')")
+        self.assertEqual(lua.eval("count('SetValue')"), 1)
 
 
 class Range(unittest.TestCase):
