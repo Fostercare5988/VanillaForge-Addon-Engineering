@@ -171,10 +171,18 @@ end
 RAID_CLASS_COLORS = { SHAMAN = color(0.96, 0.55, 0.73, 'fff58cba'), ROGUE = color(1, 0.96, 0.41, 'fffff569'),
     MAGE = color(0.41, 0.8, 0.94, 'ff69ccf0') }
 C_ClassColor = { GetClassColor = function(class) return RAID_CLASS_COLORS[class] end }
-known, guids = {}, {}
+known = {}
 C_PlayerCache = { GetPlayerInfoByName = function(name) local c = known[name]; if c then return c, c end end }
-function GetPlayerInfoByGUID(guid) local g = guids[guid]; if g then return g[2], g[2], 'r', 'r', 2, g[1] end end
-function GetCurrentChatGUID() return chatGUID end
+-- ClassicAPI 1.23.1: the chat frame keeps the option in ChatTypeInfo[type].colorNameByClass
+-- and announces it; an unknown type changes nothing (### SetChatColorNameByClass).
+ChatTypeInfo = { SAY = {}, YELL = {}, WHISPER = {}, REPLY = {}, SYSTEM = {}, GUILD = {}, PARTY = {} }
+for i = 1, 10 do ChatTypeInfo['CHANNEL' .. i] = {} end
+colorNameCalls = {}
+function SetChatColorNameByClass(kind, on)
+    table.insert(colorNameCalls, kind)
+    local info = ChatTypeInfo[string.upper(kind)]
+    if info then info.colorNameByClass = on end
+end
 function SetItemRef(link, text, button) record('stockRef', link) end
 StaticPopupDialogs = {}
 StaticPopup1 = CreateFrame('Frame', 'StaticPopup1'); StaticPopup1:Hide()
