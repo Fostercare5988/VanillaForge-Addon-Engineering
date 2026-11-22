@@ -17,19 +17,19 @@ def opened(saved=None, setup=""):
 class FreeSpace(unittest.TestCase):
     def test_the_count_and_each_bag_in_the_tooltip(self):
         lua = opened(setup="for s = 1, 20 do put(1, s, { id = 8928 }) end; for s = 3, 16 do put(0, s, { id = 8928 }) end")
-        self.assertEqual(lua.eval("BagsInventory.free:GetText()"), "1 / 36 Free")
+        self.assertEqual(lua.eval("BagsInventory.free:GetText()"), "35 / 36 Used")
         lua.execute("run(BagsInventory.free:GetParent(), 'OnEnter')")
         lines = lua.eval("table.concat(GameTooltip.lines, '|')")
-        self.assertEqual(lines, "Free space|Backpack=1 / 16|Bag 1=0 / 20")
+        self.assertEqual(lines, "Slots used|Backpack=15 / 16|Bag 1=20 / 20")
         self.assertEqual(lua.eval("GameTooltip.colors['Bag 1'][2]"), 0.1, "full: red")
         self.assertEqual(lua.eval("GameTooltip.colors['Backpack'][2]"), 0.82, "two or fewer: yellow")
 
     def test_the_bank_counts_only_while_open_and_a_stored_view_its_stored_slots(self):
         lua = load()
         lua.execute("openBank()")
-        self.assertEqual(lua.eval("BagsBank.free:GetText()"), "38 / 40 Free")
+        self.assertEqual(lua.eval("BagsBank.free:GetText()"), "2 / 40 Used")
         lua.execute("closeBank(); ToggleBackpack(); click(BagsInventory.bankButton)")
-        self.assertEqual(lua.eval("BagsBank.free:GetText()"), "38 / 40 Free")
+        self.assertEqual(lua.eval("BagsBank.free:GetText()"), "2 / 40 Used")
 
 
 class Search(unittest.TestCase):
@@ -92,15 +92,17 @@ class Sort(unittest.TestCase):
 class BagBar(unittest.TestCase):
     def test_keys_show_on_shift_click_or_the_key_button_and_are_no_free_space(self):
         lua = opened(setup="bags[-2] = { size = 4, slots = {} }; put(-2, 1, { id = 8928 })")
-        self.assertEqual(lua.eval("BagsInventory.free:GetText()"), "32 / 36 Free")
+        self.assertEqual(lua.eval("BagsInventory.free:GetText()"), "4 / 36 Used")
         self.assertEqual(lua.eval("BagsInventory.holders[-2].size"), 0, "hidden on a first login")
         lua.execute("shift = true; click(BagsInventory.barButton); shift = nil")
         self.assertTrue(lua.eval("BagsDB.keys"))
         self.assertFalse(lua.eval("BagsDB.bagBar.inventory"), "the shift-click leaves the bag icons alone")
         self.assertEqual(lua.eval("BagsInventory.holders[-2].size"), 4)
-        self.assertEqual(lua.eval("BagsInventory.free:GetText()"), "32 / 36 Free", "keys are not space")
+        self.assertEqual(lua.eval("BagsInventory.free:GetText()"), "4 / 36 Used", "keys are not space")
+        lua.execute("click(BagsInventory.keysButton)")
+        self.assertEqual(lua.eval("BagsInventory.holders[-2].size"), 0, "the Keys button hides them")
         lua.execute("ToggleKeyRing()")
-        self.assertEqual(lua.eval("BagsInventory.holders[-2].size"), 0)
+        self.assertEqual(lua.eval("BagsInventory.holders[-2].size"), 4, "the stock key button shows them")
         self.assertTrue(lua.eval("BagsInventory:IsShown()"))
 
     def test_the_toggle_is_kept_per_window(self):

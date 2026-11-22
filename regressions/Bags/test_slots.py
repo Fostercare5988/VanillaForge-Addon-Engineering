@@ -25,7 +25,7 @@ class Grid(unittest.TestCase):
         lua = opened("bags[1] = nil; bags[0].slots = {}")
         self.assertEqual(lua.eval("shownButtons('inventory')"), 16)
         self.assertIsNone(lua.eval("button('inventory', 0, 1).hasItem"))
-        self.assertEqual(lua.eval("BagsInventory.free:GetText()"), "16 / 16 Free")
+        self.assertEqual(lua.eval("BagsInventory.free:GetText()"), "0 / 16 Used")
 
     def test_a_bag_put_in_swapped_and_taken_out(self):
         lua = opened()
