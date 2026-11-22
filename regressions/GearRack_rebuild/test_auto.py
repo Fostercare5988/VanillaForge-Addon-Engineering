@@ -177,6 +177,22 @@ class ByTarget(unittest.TestCase):
         self.assertEqual(lua.eval("worn[16]"), "0xD")
         self.assertIsNone(lua.eval("GearRackDB.before"))
 
+    def test_a_swap_still_running_waits_then_both_weapons_change(self):
+        lua = load(self.ROGUE, setup=SETS + "combat = true")
+        lua.execute('swapping = true target = { enemy = true, kind = "Giant" } fire("PLAYER_TARGET_CHANGED") step(0.2)')
+        self.assertIsNone(lua.eval("usedSets[1]"), "no call while ClassicAPI says it is busy")
+        lua.execute('swapping = false fire("EQUIPMENT_SWAP_FINISHED", 1, 1) step(0)')
+        self.assertEqual((lua.eval("worn[16]"), lua.eval("worn[17]")), ("0xD", "0xE"))
+
+    def test_a_refused_weapon_is_tried_again_three_times_then_a_line(self):
+        lua = load(self.ROGUE, setup=SETS + "combat = true")
+        lua.execute('refuse["0xE"] = true target = { enemy = true, kind = "Giant" } fire("PLAYER_TARGET_CHANGED") step(0.2)')
+        lua.execute("step(0) step(0) step(0) step(0)")
+        self.assertEqual(lua.eval("#usedSets"), 3)
+        self.assertEqual(lua.eval("worn[16]"), "0xD")
+        self.assertIn("Could not put on all of Dissolvent.", lua.eval("table.concat(chat, ' ')"))
+        self.assertNotIn("ITEM_LOCK_CHANGED", lua.eval("allEvents()"), "it stops listening")
+
     def test_its_own_switch_not_the_automatic_sets_one(self):
         lua = load(self.ROGUE.replace("byTarget = true", "auto = true, byTarget = false"), setup=SETS)
         self.assertNotIn("PLAYER_TARGET_CHANGED", lua.eval("allEvents()"))

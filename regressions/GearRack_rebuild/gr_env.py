@@ -271,6 +271,10 @@ C_EquipmentSet = {
     UnignoreSlotForSave = function(s) ignoreForSave[s] = nil; setsChanged() end,
     ClearIgnoredSlotsForSave = function() ignoreForSave = {}; setsChanged() end,
     CanUseEquipmentSets = function() return not swapping end,
+    EquipmentSetContainsLockedItems = function(id)
+        for _, v in pairs(sets[id] and sets[id].slots or {}) do if locked[v] then return true end end
+        return false
+    end,
     UseEquipmentSet = function(id)
         usedSets[#usedSets + 1] = sets[id] and sets[id].name or tostring(id)
         if swapping or not sets[id] then return false end
