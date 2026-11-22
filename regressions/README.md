@@ -69,8 +69,7 @@ The kit builds no garbage of its own, so a garbage test measures the addon.
 | AutoBG | `regressions/AutoBG` | inline per test file; addon_loader.py loads files; clock_mock.py is ClassicAPI's duration text bindings, rule formatters and timers that fire by time (`__frame()` is a drawn frame) |
 | Auras | `regressions/Auras` | auras_env.py (loads FostercareFrames beside it) |
 | AutoLazy | `regressions/AutoLazy` | al_env.py (1.0, written new; the 1.3 suite went at its release, 2026-11-18) |
-| Bags (the rebuild of Bagnon) | `regressions/Bags` | bags_env.py (1.0, written new 2026-11-22; replaces `regressions/Bagnon` at the switch-over) |
-| Bagnon | `regressions/Bagnon` | bgn_env.py |
+| Bags (the rebuild of Bagnon) | `regressions/Bags` | bags_env.py (1.0, written new 2026-11-22; replaced `regressions/Bagnon`, 2026-11-22) |
 | BrainwasherPro | `regressions/BrainwasherPro` | bwp_env.py |
 | EasyPoisons | `regressions/EasyPoisons` | ep_env.py |
 | !ErrorLog | `regressions/ErrorLog` | inline |
