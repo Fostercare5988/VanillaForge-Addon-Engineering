@@ -265,6 +265,9 @@ C_SwingTimer = {
 C_StringUtil = { CreateNumericRuleFormatter = function() return { SetBreakpoints = function() end } end }
 function Widget:SetCooldown(start, duration) self.cd = start .. '+' .. duration end
 function Widget:Clear() self.cd = nil end
+function Widget:SetSwipeColor(r, g, b, a) self.swipe = { r, g, b, a } end
+function Widget:SetDrawBling(on) self.bling = on end
+function Widget:SetHideCountdownNumbers(on) self.hideNumbers = on end
 function Widget:SetNormalTexture(path) self.normalPath = path end
 function Widget:GetEffectiveScale() return self.scale or 1 end
 local kitCreate = CreateFrame
@@ -331,6 +334,14 @@ C_Spell = {
     SpellHasRange = function(id) return spellRanged[id] == true end,
     IsSpellInRange = function(id, unit) rangeAsked = rangeAsked + 1; return spellRange[id] end,
 }
+-- Loss of control (### C_LossOfControl, ### C_Spell.GetSpellLossOfControlCooldown): a test sets
+-- lossEffects (a count) and lossBlocks[spellID] = { start, duration }; unknown spells give nil.
+lossEffects, lossBlocks = 0, {}
+C_LossOfControl = { GetActiveLossOfControlDataCount = function() return lossEffects end }
+C_Spell.GetSpellLossOfControlCooldown = function(id)
+    if not spellDB[id] then return end
+    local c = lossBlocks[id] or { 0, 0 }; return c[1], c[2]
+end
 C_Item.GetItemIconByID = function(id) return 'itemTex:' .. id end
 C_Item.UseItemByName = function(id) usedItems[#usedItems + 1] = id end
 C_Item.ItemHasRange = function() return false end
