@@ -1,4 +1,4 @@
-"""Specs 1.0 (written new, 2026-11-22) on the shared game model (wowkit).
+"""Brainwasher 1.0 (written new, 2026-11-22) on the shared game model (wowkit).
 
 The device is modelled by its option texts (read in play on OctoWoW, 2026-10-21,
 from the old addon) through ClassicAPI's C_GossipInfo (API.md "C_GossipInfo.GetOptions()");
@@ -177,7 +177,7 @@ function say() return table.concat(chat, '\n') end
 '''
 
 # Claude's saved slots (the real file, minus the splits the device sends).
-CLAUDE_SAVED = '''SpecsDB = {
+CLAUDE_SAVED = '''BrainwasherDB = {
   current = 2,
   [1] = { name = "PVE ASSA", icon = "Interface\\\\Icons\\\\Ability_Rogue_DualWeild", bars = "PVE" },
   [2] = { name = "PVP ASSA", icon = "Interface\\\\Icons\\\\Ability_Rogue_Garrote", bars = "pvp",
@@ -189,12 +189,12 @@ BUILD_32_0_19 = "1" * 32 + "-" + "-" + "1" * 19
 
 
 def load(saved="", setup="", world=True):
-    """The addon loaded over `saved` (Lua that sets SpecsDB); with `world`, the
+    """The addon loaded over `saved` (Lua that sets BrainwasherDB); with `world`, the
     login events have fired."""
     lua = wowkit.runtime()
     lua.execute(MOCK)
     lua.execute(setup)
-    wowkit.load_addon(lua, ROOT, "Specs", saved=saved or None)
+    wowkit.load_addon(lua, ROOT, "Brainwasher", saved=saved or None)
     if world:
         lua.execute('fire("VARIABLES_LOADED") fire("PLAYER_LOGIN") fire("PLAYER_ENTERING_WORLD") step()')
     return lua
