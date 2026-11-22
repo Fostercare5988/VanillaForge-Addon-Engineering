@@ -90,6 +90,19 @@ class Sort(unittest.TestCase):
 
 
 class BagBar(unittest.TestCase):
+    def test_keys_show_on_shift_click_or_the_key_button_and_are_no_free_space(self):
+        lua = opened(setup="bags[-2] = { size = 4, slots = {} }; put(-2, 1, { id = 8928 })")
+        self.assertEqual(lua.eval("BagsInventory.free:GetText()"), "32 / 36 Free")
+        self.assertEqual(lua.eval("BagsInventory.holders[-2].size"), 0, "hidden on a first login")
+        lua.execute("shift = true; click(BagsInventory.barButton); shift = nil")
+        self.assertTrue(lua.eval("BagsDB.keys"))
+        self.assertFalse(lua.eval("BagsDB.bagBar.inventory"), "the shift-click leaves the bag icons alone")
+        self.assertEqual(lua.eval("BagsInventory.holders[-2].size"), 4)
+        self.assertEqual(lua.eval("BagsInventory.free:GetText()"), "32 / 36 Free", "keys are not space")
+        lua.execute("ToggleKeyRing()")
+        self.assertEqual(lua.eval("BagsInventory.holders[-2].size"), 0)
+        self.assertTrue(lua.eval("BagsInventory:IsShown()"))
+
     def test_the_toggle_is_kept_per_window(self):
         lua = opened()
         self.assertIsNone(lua.eval("BagsInventory.bar"), "hidden on a first login, made on first need")

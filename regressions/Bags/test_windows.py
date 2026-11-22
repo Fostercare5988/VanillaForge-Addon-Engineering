@@ -52,9 +52,9 @@ class StockRoutes(unittest.TestCase):
         lua.execute("CloseAllBags()")
         self.assertFalse(shown(lua, "inventory"))
 
-    def test_other_bags_and_the_keyring_keep_the_stock_functions(self):
+    def test_other_bags_keep_the_stock_functions(self):
         lua = load()
-        lua.execute("ToggleBag(5); OpenBag(-2); CloseBag(7); ToggleKeyRing()")
+        lua.execute("ToggleBag(5); OpenBag(-2); CloseBag(7)")
         self.assertEqual(lua.eval("calls.ToggleBag"), 5)
         self.assertEqual(lua.eval("calls.OpenBag"), -2)
         self.assertEqual(lua.eval("calls.CloseBag"), 7)

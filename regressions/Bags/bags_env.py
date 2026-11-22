@@ -110,6 +110,7 @@ local function bagOf(bag) if bankID(bag) and not atBank then return nil end retu
 local function key(bag, slot) return bag .. ":" .. slot end
 function itemAt(bag, slot) local b = bagOf(bag); return b and b.slots[slot] end
 function linkOf(it) return "|cff1eff00|Hitem:" .. it.id .. ":" .. (it.enchant or 0) .. ":" .. (it.suffix or 0) .. ":0:0:0:0:0|h[" .. (it.name or "Item") .. "]|h|r" end
+function GetKeyRingSize() return bags[-2] and bags[-2].size or 0 end
 C_Container = {
     GetContainerNumSlots = function(bag) local b = bagOf(bag); return b and b.size or 0 end,
     GetContainerItemInfo = function(bag, slot, buf)
