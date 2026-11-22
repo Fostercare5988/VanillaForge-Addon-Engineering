@@ -26,7 +26,8 @@ class AtRest(unittest.TestCase):
             for _, w in ipairs(widgets) do if w ~= TargetFrame then for e in pairs(w.events) do out[#out + 1] = e end end end  -- TargetFrame: the stock one
             return out end)()""").values())
         self.assertEqual(events, {"MODIFIER_STATE_CHANGED", "PLAYER_ENTERING_WORLD", "PLAYER_TARGET_CHANGED",
-                                  "UNIT_AURA_DELTA", "SPELL_UPDATE_COOLDOWN", "SPELLS_CHANGED"})
+                                  "UNIT_AURA_DELTA", "SPELL_UPDATE_COOLDOWN", "SPELLS_CHANGED",
+                                  "LOSS_OF_CONTROL_UPDATE"})
         running = lua.eval("""(function() local n = 0
             for _, w in ipairs(widgets) do  -- ours: unnamed, or named Auras*
                 local ours = type(w.name) ~= 'string' or string.find(w.name, '^Auras')
