@@ -23,7 +23,7 @@ function Widget:GetCountdownFontString() self.numbers = self.numbers or widget()
 function Widget:GetWidth() return 110 end
 function Widget:GetHeight() return 14 end
 function Widget:GetFont() return STANDARD_TEXT_FONT, self.fontSize or 12, "" end
-function Widget:SetFont(_, size) self.fontSize = size end
+function Widget:SetFont(_, size) self.fontSize, self.noFont = size, nil end
 function Widget:SetPoint(p, a, r, x, y) table.insert(self.points, { p, a, r, x or 0, y or 0 }) end
 function Widget:GetFontString() self.fs = self.fs or widget(); return self.fs end
 function Widget:GetNormalTexture() return widget() end

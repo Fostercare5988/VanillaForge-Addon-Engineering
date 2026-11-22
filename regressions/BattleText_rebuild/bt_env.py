@@ -53,7 +53,7 @@ local function onError(err) handled[#handled + 1] = tostring(err) end
 function geterrorhandler() return onError end
 
 -- What the addon writes on its lines.
-function Widget:SetFont(font, size, flags) self.font, self.fontSize, self.outline = font, size, flags end
+function Widget:SetFont(font, size, flags) self.font, self.fontSize, self.outline, self.noFont = font, size, flags, nil end
 -- Colours and anchors in reused tables (the kit's make one per call): a garbage
 -- test measures the addon.
 function Widget:SetTextColor(r, g, b)
@@ -78,6 +78,7 @@ function Widget:SetPoint(a, b, c, d, e)
 end
 said = {}
 function Widget:SetText(text)
+    if self.noFont then error("<unnamed>:SetText(): Font not set") end
     self.text = text
     if self.kind == "FontString" and self.font then said[#said + 1] = self end
 end

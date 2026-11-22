@@ -169,14 +169,24 @@ function Widget:GetValue() return self.value or 0 end
 function Widget:SetMinMaxValues(lo, hi) self.min, self.max = lo, hi end
 function Widget:GetMinMaxValues() return self.min or 0, self.max or 0 end
 
+-- The client refuses text on a font string made without a template before its
+-- SetFont or SetFontObject ("<unnamed>:SetText(): Font not set", Nameplates 2026-11-22).
 function Widget:SetText(text)
+    if self.noFont then error((self.name or "<unnamed>") .. ":SetText(): Font not set") end
     self.text = text
     if self.fontString then self.fontString:SetText(text) end
 end
 function Widget:GetText() return self.text end
 function Widget:SetFontString(fs) self.fontString = fs end
 function Widget:GetFontString() return self.fontString end
-function Widget:CreateFontString(name) return newWidget("FontString", name, self) end
+function Widget:CreateFontString(name, layer, template)
+    local w = newWidget("FontString", name, self)
+    w.layer, w.noFont = layer, not template or nil
+    return w
+end
+function Widget:SetFont(path, size, flags) self.font, self.fontSize, self.fontFlags, self.noFont = path, size, flags, nil end
+function Widget:GetFont() return self.font, self.fontSize, self.fontFlags end
+function Widget:SetFontObject(object) self.fontObject, self.noFont = object, nil end
 function Widget:CreateTexture(name) return newWidget("Texture", name, self) end
 function Widget:SetTexture(path) self.texture = path end
 function Widget:GetTexture() return self.texture end

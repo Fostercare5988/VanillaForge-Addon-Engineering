@@ -43,7 +43,7 @@ function forget() calls = {} end
 function Widget:GetFrameLevel() return self.level or 1 end
 function Widget:SetFrameLevel(l) self.level = l end
 function Widget:SetStatusBarColor(r, g, b) self.barColor = r .. "," .. g .. "," .. b end
-function Widget:SetFont(font, size, flags) self.fontSize = size; if self.native then touch(self, "SetFont") end end
+function Widget:SetFont(font, size, flags) self.fontSize, self.noFont = size, nil; if self.native then touch(self, "SetFont") end end
 function Widget:SetTexture(path) self.texture = path end
 function Widget:SetTimerDuration(d, interpolation, direction) self.timer, self.direction = d, direction; tally("SetTimerDuration") end
 function Widget:SetCooldown(start, duration) self.cdStart, self.cdDuration = start, duration; tally("SetCooldown") end
@@ -51,7 +51,10 @@ function Widget:Clear() self.cdStart, self.cdDuration = nil, nil end
 function Widget:SetCountdownFormatter(f) self.formatter = f end
 function Widget:SetMinMaxValues(lo, hi) self.min, self.max = lo, hi end
 function Widget:SetValue(v) self.value = v; tally("SetValue") end
-function Widget:SetText(text) self.text = text; tally("SetText") end
+function Widget:SetText(text)
+    if self.noFont then error("<unnamed>:SetText(): Font not set") end
+    self.text = text; tally("SetText")
+end
 function Widget:SetAlpha(a) self.alpha = a; if self.native then touch(self, "SetAlpha") end end
 -- A spy on the game's own regions: what the addon calls on them.
 touched = {}
