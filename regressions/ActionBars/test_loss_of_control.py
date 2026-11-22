@@ -68,3 +68,27 @@ class LossOfControl(unittest.TestCase):
         lua.execute(STUN)
         self.assertEqual(lua.eval("timerCount()"), 0)
         self.assertEqual(lua.eval("busyFrames()"), "")
+
+    def test_a_cooldown_that_starts_or_ends_during_the_effect_is_judged_again(self):
+        lua = load(setup=SETUP)
+        lua.execute(STUN)  # a silence of 4 s on spell 1, no cooldown yet
+        self.assertEqual(lua.eval("button('main', 1).cooldown.alpha"), 0)
+        lua.execute("cooldowns[1] = { 100, 30 } fire('ACTIONBAR_UPDATE_COOLDOWN')")
+        self.assertEqual(lua.eval("button('main', 1).cooldown.alpha"), 1, "a longer cooldown shows at once")
+        lua.execute("cooldowns[1] = nil fire('ACTIONBAR_UPDATE_COOLDOWN')")
+        self.assertEqual(lua.eval("button('main', 1).cooldown.alpha"), 0, "it ended: the swipe stands in")
+        lua.execute("cooldowns[1] = { 100, 1.5 } fire('ACTIONBAR_UPDATE_COOLDOWN')")
+        self.assertEqual(lua.eval("button('main', 1).cooldown.alpha"), 0, "a shorter one stays hidden")
+
+    def test_the_same_on_a_free_button(self):
+        lua = load(FREE, SETUP + " give(9)")
+        lua.execute(STUN)
+        lua.execute("spellCooldowns[1] = { 100, 30 } fire('SPELL_UPDATE_COOLDOWN')")
+        self.assertEqual(lua.eval("button('extra5', 1).cooldown.alpha"), 1)
+        lua.execute("spellCooldowns[1] = nil fire('SPELL_UPDATE_COOLDOWN')")
+        self.assertEqual(lua.eval("button('extra5', 1).cooldown.alpha"), 0)
+
+    def test_at_rest_the_cooldown_path_writes_no_alpha(self):
+        lua = load(setup=SETUP)
+        lua.execute("cooldowns[1] = { 100, 30 } fire('ACTIONBAR_UPDATE_COOLDOWN')")
+        self.assertIsNone(lua.eval("button('main', 1).cooldown.alpha"))
