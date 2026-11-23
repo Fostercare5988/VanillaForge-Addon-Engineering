@@ -151,7 +151,8 @@ class Estimate(unittest.TestCase):
         self.assertEqual(lua.eval(f"clock({est}.verdict)"), "|cff59ff72Win|r 8:20")
         self.assertEqual(lua.eval(f"{est}.info.text"), "2000 : 1550   Hold 3 bases")
         lua.execute(f"ctrl = true; run({est}, 'OnClick')")
-        self.assertTrue(lua.eval("said('^say:BATTLEGROUND:Arathi Basin: Win in 8:20, 2000 to 1550. Hold 3 bases.$')"))
+        # The old addon's words (2026-11-23, the player: "Win in xx:xx").
+        self.assertTrue(lua.eval("said('^say:BATTLEGROUND:Win in 08:20$')"))
 
     def test_a_base_count_not_seen_is_a_guess(self):
         lua = load(CLAUDES_TICKS)

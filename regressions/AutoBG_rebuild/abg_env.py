@@ -328,7 +328,8 @@ for i = 1, 3 do CreateFrame("Frame", nil):CreateFontString("WorldStateScoreButto
 function WorldStateScoreFrame_Update() end
 worldStates = {}
 function GetNumWorldStateUI() return #worldStates end
-function GetWorldStateUIInfo(i) return 0, 0, worldStates[i] end
+-- state, text, icon, ... as the client's WorldStateFrame.lua:39 reads them (the text second).
+function GetWorldStateUIInfo(i) if worldStates[i] then return 0, worldStates[i], "Interface\WorldStateFrame\HordeFlag" end end
 healerTime = 0
 function GetAreaSpiritHealerTime() return healerTime end
 
