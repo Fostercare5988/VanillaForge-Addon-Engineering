@@ -117,6 +117,27 @@ class RightClick(unittest.TestCase):
         self.assertEqual(lua.eval("inbox[1].money"), 5)
         self.assertEqual(lua.eval("opened"), None)
 
+    def test_right_clicks_meanwhile_wait_their_turn(self):
+        lua = load(setup='''
+            mail({ sender = "Warsong Gulch", subject = "Marks", item = { "Warsong Gulch Mark of Honor", 3 } })
+            mail({ sender = "Bob", subject = "Hi" })
+            mail({ sender = "Warsong Gulch", subject = "Marks", item = { "Warsong Gulch Mark of Honor", 3 } })
+            mail({ sender = "Ann", money = 9 })''')
+        lua.execute("rightClickRow(1); rightClickRow(3); rightClickRow(4); rightClickRow(3); answerAll()")
+        self.assertEqual(log(lua), ["item 1", "delete 1", "item 2", "delete 2", "money 2", "delete 2"])
+        self.assertEqual([m["sender"] for m in lua.eval("inbox").values()], ["Bob"])
+        self.assertEqual(lua.eval("MailOpenAllButton:GetText()"), "Open All")
+
+    def test_a_delete_with_no_answer_is_asked_again(self):
+        lua = load(setup='mail({ sender = "Warsong Gulch", item = { "Warsong Gulch Mark of Honor", 3 } })')
+        lua.execute("rightClickRow(1); answer()")
+        self.assertEqual(log(lua), ["item 1", "delete 1"])
+        lua.execute("requests = {}; step(3.1); answer()")  # the server lost the delete
+        self.assertEqual(log(lua), ["item 1", "delete 1", "delete 1"])
+        lua.execute("answerAll()")
+        self.assertEqual(lua.eval("#inbox"), 0)
+        self.assertEqual(lua.eval("MailOpenAllButton:GetText()"), "Open All")
+
     def test_cod_and_plain_rows_are_left(self):
         lua = load(setup='''mail({ sender = "A", cod = 5, item = { "Ore", 1 } }); mail({ sender = "B" })''')
         lua.execute("rightClickRow(1); rightClickRow(2); answerAll()")
