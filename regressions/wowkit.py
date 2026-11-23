@@ -87,16 +87,19 @@ local WidgetMeta = { __index = function(_, key)
     if type(key) == "string" and string.find(key, "^%u") then return NOOP end
 end }
 
+local layoutRead -- the client has read layout-cache.txt (Positions, below)
 function newWidget(kind, name, parent)
     local w = setmetatable({ kind = kind or "Frame", name = name, parent = parent, shown = true,
         enabled = true, scripts = {}, events = {}, units = {}, points = {} }, WidgetMeta)
     if name then rawset(_G, name, w) end
     widgets[#widgets + 1] = w
-    if name and layoutCache[name] then w.userPlaced = true; restoring[#restoring + 1] = w end
+    if name and layoutCache[name] and not layoutRead then w.userPlaced = true; restoring[#restoring + 1] = w end
     return w
 end
 
 -- Positions: none without an anchor; the client's saved places at the first frame.
+-- It reads them when the addons have loaded (VARIABLES_LOADED): a frame made after
+-- that has no saved place and is never saved (AutoBG's queue bars, 2026-11-23).
 layoutCache, restoring = {}, {}
 function Widget:GetLeft() if #self.points > 0 then return self.left or 100 end end
 function Widget:GetTop() if #self.points > 0 then return self.top or 200 end end
@@ -278,6 +281,7 @@ local buffers, depth = {}, 0
 local settingsEvent
 function fire(e, ...)
     local first = ...
+    if e == "VARIABLES_LOADED" then layoutRead = true end
     settingsEvent(e)
     depth = depth + 1
     local due = buffers[depth] or {}

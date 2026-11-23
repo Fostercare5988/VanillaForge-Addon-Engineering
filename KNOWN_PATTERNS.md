@@ -1251,6 +1251,10 @@ job's error must not stop another: set keys, events and layout as separate steps
 not one after the other in the same function. Tests: the kit's `layoutCache`
 (wowkit.py, "Positions") puts a frame back only at the first `step()`; each suite
 of an addon with saved positions has a first-login test that fills it.
+Make every movable named frame while the addon loads: one made later (at the first
+event that needs it) is never saved, so the player moves it again at every login
+(AutoBG's queue bars, 2026-11-23). The kit gives a saved place only to frames made
+before VARIABLES_LOADED.
 
 ------------------------------------------------------------------------
 
