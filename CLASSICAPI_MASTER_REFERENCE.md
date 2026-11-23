@@ -3602,6 +3602,11 @@ These extend [4.4](#44-modern-script-handler-arguments):
   hid under a still cursor. **Hazard:** a handler that declared a parameter in
   that position and expected nil now gets a boolean. A handler that declares no
   parameters keeps vanilla's globals.
+- **Except on a unit button** (a frame with a `type*` attribute, API.md "Click
+  actions"): a click with no verb of its own falls through ClassicAPI's chained
+  handler to the frame's `OnClick` with **no arguments**: `self` and `button`
+  are nil (seen in play in AutoBG, 2026-11-23, `Enemies.lua:58`). Take the frame
+  from a closure and the button from `GetMouseButtonClicked()`.
 - `event` is saved before and restored after each `OnEvent` handler, so a
   handler that assigns the `event` global no longer changes it for the next
   listener. Off while `SetModernScriptArgs(false)`.
