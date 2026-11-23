@@ -74,9 +74,16 @@ Do not trust for this server:
 - 2026-11-17, from the database (?item=N): the battleground marks are 20560
   Alterac Valley Mark of Honor, 20558 Warsong Gulch Mark of Honor and 20559
   Arathi Basin Mark of Honor.
+- 2026-11-23, from the database (?spell=N): 22011 Spirit Heal Channel (30 s,
+  a periodic trigger every 30 s), 22012 Spirit Heal (instant, 20-yard area),
+  24171 Resurrection Impact Visual, 2584 Waiting to Resurrect, 23333 Warsong
+  Flag and 23335 Silverwing Flag (the auras a Warsong Gulch carrier wears:
+  the Horde and the Alliance flag).
 - Unverified: one spirit healer wave every 30 seconds for the whole
-  battleground (as on MaNGOS cores). AutoBG's respawn bar and its dead enemy
-  rows count to it.
+  battleground (as on MaNGOS cores, whose wave clock starts when the
+  battleground is made and whose spirit guides cast Spirit Heal at each wave
+  that revives someone at them). AutoBG shows the wave only once one is seen,
+  and measures the period from exact sightings.
 - Unverified: Arathi Basin resource ticks. AutoBG learns what each base count
   earns from the score in play (`AutoBG_Settings.ABTicks`) and uses the vanilla
   ticks, marked `~`, until then.
