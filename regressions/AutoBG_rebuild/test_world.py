@@ -236,6 +236,18 @@ class AtRest(unittest.TestCase):
             self.assertEqual(lua.eval(f"{name}:GetLeft()"), x, name)
             self.assertTrue(lua.eval(f"{name}:IsUserPlaced()"), name)
 
+    def test_a_dropped_queue_bar_comes_back_there_whatever_the_client_saved(self):
+        lua = load()
+        lua.execute("queues[1] = { status = 'queued', map = 'Warsong Gulch' }; fire('UPDATE_BATTLEFIELD_STATUS')")
+        lua.execute("local g = AutoBG_QueueFrame; run(g, 'OnDragStart'); g.left, g.top = 300, 500; run(g, 'OnDragStop')")
+        self.assertEqual(lua.eval("AutoBGDB.places.AutoBG_QueueFrame[1]"), 300)
+        self.assertFalse(lua.eval("AutoBG_QueueFrame:IsUserPlaced()"))
+        # The next login: the client's file still has the 0, 0 it wrote before.
+        lua = load("AutoBGDB = { places = { AutoBG_QueueFrame = { 300, 500 } } }", cache={"AutoBG_QueueFrame": (0, 0)})
+        lua.execute("queues[1] = { status = 'queued', map = 'Warsong Gulch' }; fire('UPDATE_BATTLEFIELD_STATUS'); step()")
+        point = lua.eval("(function() local p = AutoBG_QueueFrame.points; p = p[#p]; return p[1] .. ' ' .. p[4] .. ' ' .. p[5] end)()")
+        self.assertEqual(point, "TOPLEFT 300 500")
+
     def test_odd_data_no_target_empty_raid_and_a_score_row_with_no_class(self):
         lua = load()
         lua.execute("scores = { { 'Nobody', 1, nil, nil } }; enter('Alterac Valley'); fire('UPDATE_BATTLEFIELD_SCORE'); step()")
