@@ -88,6 +88,19 @@ class OpenAll(unittest.TestCase):
         lua.execute("answerAll()")
         self.assertEqual(lua.eval("#inbox"), 0)
 
+    def test_a_mail_list_that_never_came_is_asked_for_again(self):
+        # Seen in play 2026-11-23: after a login the inbox stayed empty.
+        lua = load(setup="mail({ sender = 'A', money = 1 })", show=False)
+        lua.execute('fire("MAIL_SHOW"); requests = {}; checks = 0; step(2.9)')
+        self.assertEqual(lua.eval("checks"), 0)
+        lua.execute("step(0.2)")
+        self.assertEqual(lua.eval("checks"), 1)
+        lua.execute("requests = {}; step(3.1)")  # lost again
+        self.assertEqual(lua.eval("checks"), 2)
+        lua.execute("answerAll(); step(10)")
+        self.assertEqual(lua.eval("checks"), 2, "no asking once the list came")
+        self.assertEqual(lua.eval("InboxTitleText:GetText()"), "Inbox [1/1]")
+
     def test_closing_the_mailbox_ends_the_take(self):
         lua = load(setup="mail({ sender = 'A', money = 1 }); mail({ sender = 'B', money = 1 })")
         lua.execute("click(MailOpenAllButton); fire('MAIL_CLOSED'); answerAll()")
