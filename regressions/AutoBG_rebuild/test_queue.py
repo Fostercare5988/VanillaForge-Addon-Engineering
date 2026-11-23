@@ -127,9 +127,16 @@ class Pops(unittest.TestCase):
         lua.execute("queues[2] = { status = 'queued', map = 'Warsong Gulch', instance = 9001, waited = 30000, estimate = 120000 };"
                     " fire('UPDATE_BATTLEFIELD_STATUS'); step(15)")
         r = "AutoBG_QueueFrame.rows[1]"
-        self.assertEqual(lua.eval(f"{r}.label.text"), "Warsong Gulch (Cross-Faction)")
+        # 2026-11-23, the player: "Arathi Basin (First Available)" ran under the clock.
+        # Our short words; the label ends where the clock begins.
+        self.assertEqual(lua.eval(f"{r}.label.text"), "Warsong Gulch - Mixed")
         self.assertEqual(lua.eval(f"clock({r}.clock)"), "45")
-        lua.execute("queues[2] = {}; fire('UPDATE_BATTLEFIELD_STATUS')")
+        self.assertTrue(lua.eval(f"(function() for _, p in ipairs({r}.label.points) do"
+                                 f" if p[1] == 'RIGHT' and p[2] == {r}.clock then return true end end end)()"))
+        lua.execute("queues[3] = { status = 'queued', map = 'Arathi Basin', instance = 9000, waited = 0, estimate = 0 };"
+                    " fire('UPDATE_BATTLEFIELD_STATUS')")
+        self.assertEqual(lua.eval("AutoBG_QueueFrame.rows[2].label.text"), "Arathi Basin")
+        lua.execute("queues[2] = {}; queues[3] = {}; fire('UPDATE_BATTLEFIELD_STATUS')")
         self.assertFalse(lua.eval("AutoBG_QueueFrame:IsShown()"))
 
 

@@ -154,6 +154,22 @@ class Estimate(unittest.TestCase):
     def states(self, lua, a, ab, h, hb):
         lua.execute(f"worldStates = {{ 'Bases: {ab}  Resources: {a}/2000', 'Bases: {hb}  Resources: {h}/2000' }}; fire('UPDATE_WORLD_STATES'); step()")
 
+    def test_gone_after_the_match_even_while_the_zone_text_lags(self):
+        """2026-11-23, the player: the estimate stayed up in Orgrimmar after Arathi
+        Basin. The zone text can still name the battleground just after leaving,
+        and a wake asked for before the loading screen can come after it.
+        Fails on 007a05e."""
+        lua = load(CLAUDES_TICKS)
+        lua.execute("enter('Arathi Basin')")
+        self.states(lua, 1000, 2, 1000, 3)
+        self.assertTrue(lua.eval("AutoBG_ABProjectionFrame:IsShown()"))
+        # A world state change, then the loading screen before its wake.
+        lua.execute("fire('UPDATE_WORLD_STATES');"
+                    " zone = { name = 'Arathi Basin', kind = 'none', map = 1, inside = false }; fire('PLAYER_ENTERING_WORLD'); step()")
+        self.assertFalse(lua.eval("AutoBG_ABProjectionFrame:IsShown()"))
+        lua.execute("zone = { name = 'Orgrimmar', kind = 'none', map = 1, inside = false }; fire('ZONE_CHANGED_NEW_AREA'); step(5)")
+        self.assertFalse(lua.eval("AutoBG_ABProjectionFrame:IsShown()"))
+
     def test_the_verdict_finals_and_bases_from_learned_ticks(self):
         lua = load(CLAUDES_TICKS)
         lua.execute("enter('Arathi Basin')")
