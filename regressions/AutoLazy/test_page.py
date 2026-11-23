@@ -1,4 +1,4 @@
-"""The page in ClassicAPI's Settings window and /al (spec 4.2, 4.3; tests 1, 13):
+"""The page in ClassicAPI's Settings window, /autolazy and /al (spec 4.2, 4.3; tests 1, 13):
 eleven rows in play order, the defaults are Claude's settings, the roll
 choices hang on Auto-roll, Defaults puts each back, the old keys are swept.
 Also what listens at rest and which globals the addon makes.
@@ -59,14 +59,26 @@ class Page(unittest.TestCase):
             self.assertEqual(lua.eval(f"AutoLazyDB.{key}"), value, key)
         self.assertTrue(lua.eval("AutoLazyButton:IsShown()"))
 
-    def test_al_and_a_right_click_open_the_page(self):
+    def test_autolazy_al_and_a_right_click_open_the_page(self):
         lua = load()
-        self.assertEqual(lua.eval("SLASH_AUTOLAZY1"), "/al")
+        self.assertEqual(lua.eval("SLASH_AUTOLAZY1"), "/autolazy")
+        self.assertEqual(lua.eval("SLASH_AUTOLAZY2"), "/al")
         lua.execute("SlashCmdList.AUTOLAZY('')")
         self.assertEqual(lua.eval("settingsWindow.opened:GetName()"), "AutoLazy")
         lua.execute("settingsWindow.opened = nil; click(AutoLazyButton, 'RightButton')")
         self.assertEqual(lua.eval("settingsWindow.opened:GetName()"), "AutoLazy")
         self.assertFalse(lua.eval("AutoLazyTray:IsShown()"))
+
+    def test_al_is_left_to_an_addon_that_claims_it(self):
+        # AtlasLoot loads after the chat frame but may come before or after AutoLazy.
+        for when in ("before", "after"):
+            claim = "SlashCmdList.ATLASLOOT = function() end; SLASH_ATLASLOOT1 = '/atlasloot'; SLASH_ATLASLOOT2 = '/AL'"
+            lua = load(setup=claim, world=False) if when == "before" else load(world=False)
+            if when == "after":
+                lua.execute(claim)
+            lua.execute('fire("VARIABLES_LOADED") fire("PLAYER_LOGIN") fire("PLAYER_ENTERING_WORLD") step()')
+            self.assertEqual(lua.eval("SLASH_AUTOLAZY1"), "/autolazy", when)
+            self.assertIsNone(lua.eval("SLASH_AUTOLAZY2"), when)
 
 
 class AtRest(unittest.TestCase):
@@ -90,7 +102,7 @@ class AtRest(unittest.TestCase):
         lua.execute('fire("VARIABLES_LOADED") fire("PLAYER_LOGIN") fire("PLAYER_ENTERING_WORLD")')
         made = lua.eval("(function() local out = {} for k in pairs(_G) do if not before[k] then out[#out + 1] = k end end"
                         " table.sort(out) return table.concat(out, ',') end)()")
-        self.assertEqual(made, "AutoLazyButton,AutoLazyDB,AutoLazyTray,SLASH_AUTOLAZY1")
+        self.assertEqual(made, "AutoLazyButton,AutoLazyDB,AutoLazyTray,SLASH_AUTOLAZY1,SLASH_AUTOLAZY2")
 
     def test_without_classicapi_one_error_and_nothing_else(self):
         import wowkit
