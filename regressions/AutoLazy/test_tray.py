@@ -37,6 +37,8 @@ class Collect(unittest.TestCase):
     def test_the_launcher_starts_top_right_and_keeps_the_place_the_client_saved(self):
         lua = load()
         self.assertEqual(lua.eval("(select(1, AutoLazyButton:GetPoint(1)))"), "TOPRIGHT")
+        self.assertEqual(lua.eval("(select(4, AutoLazyButton:GetPoint(1)))"), -167)
+        self.assertEqual(lua.eval("(select(5, AutoLazyButton:GetPoint(1)))"), -225)
         lua = load(setup="layoutCache.AutoLazyButton = { 300, -400 }")
         self.assertEqual(lua.eval("AutoLazyButton:GetLeft()"), 300)
 

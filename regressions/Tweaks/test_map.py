@@ -62,6 +62,16 @@ class Minimap(unittest.TestCase):
                                     "#MiniMapMailFrame.points); return table.concat({ p, tostring(to == UIParent),"
                                     " rel, x, y }, ' ') end)()"), "CENTER true BOTTOMLEFT 700 300")
 
+    def test_unmoved_pieces_start_at_the_mains_places_against_the_top_right(self):
+        lua = load("TweaksDB = { pieces = { mail = { 700, 300 } } }")
+        point = "(function(f) local p, to, rel, x, y = f:GetPoint(#f.points); "                 "return table.concat({ p, tostring(to == UIParent), rel, x, y }, ' ') end)"
+        self.assertEqual(lua.eval(f"{point}(MinimapCluster)"), "CENTER true TOPRIGHT -126 -51")
+        self.assertEqual(lua.eval(f"{point}(MinimapZoneTextButton)"), "CENTER true TOPRIGHT -59 -232")
+        self.assertEqual(lua.eval(f"{point}(MinimapClock)"), "CENTER true TOPRIGHT -131 -232")
+        self.assertEqual(lua.eval(f"{point}(MiniMapTrackingFrame)"), "CENTER true TOPRIGHT -243 -44")
+        self.assertEqual(lua.eval(f"{point}(MiniMapBattlefieldFrame)"), "CENTER true TOPRIGHT -214 -241")
+        self.assertEqual(lua.eval(f"{point}(MiniMapMailFrame)"), "CENTER true BOTTOMLEFT 700 300")
+
     def test_letting_go_while_dragging_still_saves(self):
         lua = load()
         lua.execute("press(true, true); for _, w in ipairs(widgets) do if w.parent == MinimapZoneTextButton "
