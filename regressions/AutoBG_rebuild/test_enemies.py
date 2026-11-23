@@ -154,7 +154,10 @@ class Rows(unittest.TestCase):
         self.assertEqual(lua.eval(f"{self.r}.status.text"), "MELD")  # the row still says it
         self.assertFalse(lua.eval("AutoBG_SpyAlertWindow:IsShown()"))
         self.assertFalse(lua.eval("said('sound:RaidWarning')"))
-        lua.execute(f"units['{ROGUE}'].yards = 15; fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 1787)")
+        # Shadowmeld next to you is no alarm either: only Stealth, Vanish and Prowl, as Spy.
+        lua.execute(f"units['{ROGUE}'].yards = 15; fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 20580)")
+        self.assertFalse(lua.eval("AutoBG_SpyAlertWindow:IsShown()"))
+        lua.execute(f"fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 1787)")
         self.assertTrue(lua.eval("AutoBG_SpyAlertWindow:IsShown()"))
         self.assertIn("is stealthed 15 yd away", lua.eval("AutoBG_SpyAlertWindow.line.text"))
         self.assertTrue(lua.eval("said('sound:RaidWarning')"))
