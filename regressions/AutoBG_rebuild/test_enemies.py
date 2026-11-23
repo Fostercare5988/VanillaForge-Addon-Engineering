@@ -121,13 +121,15 @@ class Rows(unittest.TestCase):
     def test_stealth_from_an_aura_by_id_ended_by_its_removal_or_by_coming_into_view_without_it(self):
         lua = self.lua
         lua.execute(f"units['{ROGUE}'].yards = 20; stealthID = aura('{ROGUE}', 1787); auraEvent('{ROGUE}', {{ stealthID }})")
-        self.assertEqual(lua.eval(f"{self.r}.status.text"), "STEALTH")
-        self.assertEqual(lua.eval(f"{self.r}:GetAlpha()"), 0.5)
+        self.assertEqual(lua.eval(f"{self.r}.status.text"), "|cffc7b5ffSTEALTH|r")
+        # The spell's icon at the row's left, not dimmed (the player, 2026-11-23).
+        self.assertTrue(lua.eval(f"{self.r}.stealthIcon:IsShown()"))
+        self.assertEqual(lua.eval(f"{self.r}:GetAlpha()"), 1)
         self.assertTrue(lua.eval("said('sound:RaidWarning')"))
         lua.execute(f"removeAura('{ROGUE}', stealthID); auraEvent('{ROGUE}', nil, {{ stealthID }})")
         self.assertEqual(lua.eval(f"{self.r}.status.text"), "100%")
         lua.execute(f"auraEvent('{ROGUE}', {{ aura('{ROGUE}', 11327) }})")
-        self.assertEqual(lua.eval(f"{self.r}.status.text"), "VANISH")
+        self.assertEqual(lua.eval(f"{self.r}.status.text"), "|cffd2c2ffVANISH|r")
         lua.execute(f"units['{ROGUE}'].auras = {{}}; fireGUID('UNIT_VISIBILITY_CHANGED', '{ROGUE}', true)")
         self.assertEqual(lua.eval(f"{self.r}.status.text"), "100%")
 
@@ -138,12 +140,14 @@ class Rows(unittest.TestCase):
         lua = self.lua
         lua.execute(f"fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 1787);"
                     f" units['{ROGUE}'].visible = false; fireGUID('UNIT_VISIBILITY_CHANGED', '{ROGUE}', false)")
-        self.assertEqual(lua.eval(f"{self.r}.status.text"), "STEALTH")
-        self.assertEqual(lua.eval(f"{self.r}:GetAlpha()"), 0.5)
+        self.assertEqual(lua.eval(f"{self.r}.status.text"), "|cffc7b5ffSTEALTH|r")
+        # The spell's icon at the row's left, not dimmed (the player, 2026-11-23).
+        self.assertTrue(lua.eval(f"{self.r}.stealthIcon:IsShown()"))
+        self.assertEqual(lua.eval(f"{self.r}:GetAlpha()"), 1)
         lua.execute(f"units['{ROGUE}'].visible = true; fireGUID('UNIT_VISIBILITY_CHANGED', '{ROGUE}', true)")
         self.assertEqual(lua.eval(f"{self.r}.status.text"), "100%")
         lua.execute(f"step(9); fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 1856)")
-        self.assertEqual(lua.eval(f"{self.r}.status.text"), "VANISH")
+        self.assertEqual(lua.eval(f"{self.r}.status.text"), "|cffd2c2ffVANISH|r")
 
     def test_the_stealth_card_is_for_live_danger_only_and_targets_him(self):
         """2026-11-23, the player: the big MELD card should warn only of an enemy in
@@ -151,7 +155,7 @@ class Rows(unittest.TestCase):
         Fails on 0bd447d."""
         lua = self.lua
         lua.execute(f"units['{ROGUE}'].yards = 120; fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 20580)")
-        self.assertEqual(lua.eval(f"{self.r}.status.text"), "MELD")  # the row still says it
+        self.assertEqual(lua.eval(f"{self.r}.status.text"), "|cffc7b5ffMELD|r")  # the row still says it
         self.assertFalse(lua.eval("AutoBG_SpyAlertWindow:IsShown()"))
         self.assertFalse(lua.eval("said('sound:RaidWarning')"))
         # Shadowmeld next to you is no alarm either: only Stealth, Vanish and Prowl, as Spy.
@@ -167,14 +171,35 @@ class Rows(unittest.TestCase):
     def test_a_cast_only_stealth_ends_when_an_aura_goes_in_view(self):
         lua = self.lua
         lua.execute(f"fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 5215)")
-        self.assertEqual(lua.eval(f"{self.r}.status.text"), "PROWL")
+        self.assertEqual(lua.eval(f"{self.r}.status.text"), "|cffd2c2ffPROWL|r")
         lua.execute(f"id = aura('{ROGUE}', 1, 'Thorns'); removeAura('{ROGUE}', id); auraEvent('{ROGUE}', nil, {{ id }})")
         self.assertEqual(lua.eval(f"{self.r}.status.text"), "100%")
+
+    def test_a_hidden_enemy_shows_his_spells_icon_not_a_dimmed_row(self):
+        """2026-11-23, the player: STEALTH rows were dimmed with no icon; the old
+        addon showed the spell's icon. Fails on 01feb36."""
+        lua = self.lua
+        lua.execute(f"fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 5215)")
+        self.assertEqual(lua.eval(f"{self.r}.stealthIcon.texture"), lua.eval("select(3, GetSpellInfo(5215))"))
+        self.assertTrue(lua.eval(f"{self.r}.stealthIcon:IsShown()"))
+        self.assertEqual(lua.eval(f"{self.r}:GetAlpha()"), 1)
+        self.assertEqual(lua.eval(f"(select(4, {self.r}.name:GetPoint(1)))"), 25)  # after the icon, a 25-pixel row
+        lua.execute(f"units['{ROGUE}'].visible = true; fireGUID('UNIT_VISIBILITY_CHANGED', '{ROGUE}', true)")
+        self.assertFalse(lua.eval(f"{self.r}.stealthIcon:IsShown()"))
+        self.assertEqual(lua.eval(f"(select(4, {self.r}.name:GetPoint(1)))"), 6)
+
+    def test_the_yards_move_ten_times_a_second(self):
+        """2026-11-23, the player: the yards felt clunky at twice a second."""
+        lua = self.lua
+        lua.execute(f"units['{ROGUE}'].yards = 40; step(0.1)")
+        self.assertIn("40 yd", lua.eval(f"{self.r}.yards.text"))
+        lua.execute(f"units['{ROGUE}'].yards = 37; step(0.1)")
+        self.assertIn("37 yd", lua.eval(f"{self.r}.yards.text"))
 
     def test_an_invisibility_potion_ends_after_15_seconds(self):
         lua = self.lua
         lua.execute(f"auraEvent('{ROGUE}', {{ aura('{ROGUE}', 3680) }}); step(14.9)")
-        self.assertEqual(lua.eval(f"{self.r}.status.text"), "INVIS POT")
+        self.assertEqual(lua.eval(f"{self.r}.status.text"), "|cff00ffffINVIS POT|r")
         lua.execute("step(0.2)")
         self.assertEqual(lua.eval(f"{self.r}.status.text"), "100%")
 
