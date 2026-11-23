@@ -120,7 +120,7 @@ class Rows(unittest.TestCase):
 
     def test_stealth_from_an_aura_by_id_ended_by_its_removal_or_by_coming_into_view_without_it(self):
         lua = self.lua
-        lua.execute(f"stealthID = aura('{ROGUE}', 1787); auraEvent('{ROGUE}', {{ stealthID }})")
+        lua.execute(f"units['{ROGUE}'].yards = 20; stealthID = aura('{ROGUE}', 1787); auraEvent('{ROGUE}', {{ stealthID }})")
         self.assertEqual(lua.eval(f"{self.r}.status.text"), "STEALTH")
         self.assertEqual(lua.eval(f"{self.r}:GetAlpha()"), 0.5)
         self.assertTrue(lua.eval("said('sound:RaidWarning')"))
@@ -144,6 +144,22 @@ class Rows(unittest.TestCase):
         self.assertEqual(lua.eval(f"{self.r}.status.text"), "100%")
         lua.execute(f"step(9); fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 1856)")
         self.assertEqual(lua.eval(f"{self.r}.status.text"), "VANISH")
+
+    def test_the_stealth_card_is_for_live_danger_only_and_targets_him(self):
+        """2026-11-23, the player: the big MELD card should warn only of an enemy in
+        front of you, not of anyone stealthing anywhere, and target him on a click.
+        Fails on 0bd447d."""
+        lua = self.lua
+        lua.execute(f"units['{ROGUE}'].yards = 120; fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 20580)")
+        self.assertEqual(lua.eval(f"{self.r}.status.text"), "MELD")  # the row still says it
+        self.assertFalse(lua.eval("AutoBG_SpyAlertWindow:IsShown()"))
+        self.assertFalse(lua.eval("said('sound:RaidWarning')"))
+        lua.execute(f"units['{ROGUE}'].yards = 15; fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 1787)")
+        self.assertTrue(lua.eval("AutoBG_SpyAlertWindow:IsShown()"))
+        self.assertIn("is stealthed 15 yd away", lua.eval("AutoBG_SpyAlertWindow.line.text"))
+        self.assertTrue(lua.eval("said('sound:RaidWarning')"))
+        lua.execute("AutoBG_SpyAlertWindow:Click('LeftButton')")
+        self.assertTrue(lua.eval("said('^target:Thandril%-NZ$')"))
 
     def test_a_cast_only_stealth_ends_when_an_aura_goes_in_view(self):
         lua = self.lua
