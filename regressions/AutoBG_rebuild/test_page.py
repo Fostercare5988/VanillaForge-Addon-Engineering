@@ -3,8 +3,8 @@ new 2026-11-22; a first login with no saved file unless a test gives one."""
 import unittest
 from abg_env import load
 
-MAIN, FRAMES, SPY = ("settingsWindow.find('AutoBG')", "settingsWindow.find('Frames')",
-                     "settingsWindow.find('Spy and arena')")
+MAIN, BARS, FRAMES, SPY = ("settingsWindow.find('AutoBG')", "settingsWindow.find('Timer bars')",
+                           "settingsWindow.find('Enemy frames')", "settingsWindow.find('Spy and arena')")
 
 
 def rows(lua, page):
@@ -23,12 +23,14 @@ class Pages(unittest.TestCase):
         self.assertEqual(rows(lua, MAIN), "Queue|Warsong Gulch|Arathi Basin|Alterac Valley|Queue at login|Leave queues|"
                          "Sound and flash when it pops|The match|Release spirit when you die|Leave when it ends|"
                          "Queue again after leaving")
-        self.assertEqual(rows(lua, FRAMES), "Timer bars|Width|Height|Enemy frames|Size|Show|Hide realm names|"
-                         "Distance in yards|Width|Height|Text size|Preview frames")
-        # 2026-11-23, players: some racials are not worth watching. One switch each.
-        self.assertEqual(rows(lua, "settingsWindow.find('Enemy racials')"),
-                         "Perception (Human)|Stoneform (Dwarf)|Shadowmeld (Night Elf)|Escape Artist (Gnome)|"
-                         "Blood Fury (Orc)|Will of the Forsaken (Undead)|War Stomp (Tauren)|Berserking (Troll)")
+        self.assertEqual(rows(lua, BARS), "Width|Height|Preview frames")
+        # 2026-11-23, the player: the racial switches on a page of their own did not
+        # say what they change; they sit in Enemy frames, one switch each.
+        self.assertEqual(rows(lua, FRAMES), "Preview frames|Layout|Size|Show|Hide realm names|Distance in yards|"
+                         "Width|Height|Text size|Racial cooldowns|Perception (Human)|Stoneform (Dwarf)|"
+                         "Shadowmeld (Night Elf)|Escape Artist (Gnome)|Blood Fury (Orc)|"
+                         "Will of the Forsaken (Undead)|War Stomp (Tauren)|Berserking (Troll)")
+        self.assertIsNone(lua.eval("settingsWindow.find('Enemy racials')"))
         self.assertEqual(rows(lua, SPY), "Spy|Spy list|Rows shown|Warning sounds|Arena|Callouts to your team")
 
     def test_claudes_choices_are_the_defaults_and_defaults_puts_them_back(self):
