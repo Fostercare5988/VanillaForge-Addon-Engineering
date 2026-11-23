@@ -167,6 +167,28 @@ class Rows(unittest.TestCase):
         lua.execute(f"fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 20580)")
         self.assertEqual(lua.eval(f"{self.r}.racial.cd.cdDuration"), 60)
 
+    def test_the_yards_follow_the_distance_look_and_each_size_can_hide_them(self):
+        """2026-11-23, players asked for the distance on the enemy frames."""
+        lua = self.lua
+        lua.execute(f"units['{ROGUE}'].yards = 24.4; step(0.5)")
+        self.assertIn("24 yd", lua.eval(f"{self.r}.yards.text"))
+        lua.execute(f"units['{ROGUE}'].yards = 71; step(0.5)")
+        self.assertIn("71 yd", lua.eval(f"{self.r}.yards.text"))
+        lua.execute(f"units['{ROGUE}'].visible = false; fireGUID('UNIT_VISIBILITY_CHANGED', '{ROGUE}', false)")
+        self.assertEqual(lua.eval(f"{self.r}.yards.text"), "")
+        lua.execute(f"units['{ROGUE}'].visible = true; fireGUID('UNIT_VISIBILITY_CHANGED', '{ROGUE}', true);"
+                    " settingsWindow.use('AutoBG_size', '10'); settingsWindow.use('AutoBG_size_yards', false); step(0.5)")
+        self.assertEqual(lua.eval(f"{self.r}.yards.text"), "")
+        self.assertFalse(lua.eval("AutoBGDB.sizes[15].yards == false"))
+
+    def test_a_racial_switched_off_is_not_shown(self):
+        lua = self.lua
+        lua.execute("settingsWindow.use('AutoBG_racial_NightElf', false)")
+        self.assertFalse(lua.eval(f"{self.r}.racial:IsShown()"))
+        self.assertTrue(lua.eval("row(1).racial:IsShown()"))  # Ashka, a Human: Perception
+        lua.execute("settingsWindow.defaults()")
+        self.assertTrue(lua.eval(f"{self.r}.racial:IsShown()"))
+
     def test_raid_icons_borders_and_the_range_stripe(self):
         lua = self.lua
         lua.execute(f"units['{ROGUE}'].mark = 8; fire('RAID_TARGET_UPDATE')")

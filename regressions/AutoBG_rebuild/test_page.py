@@ -23,8 +23,12 @@ class Pages(unittest.TestCase):
         self.assertEqual(rows(lua, MAIN), "Queue|Warsong Gulch|Arathi Basin|Alterac Valley|Queue at login|Leave queues|"
                          "Sound and flash when it pops|The match|Release spirit when you die|Leave when it ends|"
                          "Queue again after leaving")
-        self.assertEqual(rows(lua, FRAMES), "Timer bars|Width|Height|Enemy frames|Size|Show|Hide realm names|Width|"
-                         "Height|Text size|Preview frames")
+        self.assertEqual(rows(lua, FRAMES), "Timer bars|Width|Height|Enemy frames|Size|Show|Hide realm names|"
+                         "Distance in yards|Width|Height|Text size|Preview frames")
+        # 2026-11-23, players: some racials are not worth watching. One switch each.
+        self.assertEqual(rows(lua, "settingsWindow.find('Enemy racials')"),
+                         "Perception (Human)|Stoneform (Dwarf)|Shadowmeld (Night Elf)|Escape Artist (Gnome)|"
+                         "Blood Fury (Orc)|Will of the Forsaken (Undead)|War Stomp (Tauren)|Berserking (Troll)")
         self.assertEqual(rows(lua, SPY), "Spy|Spy list|Rows shown|Warning sounds|Arena|Callouts to your team")
 
     def test_claudes_choices_are_the_defaults_and_defaults_puts_them_back(self):
