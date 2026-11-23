@@ -7,7 +7,7 @@ import unittest
 from ftr_env import load
 
 PAGE = "settingsWindow.find('Tweaks')"
-SWITCHES = ("arrowKeys", "history", "timestamps", "classColors", "blueShaman", "minimapSquare",
+SWITCHES = ("arrowKeys", "history", "timestamps", "minimapSquare",
             "minimapClock", "minimapTidy")
 
 
@@ -23,7 +23,7 @@ class Page(unittest.TestCase):
     def test_the_rows_in_play_order(self):
         # A rogue: no Auto Stance row, since it would do nothing (review 2026-11-18).
         rogue = ("Chat|Arrow keys without Alt|Chat history|Timestamps|"
-                 "Names in class colours|Blue shamans|Minimap|Minimap size|Square minimap|Clock|"
+                 "Minimap|Minimap size|Square minimap|Clock|"
                  "Tidy minimap|World map|Map window size")
         self.assertEqual(rows(load()), rogue)
         self.assertEqual(rows(load(cls="DRUID")), rogue + "|Gameplay|Auto Stance")

@@ -1,6 +1,6 @@
 """Chat (spec T5-T8, 4.7 "Tweaks"): arrow keys; a URL line and a "Bob:" line;
 history saved at logout and back after a reload, in order; timestamps not in
-the combat log; chat names coloured by the chat frame (SetChatColorNameByClass), shaman blue.
+the combat log; class colours and shamans left to ClassicAPI and the client.
 """
 import unittest
 from ftr_env import load
@@ -14,7 +14,7 @@ def say(lua, text, frame="ChatFrame1"):
 
 
 def plain():
-    return load("TweaksDB = { timestamps = false, classColors = false }")
+    return load("TweaksDB = { timestamps = false }")
 
 
 class Keys(unittest.TestCase):
@@ -69,7 +69,7 @@ class Addresses(unittest.TestCase):
 
 class Lines(unittest.TestCase):
     def test_timestamps_and_switching_them_off(self):
-        lua = load("TweaksDB = { classColors = false }")
+        lua = load()
         self.assertEqual(say(lua, "hi"), "|cffcccccc[13:07:42]|r hi")
         lua.execute("settingsWindow.use('Tweaks_timestamps', false)")
         self.assertEqual(say(lua, "hi"), "hi")
@@ -77,32 +77,13 @@ class Lines(unittest.TestCase):
     def test_the_combat_log_is_left_alone(self):
         self.assertEqual(say(load(), "You hit x.org for 5.", "ChatFrame2"), "You hit x.org for 5.")
 
-    def test_the_chat_frame_colours_names_in_every_sender_type_and_the_line_is_left_alone(self):
-        lua = load("TweaksDB = { timestamps = false }")
-        for kind in ("SAY", "GUILD", "WHISPER", "CHANNEL1", "CHANNEL10"):
-            self.assertIs(lua.eval(f"ChatTypeInfo.{kind}.colorNameByClass"), True, kind)
-        self.assertIsNone(lua.eval("ChatTypeInfo.SYSTEM.colorNameByClass"))
-        self.assertEqual(say(lua, PLAYER + ": hi"), PLAYER + ": hi")
-
-    def test_switching_names_off_sets_false_for_all_types_and_back_on(self):
-        lua = load()
-        lua.execute("colorNameCalls = {}; settingsWindow.use('Tweaks_classColors', false)")
-        self.assertEqual(lua.eval("#colorNameCalls"), 23)
-        for kind in ("SAY", "YELL", "WHISPER", "GUILD", "PARTY", "CHANNEL1", "CHANNEL7", "CHANNEL10"):
-            self.assertIs(lua.eval(f"ChatTypeInfo.{kind}.colorNameByClass"), False, kind)
-        lua.execute("settingsWindow.use('Tweaks_classColors', true)")
-        self.assertIs(lua.eval("ChatTypeInfo.GUILD.colorNameByClass"), True)
-
-    def test_the_option_off_at_login_sets_false(self):
-        lua = load("TweaksDB = { classColors = false }")
-        self.assertIs(lua.eval("ChatTypeInfo.CHANNEL3.colorNameByClass"), False)
-
-    def test_shamans_blue_and_back(self):
-        lua = load()
-        self.assertEqual(lua.eval("RAID_CLASS_COLORS.SHAMAN.colorStr"), "ff2459ff")
-        lua.execute("settingsWindow.use('Tweaks_blueShaman', false)")
+    def test_class_colours_and_shamans_are_left_alone_and_the_old_keys_go(self):
+        lua = load("TweaksDB = { timestamps = false, classColors = true, blueShaman = true }")
+        self.assertEqual(lua.eval("#colorNameCalls"), 0)
         self.assertEqual(lua.eval("RAID_CLASS_COLORS.SHAMAN.colorStr"), "fff58cba")
-        self.assertEqual(lua.eval("RAID_CLASS_COLORS.SHAMAN.r"), 0.96)
+        self.assertIsNone(lua.eval("TweaksDB.classColors"))
+        self.assertIsNone(lua.eval("TweaksDB.blueShaman"))
+        self.assertEqual(say(lua, PLAYER + ": hi"), PLAYER + ": hi")
 
 
 class History(unittest.TestCase):
