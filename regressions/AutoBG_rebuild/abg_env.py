@@ -266,9 +266,9 @@ end
 -- Casts and spells.
 C_Spell = {
     UnitCastingInfo = function(u) local c = d(u) and d(u).cast
-        if c and not c.channel then return c.name, c.name, 1, c.from * 1000, c.to * 1000, false, nil, c.locked or false, c.spell end end,
+        if c and not c.channel then return c.name, c.name, c.icon, c.from * 1000, c.to * 1000, false, nil, c.locked or false, c.spell end end,
     UnitChannelInfo = function(u) local c = d(u) and d(u).cast
-        if c and c.channel then return c.name, c.name, 1, c.from * 1000, c.to * 1000, false, c.locked or false, c.spell end end,
+        if c and c.channel then return c.name, c.name, c.icon, c.from * 1000, c.to * 1000, false, c.locked or false, c.spell end end,
 }
 function GetSpellInfo(id) return "Spell" .. id, nil, "Icon" .. id end
 

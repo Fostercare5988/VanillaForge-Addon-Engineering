@@ -131,6 +131,27 @@ class Rows(unittest.TestCase):
         lua.execute(f"units['{ROGUE}'].auras = {{}}; fireGUID('UNIT_VISIBILITY_CHANGED', '{ROGUE}', true)")
         self.assertEqual(lua.eval(f"{self.r}.status.text"), "100%")
 
+    def test_stealth_and_vanish_from_their_casts_when_no_aura_reaches_us(self):
+        """2026-11-23, the player: no STEALTH/PROWL on the rows. The enemy leaves
+        view as he stealths, so his aura often never arrives; the cast does.
+        Fails on fc7ba38."""
+        lua = self.lua
+        lua.execute(f"fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 1787);"
+                    f" units['{ROGUE}'].visible = false; fireGUID('UNIT_VISIBILITY_CHANGED', '{ROGUE}', false)")
+        self.assertEqual(lua.eval(f"{self.r}.status.text"), "STEALTH")
+        self.assertEqual(lua.eval(f"{self.r}:GetAlpha()"), 0.5)
+        lua.execute(f"units['{ROGUE}'].visible = true; fireGUID('UNIT_VISIBILITY_CHANGED', '{ROGUE}', true)")
+        self.assertEqual(lua.eval(f"{self.r}.status.text"), "100%")
+        lua.execute(f"step(9); fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 1856)")
+        self.assertEqual(lua.eval(f"{self.r}.status.text"), "VANISH")
+
+    def test_a_cast_only_stealth_ends_when_an_aura_goes_in_view(self):
+        lua = self.lua
+        lua.execute(f"fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 5215)")
+        self.assertEqual(lua.eval(f"{self.r}.status.text"), "PROWL")
+        lua.execute(f"id = aura('{ROGUE}', 1, 'Thorns'); removeAura('{ROGUE}', id); auraEvent('{ROGUE}', nil, {{ id }})")
+        self.assertEqual(lua.eval(f"{self.r}.status.text"), "100%")
+
     def test_an_invisibility_potion_ends_after_15_seconds(self):
         lua = self.lua
         lua.execute(f"auraEvent('{ROGUE}', {{ aura('{ROGUE}', 3680) }}); step(14.9)")
@@ -141,9 +162,12 @@ class Rows(unittest.TestCase):
     def test_casts_start_stop_and_channel_and_one_with_no_stop_leaves_at_its_end(self):
         lua = self.lua
         cast = f"{self.r}.cast"
-        lua.execute(f"units['{ROGUE}'].cast = {{ name = 'Frostbolt', from = now, to = now + 2.5 }}; fireGUID('UNIT_SPELLCAST_START', '{ROGUE}')")
+        lua.execute(f"units['{ROGUE}'].cast = {{ name = 'Frostbolt', icon = 'Interface@@Icons@@Spell_Frost_FrostBolt02', from = now, to = now + 2.5 }};"
+                    f" fireGUID('UNIT_SPELLCAST_START', '{ROGUE}')")
         self.assertTrue(lua.eval(f"{cast}:IsShown()"))
         self.assertEqual(lua.eval(f"{cast}.text.text"), "Frostbolt")
+        # 2026-11-23, the player: the spell's icon beside the cast bar, as the old addon had.
+        self.assertEqual(lua.eval(f"{cast}.icon.texture"), "Interface@@Icons@@Spell_Frost_FrostBolt02")
         self.assertEqual(list(lua.eval(f"{cast}.barColor").values()), [1, 0.55, 0.1])
         lua.execute(f"fireGUID('UNIT_SPELLCAST_INTERRUPTED', '{ROGUE}')")
         self.assertFalse(lua.eval(f"{cast}:IsShown()"))
