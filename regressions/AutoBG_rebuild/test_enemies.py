@@ -176,6 +176,16 @@ class Rows(unittest.TestCase):
         lua.execute("step(5.2)")
         self.assertFalse(lua.eval(f"{cast}:IsShown()"))
 
+    def test_a_click_on_the_cast_bar_targets_the_caster(self):
+        """2026-11-23, the player: a heal or an Opening seen on the cast bar should
+        be one click from targeting him. Fails on faf52b9."""
+        lua = self.lua
+        lua.execute(f"units['{ROGUE}'].cast = {{ name = 'Opening', from = now, to = now + 5 }}; fireGUID('UNIT_SPELLCAST_START', '{ROGUE}')")
+        lua.execute(f"{self.r}.castButton:Click('LeftButton')")
+        self.assertTrue(lua.eval("said('^target:Thandril%-NZ$')"))
+        lua.execute(f"{self.r}.castButton:Click('RightButton')")
+        self.assertTrue(lua.eval("said('^focus:Thandril%-NZ$')"))
+
     def test_the_trinket_from_the_immune_aura_one_use_per_two_reports(self):
         lua = self.lua
         lua.execute(f"log = {{}}; auraEvent('{ROGUE}', {{ aura('{ROGUE}', 52317) }}); fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 52317)")
