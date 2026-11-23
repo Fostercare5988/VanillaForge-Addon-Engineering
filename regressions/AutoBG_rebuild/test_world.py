@@ -26,6 +26,17 @@ class FlagWatch(unittest.TestCase):
         lua.execute(f"fireGUID('UNIT_SPELLCAST_STOP', '{FOE}')")
         self.assertEqual(lua.eval("row(1, 15).status.text"), "100%")
 
+    def test_the_gold_mine_is_not_the_lumber_mill(self):
+        """2026-11-23, seen in play: Bibs opening the Gold Mine, 441 yards away, was
+        called the Lumber Mill. UnitPosition gives posY first; read as x, y the Gold
+        Mine's spot lands on the Lumber Mill's. Claude's learned spots. Fails on 35dc4bf."""
+        spots = ("AutoBGDB = { queueOnLogin = false, spots = { [529] = { ['Gold Mine'] = { x = 1146.3, y = 848.9, n = 10 },"
+                 " ['Lumber Mill'] = { x = 855.5, y = 1149.4, n = 10 } } } }")
+        lua = load(spots)
+        arathi(lua, (1146, 850))
+        lua.execute(f"units['{FOE}'].cast = {{ name = 'Opening', from = now, to = now + 5 }}; fireGUID('UNIT_SPELLCAST_START', '{FOE}')")
+        self.assertEqual(lua.eval("AutoBG_FlagAlert.line.text"), "Foe is opening the Gold Mine")
+
     def test_with_no_spots_it_is_a_flag(self):
         lua = load("AutoBGDB = { queueOnLogin = false }")
         arathi(lua)

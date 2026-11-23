@@ -205,7 +205,8 @@ function UnitDistanceSquared(u)
     if x and x.visible and x.yards then return x.yards * x.yards, true end
     return 0, false
 end
-C_PlayerInfo = { UnitPosition = function(u) local x = d(u); if x and x.visible and x.pos then return x.pos[1], x.pos[2], 0, 529 end end }
+-- A unit's pos is { x, y }; UnitPosition returns posY first (### UnitPosition(unit)).
+C_PlayerInfo = { UnitPosition = function(u) local x = d(u); if x and x.visible and x.pos then return x.pos[2], x.pos[1], 0, 529 end end }
 raid, afk = false, nil
 function GetNumRaidMembers() return raid and 10 or 0 end
 function GetNumPartyMembers() return partySize or 0 end

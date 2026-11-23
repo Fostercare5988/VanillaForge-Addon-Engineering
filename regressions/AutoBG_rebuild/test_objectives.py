@@ -164,7 +164,7 @@ class Estimate(unittest.TestCase):
         self.assertEqual(lua.eval(f"clock({est}.verdict)"), "|cff59ff72Win|r 8:20")
         # Small as the old one (2026-11-23, the player: the big card was "clumsy"),
         # the final scores Alliance blue over Horde red.
-        self.assertEqual(lua.eval(f"{est}:GetHeight()"), 30)
+        self.assertEqual(lua.eval(f"{est}:GetWidth()"), 126)
         self.assertEqual(lua.eval(f"{est}.side.Alliance.text"), "1550")
         self.assertEqual(lua.eval(f"{est}.side.Horde.text"), "2000")
         self.assertGreater(lua.eval(f"{est}.side.Alliance.color[3]"), 0.9)  # blue
