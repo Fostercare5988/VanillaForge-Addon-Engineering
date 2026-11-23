@@ -7,7 +7,7 @@ import unittest
 from ftr_env import load
 
 PAGE = "settingsWindow.find('Tweaks')"
-SWITCHES = ("arrowKeys", "history", "timestamps", "minimapSquare",
+SWITCHES = ("history", "timestamps", "minimapSquare",
             "minimapClock", "minimapTidy")
 
 
@@ -22,7 +22,7 @@ def rows(lua):
 class Page(unittest.TestCase):
     def test_the_rows_in_play_order(self):
         # A rogue: no Auto Stance row, since it would do nothing (review 2026-11-18).
-        rogue = ("Chat|Arrow keys in chat|Chat history|Timestamps|"
+        rogue = ("Chat|Chat history|Timestamps|"
                  "Minimap|Minimap size|Square minimap|Clock|"
                  "Tidy minimap|World map|Map window size")
         self.assertEqual(rows(load()), rogue)
@@ -47,11 +47,11 @@ class Page(unittest.TestCase):
         lua = load()
         lua.execute("settingsWindow.use('Tweaks_minimapScale', 1.0)")
         self.assertEqual(lua.eval("Minimap:GetScale()"), 1.0)
-        lua.execute("settingsWindow.use('Tweaks_arrowKeys', false)")
-        self.assertIs(lua.eval("ChatFrameEditBox.altArrows"), True)
+        lua.execute("settingsWindow.use('Tweaks_history', false)")
+        self.assertIs(lua.eval("TweaksDB.history"), False)
         lua.execute(f"settingsWindow.defaults({PAGE})")
         self.assertEqual(lua.eval("Minimap:GetScale()"), 1.6)
-        self.assertIs(lua.eval("ChatFrameEditBox.altArrows"), False)
+        self.assertIs(lua.eval("TweaksDB.history"), True)
 
     def test_ft_opens_the_page(self):
         lua = load()

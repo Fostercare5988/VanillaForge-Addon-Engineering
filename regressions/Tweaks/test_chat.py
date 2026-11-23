@@ -18,11 +18,10 @@ def plain():
 
 
 class Keys(unittest.TestCase):
-    def test_arrow_keys_without_alt_and_back(self):
-        lua = load()
+    def test_arrow_keys_need_no_alt_and_the_old_switch_goes(self):
+        lua = load("TweaksDB = { arrowKeys = false }")
         self.assertIs(lua.eval("ChatFrameEditBox.altArrows"), False)
-        lua.execute("settingsWindow.use('Tweaks_arrowKeys', false)")
-        self.assertIs(lua.eval("ChatFrameEditBox.altArrows"), True)
+        self.assertIsNone(lua.eval("TweaksDB.arrowKeys"))
 
 
 class Addresses(unittest.TestCase):
