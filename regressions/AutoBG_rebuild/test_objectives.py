@@ -75,27 +75,64 @@ class Bars(unittest.TestCase):
 
 
 class Wave(unittest.TestCase):
-    def test_a_guess_until_a_wave_is_seen_then_synced(self):
+    """2026-11-23: the wave as evidence ranks it. Fails on 59c79f4, which guessed
+    a wave from the moment you loaded in, let a rough sighting move an exact
+    one and counted 30 s for ever."""
+    R = "AutoBG_RespawnFrame.rows[1]"
+
+    def test_nothing_until_a_wave_is_seen_then_the_healers_own_countdown(self):
         lua = load()
         lua.execute("enter('Warsong Gulch')")
-        r = "AutoBG_RespawnFrame.rows[1]"
-        self.assertEqual(lua.eval(f"clock({r}.clock)"), "~30")
+        self.assertFalse(lua.eval("AutoBG_RespawnFrame:IsShown()"))
         lua.execute("healerTime = 12; fire('AREA_SPIRIT_HEALER_IN_RANGE')")
-        self.assertEqual(lua.eval(f"clock({r}.clock)"), "12")
+        self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "12")
         lua.execute("step(12.5)")
-        self.assertEqual(lua.eval(f"clock({r}.clock)"), "30")
+        self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "30")
 
-    def test_your_unghost_and_a_raid_ghost_turning_alive_sync_it(self):
+    def test_a_reading_of_0_is_read_again(self):
         lua = load()
-        lua.execute("enter('Arathi Basin'); step(7); fire('PLAYER_UNGHOST')")
-        self.assertEqual(lua.eval("clock(AutoBG_RespawnFrame.rows[1].clock)"), "30")
-        lua.execute("unit('0x0000000000000077', { name = 'Mate', player = true, inGroup = true, ghost = true }); tokens.raid3 = '0x0000000000000077'")
-        lua.execute("step(10); fire('PLAYER_FLAGS_CHANGED', 'raid3'); units['0x0000000000000077'].ghost = nil; fire('UNIT_HEALTH', 'raid3')")
-        self.assertEqual(lua.eval("clock(AutoBG_RespawnFrame.rows[1].clock)"), "30")
+        lua.execute("enter('Arathi Basin'); healerTime = 0; fire('AREA_SPIRIT_HEALER_IN_RANGE'); healerTime = 9; step(0.5)")
+        self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "|cffffd1009|r")  # the last ten seconds in gold
+
+    def test_a_spirit_guide_casting_spirit_heal_is_exact(self):
+        lua = load()
+        lua.execute("enter('Arathi Basin'); step(4); fire('SPELL_GO_OTHER', 0, 22012, '0xF130000000000901', '0x0000000000000000')")
+        self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "30")
+        lua.execute("fire('SPELL_GO_OTHER', 0, 133, '0xF130000000000901', '0x0000000000000000'); step(10)")
+        self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "20")
+        self.assertEqual(lua.eval("cvars.NP_EnableSpellGoEvents"), "1")
+
+    def test_a_member_back_alive_is_rough_and_never_moves_an_exact_wave(self):
+        lua = load()
+        lua.execute("unit('0x0000000000000077', { name = 'Mate', player = true, inGroup = true }); tokens.raid3 = '0x0000000000000077'")
+        lua.execute("enter('Arathi Basin'); units['0x0000000000000077'].ghost = true; fire('UNIT_HEALTH', 'raid3'); step(7)")
+        lua.execute("units['0x0000000000000077'].ghost = nil; fire('UNIT_HEALTH', 'raid3')")
+        self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "~30")
+        lua.execute("step(3); fire('SPELL_GO_OTHER', 0, 22012, '0xF130000000000901', '0x0000000000000000')")
+        self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "30")
+        lua.execute("step(5); units['0x0000000000000077'].ghost = true; fire('UNIT_HEALTH', 'raid3');"
+                    " units['0x0000000000000077'].ghost = nil; fire('UNIT_HEALTH', 'raid3'); fire('PLAYER_UNGHOST')")
+        self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "25")
+
+    def test_exact_waves_measure_a_period_a_little_over_30(self):
+        lua = load()
+        lua.execute("enter('Arathi Basin'); fire('SPELL_GO_OTHER', 0, 22012, 'g', 'x')")
+        for _ in range(4):
+            lua.execute("step(30.4); fire('SPELL_GO_OTHER', 0, 22012, 'g', 'x')")
+        lua.execute("step(30.3)")
+        self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "|cffffd1001|r")  # 30 s would have said 30 already
+        lua.execute("step(0.2)")
+        self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "31")
+
+    def test_one_that_disagrees_starts_the_measure_again(self):
+        lua = load()
+        lua.execute("enter('Arathi Basin'); fire('SPELL_GO_OTHER', 0, 22012, 'g', 'x'); step(40); fire('SPELL_GO_OTHER', 0, 22012, 'g', 'x')")
+        lua.execute("step(30); fire('SPELL_GO_OTHER', 0, 22012, 'g', 'x'); step(10)")
+        self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "20")
 
     def test_never_in_an_arena(self):
         lua = load()
-        lua.execute("enter('Lordaeron Arena', true)")
+        lua.execute("enter('Lordaeron Arena', true); fire('SPELL_GO_OTHER', 0, 22012, 'g', 'x')")
         self.assertFalse(lua.eval("AutoBG_RespawnFrame:IsShown()"))
         self.assertFalse(lua.eval("receives(AutoBG_RespawnFrame, 'AREA_SPIRIT_HEALER_IN_RANGE')"))
 

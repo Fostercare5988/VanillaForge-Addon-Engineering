@@ -111,6 +111,8 @@ class Rows(unittest.TestCase):
 
     def test_a_guessed_wave_revives_nobody(self):
         lua = self.lua
+        lua.execute("tokens.raid3 = '0x0000000000000050'; units['0x0000000000000050'].dead = true; fire('UNIT_HEALTH', 'raid3');"
+                    " units['0x0000000000000050'].dead = nil; fire('UNIT_HEALTH', 'raid3')")  # a rough wave
         lua.execute(f"units['{ROGUE}'].dead = true; units['{ROGUE}'].visible = false; fireGUID('UNIT_HEALTH', '{ROGUE}')")
         self.assertEqual(lua.eval(f"clock({self.r}.status)"), "DEAD ~30")
         lua.execute("step(31)")
@@ -219,6 +221,34 @@ class Carriers(unittest.TestCase):
         self.assertTrue(lua.eval("AutoBG_HordeFC:IsShown() and AutoBG_AllianceFC:IsShown()"))
         lua.execute("line('The flags are now placed at their bases.')")
         self.assertFalse(lua.eval("AutoBG_HordeFC:IsShown() or AutoBG_AllianceFC:IsShown()"))
+
+    def test_joined_after_the_pickups_the_flags_they_wear_name_both(self):
+        """2026-11-23, the player: joining with both flags out, the cards never
+        showed, though the enemy carrier could be targeted. Fails on 59c79f4,
+        which knew carriers only from the pickup lines."""
+        lua = load()
+        lua.execute("unit('0x0000000000000051', { name = 'Grom', player = true, inGroup = true, class = 'WARRIOR' });"
+                    " tokens.raid2 = '0x0000000000000051'; aura('0x0000000000000051', 23335, 'Silverwing Flag')")
+        match(lua)
+        self.assertTrue(lua.eval("AutoBG_HordeFC:IsShown()"))
+        self.assertIn("Grom", lua.eval("AutoBG_HordeFC.name.text"))
+        self.assertFalse(lua.eval("AutoBG_AllianceFC:IsShown()"))
+        lua.execute(f"enemy('{ROGUE}', {{ name = 'Thandril-NZ', class = 'ROGUE' }}); flagID = aura('{ROGUE}', 23333, 'Warsong Flag');"
+                    f" setTarget('{ROGUE}')")
+        self.assertTrue(lua.eval("AutoBG_AllianceFC:IsShown()"))
+        self.assertEqual(lua.eval("AutoBG_AllianceFC:GetAttribute('unit')"), ROGUE)
+        lua.execute(f"removeAura('{ROGUE}', flagID); auraEvent('{ROGUE}', nil, {{ flagID }})")
+        self.assertFalse(lua.eval("AutoBG_AllianceFC:IsShown()"))
+        self.assertTrue(lua.eval("AutoBG_HordeFC:IsShown()"))
+
+    def test_a_flag_picked_up_in_sight_of_the_group(self):
+        lua = load()
+        lua.execute("unit('0x0000000000000051', { name = 'Grom', player = true, inGroup = true }); tokens.raid2 = '0x0000000000000051'")
+        match(lua)
+        lua.execute("id = aura('0x0000000000000051', 23335, 'Silverwing Flag'); fire('UNIT_AURA_DELTA', 'raid2', { addedAuraInstanceIDs = { id } })")
+        self.assertTrue(lua.eval("AutoBG_HordeFC:IsShown()"))
+        lua.execute("enter('Arathi Basin'); fire('UNIT_AURA_DELTA', 'raid2', { addedAuraInstanceIDs = { id } })")
+        self.assertFalse(lua.eval("AutoBG_HordeFC:IsShown()"))
 
 
 class Scoreboard(unittest.TestCase):
