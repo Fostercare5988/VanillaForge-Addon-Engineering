@@ -80,11 +80,14 @@ class Wave(unittest.TestCase):
     one and counted 30 s for ever."""
     R = "AutoBG_RespawnFrame.rows[1]"
 
+    def healer(self, lua, left):
+        lua.execute(f"healerTime = {left}; fire('AREA_SPIRIT_HEALER_IN_RANGE')")
+
     def test_nothing_until_a_wave_is_seen_then_the_healers_own_countdown(self):
         lua = load()
         lua.execute("enter('Warsong Gulch')")
         self.assertFalse(lua.eval("AutoBG_RespawnFrame:IsShown()"))
-        lua.execute("healerTime = 12; fire('AREA_SPIRIT_HEALER_IN_RANGE')")
+        self.healer(lua, 12)
         self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "12")
         lua.execute("step(12.5)")
         self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "30")
@@ -92,15 +95,16 @@ class Wave(unittest.TestCase):
     def test_a_reading_of_0_is_read_again(self):
         lua = load()
         lua.execute("enter('Arathi Basin'); healerTime = 0; fire('AREA_SPIRIT_HEALER_IN_RANGE'); healerTime = 9; step(0.5)")
-        self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "|cffffd1009|r")  # the last ten seconds in gold
+        self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "|cffffd1009|r")
 
-    def test_a_spirit_guide_casting_spirit_heal_is_exact(self):
+    def test_spirit_heal_cast_by_a_guide_moves_nothing(self):
+        """2026-11-23, seen in play: timed from the guides' Spirit Heal (22012) the
+        bar said 17 while the death popup said 1. Fails on a6d6007."""
         lua = load()
-        lua.execute("enter('Arathi Basin'); step(4); fire('SPELL_GO_OTHER', 0, 22012, '0xF130000000000901', '0x0000000000000000')")
-        self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "30")
-        lua.execute("fire('SPELL_GO_OTHER', 0, 133, '0xF130000000000901', '0x0000000000000000'); step(10)")
-        self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "20")
-        self.assertEqual(lua.eval("cvars.NP_EnableSpellGoEvents"), "1")
+        lua.execute("enter('Arathi Basin')")
+        self.healer(lua, 1)
+        lua.execute("step(0.5); fire('SPELL_GO_OTHER', 0, 22012, '0xF130000000000901', '0x0000000000000000')")
+        self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "|cffffd1001|r")
 
     def test_a_member_back_alive_is_rough_and_never_moves_an_exact_wave(self):
         lua = load()
@@ -108,31 +112,40 @@ class Wave(unittest.TestCase):
         lua.execute("enter('Arathi Basin'); units['0x0000000000000077'].ghost = true; fire('UNIT_HEALTH', 'raid3'); step(7)")
         lua.execute("units['0x0000000000000077'].ghost = nil; fire('UNIT_HEALTH', 'raid3')")
         self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "~30")
-        lua.execute("step(3); fire('SPELL_GO_OTHER', 0, 22012, '0xF130000000000901', '0x0000000000000000')")
+        lua.execute("step(3)")
+        self.healer(lua, 30)
         self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "30")
         lua.execute("step(5); units['0x0000000000000077'].ghost = true; fire('UNIT_HEALTH', 'raid3');"
                     " units['0x0000000000000077'].ghost = nil; fire('UNIT_HEALTH', 'raid3'); fire('PLAYER_UNGHOST')")
         self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "25")
 
-    def test_exact_waves_measure_a_period_a_little_over_30(self):
+    def test_exact_readings_measure_a_period_a_little_over_30(self):
         lua = load()
-        lua.execute("enter('Arathi Basin'); fire('SPELL_GO_OTHER', 0, 22012, 'g', 'x')")
+        lua.execute("enter('Arathi Basin')")
+        self.healer(lua, 10)
         for _ in range(4):
-            lua.execute("step(30.4); fire('SPELL_GO_OTHER', 0, 22012, 'g', 'x')")
-        lua.execute("step(30.3)")
+            lua.execute("step(30.4)")
+            self.healer(lua, 10)
+        lua.execute("step(40.3)")
         self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "|cffffd1001|r")  # 30 s would have said 30 already
         lua.execute("step(0.2)")
         self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "31")
 
     def test_one_that_disagrees_starts_the_measure_again(self):
         lua = load()
-        lua.execute("enter('Arathi Basin'); fire('SPELL_GO_OTHER', 0, 22012, 'g', 'x'); step(40); fire('SPELL_GO_OTHER', 0, 22012, 'g', 'x')")
-        lua.execute("step(30); fire('SPELL_GO_OTHER', 0, 22012, 'g', 'x'); step(10)")
-        self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "20")
+        lua.execute("enter('Arathi Basin')")
+        self.healer(lua, 10)
+        lua.execute("step(40)")
+        self.healer(lua, 10)
+        lua.execute("step(30)")
+        self.healer(lua, 10)
+        lua.execute("step(15)")
+        self.assertEqual(lua.eval(f"clock({self.R}.clock)"), "25")
 
     def test_never_in_an_arena(self):
         lua = load()
-        lua.execute("enter('Lordaeron Arena', true); fire('SPELL_GO_OTHER', 0, 22012, 'g', 'x')")
+        lua.execute("enter('Lordaeron Arena', true)")
+        self.healer(lua, 10)
         self.assertFalse(lua.eval("AutoBG_RespawnFrame:IsShown()"))
         self.assertFalse(lua.eval("receives(AutoBG_RespawnFrame, 'AREA_SPIRIT_HEALER_IN_RANGE')"))
 
@@ -149,7 +162,18 @@ class Estimate(unittest.TestCase):
         self.assertTrue(lua.eval(f"{est}:IsShown()"))
         # Horde (you) at 3 bases, 2 per s, needs 500 s; the Alliance at 2 bases makes 555 by then.
         self.assertEqual(lua.eval(f"clock({est}.verdict)"), "|cff59ff72Win|r 8:20")
-        self.assertEqual(lua.eval(f"{est}.info.text"), "2000 : 1550   Hold 3 bases")
+        # The card (2026-11-23, the player: "use blue and red for the sides"): Alliance
+        # over Horde, bright to the score now, pale to the end; your side marked.
+        side = f"{est}.side"
+        self.assertEqual(lua.eval(f"{side}.Alliance.now.value"), 1000)
+        self.assertEqual(lua.eval(f"{side}.Alliance.value"), 1550)
+        self.assertEqual(lua.eval(f"{side}.Horde.value"), 2000)
+        self.assertEqual(lua.eval(f"{side}.Horde.final.text"), "2000")
+        self.assertEqual(lua.eval(f"{side}.Alliance.now.barColor[3]"), 1)  # blue
+        self.assertEqual(lua.eval(f"{side}.Horde.now.barColor[1]"), 0.9)  # red
+        self.assertTrue(lua.eval(f"{side}.Horde.mine:IsShown()"))
+        self.assertFalse(lua.eval(f"{side}.Alliance.mine:IsShown()"))
+        self.assertEqual(lua.eval(f"{est}.advice.text"), "Hold 3 bases")
         lua.execute(f"ctrl = true; run({est}, 'OnClick')")
         # The old addon's words (2026-11-23, the player: "Win in xx:xx").
         self.assertTrue(lua.eval("said('^say:BATTLEGROUND:Win in 08:20$')"))

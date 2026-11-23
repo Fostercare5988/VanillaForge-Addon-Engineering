@@ -81,9 +81,11 @@ Do not trust for this server:
   the Horde and the Alliance flag).
 - Unverified: one spirit healer wave every 30 seconds for the whole
   battleground (as on MaNGOS cores, whose wave clock starts when the
-  battleground is made and whose spirit guides cast Spirit Heal at each wave
-  that revives someone at them). AutoBG shows the wave only once one is seen,
-  and measures the period from exact sightings.
+  battleground is made). 2026-11-23, seen in play: Spirit Heal (22012) cast by
+  the spirit guides does not mark the wave; timed from it, the bar was 16 s off
+  the server's own countdown (the death popup), so each guide keeps a rhythm of
+  its own. The countdown while dead at a healer (`GetAreaSpiritHealerTime`) is
+  the only exact source AutoBG uses.
 - Unverified: Arathi Basin resource ticks. AutoBG learns what each base count
   earns from the score in play (`AutoBG_Settings.ABTicks`) and uses the vanilla
   ticks, marked `~`, until then.
