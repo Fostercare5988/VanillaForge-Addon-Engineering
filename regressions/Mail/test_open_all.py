@@ -135,6 +135,15 @@ class RightClick(unittest.TestCase):
         lua.execute("run(MailItem2Button, 'OnEnter')")
         self.assertNotIn("Right-click to take", list(lua.eval("GameTooltip.lines").values()))
 
+    def test_an_inbox_answered_at_once_ends_cleanly(self):
+        # Seen in play 2026-11-23 (Inbox.lua:39): the client can fire
+        # MAIL_INBOX_UPDATE inside CheckInbox, so the take ends before Wait.
+        lua = load(setup='mail({ sender = "Bob", subject = "Just words" })')
+        lua.execute('''local ask = CheckInbox
+            CheckInbox = function() ask(); answer() end
+            click(MailOpenAllButton)''')
+        self.assertEqual(lua.eval("MailOpenAllButton:GetText()"), "Open All")
+
 
 if __name__ == "__main__":
     unittest.main()
