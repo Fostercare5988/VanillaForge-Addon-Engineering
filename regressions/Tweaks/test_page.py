@@ -22,7 +22,7 @@ def rows(lua):
 class Page(unittest.TestCase):
     def test_the_rows_in_play_order(self):
         # A rogue: no Auto Stance row, since it would do nothing (review 2026-11-18).
-        rogue = ("Chat|Arrow keys without Alt|Chat history|Timestamps|"
+        rogue = ("Chat|Arrow keys in chat|Chat history|Timestamps|"
                  "Minimap|Minimap size|Square minimap|Clock|"
                  "Tidy minimap|World map|Map window size")
         self.assertEqual(rows(load()), rogue)
