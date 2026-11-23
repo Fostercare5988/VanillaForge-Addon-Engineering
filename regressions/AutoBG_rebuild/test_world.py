@@ -107,13 +107,14 @@ class Spy(unittest.TestCase):
         self.assertIn("Sneak", lua.eval("AutoBG_SpyAlertWindow.line.text"))
         self.assertTrue(lua.eval("said('sound:RaidWarning')"))
 
-    def test_one_warning_per_8_seconds_and_the_same_enemy_quiet_for_60(self):
+    def test_each_new_stealth_warns_with_3_seconds_between_cards(self):
+        """2026-11-23: as the Nampower Spy, each new stealth warns; the same rogue
+        stealthing again near you is danger again. Was one per 8 s, the same enemy
+        quiet for 60."""
         lua = load()
         lua.execute("__addon_ns.StealthWarn('A', nil, 'STEALTH', 'ROGUE', true); __addon_ns.StealthWarn('B', nil, 'STEALTH', 'ROGUE', true)")
         self.assertEqual(lua.eval("count('sound:RaidWarning')"), 1)
-        lua.execute("step(9); __addon_ns.StealthWarn('A', nil, 'STEALTH', 'ROGUE', true)")
-        self.assertEqual(lua.eval("count('sound:RaidWarning')"), 1)
-        lua.execute("__addon_ns.StealthWarn('B', nil, 'STEALTH', 'ROGUE', true)")
+        lua.execute("step(3); __addon_ns.StealthWarn('A', nil, 'VANISH', 'ROGUE', true)")
         self.assertEqual(lua.eval("count('sound:RaidWarning')"), 2)
 
     def test_warning_sounds_off_keeps_the_card_quiet_outside_battlegrounds(self):

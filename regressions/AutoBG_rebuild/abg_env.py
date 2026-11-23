@@ -185,6 +185,7 @@ function UnitFactionGroup(u) local x = d(u); return x and x.faction end
 function UnitHealth(u) local x = d(u); return x and x.hp or 0 end
 function UnitHealthMax(u) local x = d(u); return x and x.max or 0 end
 function UnitIsDeadOrGhost(u) local x = d(u); if x and (x.dead or x.ghost) then return 1 end end
+function UnitIsFeignDeath(u) local x = d(u); return x and x.feign and true or false end
 function UnitIsGhost(u) local x = d(u); if x and x.ghost then return 1 end end
 function UnitIsVisible(u) local x = d(u); if x and x.visible then return 1 end end
 function UnitIsAFK() return afk end
@@ -218,7 +219,10 @@ function GetNumRaidMembers() return raid and 10 or 0 end
 function GetNumPartyMembers() return partySize or 0 end
 targetGUID, focusGUID = nil, nil
 function setTarget(g) targetGUID = g; tokens.target = g; fire("PLAYER_TARGET_CHANGED") end
-function UnitXP(u, what)
+-- UnitXP (dllmain.cpp): "inSight" answers false for a unit marked blocked; the
+-- enemy cycle moves your target.
+function UnitXP(u, what, other)
+    if u == "inSight" then local x = d(other); if x then return not x.blocked end return nil end
     assert(u == "target" and what == "nextEnemyInCycle")
     for g, x in pairs(units) do
         if x.enemy and x.player and x.visible and not x.cycled then x.cycled = true; setTarget(g); return true end

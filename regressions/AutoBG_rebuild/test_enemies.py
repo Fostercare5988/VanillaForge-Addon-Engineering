@@ -225,6 +225,27 @@ class Rows(unittest.TestCase):
         self.assertEqual(lua.eval(f"{cd}.countdownText.fontSize"), 13)  # a 25-pixel row
         self.assertEqual(lua.eval(f"{self.r}.racial.cd.countdownText.fontSize"), 13)
 
+    def test_yards_go_grey_when_a_wall_is_between(self):
+        """2026-11-23: line of sight on the yards (UnitXP "inSight"), as the Nampower
+        Spy colours its distances. Fails on 368a882."""
+        lua = self.lua
+        lua.execute(f"units['{ROGUE}'].yards = 24; step(0.5)")
+        self.assertEqual(lua.eval(f"{self.r}.yards.text"), "|cff59ff7224 yd|r")
+        lua.execute(f"units['{ROGUE}'].blocked = true; step(0.5)")
+        self.assertEqual(lua.eval(f"{self.r}.yards.text"), "|cff80808024 yd|r")
+        lua.execute(f"units['{ROGUE}'].blocked = nil; step(0.5)")
+        self.assertEqual(lua.eval(f"{self.r}.yards.text"), "|cff59ff7224 yd|r")
+
+    def test_a_feigning_hunter_is_not_dead(self):
+        """2026-11-23: UnitIsFeignDeath (ClassicAPI), as the Nampower Spy tells Feign
+        Death from death. Fails on 368a882."""
+        lua = self.lua
+        lua.execute(f"units['{ROGUE}'].dead = true; units['{ROGUE}'].feign = true; fireGUID('UNIT_HEALTH', '{ROGUE}')")
+        self.assertEqual(lua.eval(f"{self.r}.status.text"), "|cffffd100FEIGN|r")
+        self.assertEqual(lua.eval("AutoBG_TargetsMainFrame10.title.text"), "Enemies 2/2")
+        lua.execute(f"units['{ROGUE}'].feign = nil; fireGUID('UNIT_HEALTH', '{ROGUE}')")
+        self.assertEqual(lua.eval(f"clock({self.r}.status)"), "DEAD")
+
     def test_the_racial_from_the_race_and_its_use(self):
         lua = self.lua
         self.assertTrue(lua.eval(f"{self.r}.racial:IsShown()"))
