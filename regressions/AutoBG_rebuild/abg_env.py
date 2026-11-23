@@ -59,6 +59,12 @@ function Widget:SetStatusBarColor(r, g, b) self.barColor = { r, g, b } end
 function Widget:SetTimerDuration(d, _, direction) self.timer, self.direction = d, direction end
 function Widget:SetCooldown(start, duration) self.cdStart, self.cdDuration = start, duration; note("SetCooldown") end
 function Widget:Clear() self.cdStart, self.cdDuration = nil, nil end
+-- A cooldown's countdown: its formatter, and its own font string (### CreateFrame("Cooldown")).
+function Widget:SetCountdownFormatter(f) self.countdownFormatter = f end
+function Widget:GetCountdownFontString()
+    self.countdownText = self.countdownText or self:CreateFontString(nil, "OVERLAY")
+    return self.countdownText
+end
 function Widget:SetTexture(path, g, b) self.texture = path end
 function Widget:SetAttribute(k, v) self.attrs = self.attrs or {}; self.attrs[string.lower(k)] = v end
 function Widget:GetAttribute(k) return self.attrs and self.attrs[string.lower(k)] end

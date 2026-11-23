@@ -213,6 +213,18 @@ class Rows(unittest.TestCase):
         lua.execute(f"fireGUID('UNIT_HEALTH', '{ROGUE}')")
         self.assertEqual(lua.eval("count('SetCooldown')"), 1)
 
+    def test_cooldown_numbers_fit_inside_their_icons(self):
+        """2026-11-23, the player's screenshot: "2:54" and "1:02:43" ran into each
+        other (the cooldown's own font is size 16 on a 20-pixel icon). "3m" above a
+        minute, seconds below, in a font sized to the icon. Fails on ea596d7."""
+        lua = self.lua
+        cd = f"{self.r}.trinket.cd"
+        self.assertEqual(lua.eval(f"{cd}.countdownFormatter:FormatNumber(174)"), "3m")
+        self.assertEqual(lua.eval(f"{cd}.countdownFormatter:FormatNumber(61)"), "2m")
+        self.assertEqual(lua.eval(f"{cd}.countdownFormatter:FormatNumber(45)"), "45")
+        self.assertEqual(lua.eval(f"{cd}.countdownText.fontSize"), 13)  # a 25-pixel row
+        self.assertEqual(lua.eval(f"{self.r}.racial.cd.countdownText.fontSize"), 13)
+
     def test_the_racial_from_the_race_and_its_use(self):
         lua = self.lua
         self.assertTrue(lua.eval(f"{self.r}.racial:IsShown()"))
