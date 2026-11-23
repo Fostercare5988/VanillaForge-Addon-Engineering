@@ -1254,7 +1254,9 @@ of an addon with saved positions has a first-login test that fills it.
 Make every movable named frame while the addon loads: one made later (at the first
 event that needs it) is never saved, so the player moves it again at every login
 (AutoBG's queue bars, 2026-11-23). The kit gives a saved place only to frames made
-before VARIABLES_LOADED.
+before VARIABLES_LOADED. Making it at load was not enough there: the client then
+saved it as 0, 0 and it still came back elsewhere, so the bars save their own place
+(`SetDontSavePosition`, set again on show). A frame the client keeps losing does that.
 
 ------------------------------------------------------------------------
 
