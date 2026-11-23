@@ -21,7 +21,7 @@ class FlagWatch(unittest.TestCase):
         self.assertEqual(lua.eval("AutoBG_FlagAlert.line.text"), "Foe is opening the Stables")
         self.assertTrue(lua.eval("said('sound:igPVPUpdate')"))
         self.assertEqual(lua.eval("row(1, 15).status.text"), "|cffff4040OPENING|r")
-        lua.execute("ctrl = true; run(AutoBG_FlagAlert, 'OnClick', 'LeftButton')")
+        lua.execute("ctrl = true; AutoBG_FlagAlert:Click('LeftButton')")
         self.assertTrue(lua.eval("said('^say:BATTLEGROUND:Foe is opening the Stables$')"))
         lua.execute(f"fireGUID('UNIT_SPELLCAST_STOP', '{FOE}')")
         self.assertEqual(lua.eval("row(1, 15).status.text"), "100%")

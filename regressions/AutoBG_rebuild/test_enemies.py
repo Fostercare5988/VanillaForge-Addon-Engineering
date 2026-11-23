@@ -241,6 +241,16 @@ class Carriers(unittest.TestCase):
         self.assertFalse(lua.eval("AutoBG_AllianceFC:IsShown()"))
         self.assertTrue(lua.eval("AutoBG_HordeFC:IsShown()"))
 
+    def test_a_card_with_no_guid_yet_selects_by_name_with_either_button(self):
+        """2026-11-23, seen in play (Enemies.lua:58): a unit button's click with no
+        verb reaches its handler with no arguments; it read self and button."""
+        lua = load()
+        match(lua)
+        lua.execute("line('The Horde flag was picked up by Ashka!')")
+        self.assertIsNone(lua.eval("AutoBG_AllianceFC:GetAttribute('unit')"))
+        lua.execute(f"enemy('{MAGE}', {{ name = 'Ashka', class = 'MAGE' }}); AutoBG_AllianceFC:Click('RightButton')")
+        self.assertTrue(lua.eval("said('^focus:Ashka$')"))
+
     def test_a_flag_picked_up_in_sight_of_the_group(self):
         lua = load()
         lua.execute("unit('0x0000000000000051', { name = 'Grom', player = true, inGroup = true }); tokens.raid2 = '0x0000000000000051'")

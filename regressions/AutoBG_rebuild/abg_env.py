@@ -72,9 +72,19 @@ function Widget:Click(button)
         note(verb .. ":" .. tostring(UnitName(unit)))
         if verb == "target" then setTarget(resolve(unit)) else focusGUID = resolve(unit); fire("PLAYER_FOCUS_CHANGED") end
     else
-        run(self, "OnClick", button or "LeftButton")
+        -- ClassicAPI's chained OnClick hands a click with no verb to the frame's own
+        -- handler with no arguments (seen in play 2026-11-23: self and button nil);
+        -- GetMouseButtonClicked names the button while it runs.
+        local f = self.scripts.OnClick
+        if f then
+            local outer = clicked
+            clicked = button or "LeftButton"
+            f()
+            clicked = outer
+        end
     end
 end
+function GetMouseButtonClicked() return clicked end
 ctrl, shift = false, false
 function IsControlKeyDown() return ctrl end
 function IsShiftKeyDown() return shift end
