@@ -32,7 +32,10 @@ What the kit models, and the evidence:
   only when the first argument is a string naming one of its units (case
   ignored); a non-string first argument always gets through; a registration
   keeps its kind until it is unregistered; `IsEventRegistered` returns the
-  units after the boolean.
+  units after the boolean. `RegisterGUIDEvent` (ClassicAPI) is a registration of
+  its own: `fireGUID(event, guid, ...)` reaches it with the GUID first, `fire`
+  never does, `IsEventRegistered` does not see it and `UnregisterAllEvents`
+  removes it.
 * Time (`now`, `GetTime`, `step(dt)`): `step` moves the clock, runs the
   C_Timer callbacks that are due (After, NewTimer, NewTicker; Cancel and
   IsCancelled; a timer or ticker callback gets its handle, After's gets
@@ -226,7 +229,34 @@ function Widget:RegisterUnitEvent(e, ...)
     return 1
 end
 function Widget:UnregisterEvent(e) self.events[e], self.units[e] = nil, nil end
-function Widget:UnregisterAllEvents() self.events, self.units = {}, {} end
+function Widget:UnregisterAllEvents() self.events, self.units, self.guids = {}, {}, nil end
+-- GUID registrations (ClassicAPI ### frame:RegisterGUIDEvent): apart from the
+-- others, each call replaces the list, a string that is no GUID is skipped and
+-- none at all is a usage error; only fireGUID reaches them.
+function Widget:RegisterGUIDEvent(e, ...)
+    local list = {}
+    for i = 1, select("#", ...) do
+        local g = select(i, ...)
+        if type(g) ~= "string" then break end
+        if string.find(g, "^0x%x+$") then list[#list + 1] = g end
+    end
+    if #list == 0 then error("Usage: frame:RegisterGUIDEvent(event, guid [, guid ...])", 2) end
+    self.guids = self.guids or {}
+    local old = self.guids[e]
+    if old and #old == #list then
+        local same = true
+        for i = 1, #list do if old[i] ~= list[i] then same = false end end
+        if same then return false end
+    end
+    self.guids[e] = list
+    return true
+end
+function Widget:UnregisterGUIDEvent(e) if self.guids then self.guids[e] = nil end end
+function Widget:IsGUIDEventRegistered(e)
+    local list = self.guids and self.guids[e]
+    if not list then return false, nil end
+    return true, unpack(list)
+end
 function Widget:IsEventRegistered(e)
     if not self.events[e] then return nil end
     if self.units[e] then return 1, unpack(self.units[e]) end
@@ -270,6 +300,35 @@ function fire(e, ...)
             this, event = w, e
             arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9 = ...
             f(w, e, ...)
+            this = oldThis
+        end
+    end
+    depth = depth - 1
+end
+-- A unit event of the unit with this GUID, as the engine gives it to GUID
+-- registrations: the GUID first, once per frame that lists it, in creation order.
+function fireGUID(e, guid, ...)
+    depth = depth + 1
+    local due = buffers[depth] or {}
+    buffers[depth] = due
+    local n = 0
+    for _, w in ipairs(widgets) do
+        local list = w.guids and w.guids[e]
+        if list and w.scripts.OnEvent then
+            for i = 1, #list do
+                if list[i] == guid then n = n + 1; due[n] = w; break end
+            end
+        end
+    end
+    for i = 1, n do
+        local w = due[i]
+        due[i] = nil
+        local f = w.guids and w.guids[e] and w.scripts.OnEvent
+        if f then
+            local oldThis = this
+            this, event = w, e
+            arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9 = guid, ...
+            f(w, e, guid, ...)
             this = oldThis
         end
     end

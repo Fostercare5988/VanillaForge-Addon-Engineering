@@ -63,6 +63,25 @@ class Events(unittest.TestCase):
         self.lua.execute('filtered:UnregisterEvent("E")')
         self.assertIsNone(self.lua.eval('filtered:IsEventRegistered("E")'))
 
+    def test_guid_registrations_stand_apart(self):
+        self.lua.execute('''
+            g = listener("g")
+            first = g:RegisterGUIDEvent("UNIT_HEALTH", "0x0A", "nope", "0x0B")
+            again = g:RegisterGUIDEvent("UNIT_HEALTH", "0x0A", "0x0B")
+            fireGUID("UNIT_HEALTH", "0x0B"); fireGUID("UNIT_HEALTH", "0x0C"); fire("UNIT_HEALTH", "0x0A")
+            g:RegisterGUIDEvent("UNIT_HEALTH", "0x0C")
+            fireGUID("UNIT_HEALTH", "0x0A")
+        ''')
+        self.assertEqual(list(self.lua.eval("got").values()), ["g:UNIT_HEALTH:0x0B:0x0B:true"])
+        self.assertTrue(self.lua.eval("first"))
+        self.assertFalse(self.lua.eval("again"))
+        self.assertIsNone(self.lua.eval('g:IsEventRegistered("UNIT_HEALTH")'))
+        self.assertEqual(self.lua.eval('select(2, g:IsGUIDEventRegistered("UNIT_HEALTH"))'), "0x0C")
+        self.lua.execute('g:UnregisterAllEvents()')
+        self.assertFalse(self.lua.eval('(g:IsGUIDEventRegistered("UNIT_HEALTH"))'))
+        with self.assertRaises(Exception):
+            self.lua.execute('g:RegisterGUIDEvent("UNIT_HEALTH", "player")')
+
     def test_a_handler_may_fire_another_event(self):
         self.lua.execute('''
             local outer = listener("o"); outer:RegisterEvent("A")
