@@ -162,17 +162,13 @@ class Estimate(unittest.TestCase):
         self.assertTrue(lua.eval(f"{est}:IsShown()"))
         # Horde (you) at 3 bases, 2 per s, needs 500 s; the Alliance at 2 bases makes 555 by then.
         self.assertEqual(lua.eval(f"clock({est}.verdict)"), "|cff59ff72Win|r 8:20")
-        # The card (2026-11-23, the player: "use blue and red for the sides"): Alliance
-        # over Horde, bright to the score now, pale to the end; your side marked.
-        side = f"{est}.side"
-        self.assertEqual(lua.eval(f"{side}.Alliance.now.value"), 1000)
-        self.assertEqual(lua.eval(f"{side}.Alliance.value"), 1550)
-        self.assertEqual(lua.eval(f"{side}.Horde.value"), 2000)
-        self.assertEqual(lua.eval(f"{side}.Horde.final.text"), "2000")
-        self.assertEqual(lua.eval(f"{side}.Alliance.now.barColor[3]"), 1)  # blue
-        self.assertEqual(lua.eval(f"{side}.Horde.now.barColor[1]"), 0.9)  # red
-        self.assertTrue(lua.eval(f"{side}.Horde.mine:IsShown()"))
-        self.assertFalse(lua.eval(f"{side}.Alliance.mine:IsShown()"))
+        # Small as the old one (2026-11-23, the player: the big card was "clumsy"),
+        # the final scores Alliance blue over Horde red.
+        self.assertEqual(lua.eval(f"{est}:GetHeight()"), 30)
+        self.assertEqual(lua.eval(f"{est}.side.Alliance.text"), "1550")
+        self.assertEqual(lua.eval(f"{est}.side.Horde.text"), "2000")
+        self.assertGreater(lua.eval(f"{est}.side.Alliance.color[3]"), 0.9)  # blue
+        self.assertGreater(lua.eval(f"{est}.side.Horde.color[1]"), 0.9)  # red
         self.assertEqual(lua.eval(f"{est}.advice.text"), "Hold 3 bases")
         lua.execute(f"ctrl = true; run({est}, 'OnClick')")
         # The old addon's words (2026-11-23, the player: "Win in xx:xx").
