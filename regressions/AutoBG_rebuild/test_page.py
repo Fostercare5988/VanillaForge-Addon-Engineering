@@ -18,9 +18,11 @@ def rows(lua, page):
 class Pages(unittest.TestCase):
     def test_the_rows_in_play_order(self):
         lua = load()
-        self.assertEqual(rows(lua, MAIN), "Queue|Warsong Gulch|Teams|Arathi Basin|Teams|Alterac Valley|Queue at login|"
-                         "Queue now|Leave queues|When it pops|Sound and flash|After the match|Leave when it ends|"
-                         "Queue again after leaving|Release spirit")
+        # 2026-11-23, the player: the page was too long, the match switches below the fold
+        # and Release spirit under "After the match". 15 rows to 11.
+        self.assertEqual(rows(lua, MAIN), "Queue|Warsong Gulch|Arathi Basin|Alterac Valley|Queue at login|Leave queues|"
+                         "Sound and flash when it pops|The match|Release spirit when you die|Leave when it ends|"
+                         "Queue again after leaving")
         self.assertEqual(rows(lua, FRAMES), "Timer bars|Width|Height|Enemy frames|Size|Show|Hide realm names|Width|"
                          "Height|Text size|Preview frames")
         self.assertEqual(rows(lua, SPY), "Spy|Spy list|Rows shown|Warning sounds|Arena|Callouts to your team")
@@ -39,13 +41,19 @@ class Pages(unittest.TestCase):
         for key, value in expect.items():
             self.assertEqual(lua.eval(f"AutoBGDB.{key}"), value, key)
 
-    def test_teams_grey_out_with_their_battleground(self):
+    def test_each_battleground_and_its_teams_share_a_row_and_queue_now_rides_the_login_switch(self):
+        # The window greys a checkbox-dropdown row's dropdown while its box is off
+        # (Blizzard_SettingControls.lua, SettingsCheckboxDropdownControlMixin:EvaluateState).
         lua = load()
-        teams = f"{MAIN}.layout.rows[3]"
-        self.assertFalse(lua.eval(f"settingsWindow.enabled({teams})"))
-        lua.execute("settingsWindow.use('AutoBG_queueWSG', true)")
-        self.assertTrue(lua.eval(f"settingsWindow.enabled({teams})"))
-        self.assertEqual(lua.eval(f"#settingsWindow.choices({teams})"), 3)
+        wsg = f"{MAIN}.layout.rows[2]"
+        self.assertEqual(lua.eval(f"{wsg}.template"), "SettingsCheckboxDropdownControlTemplate")
+        self.assertEqual(lua.eval(f"{wsg}.data.cbSetting:GetVariable()"), "AutoBG_queueWSG")
+        self.assertEqual(lua.eval(f"{wsg}.data.dropdownSetting:GetVariable()"), "AutoBG_teamsWSG")
+        self.assertEqual(lua.eval(f"#{wsg}.data.dropdownOptions()"), 3)
+        login = f"{MAIN}.layout.rows[5]"
+        self.assertEqual(lua.eval(f"{login}.data.setting:GetVariable()"), "AutoBG_queueOnLogin")
+        lua.execute(f"settingsWindow.click({login})")
+        self.assertTrue(lua.eval("said('^request:Alterac$')"))  # Alterac is ticked by default
 
     def test_the_size_dropdown_edits_only_that_size(self):
         lua = load()
