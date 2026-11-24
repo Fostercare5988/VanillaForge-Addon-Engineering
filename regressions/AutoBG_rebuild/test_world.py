@@ -380,20 +380,32 @@ class Arena(unittest.TestCase):
         self.assertEqual(lua.eval("row(1, 5).status.text"), "DEAD")
         self.assertFalse(lua.eval("said('sound:RaidWarning')"))
 
-    def test_an_enemy_not_yet_hostile_is_looked_at_again_an_ally_never(self):
-        """Before the gates open the other team may not be attackable: the first
-        look must not settle it for the match."""
+    def test_behind_the_gates_the_other_team_and_his_pet_are_tracked_before_they_are_hostile(self):
+        """2026-11-24, the player: a friend saw the hunter's pet, the frames did
+        not, behind the gates; as good tracking before as after."""
         lua = self.lua
-        lua.execute(f"enemy('{FOE}', {{ name = 'Foe', class = 'MAGE' }}); units['{FOE}'].enemy = false;"
+        lua.execute(f"enemy('{FOE}', {{ name = 'Hunt', class = 'HUNTER' }}); units['{FOE}'].enemy = false;"
                     " unit('0x0000000000000050', { name = 'Mate', player = true, inGroup = true });"
-                    " setTarget('0x0000000000000050');"  # a target holds the sweep still
-                    f" fire('SPELL_GO_OTHER', 0, 133, '{FOE}', '0x0000000000000050')")
-        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 0)
-        lua.execute(f"units['{FOE}'].enemy = true; fire('SPELL_GO_OTHER', 0, 133, '{FOE}', '0x0000000000000050')")
-        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 0)  # not within a second
-        lua.execute(f"step(1.1); fire('SPELL_GO_OTHER', 0, 133, '{FOE}', '0x0000000000000050')")
+                    f" unit('0xF140000000000D01', {{ name = 'Wolf', owner = '{FOE}' }});"
+                    " unit('0xF140000000000D02', { name = 'MyCat', owner = '0x0000000000000050' });"
+                    " plate('0xF140000000000D02'); plate('0xF140000000000D01')")
         self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 1)
-        self.assertEqual(lua.eval("__addon_ns.Enemies.roster[1].name"), "Foe")
+        self.assertEqual(lua.eval("__addon_ns.Enemies.roster[1].name"), "Hunt")
+        self.assertTrue(lua.eval("AutoBG_ArenaPets:IsShown()"))  # his wolf, never your mate's cat
+        lua.execute("unit('0x0000000000000051', { name = 'Foe2', player = true, enemy = false });"
+                    " fire('SPELL_GO_OTHER', 0, 133, '0x0000000000000051', '0x0000000000000050')")
+        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 2)  # combat names him
+        lua.execute("fire('SPELL_GO_OTHER', 0, 133, '0x0000000000000050', me.guid)")
+        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 2)  # never an ally
+
+    def test_sunstrider_court_is_an_arena_though_the_client_calls_it_no_instance(self):
+        """The player, 2026-11-24: IsInInstance and IsActiveBattlefieldArena are false there."""
+        lua = load("AutoBGDB = { queueOnLogin = false }", setup="partySize = 1")
+        lua.execute("zone = { name = 'Sunstrider Court', kind = 'none', map = 0, inside = false };"
+                    " fire('PLAYER_ENTERING_WORLD'); fire('ZONE_CHANGED_NEW_AREA'); step()")
+        self.assertTrue(lua.eval("AutoBG_TargetsMainFrame5:IsShown()"))
+        lua.execute("enter(nil)")
+        self.assertFalse(lua.eval("AutoBG_TargetsMainFrame5:IsShown()"))
 
     def test_a_name_the_scoreboard_gave_stays_while_he_is_not_yet_attackable(self):
         lua = self.lua
