@@ -459,6 +459,36 @@ class Arena(unittest.TestCase):
         self.assertEqual(lua.eval("__addon_ns.Enemies.roster[1].guid"), "0x0000000000000B01")
         self.assertEqual(lua.eval("row(1, 5).entry.guid"), "0x0000000000000B01")
 
+    def test_a_totems_pulse_names_its_shaman_even_when_he_is_not_in_view_yet(self):
+        lua = self.lua
+        lua.execute("unit('0xF130000000000E01', { name = 'Strength of Earth Totem', enemy = true, owner = '0x0000000000000B09', creature = 'Totem' });"
+                    " unit('0x0000000000000050', { name = 'Mate', player = true, inGroup = true });"
+                    " setTarget('0x0000000000000050');"  # a target holds the sweep still
+                    " fire('AURA_CAST_ON_OTHER', 8075, '0xF130000000000E01', '0x0000000000000050', 1, 1, 0, 0)")
+        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 0)  # he is no unit yet
+        lua.execute("enemy('0x0000000000000B09', { name = 'Sham', class = 'SHAMAN' }); step(1)")
+        self.assertEqual(lua.eval("__addon_ns.Enemies.roster[1].name"), "Sham")
+        self.assertFalse(lua.eval("AutoBG_ArenaPets:IsShown()"))
+
+    def test_a_buff_cast_by_nobody_here_names_nobody_and_a_buffer_on_a_teammate_is_an_enemy(self):
+        """A hunter's pet can carry buffs cast outside the arena: a caster that is
+        no unit now is never listed."""
+        lua = self.lua
+        lua.execute("unit('0xF140000000000D01', { name = 'Wolf', enemy = true, owner = '0x0000000000000B01' });"
+                    " fire('AURA_CAST_ON_OTHER', 1126, '0x0000000000000EEE', '0xF140000000000D01', 1, 1, 0, 0)")
+        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 0)
+        lua.execute("enemy('0x0000000000000B02', { name = 'Priest', class = 'PRIEST' }); enemy('0x0000000000000B03', { name = 'Rogue', class = 'ROGUE' });"
+                    " fire('AURA_CAST_ON_OTHER', 1243, '0x0000000000000B02', '0x0000000000000B03', 1, 1, 0, 0)")
+        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 2)
+
+    def test_nobody_is_called_drinking_before_he_can_be_attacked(self):
+        lua = self.lua
+        lua.execute(f"enemy('{FOE}', {{ name = 'Foe', class = 'MAGE' }}); plate('{FOE}'); units['{FOE}'].enemy = false;"
+                    f" auraEvent('{FOE}', {{ aura('{FOE}', 1137, 'Drink') }})")
+        self.assertFalse(lua.eval("said('is drinking')"))
+        lua.execute(f"units['{FOE}'].enemy = true; auraEvent('{FOE}', {{ aura('{FOE}', 1137, 'Drink') }})")
+        self.assertTrue(lua.eval("said('Foe is drinking')"))
+
 
 class AtRest(unittest.TestCase):
     def test_nothing_runs_in_the_open_world_after_login_a_zone_change_and_a_loading_screen(self):
