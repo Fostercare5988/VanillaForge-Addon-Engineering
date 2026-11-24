@@ -51,6 +51,18 @@ class Roster(unittest.TestCase):
         lua.execute("fire('UPDATE_BATTLEFIELD_SCORE'); step()")
         self.assertEqual(names(lua), "Thandril")
 
+    def test_a_killed_enemy_is_no_teammate_when_his_corpse_or_ghost_is_seen(self):
+        # 2026-11-24, the player: the carrier killed left the frames for minutes.
+        # A corpse and a ghost cannot be attacked, like a teammate.
+        lua = load()
+        match(lua)
+        seen(lua, ROGUE)
+        lua.execute(f"units['{ROGUE}'].dead, units['{ROGUE}'].enemy = true, nil; plate('{ROGUE}'); setTarget('{ROGUE}')")
+        lua.execute("fire('UPDATE_BATTLEFIELD_SCORE'); step()")
+        self.assertEqual(names(lua), "Ashka|Thandril")
+        lua.execute(f"units['{ROGUE}'].dead, units['{ROGUE}'].ghost = nil, true; plate('{ROGUE}')")
+        self.assertEqual(names(lua), "Ashka|Thandril")
+
     def test_a_hostile_player_seen_joins_and_the_scoreboard_is_asked(self):
         lua = load()
         match(lua)

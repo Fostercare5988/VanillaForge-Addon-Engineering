@@ -102,6 +102,13 @@ class Spy(unittest.TestCase):
         lua.execute("enemy('0x0000000000000C05', { name = 'Far', class = 'MAGE' }); fire('SPELL_GO_OTHER', 0, 133, '0x0000000000000C05', '0x0000000000000000')")
         self.assertEqual(lua.eval("AutoBG_SpyFrame.title.text"), "Spy  1")
         lua.execute("fire('SPELL_GO_OTHER', 0, 133, '0xF130000000000C06', '0x0000000000000000')")  # a creature
+        # A dead enemy cannot be attacked: not listed, but looked at again once alive.
+        lua.execute("enemy('0x0000000000000C08', { name = 'Corpse', class = 'MAGE', dead = true, enemy = false });"
+                    " fire('SPELL_GO_OTHER', 0, 133, '0x0000000000000C08', '0x0000000000000000')")
+        self.assertEqual(lua.eval("AutoBG_SpyFrame.title.text"), "Spy  1")
+        lua.execute("units['0x0000000000000C08'].dead, units['0x0000000000000C08'].enemy = nil, true;"
+                    " fire('SPELL_GO_OTHER', 0, 133, '0x0000000000000C08', '0x0000000000000000')")
+        self.assertEqual(lua.eval("AutoBG_SpyFrame.title.text"), "Spy  2")
         lua.execute("enemy('0x0000000000000C07', { name = 'Sneak', class = 'ROGUE', yards = 25 }); fire('BUFF_ADDED_OTHER', '0x0000000000000C07', 1, 1787, 1, 60, 3, 0)")
         self.assertTrue(lua.eval("AutoBG_SpyAlertWindow:IsShown()"))
         self.assertIn("Sneak", lua.eval("AutoBG_SpyAlertWindow.line.text"))

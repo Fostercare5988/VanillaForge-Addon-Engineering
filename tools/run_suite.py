@@ -99,6 +99,9 @@ def main(argv=None):
     addon_dir = addons_folder(args.addons) / args.addon
     if not addon_dir.is_dir():
         addon_dir = addons_folder(args.addons) / ("!" + args.addon)
+    # A rebuild's suite (regressions/AutoBG_rebuild) tests the switched-over addon.
+    if not addon_dir.is_dir() and args.addon.endswith("_rebuild"):
+        addon_dir = addons_folder(args.addons) / args.addon[:-len("_rebuild")]
     if not suite.is_dir():
         raise SystemExit("No suite at %s" % suite)
     with tempfile.TemporaryDirectory() as tmp:
