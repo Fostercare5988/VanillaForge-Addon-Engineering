@@ -437,6 +437,28 @@ class Arena(unittest.TestCase):
         lua.execute("fire('ZONE_CHANGED_NEW_AREA'); step()")
         self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 1)
 
+    def test_the_arena_scoreboard_names_the_other_team_before_the_gates_open(self):
+        """2026-11-24, the player: friends' addons tell what they face before the
+        start. The stock scoreboard lists both teams (WorldStateFrame.lua:325)."""
+        lua = self.lua  # a team of two
+        self.assertTrue(lua.eval("said('RequestScores')"))  # asked on entering
+        lua.execute("unit('0x0000000000000050', { name = 'Mate', player = true, inGroup = true });"
+                    " scores = { { 'Claude', 0, 'Orc', 'Rogue' }, { 'Mate', 0, 'Orc', 'Priest' },"
+                    " { 'Hunt', 1, 'Human', 'Hunter' }, { 'Frost', 1, 'Gnome', 'Mage' } };"
+                    " fire('UPDATE_BATTLEFIELD_SCORE'); step()")
+        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 2)
+        self.assertEqual(lua.eval("row(1, 5).name.text"), "Hunt")
+        self.assertEqual(lua.eval("__addon_ns.Enemies.roster[1].class"), "HUNTER")
+        self.assertEqual(lua.eval("AutoBG_TargetsMainFrame5.title.text"), "Enemies 2/2")
+        self.assertTrue(lua.eval("row(1, 5).racial:IsShown()"))
+        # No GUID yet: the sweep goes on, asks no more, and finds him by name when he is in view.
+        lua.execute("log = {}; step(10)")
+        self.assertFalse(lua.eval("said('ArenaScore')"))
+        lua.execute("enemy('0x0000000000000B01', { name = 'Hunt', class = 'HUNTER', race = 'Human' });"
+                    " units['0x0000000000000B01'].enemy = false; setTarget(nil); step(1)")
+        self.assertEqual(lua.eval("__addon_ns.Enemies.roster[1].guid"), "0x0000000000000B01")
+        self.assertEqual(lua.eval("row(1, 5).entry.guid"), "0x0000000000000B01")
+
 
 class AtRest(unittest.TestCase):
     def test_nothing_runs_in_the_open_world_after_login_a_zone_change_and_a_loading_screen(self):
