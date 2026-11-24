@@ -301,6 +301,131 @@ class Arena(unittest.TestCase):
         self.assertFalse(lua.eval("AutoBG_SpyAlertWindow:IsShown()"))
 
 
+    # 2026-11-24, the player: better enemy tracking, and the stealth tracker in
+    # every arena, for the quick Saps and CCs.
+    def test_the_frame_holds_a_slot_for_every_enemy_found_or_not_and_no_row_moves(self):
+        lua = self.lua  # partySize 1: a team of two
+        self.assertTrue(lua.eval("AutoBG_TargetsMainFrame5:IsShown()"))
+        self.assertEqual(lua.eval("row(1, 5).name.text"), "|cff8c8c8c?|r")
+        self.assertEqual(lua.eval("AutoBG_TargetsMainFrame5.title.text"), "Enemies 2/2")
+        lua.execute("enemy('0x0000000000000B01', { name = 'Zed', class = 'WARRIOR' }); plate('0x0000000000000B01')")
+        lua.execute("enemy('0x0000000000000B02', { name = 'Abe', class = 'MAGE' }); plate('0x0000000000000B02')")
+        # In the order found, not by class: a row never moves under a click.
+        self.assertEqual(lua.eval("row(1, 5).name.text"), "Zed")
+        self.assertEqual(lua.eval("row(2, 5).name.text"), "Abe")
+        self.assertEqual(lua.eval("AutoBG_TargetsMainFrame5.title.text"), "Enemies 2/2")
+        lua.execute("units['0x0000000000000B02'].dead = true; fireGUID('UNIT_HEALTH', '0x0000000000000B02')")
+        self.assertEqual(lua.eval("AutoBG_TargetsMainFrame5.title.text"), "Enemies 1/2")
+
+    def test_a_slot_is_blank_again_in_a_new_match_and_a_bigger_team_adds_slots(self):
+        lua = self.lua
+        lua.execute("enemy('0x0000000000000B01', { name = 'Zed', class = 'ROGUE', race = 'NightElf' });"
+                    " plate('0x0000000000000B01'); fireGUID('UNIT_SPELLCAST_SUCCEEDED', '0x0000000000000B01', 'c', 52317)")
+        self.assertTrue(lua.eval("row(1, 5).trinket:IsShown()"))
+        lua.execute("enter('Blood Ring', true)")  # a new match
+        self.assertEqual(lua.eval("row(1, 5).name.text"), "|cff8c8c8c?|r")
+        self.assertFalse(lua.eval("row(1, 5).trinket:IsShown()"))
+        self.assertFalse(lua.eval("row(1, 5).racial:IsShown()"))
+        self.assertIsNone(lua.eval("row(1, 5).trinketAt"))
+        self.assertFalse(lua.eval("row(1, 5).power:IsShown()"))
+        lua.execute("partySize = 4; enter('Blood Ring', true)")
+        self.assertEqual(lua.eval("AutoBG_TargetsMainFrame5.title.text"), "Enemies 5/5")
+        # The frame is as tall as its rows, spaced as they are.
+        self.assertEqual(lua.eval("AutoBG_TargetsMainFrame5:GetHeight()"), 18 + 5 * (32 + 9))
+
+    def test_an_enemy_out_of_view_shows_his_last_health_and_how_long_ago(self):
+        lua = self.lua
+        r = "row(1, 5)"
+        lua.execute(f"enemy('{FOE}', {{ name = 'Foe', class = 'MAGE' }}); plate('{FOE}');"
+                    f" units['{FOE}'].hp = 40; fireGUID('UNIT_HEALTH', '{FOE}');"
+                    f" units['{FOE}'].visible = false; fireGUID('UNIT_VISIBILITY_CHANGED', '{FOE}', false); step(7)")
+        self.assertEqual(lua.eval(f"clock({r}.status)"), "40%  |cff9a9a9a7s|r")
+        lua.execute(f"units['{FOE}'].visible = true; fireGUID('UNIT_VISIBILITY_CHANGED', '{FOE}', true)")
+        self.assertEqual(lua.eval(f"clock({r}.status)"), "40%")
+
+    def test_a_hide_heard_in_combat_events_warns_once_in_view_or_not(self):
+        lua = self.lua
+        lua.execute(f"enemy('{FOE}', {{ name = 'Elf', class = 'ROGUE' }}); plate('{FOE}');"
+                    f" units['{FOE}'].visible = false; fireGUID('UNIT_VISIBILITY_CHANGED', '{FOE}', false);"
+                    f" fire('SPELL_GO_OTHER', 0, 1784, '{FOE}', '{FOE}')")
+        self.assertTrue(lua.eval("AutoBG_SpyAlertWindow:IsShown()"))
+        self.assertIn("Elf", lua.eval("AutoBG_SpyAlertWindow.line.text"))
+        self.assertEqual(lua.eval("clock(row(1, 5).status)"), "|cffc7b5ffSTEALTH|r 0s")
+        # The aura of the same stealth, and a second report: one card, one sound.
+        lua.execute(f"fire('BUFF_ADDED_OTHER', '{FOE}', 1, 1784, 1, 60, 3, 0); fire('SPELL_GO_OTHER', 0, 1784, '{FOE}', '{FOE}')")
+        self.assertEqual(lua.eval("count('sound:RaidWarning')"), 1)
+        # A stack change (state 2) is no new stealth.
+        lua.execute(f"step(5); fire('BUFF_ADDED_OTHER', '{FOE}', 1, 1784, 1, 60, 3, 2)")
+        self.assertEqual(lua.eval("count('sound:RaidWarning')"), 1)
+
+    def test_two_rogues_hiding_together_are_two_cards_and_a_sap_is_not_held_back(self):
+        lua = self.lua
+        lua.execute("me.pos = { 0, 0 }; unit('0x0000000000000050', { name = 'Mate', player = true, inGroup = true, pos = { 5, 0 } })")
+        for guid, name in ((FOE, "Elf"), ("0x0000000000000B02", "Two")):
+            lua.execute(f"enemy('{guid}', {{ name = '{name}', class = 'ROGUE', visible = false }});"
+                        f" fire('BUFF_ADDED_OTHER', '{guid}', 1, 1787, 1, 60, 3, 0)")
+        self.assertEqual(lua.eval("count('sound:RaidWarning')"), 2)
+        self.assertIn("Two", lua.eval("AutoBG_SpyAlertWindow.line.text"))
+        lua.execute(f"fire('SPELL_GO_OTHER', 0, 11297, '{FOE}', '0x0000000000000050')")
+        self.assertEqual(lua.eval("count('sound:RaidWarning')"), 3)
+        self.assertIn("on Mate", lua.eval("AutoBG_SpyAlertWindow.line.text"))
+
+    def test_a_hide_names_an_enemy_nobody_has_seen_yet_and_a_dead_one_hides_nothing(self):
+        lua = self.lua
+        lua.execute(f"enemy('{FOE}', {{ name = 'Elf', class = 'ROGUE' }}); fire('SPELL_GO_OTHER', 0, 1856, '{FOE}', '{FOE}'); step()")
+        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 1)
+        self.assertEqual(lua.eval("row(1, 5).status.text"), "|cffd2c2ffVANISH|r")
+        lua.execute(f"units['{FOE}'].dead = true; fireGUID('UNIT_HEALTH', '{FOE}'); log = {{}}; step(5);"
+                    f" fire('SPELL_GO_OTHER', 0, 1784, '{FOE}', '{FOE}')")
+        self.assertEqual(lua.eval("row(1, 5).status.text"), "DEAD")
+        self.assertFalse(lua.eval("said('sound:RaidWarning')"))
+
+    def test_an_enemy_not_yet_hostile_is_looked_at_again_an_ally_never(self):
+        """Before the gates open the other team may not be attackable: the first
+        look must not settle it for the match."""
+        lua = self.lua
+        lua.execute(f"enemy('{FOE}', {{ name = 'Foe', class = 'MAGE' }}); units['{FOE}'].enemy = false;"
+                    " unit('0x0000000000000050', { name = 'Mate', player = true, inGroup = true });"
+                    " setTarget('0x0000000000000050');"  # a target holds the sweep still
+                    f" fire('SPELL_GO_OTHER', 0, 133, '{FOE}', '0x0000000000000050')")
+        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 0)
+        lua.execute(f"units['{FOE}'].enemy = true; fire('SPELL_GO_OTHER', 0, 133, '{FOE}', '0x0000000000000050')")
+        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 0)  # not within a second
+        lua.execute(f"step(1.1); fire('SPELL_GO_OTHER', 0, 133, '{FOE}', '0x0000000000000050')")
+        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 1)
+        self.assertEqual(lua.eval("__addon_ns.Enemies.roster[1].name"), "Foe")
+
+    def test_a_name_the_scoreboard_gave_stays_while_he_is_not_yet_attackable(self):
+        lua = self.lua
+        lua.execute("fire('CHAT_MSG_ADDON', 'TW_ARENA', 'S2C_SCOREBOARD;0;2;Claude|1|0:Foe|2|0', 'GUILD', ''); step()")
+        lua.execute(f"enemy('{FOE}', {{ name = 'Foe', class = 'MAGE' }}); units['{FOE}'].enemy = false; setTarget('{FOE}')")
+        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 1)
+        lua.execute(f"units['{FOE}'].enemy = true; setTarget('{FOE}')")
+        self.assertEqual(lua.eval("__addon_ns.Enemies.byGUID['" + FOE + "'].name"), "Foe")
+
+    def test_the_sweep_slows_down_when_it_finds_nobody(self):
+        lua = self.lua
+        lua.execute("log = {}; step(30)")
+        self.assertEqual(lua.eval("count('ClearTarget')"), 24)  # every second for 20 s, then every third
+
+    def test_an_arena_read_late_is_watched_all_the_same(self):
+        """The zone text can lag the loading screen: the setup follows the zone
+        change too. Fails on 2ada37f."""
+        lua = load("AutoBGDB = { queueOnLogin = false }", setup="partySize = 1")
+        lua.execute("zone = { name = '', kind = 'none', map = 0, inside = false }; fire('PLAYER_ENTERING_WORLD'); step()")
+        self.assertFalse(lua.eval("AutoBG_TargetsMainFrame5:IsShown()"))
+        lua.execute("zone = { name = 'Blood Ring', kind = 'pvp', map = 0, inside = true, arena = true };"
+                    " fire('ZONE_CHANGED_NEW_AREA'); step()")
+        self.assertTrue(lua.eval("AutoBG_TargetsMainFrame5:IsShown()"))
+        self.assertEqual(lua.eval("cvars.NP_EnableSpellGoEvents"), "1")
+        lua.execute(f"enemy('{FOE}', {{ name = 'Foe', class = 'MAGE', visible = false }});"
+                    f" fire('DEBUFF_ADDED_OTHER', '{FOE}', 1, 172, 1, 60, 33, 0)")
+        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 1)
+        # A second zone event in the same arena resets nothing.
+        lua.execute("fire('ZONE_CHANGED_NEW_AREA'); step()")
+        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 1)
+
+
 class AtRest(unittest.TestCase):
     def test_nothing_runs_in_the_open_world_after_login_a_zone_change_and_a_loading_screen(self):
         lua = load("AutoBGDB = { queueOnLogin = false }")
