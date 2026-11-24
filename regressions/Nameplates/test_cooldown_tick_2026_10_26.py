@@ -7,7 +7,7 @@ itself (a ClassicAPI countdown formatter writes "~43", then "~3m"), and the
 cooldown's OnCooldownDone redraws the row when it runs out. A cast nearby with
 no cooldown worth showing is answered from the spell cache before any unit is
 asked about. Fails on 1.5.0. That the numbers show and read right stays an
-in-game check (the player's countdownForCooldowns CVar must be 1).
+in-game check (no CVar gates the numbers since ClassicAPI 1.23.7).
 """
 import unittest
 from fnp_env import load

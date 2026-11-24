@@ -124,7 +124,10 @@ def main(argv: list[str] | None = None) -> int:
         release = github_api(f"/repos/{repo}/releases/latest", tok)
         new_tag, old = release["tag_name"], entry["reference_version"]
         new = new_tag.lstrip("v")
-        old_tag = entry.get("release_provenance", {}).get("tag") or ("v" + old)
+        # The pinned commit, not its tag: a maintainer can delete and renumber tags
+        # (ClassicAPI's v1.24.x became v1.23.x on 2026-11-24).
+        old_tag = (entry.get("reference_commit") or entry.get("release_provenance", {}).get("tag")
+                   or ("v" + old))
         print(f"{args.component}: pinned {old}, latest {new}")
         if new != old:
             compare = github_api(f"/repos/{repo}/compare/{old_tag}...{new_tag}", tok)

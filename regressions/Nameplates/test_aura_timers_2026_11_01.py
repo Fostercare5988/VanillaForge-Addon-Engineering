@@ -4,8 +4,8 @@ Each aura icon used to carry its own text, rewritten every 0.2 s by a ticker
 (TickAuras, NP.timed). The icon now has a ClassicAPI Cooldown frame that draws
 only the countdown number (no sweep, no flash, minutes from 60 s); its
 OnCooldownDone redraws the row when the aura runs out. Whether the number shows
-and sits right on the icon stays an in-game check (the CVar countdownForCooldowns
-must be 1).
+and sits right on the icon stays an in-game check (no CVar gates the numbers
+since ClassicAPI 1.23.7).
 """
 import unittest
 import fnp_env

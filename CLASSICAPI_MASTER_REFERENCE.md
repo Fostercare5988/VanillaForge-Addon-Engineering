@@ -503,6 +503,13 @@ This is the preferred architecture over WorldFrame child scraping when the addon
 Plate alpha follows vanilla rules, not the inherited-alpha model of other frames; see
 [Nameplate alpha](#nameplate-alpha).
 
+`nameplateUseClassColorForFriendlyPlayerUnitNames` (1.23.6, default `0`): `1`
+writes a friendly player's plate name in `RAID_CLASS_COLORS`. Hover yellow and
+the 5 s hit red stay above it; a player who turns hostile goes white at the next
+mouse-leave or hit-flash end. Only the name, never the bar, so it does not close
+Nameplates' class-bar GAP. A player's setting: read it, never set it. A plate
+name region an addon recolours itself keeps its colour.
+
 **Delivery Resilience:** [SOURCE-VERIFIED]
 The dispatcher records a frame as announced only after it issues
 `NAME_PLATE_CREATED`. A new GUID's `NAME_PLATE_UNIT_ADDED` waits for that frame's
@@ -987,11 +994,16 @@ SetConsoleKey
 Developer-console commands:
 
 ```text
+enable
 ExportInterfaceFiles code
 ExportInterfaceFiles art
 ExportDBCFiles
 ExportSoundFiles [subpath]
 ```
+
+`/console enable` (1.23.6) turns the `~` console on without the `-console`
+start flag, until the client exits; it then removes itself from
+`ConsoleGetAllCommands`. `ConsoleIsActive` is `false` while the console is off.
 
 ---
 
@@ -1532,7 +1544,21 @@ IsRightShiftKeyDown
 
 ```lua
 GetInstanceInfo
+C_InstanceEncounter.AddBossCreatureID(creatureID or { ids })
+C_InstanceEncounter.RemoveBossCreatureID(creatureID or { ids })
+C_InstanceEncounter.GetBossCreatureIDs()
 ```
+
+The boss list (1.23.5): by default only world bosses (`UnitClassification`
+`"worldboss"`) are bosses. A creature ID (`UnitCreatureID`) on the list is a
+boss too: it gets a `bossN` token and `INSTANCE_ENCOUNTER_ENGAGE_UNIT`, writes
+`ENCOUNTER_START`/`ENCOUNTER_END` to the combat log file, and names a damage
+meter session. One list for all addons; empty after every login and `/reload`,
+so add the IDs at load. A bad entry in a table raises an error naming its index
+and changes nothing. Removing an ID mid-fight keeps the tokens until the
+encounter ends; several creatures with one ID all join, and the kill needs all
+of them dead. The IDs are server data (§1 rule 2 of VANILLAFORGE.md): take them
+from the server profile's sources, never from Classic Era lists.
 
 ---
 
@@ -3461,7 +3487,11 @@ ClassicAPI registers has an API descriptor (`/classicapi`,
 `PLAYER_SOFT_*_CHANGED`) is off unless the player sets `SoftTargetEnemy` /
 `SoftTargetFriend` to 2 or 3. With it on, a spell cast with no target goes to
 the soft unit. That is a gameplay choice: an addon may read the tokens but must
-not turn the CVars on by itself.
+not turn the CVars on by itself. Since 1.23.7 the defaults are Classic Era's:
+`SoftTargetInteract` `0` (was `3`), `SoftTargetEnemy` `0`, both arcs `2`. The
+client saves only values that differ from the default, so a player who used the
+interact key on the old default lost soft objects and needs
+`/console SoftTargetInteract 3` once.
 
 ## Profiling
 
@@ -3568,8 +3598,9 @@ get the later clients' methods:
 - `OnCooldownDone` runs once when the sweep ends, before the flash. It does not
   run for `Clear()` or a cooldown of duration `0`.
 - Countdown numbers: every `Cooldown` has a countdown font string
-  (`GetCountdownFontString`, FRIZQT 16 outline, centred). It shows only while
-  the player's `countdownForCooldowns` CVar is `1` (default `0`), never during
+  (`GetCountdownFontString`, FRIZQT 16 outline, centred). It shows by default
+  (since 1.23.7 no CVar gates it; `SetHideCountdownNumbers(true)` or XML
+  `hideCountdownNumbers="true"` is the only switch), never during
   the flash, and only for cooldowns longer than `SetMinimumCountdownDuration`
   (ms of the full duration, default `2000`). Per frame:
   `SetHideCountdownNumbers`, `SetCountdownAbbrevThreshold` (default 120 s),
@@ -3582,12 +3613,14 @@ get the later clients' methods:
 Use: on a native frame, `cd:Clear()` replaces `CooldownFrame_SetTimer(cd, 0, 0, 0)`,
 and an aura or item timer that knows its end time calls
 `SetCooldownFromExpirationTime`. An addon that draws its own countdown text over
-cooldowns can let the native numbers do it, but `countdownForCooldowns` is the
-player's setting, like the nameplate alpha CVars: read it, never set it. An
-addon that keeps its own numbers calls `SetHideCountdownNumbers(true)` on its
-frames, so the two never overlap when the player turns the CVar on.
-[UNVERIFIED - TEST FIRST] The stock action buttons are indicator Models, which
-have no countdown font string, so the CVar should add no numbers to them.
+cooldowns lets the native numbers do it (`SetCountdownFormatter` for the look);
+one that keeps its own text must call `SetHideCountdownNumbers(true)`, or both
+show. `countdownForCooldowns` (default `0`, no longer on ClassicAPI's options
+page) changes no frame: retail's action-button Lua reads it and hides its own
+buttons' numbers, and an action bar addon may do the same. It is `1` in this
+player's Config.wtf, and our addons show numbers on every cooldown regardless.
+The stock action buttons are indicator Models, which have no countdown font
+string (753d2fa).
 
 ## Script handler arguments
 
@@ -3908,3 +3941,38 @@ A mount ID is the ID of the spell that summons the mount.
   mount item carries "Add Mount to Collection", not the mount spell, so only
   the spellbook spell gives a mount ID. [UNVERIFIED - TEST FIRST] on OctoWoW:
   `/run print(C_MountJournal.GetMountFromSpell("<your mount's spell name>"))`.
+
+## Character cvars, colour globals and loading (1.23.5–1.23.9)
+
+- **Character cvars** (`damageMeterEnabled`, `damageMeterResetOnNewInstance`,
+  `nameplateSelectedAlpha`, `stopAutoAttackOnTargetChange`) live in the
+  character's `config-cache.wtf` (account-data section 1) since 1.23.7. At a
+  login the saved value arrives with the server sync, after the addons load:
+  until then `GetCVar` returns the default, and the saved value reaches Lua as
+  `CVAR_UPDATE`. On `/reload` it is there at once. An addon that reads one of
+  them at load also listens to `CVAR_UPDATE` (ea4debe). None of ours reads one
+  (2026-11-24).
+- **Colour globals are repaired on the write** (1.23.6): an addon that assigns
+  a plain table to `RAID_CLASS_COLORS`, `ITEM_QUALITY_COLORS` or a
+  `*_FONT_COLOR` global gets ColorMixin objects back in the same statement, so
+  `:GetRGB()` on them always works (347dc7e).
+- **Damage meter sessions**: IDs start again at 1 after a reset. A boss that
+  joins an open fight turns that session into the encounter and renames it;
+  it no longer starts a new one.
+- **Button state textures take atlas names**: `SetNormalTexture`,
+  `SetPushedTexture`, `SetDisabledTexture`, `SetHighlightTexture`,
+  `SetCheckedTexture`, `SetDisabledCheckedTexture` accept a known atlas name;
+  `GetAtlas()` on the state texture returns it. `SetTexture` after `SetAtlas`
+  now restores the addon's own `SetTexCoord` (6636690).
+- **`clipChildren`** clips on whole pixels: a clipped texture no longer stops one
+  pixel short at odd UI scales (793d55a, D3D9 only).
+- **Settings window**: retail art; its keybinding templates are now
+  `SettingsKeybindingTemplate`, `SettingsKeybindingButtonTemplate` and
+  `SettingsKeybindingButtonTemplateWithLabel`, so stock `KeyBindingFrame` rows
+  are 1.12's again (36ded48).
+- **Loading**: `maxFPSLoading` (10–100, default 10) caps loading-screen redraws;
+  lower loads faster with many addons. A UI load now indexes only
+  `Interface\AddOns`, not the whole install (88e4ee0: ~420 ms saved per walk).
+- **Version numbers**: the releases first tagged v1.24.0–v1.24.4 were renumbered
+  v1.23.x on 2026-11-24 (v1.24.4 is v1.23.4, commit 90aeaa6). Tools compare
+  pinned commits, not tags.

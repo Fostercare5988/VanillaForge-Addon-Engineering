@@ -2,6 +2,14 @@
   "about": "Old ways a DLL now does better. find_holes.py reports a match as a lead, not a verdict: read the code first. Add an entry whenever an audit finds a new one; cite where the better way is documented.",
   "entries": [
     {
+      "id": "character-cvar-read-at-load",
+      "pattern": "GetCVar\\w*\\s*\\(\\s*\"(damageMeterEnabled|damageMeterResetOnNewInstance|nameplateSelectedAlpha|stopAutoAttackOnTargetChange)\"",
+      "unless": "\"CVAR_UPDATE\"",
+      "finding": "Reads a character cvar with no CVAR_UPDATE: at a login it holds the default until the server sync, after the addons load.",
+      "better": "Read it again on CVAR_UPDATE; the saved value arrives there at a login (on /reload it is already set).",
+      "source": "ClassicAPI docs/API.md#character-cvars; commit ea4debe (1.23.7)"
+    },
+    {
       "id": "bag-update-burst",
       "pattern": "\"BAG_UPDATE\"",
       "unless": "\"BAG_UPDATE_DELAYED\"",
@@ -114,7 +122,7 @@
       "pattern": "hooksecurefunc\\s*\\(\\s*\"CooldownFrame_SetTimer\"|CooldownFrame_SetTimer\\s*=",
       "unless": "\"countdownForCooldowns\"|SetDrawSwipe\\(false\\)",
       "finding": "Draws its own countdown text over cooldown frames.",
-      "better": "Native Cooldown frames draw countdown numbers while the player's countdownForCooldowns CVar is 1; SetHideCountdownNumbers, GetCountdownFontString and the thresholds set them per frame. Read the CVar, never set it. The stock buttons' sweeps are 1.12 Models with none: give each a native Cooldown child with SetDrawSwipe(false), SetDrawBling(false) and the formatter, set from the CooldownFrame_SetTimer hook, with no timer (FostercareTweaks cooldown-numbers.lua, 2026-11-13).",
+      "better": "Native Cooldown frames draw countdown numbers by default (ClassicAPI 1.23.7: no CVar gates them); SetHideCountdownNumbers, GetCountdownFontString and the thresholds set them per frame. The stock buttons' sweeps are 1.12 Models with none: give each a native Cooldown child with SetDrawSwipe(false), SetDrawBling(false) and the formatter, set from the CooldownFrame_SetTimer hook, with no timer (FostercareTweaks cooldown-numbers.lua, 2026-11-13).",
       "source": "CLASSICAPI_MASTER_REFERENCE.md#cooldown-api-1179"
     },
     {
@@ -336,7 +344,7 @@
       "id": "countdown-text-ticker",
       "pattern": "SetHideCountdownNumbers\\(\\s*true",
       "finding": "Hides a Cooldown frame's native numbers to draw its own countdown text (a prefix such as ~, a color, minutes) on a timer.",
-      "better": "cooldown:SetCountdownFormatter(C_StringUtil.CreateNumericRuleFormatter()) with breakpoints such as { threshold = 0, step = 1, rounding = Up, format = \"~%d\" } and { threshold = 60, format = \"~%dm\", components = { { div = 60, step = 1, rounding = Up } } }; OnCooldownDone for the end. Numbers show while countdownForCooldowns is 1.",
+      "better": "cooldown:SetCountdownFormatter(C_StringUtil.CreateNumericRuleFormatter()) with breakpoints such as { threshold = 0, step = 1, rounding = Up, format = \"~%d\" } and { threshold = 60, format = \"~%dm\", components = { { div = 60, step = 1, rounding = Up } } }; OnCooldownDone for the end. Numbers show unless SetHideCountdownNumbers(true).",
       "source": "ClassicAPI docs/API.md#c_stringutilcreatenumericruleformatter, Cooldown methods (SetCountdownFormatter)"
     },
     {

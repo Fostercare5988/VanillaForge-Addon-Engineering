@@ -2,8 +2,8 @@
 
 Its equipment, trinket and flyout buttons used to carry a FontString each and
 write the time left from a polling pass. Each button now has a native ClassicAPI
-Cooldown frame ("<button>CD"); the client draws the numbers while the player's
-countdownForCooldowns CVar is 1 and GearRack only styles the font. Whether the
+Cooldown frame ("<button>CD"); the client draws the numbers (by default since
+ClassicAPI 1.23.7) and GearRack only styles the font. Whether the
 frame sits right on the button, takes no clicks and shows the numbers stays an
 in-game check.
 """

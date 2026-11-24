@@ -1,21 +1,21 @@
 {
   "classicapi": {
-    "minimum_version": "1.24.4",
-    "reference_version": "1.24.4",
+    "minimum_version": "1.23.9",
+    "reference_version": "1.23.9",
     "repository": "brues-code/ClassicAPI",
-    "reference_commit": "90aeaa60520417d06f78fad242c9dba7629f3346",
+    "reference_commit": "793d55a0cdcca7621d86d5bd3530510737fa8b14",
     "file_shas": {
-      "docs/API.md": "c6a61b2aa61923f61d128ff3af8971390ccf33b5",
+      "docs/API.md": "1ae46fb73f1549d722034a1f2054db061e884b00",
       "README.md": "cff2a21197961d860f26a8e9137489a397797bb2"
     },
     "release_provenance": {
-      "tag": "v1.24.4",
-      "tag_object": "a3abbb99fb3eb7120eb651d3bd5c879248b61968",
-      "commit": "90aeaa60520417d06f78fad242c9dba7629f3346",
-      "published_at": "2026-11-22T17:23:10Z",
-      "dll_asset_id": 779846704,
-      "dll_size_bytes": 3184128,
-      "dll_sha256": "fcf2fe68ed427006151209a867b58f533ea80edbcade4f04faa14abe2bd5578d"
+      "tag": "v1.23.9",
+      "tag_object": "4dbefdaf5aa9880abef8d3fd91a80275227568e9",
+      "commit": "793d55a0cdcca7621d86d5bd3530510737fa8b14",
+      "published_at": "2026-11-24T03:52:53Z",
+      "dll_asset_id": 785595006,
+      "dll_size_bytes": 3268608,
+      "dll_sha256": "6e79a2862602cf9212319292ebfb9b6d555fb62acd0f2ea5ee9f5acc490aabc4"
     }
   },
   "superwow": {
