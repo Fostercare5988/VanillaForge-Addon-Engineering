@@ -45,6 +45,33 @@ class Queueing(unittest.TestCase):
         self.assertFalse(lua.eval("said('^join')"))
         self.assertTrue(lua.eval("BattlefieldFrame:IsShown()"))
 
+    def test_the_arena_queued_last_as_skirmish_and_joined_from_its_window(self):
+        # 2026-11-24, the player: the arena queue was missing.
+        lua = load("AutoBGDB = { queueOnLogin = false, queueAV = false, queueArena = true }")
+        lua.execute("AutoBGDB.queueWSG = true; __addon_ns.Queue.QueueAll(); step(2.2)")
+        self.assertEqual(requests(lua), ["request:Warsong", "arena:0"])
+        lua.execute("shownBattlefield = 'Blood Ring'; BattlefieldFrame:Show(); fire('BATTLEFIELDS_SHOW')")
+        self.assertTrue(lua.eval("said('^join:0$')"))
+        self.assertFalse(lua.eval("BattlefieldFrame:IsShown()"))
+        self.assertIn("(Skirmish)", lua.eval("heard('Queued for')"))
+
+    def test_a_rated_arena_hears_the_servers_answer_only_while_it_waits(self):
+        lua = load("AutoBGDB = { queueOnLogin = false, queueAV = false, queueArena = true, arenaType = '3v3' }")
+        lua.execute("__addon_ns.Queue.QueueAll()")
+        self.assertEqual(requests(lua), ["arena:2"])
+        lua.execute("fire('CHAT_MSG_ADDON', 'TW_ARENA', 'S2C_QUEUE_SUCCESS;3v3', 'GUILD', 'Claude')")
+        self.assertIn("(Rated 3v3)", lua.eval("heard('Queued for')"))
+        lua.execute("chat = {}; fire('CHAT_MSG_ADDON', 'TW_ARENA', 'S2C_QUEUE_SUCCESS;3v3', 'GUILD', 'Claude')")
+        self.assertIsNone(lua.eval("heard('Queued for')"))
+        lua.execute("step(3); SlashCmdList.AUTOBG('q arena')")
+        lua.execute("fire('CHAT_MSG_ADDON', 'TW_ARENA', 'S2C_ERROR;You are not in a team', 'GUILD', 'Claude')")
+        self.assertIsNotNone(lua.eval("heard('Rated 3v3 not queued: You are not in a team')"))
+
+    def test_an_arena_queue_named_arena_is_held(self):
+        lua = load("AutoBGDB = { queueOnLogin = false, queueAV = false, queueArena = true }")
+        lua.execute("queues[1] = { status = 'queued', map = 'ARENA' }; __addon_ns.Queue.QueueAll()")
+        self.assertEqual(requests(lua), [])
+
     def test_a_held_queue_is_skipped_and_the_cap_named(self):
         lua = load()
         lua.execute("queues[1] = { status = 'queued', map = 'Warsong Gulch' }; queues[2] = { status = 'queued', map = 'Blood Ring' };"

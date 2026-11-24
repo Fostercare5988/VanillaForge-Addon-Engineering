@@ -20,7 +20,8 @@ class Pages(unittest.TestCase):
         lua = load()
         # 2026-11-23, the player: the page was too long, the match switches below the fold
         # and Release spirit under "After the match". 15 rows to 11.
-        self.assertEqual(rows(lua, MAIN), "Queue|Warsong Gulch|Arathi Basin|Alterac Valley|Queue at login|Leave queues|"
+        # 2026-11-24, the player: the arena queue was missing; its row after Alterac.
+        self.assertEqual(rows(lua, MAIN), "Queue|Warsong Gulch|Arathi Basin|Alterac Valley|Arena|Queue at login|Leave queues|"
                          "Sound and flash when it pops|The match|Release spirit when you die|Leave when it ends|"
                          "Queue again after leaving")
         self.assertEqual(rows(lua, BARS), "Width|Height|Preview frames")
@@ -36,7 +37,7 @@ class Pages(unittest.TestCase):
     def test_claudes_choices_are_the_defaults_and_defaults_puts_them_back(self):
         lua = load()
         expect = {"queueWSG": False, "queueAB": False, "queueAV": True, "teamsWSG": "fa", "teamsAB": "fa",
-                  "queueOnLogin": True, "popAlert": True, "leave": True, "rejoin": True, "release": True,
+                  "queueArena": False, "arenaType": "skirmish", "queueOnLogin": True, "popAlert": True, "leave": True, "rejoin": True, "release": True,
                   "barWidth": 200, "barHeight": 22, "callouts": False, "spy": True, "spyRows": 10, "spySounds": True}
         for key, value in expect.items():
             self.assertEqual(lua.eval(f"AutoBGDB.{key}"), value, key)
@@ -56,7 +57,10 @@ class Pages(unittest.TestCase):
         self.assertEqual(lua.eval(f"{wsg}.data.cbSetting:GetVariable()"), "AutoBG_queueWSG")
         self.assertEqual(lua.eval(f"{wsg}.data.dropdownSetting:GetVariable()"), "AutoBG_teamsWSG")
         self.assertEqual(lua.eval(f"#{wsg}.data.dropdownOptions()"), 3)
-        login = f"{MAIN}.layout.rows[5]"
+        arena = f"{MAIN}.layout.rows[5]"
+        self.assertEqual(lua.eval(f"{arena}.data.dropdownSetting:GetVariable()"), "AutoBG_arenaType")
+        self.assertEqual(lua.eval(f"#{arena}.data.dropdownOptions()"), 4)
+        login = f"{MAIN}.layout.rows[6]"
         self.assertEqual(lua.eval(f"{login}.data.setting:GetVariable()"), "AutoBG_queueOnLogin")
         lua.execute(f"settingsWindow.click({login})")
         self.assertTrue(lua.eval("said('^request:Alterac$')"))  # Alterac is ticked by default
