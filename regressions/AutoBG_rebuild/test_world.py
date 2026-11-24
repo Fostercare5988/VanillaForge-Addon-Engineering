@@ -103,7 +103,7 @@ class Spy(unittest.TestCase):
         self.assertEqual(lua.eval("AutoBG_SpyFrame.title.text"), "Spy  1")
         lua.execute("fire('SPELL_GO_OTHER', 0, 133, '0xF130000000000C06', '0x0000000000000000')")  # a creature
         # A dead enemy cannot be attacked: not listed, but looked at again once alive.
-        lua.execute("enemy('0x0000000000000C08', { name = 'Corpse', class = 'MAGE', dead = true, enemy = false });"
+        lua.execute("enemy('0x0000000000000C08', { name = 'Corpse', class = 'MAGE', dead = true }).enemy = false;"
                     " fire('SPELL_GO_OTHER', 0, 133, '0x0000000000000C08', '0x0000000000000000')")
         self.assertEqual(lua.eval("AutoBG_SpyFrame.title.text"), "Spy  1")
         lua.execute("units['0x0000000000000C08'].dead, units['0x0000000000000C08'].enemy = nil, true;"
@@ -221,6 +221,84 @@ class Arena(unittest.TestCase):
         self.assertLess(lua.eval("liveTimers()"), live + 1)
         lua.execute("log = {}; step(3)")
         self.assertFalse(lua.eval("said('ClearTarget')"))
+
+
+    # 2026-11-24, the player: arena enemy tracking as good as it can be, the
+    # stealth warnings there too, "use totems or buffs to track where people are".
+    def test_every_stealth_warns_in_an_arena_at_any_distance(self):
+        lua = self.lua
+        lua.execute(f"enemy('{FOE}', {{ name = 'Elf', class = 'HUNTER', yards = 120 }}); plate('{FOE}');"
+                    f" fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{FOE}', 'c', 20580)")
+        self.assertTrue(lua.eval("AutoBG_SpyAlertWindow:IsShown()"))
+        self.assertTrue(lua.eval("said('sound:RaidWarning')"))
+
+    def test_combat_that_names_an_enemy_lists_him_never_an_ally(self):
+        lua = self.lua
+        self.assertEqual(lua.eval("cvars.NP_EnableSpellGoEvents"), "1")
+        lua.execute(f"enemy('{FOE}', {{ name = 'Foe', class = 'MAGE', visible = false }});"
+                    " unit('0x0000000000000050', { name = 'Mate', player = true, inGroup = true })")
+        lua.execute(f"fire('SPELL_GO_OTHER', 0, 133, '0x0000000000000050', '{FOE}')")
+        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 1)
+        lua.execute("enemy('0x0000000000000B03', { name = 'Dot', class = 'WARLOCK', visible = false });"
+                    " fire('DEBUFF_ADDED_OTHER', '0x0000000000000B03', 1, 172, 1, 60, 33, 0)")
+        lua.execute("enemy('0x0000000000000B04', { name = 'Hit', class = 'WARRIOR', visible = false });"
+                    " fire('SPELL_DAMAGE_EVENT_OTHER', '0x0000000000000050', '0x0000000000000B04', 12294, 900, '0,0,0', 0, 1, '2,0,0,0')")
+        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 3)
+        lua.execute("enter(nil); enemy('0x0000000000000B05', { name = 'Far' }); fire('SPELL_DAMAGE_EVENT_OTHER', '0x0000000000000B05', me.guid)")
+        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 0)
+
+    def test_a_totem_names_its_shaman_and_gets_no_pet_row(self):
+        lua = self.lua
+        lua.execute(f"enemy('{FOE}', {{ name = 'Sham', class = 'SHAMAN', visible = false }});"
+                    f" unit('0xF130000000000E01', {{ name = 'Grounding Totem', enemy = true, owner = '{FOE}', creature = 'Totem' }});"
+                    " plate('0xF130000000000E01')")
+        self.assertEqual(lua.eval(f"__addon_ns.Enemies.byGUID['{FOE}'].name"), "Sham")
+        self.assertFalse(lua.eval("AutoBG_ArenaPets:IsShown()"))
+
+    def test_the_servers_arena_scoreboard_lists_the_other_team_never_yours(self):
+        lua = self.lua
+        lua.execute("unit('0x0000000000000050', { name = 'Mate', player = true, inGroup = true }); step(1)")
+        self.assertTrue(lua.eval("said('ArenaScore')"))
+        lua.execute("fire('CHAT_MSG_ADDON', 'TW_ARENA', 'S2C_SCOREBOARD;0;2;Claude|1|0:Mate|1|0', 'GUILD', '')")
+        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 0)
+        lua.execute("fire('CHAT_MSG_ADDON', 'TW_ARENA', 'S2C_SCOREBOARD;0;4;Claude|1|0:Foe|2|0:Mate|1|0:Two|2|0', 'GUILD', ''); step()")
+        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 2)
+        self.assertEqual(lua.eval("row(1, 5).name.text"), "Foe")
+        # Asked again only while the list is short.
+        lua.execute("log = {}; step(10)")
+        self.assertFalse(lua.eval("said('ArenaScore')"))
+
+    def test_a_hidden_stealther_shows_how_long_ago_and_how_far_his_last_spot_is(self):
+        lua = self.lua
+        r = "row(1, 5)"
+        lua.execute(f"me.pos = {{ 0, 0 }}; enemy('{FOE}', {{ name = 'Foe', class = 'ROGUE', yards = 30, pos = {{ 30, 0 }} }}); plate('{FOE}')")
+        lua.execute(f"auraEvent('{FOE}', {{ aura('{FOE}', 1787) }})")
+        self.assertTrue(lua.eval("AutoBG_SpyAlertWindow:IsShown()"))
+        lua.execute(f"units['{FOE}'].visible = false; fireGUID('UNIT_VISIBILITY_CHANGED', '{FOE}', false); step(5)")
+        self.assertEqual(lua.eval(f"clock({r}.status)"), "|cffc7b5ffSTEALTH|r 5s")
+        self.assertEqual(lua.eval(f"{r}.yards.text"), "|cffb59cff~30 yd|r")
+        lua.execute("me.pos = { 10, 0 }; step(0.2)")
+        self.assertEqual(lua.eval(f"{r}.yards.text"), "|cffb59cff~20 yd|r")
+        lua.execute("step(60)")
+        self.assertEqual(lua.eval(f"{r}.yards.text"), "")
+        self.assertEqual(lua.eval(f"clock({r}.status)"), "|cffc7b5ffSTEALTH|r 1m")
+        lua.execute(f"units['{FOE}'].visible = true; units['{FOE}'].auras = {{}}; fireGUID('UNIT_VISIBILITY_CHANGED', '{FOE}', true)")
+        self.assertEqual(lua.eval(f"clock({r}.status)"), "100%")
+
+    def test_a_hidden_enemys_spell_on_your_group_says_who_what_on_whom_and_where(self):
+        lua = self.lua
+        r = "row(1, 5)"
+        lua.execute("me.pos = { 0, 0 }; unit('0x0000000000000050', { name = 'Mate', player = true, inGroup = true, pos = { 50, 0 } })")
+        lua.execute(f"enemy('{FOE}', {{ name = 'Foe', class = 'ROGUE', visible = false }}); fire('BUFF_ADDED_OTHER', '{FOE}', 1, 1787, 1, 60, 3, 0)")
+        lua.execute(f"fire('SPELL_GO_OTHER', 0, 11297, '{FOE}', '0x0000000000000050'); step(0.2)")
+        self.assertTrue(lua.eval("AutoBG_SpyAlertWindow:IsShown()"))
+        self.assertIn("Spell11297", lua.eval("AutoBG_SpyAlertWindow.title.text"))
+        self.assertIn("on Mate", lua.eval("AutoBG_SpyAlertWindow.line.text"))
+        self.assertEqual(lua.eval(f"{r}.yards.text"), "|cffb59cff~50 yd|r")
+        # A spell of his on the other side tells nothing.
+        lua.execute("AutoBG_SpyAlertWindow:Hide(); step(5)")
+        lua.execute(f"enemy('0x0000000000000B02', {{ name = 'Two' }}); fire('SPELL_GO_OTHER', 0, 2061, '{FOE}', '0x0000000000000B02')")
+        self.assertFalse(lua.eval("AutoBG_SpyAlertWindow:IsShown()"))
 
 
 class AtRest(unittest.TestCase):

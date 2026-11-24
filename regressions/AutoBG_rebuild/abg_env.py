@@ -329,6 +329,8 @@ function GetBattlefieldScore(i)
     if s then return s[1], 0, 0, 0, 0, s[2], 0, s[3], s[4] end
 end
 function RequestBattlefieldScoreData() note("RequestScores") end
+-- The arena's own scoreboard (Turtle_ArenaUI.lua): a TW_ARENA addon message answers.
+function RequestArenaScoreInfo() note("ArenaScore") end
 cvars = {}
 function GetCVar(name) return cvars[name] end
 function SetCVar(name, value) cvars[name] = tostring(value) end
