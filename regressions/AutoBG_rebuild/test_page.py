@@ -4,7 +4,7 @@ import unittest
 from abg_env import load
 
 MAIN, BARS, FRAMES, SPY = ("settingsWindow.find('AutoBG')", "settingsWindow.find('Timer bars')",
-                           "settingsWindow.find('Enemy frames')", "settingsWindow.find('Spy and arena')")
+                           "settingsWindow.find('Enemy frames')", "settingsWindow.find('Spy')")
 
 
 def rows(lua, page):
@@ -32,13 +32,13 @@ class Pages(unittest.TestCase):
                          "Shadowmeld (Night Elf)|Escape Artist (Gnome)|Blood Fury (Orc)|"
                          "Will of the Forsaken (Undead)|War Stomp (Tauren)|Berserking (Troll)")
         self.assertIsNone(lua.eval("settingsWindow.find('Enemy racials')"))
-        self.assertEqual(rows(lua, SPY), "Spy|Spy list|Rows shown|Warning sounds|Arena|Callouts to your team")
+        self.assertEqual(rows(lua, SPY), "Spy list|Rows shown|Warning sounds")
 
     def test_claudes_choices_are_the_defaults_and_defaults_puts_them_back(self):
         lua = load()
         expect = {"queueWSG": False, "queueAB": False, "queueAV": True, "teamsWSG": "fa", "teamsAB": "fa",
                   "queueArena": False, "arenaType": "skirmish", "queueOnLogin": True, "popAlert": True, "leave": True, "rejoin": True, "release": True,
-                  "barWidth": 200, "barHeight": 22, "callouts": False, "spy": True, "spyRows": 10, "spySounds": True}
+                  "barWidth": 200, "barHeight": 22, "spy": True, "spyRows": 10, "spySounds": True}
         for key, value in expect.items():
             self.assertEqual(lua.eval(f"AutoBGDB.{key}"), value, key)
         lua.execute("settingsWindow.use('AutoBG_queueWSG', true); settingsWindow.use('AutoBG_teamsWSG', 'xf');"
@@ -73,9 +73,6 @@ class Pages(unittest.TestCase):
         self.assertFalse(lua.eval("AutoBGDB.sizes[15].show"))
         self.assertEqual(lua.eval("AutoBGDB.sizes[10].width"), 195)
         self.assertFalse(lua.eval(f"settingsWindow.enabled({FRAMES}.layout.rows[8])"))
-        lua.execute("settingsWindow.use('AutoBG_size', 'arena')")
-        self.assertEqual(lua.eval("Settings.GetValue('AutoBG_size_width')"), 200)
-        self.assertFalse(lua.eval("Settings.GetValue('AutoBG_size_hideRealm')"))
         lua.execute(f"settingsWindow.use('AutoBG_size', '15'); settingsWindow.defaults({FRAMES})")
         self.assertEqual(lua.eval("AutoBGDB.sizes[10].width"), 195)
 
@@ -89,7 +86,7 @@ class Pages(unittest.TestCase):
         self.assertEqual(lua.eval("AutoBGDB.spots[529].Farm.n"), 3)
         self.assertEqual(lua.eval("AutoBGDB.sizes[10].width"), 180)
         self.assertEqual(lua.eval("AutoBGDB.sizes[10].height"), 25)
-        self.assertEqual(lua.eval("AutoBGDB.sizes.arena.text"), 21)
+        self.assertIsNone(lua.eval("AutoBGDB.sizes.arena"))  # the arena's frame moved to AutoArena
 
     def test_the_old_table_is_not_read(self):
         lua = load("AutoBG_Settings = { AutoQueue_WSG = true, ObjectiveWidth = 150 }")
