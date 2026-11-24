@@ -329,6 +329,12 @@ function GetBattlefieldScore(i)
     if s then return s[1], 0, 0, 0, 0, s[2], 0, s[3], s[4] end
 end
 function RequestBattlefieldScoreData() note("RequestScores") end
+-- The score window's tabs filter by faction (WorldStateFrame.lua:650): nil asks every row.
+function SetBattlefieldScoreFaction(f) note("ScoreFaction:" .. tostring(f)) end
+-- ClassicAPI: the GUIDs of every unit with a nameplate (### C_NamePlate.GetNamePlateGUIDs).
+plateGUIDs = {}
+C_NamePlate = C_NamePlate or {}
+C_NamePlate.GetNamePlateGUIDs = function() return plateGUIDs end
 -- The arena's own scoreboard (Turtle_ArenaUI.lua): a TW_ARENA addon message answers.
 function RequestArenaScoreInfo() note("ArenaScore") end
 cvars = {}

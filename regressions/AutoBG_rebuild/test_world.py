@@ -489,6 +489,34 @@ class Arena(unittest.TestCase):
         lua.execute(f"units['{FOE}'].enemy = true; auraEvent('{FOE}', {{ aura('{FOE}', 1137, 'Drink') }})")
         self.assertTrue(lua.eval("said('Foe is drinking')"))
 
+    # From OctoArenaFrames' notes (a friend's addon, read 2026-11-24 for design only):
+    # every faction's rows, nameplates already up, and a log of what each source did.
+    def test_every_faction_is_asked_for_and_the_plates_already_up_name_the_team(self):
+        lua = self.lua
+        self.assertTrue(lua.eval("said('ScoreFaction:nil')"))
+        lua.execute("unit('0x0000000000000050', { name = 'Mate', player = true, inGroup = true }); setTarget('0x0000000000000050');"
+                    f" enemy('{FOE}', {{ name = 'Foe', class = 'MAGE' }});"
+                    " unit('0xF130000000000E01', { name = 'Earthbind Totem', enemy = true, owner = '0x0000000000000B09', creature = 'Totem' });"
+                    f" plateGUIDs = {{ '{FOE}', '0xF130000000000E01' }}; step(1)")
+        self.assertEqual(lua.eval("__addon_ns.Enemies.roster[1].name"), "Foe")
+        lua.execute("enemy('0x0000000000000B09', { name = 'Sham', class = 'SHAMAN' }); step(1)")
+        self.assertEqual(lua.eval("#__addon_ns.Enemies.roster"), 2)
+
+    def test_the_match_log_keeps_what_each_source_said_for_the_last_eight_matches(self):
+        lua = self.lua
+        lua.execute("fire('CHAT_MSG_ADDON', 'TW_ARENA', 'S2C_SCOREBOARD;0;2;Claude|1|0:Foe|2|0', 'GUILD', ''); step();"
+                    f" enemy('{FOE}', {{ name = 'Foe', class = 'MAGE' }}); plate('{FOE}')")
+        text = lua.eval("table.concat(AutoBGDB.arenaLog[1].log, '|')")
+        self.assertIn("server S2C_SCOREBOARD;0;2;Claude|1|0:Foe|2|0", text)
+        self.assertIn("named Foe", text)
+        self.assertIn("id Foe attackable yes", text)
+        for _ in range(9):
+            lua.execute("enter('Blood Ring', true)")
+        self.assertEqual(lua.eval("#AutoBGDB.arenaLog"), 8)
+        lua.execute("enter(nil)")
+        lua.execute(f"__addon_ns.ArenaLog('late', 'x')")
+        self.assertNotIn("late", lua.eval("table.concat(AutoBGDB.arenaLog[1].log, '|')"))
+
 
 class AtRest(unittest.TestCase):
     def test_nothing_runs_in_the_open_world_after_login_a_zone_change_and_a_loading_screen(self):
