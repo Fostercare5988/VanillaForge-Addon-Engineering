@@ -16,8 +16,8 @@ class FirstLogin(unittest.TestCase):
         self.assertEqual(lua.eval("GearRackDB.trinketBar"), "DOWN")
         self.assertTrue(lua.eval("GearRackDB.readyAlert"))
         self.assertFalse(lua.eval("GearRackDB.auto"))
-        # Main, off, ranged and the Sets button across; the trinkets one under the other.
-        self.assertEqual(lua.eval("GearRackGearBar:GetWidth()"), 4 * 40 - 4)
+        # Main, off, ranged, the Sets and Events buttons across; the trinkets one under the other.
+        self.assertEqual(lua.eval("GearRackGearBar:GetWidth()"), 5 * 40 - 4)
         self.assertEqual(lua.eval("GearRackGearBar:GetHeight()"), 36)
         self.assertEqual(lua.eval("GearRackTrinketBar:GetHeight()"), 2 * 40 - 4)
         self.assertEqual(lua.eval("(select(4, GearRackSets:GetPoint(1)))"), 3 * 40)

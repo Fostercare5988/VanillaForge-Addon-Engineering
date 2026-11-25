@@ -226,6 +226,30 @@ class ByTarget(unittest.TestCase):
         self.assertEqual((lua.eval("worn[16]"), lua.eval("worn[17]"), lua.eval("worn[1]")), ("0xD", "0xE", "0x16"))
         self.assertNotIn("Could not put on", lua.eval("chatText()"))
 
+    def test_the_events_button_switches_both_and_shows_it(self):
+        lua = load(self.ROGUE.replace("byTarget = true", "byTarget = false"), setup=SETS)
+        self.assertTrue(lua.eval("GearRackEvents.icon.desaturated"), "dark while both are off")
+        lua.execute("click(GearRackEvents)")
+        self.assertTrue(lua.eval("GearRackDB.auto and GearRackDB.byTarget"))
+        self.assertIsNone(lua.eval("GearRackEvents.icon.desaturated"))
+        self.assertTrue(lua.eval('settingsWindow.find("Sets by target") and Settings.GetValue("GearRack_byTarget")'))
+        self.assertIn("PLAYER_TARGET_CHANGED", lua.eval("allEvents()"))
+        self.assertIn("Events on", lua.eval("chatText()"))
+        lua.execute('target = { enemy = true, kind = "Undead" } fire("PLAYER_TARGET_CHANGED") step(0.2)')
+        self.assertEqual(lua.eval("usedSets[1]"), "Dissolvent")
+        lua.execute("GearRack.ToggleEvents()")  # the key
+        self.assertFalse(lua.eval("GearRackDB.auto or GearRackDB.byTarget"))
+        self.assertNotIn("PLAYER_TARGET_CHANGED", lua.eval("allEvents()"))
+        lua.execute("SlashCmdList.GEARRACK('events')")
+        self.assertTrue(lua.eval("GearRackDB.byTarget"))
+
+    def test_either_switch_on_lights_it_and_a_click_turns_both_off(self):
+        lua = load(self.ROGUE, setup=SETS)
+        self.assertIsNone(lua.eval("GearRackEvents.icon.desaturated"))
+        lua.execute("click(GearRackEvents)")
+        self.assertFalse(lua.eval("GearRackDB.auto or GearRackDB.byTarget"))
+        self.assertTrue(lua.eval("GearRackEvents.icon.desaturated"))
+
     def test_its_own_switch_not_the_automatic_sets_one(self):
         lua = load(self.ROGUE.replace("byTarget = true", "auto = true, byTarget = false"), setup=SETS)
         self.assertNotIn("PLAYER_TARGET_CHANGED", lua.eval("allEvents()"))

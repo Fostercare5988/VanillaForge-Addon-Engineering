@@ -334,7 +334,7 @@ end
 function GetBindingKey(action) return keys[action] end
 function GetBindingText(key) return "k" .. key end
 function GetBindingName(action) return "name:" .. action end
-local bindingIndex = { GEARRACK_USE_TOP_TRINKET_ITEM = 41, GEARRACK_USE_BOTTOM_TRINKET_ITEM = 42 }
+local bindingIndex = { GEARRACK_USE_TOP_TRINKET_ITEM = 41, GEARRACK_USE_BOTTOM_TRINKET_ITEM = 42, GEARRACK_TOGGLE_EVENTS = 43 }
 C_KeyBindings = { GetBindingIndex = function(action) return bindingIndex[action] end }
 function CreateKeybindingEntryInitializer(index, search)
     return Settings.CreateElementInitializer("KeybindingFrame", { name = "Key " .. tostring(index), bindingIndex = index })
@@ -544,6 +544,7 @@ dualWield = true
 
 GLOBALS = ("GearRackDB", "GearRack", "SLASH_GEARRACK1", "BINDING_HEADER_GEARRACK",
            "BINDING_NAME_GEARRACK_USE_TOP_TRINKET_ITEM", "BINDING_NAME_GEARRACK_USE_BOTTOM_TRINKET_ITEM",
+           "BINDING_NAME_GEARRACK_TOGGLE_EVENTS", "GearRackEvents",
            "GearRackGearBar", "GearRackTrinketBar", "GearRackMenu", "GearRackSetsWindow", "GearRackSetName",
            "GearRackTrinkets", "GearRackMinimapGear", "GearRackMinimapTrinkets",
            "GearRackSets", "GearRackTrinket13", "GearRackTrinket14")

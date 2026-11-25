@@ -15,7 +15,7 @@ def names(lua, page):
 class Pages(unittest.TestCase):
     def test_the_gearrack_page(self):
         lua = load()
-        self.assertEqual(names(lua, "GearRack"), ["Bars", "Gear bar", "Trinket bar", "Key 41", "Key 42",
+        self.assertEqual(names(lua, "GearRack"), ["Bars", "Gear bar", "Trinket bar", "Key 41", "Key 42", "Key 43",
                                                   "Alerts", "Ready alert", "Windows", "Gear sets", "Trinkets",
                                                   "Minimap buttons"])
 
@@ -43,7 +43,7 @@ class Pages(unittest.TestCase):
         lua = load()
         lua.execute('settingsWindow.use("GearRack_gearBar", "DOWN")')
         self.assertEqual(lua.eval("GearRackGearBar:GetWidth()"), 36)
-        self.assertEqual(lua.eval("GearRackGearBar:GetHeight()"), 4 * 40 - 4)
+        self.assertEqual(lua.eval("GearRackGearBar:GetHeight()"), 5 * 40 - 4)
         lua.execute('settingsWindow.use("GearRack_trinketBar", "OFF")')
         self.assertFalse(lua.eval("GearRackTrinketBar:IsShown()"))
         lua.execute('settingsWindow.use("GearRack_trinketBar", "ACROSS")')

@@ -345,7 +345,7 @@ class Sheet(unittest.TestCase):
         lua = load()
         lua.execute("ToggleCharacter() press('lalt') click(CharacterBackSlot)")
         self.assertEqual(lua.eval("GearRackDB.slots[4]"), 15)
-        self.assertEqual(lua.eval("GearRackGearBar:GetWidth()"), 5 * 40 - 4)
+        self.assertEqual(lua.eval("GearRackGearBar:GetWidth()"), 6 * 40 - 4)
         self.assertIn("is on the gear bar", lua.eval("chatText()"))
         lua.execute("press('ralt') click(CharacterMainHandSlot)")
         self.assertEqual(lua.eval("GearRackDB.slots[1]"), 17)

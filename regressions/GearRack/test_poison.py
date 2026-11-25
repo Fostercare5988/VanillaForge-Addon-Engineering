@@ -3,7 +3,7 @@ time or charges on the bar and in menus, the time counted down by a
 ClassicAPI text binding (review, 2026-11-25: no timer of ours), and a poison
 in hand applied by clicking the weapon on the bar."""
 import unittest
-from gr_env import load
+from gr_env import load, values
 
 # Instant Poison (enchant 625, icon from its spell) on the main hand, 28 min left.
 POISONED = 'poisons["0xA"] = { ["until"] = now + 28 * 60 - 10, charges = 60, enchant = 625 }'
@@ -38,9 +38,16 @@ class Poison(unittest.TestCase):
         self.assertFalse(lua.eval("GearRackGear16.poison:IsShown()"))
         self.assertEqual(lua.eval("timerCount()"), 0, "no poison, no timer")
 
-    def test_an_enchant_with_no_spell_icon_gets_the_poison_icon(self):
-        lua = load(setup='poisons["0xB"] = { ["until"] = now + 600, charges = 0, enchant = 2640 }')
-        self.assertEqual(lua.eval("GearRackGear17.poison.icon.texture"), "Interface\Icons\Ability_Poisons")
+    def test_each_poison_has_its_own_icon_and_ring(self):
+        # Dissolvent's enchant has no spell icon; it showed Instant's (play, 2026-11-25).
+        lua = load(setup=POISONED + ' poisons["0xB"] = { ["until"] = now + 600, charges = 0, enchant = 2640 }'
+                   ' local get = C_Item.GetEnchantInfo function C_Item.GetEnchantInfo(id)'
+                   ' if id == 2640 then return { enchantID = 2640, name = "Dissolvent Poison II" } end'
+                   ' return get(id) end')
+        self.assertEqual(lua.eval("GearRackGear16.poison.icon.texture"), "Interface\\Icons\\Ability_Poisons")
+        self.assertEqual(lua.eval("GearRackGear17.poison.icon.texture"), "Interface\\Icons\\Spell_Nature_Acid_01")
+        self.assertEqual(values(lua, "GearRackGear16.poison.ring.border"), [1, 0.82, 0], "Instant: gold")
+        self.assertEqual(values(lua, "GearRackGear17.poison.ring.border"), [0.1, 0.9, 0.8], "Dissolvent: teal")
 
     def test_crippling_poison_shows_the_classic_purple_sting(self):
         lua = load(setup='poisons["0xB"] = { ["until"] = now + 600, charges = 0, enchant = 603 }'
@@ -48,6 +55,15 @@ class Poison(unittest.TestCase):
                    ' if id == 603 then return { enchantID = 603, name = "Crippling Poison II", spellID = 11202 } end'
                    ' return get(id) end')
         self.assertEqual(lua.eval("GearRackGear17.poison.icon.texture"), "Interface\\Icons\\Ability_PoisonSting")
+        self.assertEqual(values(lua, "GearRackGear17.poison.ring.border"), [0.7, 0.3, 1])
+
+    def test_an_oil_keeps_its_spell_icon_in_a_black_ring(self):
+        lua = load(setup='poisons["0xB"] = { ["until"] = now + 600, charges = 0, enchant = 2629 }'
+                   ' local get = C_Item.GetEnchantInfo function C_Item.GetEnchantInfo(id)'
+                   ' if id == 2629 then return { enchantID = 2629, name = "Brilliant Mana Oil" } end'
+                   ' return get(id) end')
+        self.assertEqual(lua.eval("GearRackGear17.poison.icon.texture"), "Interface\\Icons\\Trade_BrewPoison")
+        self.assertEqual(values(lua, "GearRackGear17.poison.ring.border"), [0, 0, 0])
 
     def test_a_bag_weapon_in_the_menu_shows_its_poison(self):
         lua = load(setup='poisons["0xD"] = { ["until"] = now + 3000, charges = 30, enchant = 625 }')

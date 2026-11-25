@@ -75,7 +75,7 @@ class AtRest(unittest.TestCase):
         made = lua.eval('''(function() local t = {} for k in pairs(_G) do
             if not before[k] then t[#t + 1] = k end end table.sort(t) return table.concat(t, ",") end)()''')
         extra = [g for g in made.split(",") if g and g not in GLOBALS + ("__addon_ns", "event") and not g.startswith("GearRackGear")
-                 and not g.startswith("GearRackTrinket1") and not g.startswith("GearRackSets")]
+                 and not g.startswith("GearRackTrinket1") and not g.startswith("GearRackSets") and not g.startswith("GearRackEvents")]
         self.assertEqual(extra, [])
 
 
