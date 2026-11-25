@@ -369,7 +369,7 @@ table.insert(args, nil)
 
 
 class AddonDirectoryPolicyTests(unittest.TestCase):
-    def test_missing_dependency_guard_is_not_an_error(self):
+    def test_a_minimal_addon_has_no_errors_or_warnings(self):
         auditor = LINTER.VanillaForgeAuditor()
 
         with tempfile.TemporaryDirectory() as tmp:
@@ -381,12 +381,10 @@ class AddonDirectoryPolicyTests(unittest.TestCase):
             (addon / "README.md").write_text("# MinimalAddon\\n", encoding="utf-8")
 
             result = auditor.audit_addon_dir(str(addon))
-            has_guard = result[1]
-            readme_warnings = result[2]
-            structure_warnings = result[3]
-            total_errors = result[4]
+            readme_warnings = result[1]
+            structure_warnings = result[2]
+            total_errors = result[3]
 
-            self.assertFalse(has_guard)
             self.assertEqual(total_errors, 0)
             self.assertEqual(readme_warnings, [])
             self.assertEqual(structure_warnings, [])
@@ -407,10 +405,11 @@ class AddonDirectoryPolicyTests(unittest.TestCase):
                         "end\n",
                         encoding="utf-8",
                     )
+                    # A version guard is no lint matter: find_holes names it (version
+                    # drift), since addons only check that a DLL is loaded.
                     result = auditor.audit_addon_dir(str(addon))
-                    self.assertTrue(result[1])
-                    self.assertEqual(result[2], [])
-                    self.assertEqual(result[4], 0)
+                    self.assertEqual(result[1], [])
+                    self.assertEqual(result[3], 0)
 
     def test_readme_marketing_superlatives_trigger_rule_h9(self):
         auditor = LINTER.VanillaForgeAuditor()
@@ -426,7 +425,7 @@ class AddonDirectoryPolicyTests(unittest.TestCase):
             )
 
             result = auditor.audit_addon_dir(str(addon))
-            readme_warnings = result[2]
+            readme_warnings = result[1]
             self.assertTrue(any("Rule H9 - Marketing Superlative" in w and "Performance and UI" in w for w in readme_warnings))
 
 
@@ -573,15 +572,6 @@ class TocManifestTests(unittest.TestCase):
             errors, _, _, _ = self.auditor.audit_toc_file(str(toc), str(addon))
             self.assertEqual(errors, [])
 
-    def test_dxvk_in_dependency_metadata_warns(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            addon = self.make_addon(tmp)
-            toc = addon / "ManifestAddon.toc"
-            toc.write_text("## Interface: 11200\n## Dependencies: DXVK\n", encoding="utf-8")
-            errors, warnings, _, _ = self.auditor.audit_toc_file(str(toc), str(addon))
-            self.assertEqual(errors, [])
-            self.assertTrue(any("Invalid Addon Dependency" in w for w in warnings))
-
     def test_tests_lua_is_not_reported_as_orphan(self):
         with tempfile.TemporaryDirectory() as tmp:
             addon = self.make_addon(tmp)
@@ -591,7 +581,7 @@ class TocManifestTests(unittest.TestCase):
             (test_dir / "fixture.lua").write_text("return\n", encoding="utf-8")
             (addon / "ManifestAddon.toc").write_text("## Interface: 11200\nCore.lua\n", encoding="utf-8")
             result = self.auditor.audit_addon_dir(str(addon))
-            self.assertFalse(any("fixture.lua" in w for w in result[3]))
+            self.assertFalse(any("fixture.lua" in w for w in result[2]))
 
     def test_unlisted_root_lua_is_advisory_not_error(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -600,8 +590,8 @@ class TocManifestTests(unittest.TestCase):
             (addon / "Bootstrap.lua").write_text("return\n", encoding="utf-8")
             (addon / "ManifestAddon.toc").write_text("## Interface: 11200\nCore.lua\n", encoding="utf-8")
             result = self.auditor.audit_addon_dir(str(addon))
-            self.assertEqual(result[4], 0)
-            self.assertTrue(any("Bootstrap.lua" in w for w in result[3]))
+            self.assertEqual(result[3], 0)
+            self.assertTrue(any("Bootstrap.lua" in w for w in result[2]))
 
     def test_root_bindings_xml_is_not_reported_as_orphan(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -613,7 +603,7 @@ class TocManifestTests(unittest.TestCase):
             )
             (addon / "ManifestAddon.toc").write_text("## Interface: 11200\nCore.lua\n", encoding="utf-8")
             result = self.auditor.audit_addon_dir(str(addon))
-            self.assertFalse(any("Bindings.xml" in w for w in result[3]), result[3])
+            self.assertFalse(any("Bindings.xml" in w for w in result[2]), result[2])
 
     def test_unlisted_root_lua_still_reports_orphan(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -622,7 +612,7 @@ class TocManifestTests(unittest.TestCase):
             (addon / "Dormant.lua").write_text("return\n", encoding="utf-8")
             (addon / "ManifestAddon.toc").write_text("## Interface: 11200\nCore.lua\n", encoding="utf-8")
             result = self.auditor.audit_addon_dir(str(addon))
-            self.assertTrue(any("Dormant.lua" in w for w in result[3]), result[3])
+            self.assertTrue(any("Dormant.lua" in w for w in result[2]), result[2])
 
     def test_unlisted_nested_bindings_xml_still_reports_orphan(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -633,7 +623,7 @@ class TocManifestTests(unittest.TestCase):
             (sub / "Bindings.xml").write_text("<Bindings></Bindings>\n", encoding="utf-8")
             (addon / "ManifestAddon.toc").write_text("## Interface: 11200\nCore.lua\n", encoding="utf-8")
             result = self.auditor.audit_addon_dir(str(addon))
-            self.assertTrue(any("Bindings.xml" in w for w in result[3]), result[3])
+            self.assertTrue(any("Bindings.xml" in w for w in result[2]), result[2])
 
 
 if __name__ == "__main__":

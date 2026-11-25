@@ -533,10 +533,6 @@ class VanillaForgeAuditor:
         except Exception as e:
             return [f"[TOC Read Error] Cannot read manifest: {e}"], [], [], declared
 
-        dependency_fields = {
-            'dependencies', 'dependency', 'requireddeps', 'requireddep',
-            'optionaldeps', 'optionaldep'
-        }
         addon_abs = os.path.abspath(addon_dir)
 
         for idx, raw_line in enumerate(raw_lines, 1):
@@ -555,12 +551,6 @@ class VanillaForgeAuditor:
                         warnings.append(
                             f"[Rule L1 - Locale TOC Field] Line {idx}: '## {meta.group(1).strip()}' "
                             "is a translated title or note. The client is English only: keep the English field."
-                        )
-                    if key in dependency_fields and re.search(r'\bdxvk\b', value, re.IGNORECASE):
-                        warnings.append(
-                            f"[Rule H8 - Invalid Addon Dependency] Line {idx}: "
-                            "DXVK appears in TOC dependency metadata. DXVK is runtime/rendering "
-                            "infrastructure, not a Lua addon dependency."
                         )
                 continue
 
@@ -626,20 +616,6 @@ class VanillaForgeAuditor:
         total_warnings = 0
         total_infos = 0
 
-        # Optional dependency/startup guard inspection.
-        # VanillaForge v3 does NOT require every addon to guard every installed DLL.
-        # Environment availability is not the same thing as per-addon dependency.
-        has_startup_guard = False
-        for root, _, files in os.walk(dir_path):
-            for f in files:
-                if not f.endswith('.lua'):
-                    continue
-                filepath = os.path.join(root, f)
-                with open(filepath, 'r', encoding='utf-8', errors='replace') as lf:
-                    c = lf.read()
-                if 'CLASSIC_API_VERSION' in c or 'MIN_CLASSIC_API' in c:
-                    has_startup_guard = True
-
         # Check README & Directory Standards
         readme_path = os.path.join(dir_path, 'README.md')
         readme_warnings = []
@@ -650,12 +626,8 @@ class VanillaForgeAuditor:
                 rm = f.read()
                 if '|cff' in rm or '|r' in rm:
                     readme_warnings.append("[Rule H5 - Raw WoW Colors] README.md contains raw WoW color codes (|cff.../|r). Clean to standard Markdown.")
-                if '144Hz+' in rm:
-                    readme_warnings.append("[Style - Redundant Marketing] README.md contains '144Hz+'. Change to clean 'DXVK'.")
                 if 'VanillaForge' in rm or '-Octo' in rm or '[Octo]' in rm:
                     readme_warnings.append("[Branding - Legacy Server/Framework Name] README.md contains legacy 'Octo' branding. Keep public addon repositories server-neutral unless intentional.")
-                if re.search(r'(?:prerequisite|requirement|dependency|dependencies).*?(dxvk)', rm, re.IGNORECASE):
-                    readme_warnings.append("[Rule H8 - Gratuitous DLL Requirement] README.md lists 'DXVK' as an addon dependency. DXVK is a client rendering translation layer, not an addon API requirement. Remove it.")
                 buzz_match = re.search(r'\b(enterprise-grade|zero-latency|zero-bloat|ultra-optimized|military-grade|best-in-class)\b', rm, re.IGNORECASE)
                 if buzz_match:
                     readme_warnings.append(f"[Rule H9 - Marketing Superlative] README.md contains marketing buzzword '{buzz_match.group(1)}'. Use neutral technical language per the contract's Performance and UI section.")
@@ -749,7 +721,7 @@ class VanillaForgeAuditor:
                 results[rel] = (errs + messages, warns, infs)
                 total_errors += len(messages)
 
-        return results, has_startup_guard, readme_warnings, structure_warnings, total_errors, total_warnings, total_infos
+        return results, readme_warnings, structure_warnings, total_errors, total_warnings, total_infos
 
 
 def main():
@@ -790,7 +762,7 @@ def main():
 
     elif os.path.isdir(target):
         print(f"\n{BOLD}{CYAN}=== Auditing Addon: {os.path.basename(target)} ==={RESET}\n")
-        results, has_guard, readme_warnings, structure_warnings, total_errors, total_warnings, total_infos = auditor.audit_addon_dir(target)
+        results, readme_warnings, structure_warnings, total_errors, total_warnings, total_infos = auditor.audit_addon_dir(target)
 
         if readme_warnings:
             for rw in readme_warnings:

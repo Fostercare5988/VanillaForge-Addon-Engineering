@@ -119,11 +119,11 @@ for index, row in ipairs(MyAddon.handlers) do row(index) end
 
     def test_the_linter_fails_the_addon(self):
         (self.addon / "Core.lua").write_text("local spec = GetCurrentSpecialization()\n", "utf-8")
-        results, _, _, _, errors, _, _ = LINTER.VanillaForgeAuditor(known=self.known).audit_addon_dir(str(self.addon))
+        results, _, _, errors, _, _ = LINTER.VanillaForgeAuditor(known=self.known).audit_addon_dir(str(self.addon))
         self.assertEqual(errors, 1)
         self.assertIn("Rule K1", results["Core.lua"][0][0])
-        self.assertEqual(LINTER.VanillaForgeAuditor().audit_addon_dir(str(self.addon))[4], 0)
-        self.assertEqual(LINTER.VanillaForgeAuditor(["K1"], self.known).audit_addon_dir(str(self.addon))[4], 0)
+        self.assertEqual(LINTER.VanillaForgeAuditor().audit_addon_dir(str(self.addon))[3], 0)
+        self.assertEqual(LINTER.VanillaForgeAuditor(["K1"], self.known).audit_addon_dir(str(self.addon))[3], 0)
 
 
 if __name__ == "__main__":
