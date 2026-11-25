@@ -69,7 +69,8 @@ class Casts(unittest.TestCase):
         lua.execute("target('nameplate1'); fire('UNIT_SPELLCAST_START', 'nameplate1')")
         self.assertEqual(lua.eval(f"{BAR}.barColor"), "0.6,0.6,0.6")
         lua.execute("fire('UNIT_SPELLCAST_INTERRUPTIBLE', 'target')")
-        self.assertEqual(lua.eval(f"{BAR}.barColor"), "1,0.8,0")
+        for part in ("barColor", "edge.edgeColor", "box.edgeColor"):  # the borders with the bar
+            self.assertEqual(lua.eval(f"{BAR}.{part}"), "1,0.8,0", part)
         lua.execute("fire('UNIT_SPELLCAST_NOT_INTERRUPTIBLE', 'target')")
         self.assertEqual(lua.eval(f"{BAR}.barColor"), "0.6,0.6,0.6")
 
@@ -124,15 +125,13 @@ class Cooldowns(unittest.TestCase):
         for t in ("nameplate2", "nameplate3"):
             self.assertFalse(lua.eval(f"__addon_ns.byToken.{t}.cds.icons[1]:IsShown()"))
 
-    def test_the_same_spell_twice_in_half_a_second_counts_once_later_replaces(self):
+    def test_a_later_use_of_the_same_spell_replaces_it(self):
         lua = self.lua
         used(lua, 2); used(lua, 1)
-        lua.execute("now = now + 0.2")
-        used(lua, 2)
-        self.assertEqual(cds(lua), ["blind", "kick", None, None, None])
         lua.execute("now = now + 1")
         used(lua, 2)
         self.assertEqual(cds(lua), ["kick", "blind", None, None, None])
+        self.assertEqual(lua.eval(f"{CDS}[1].cd.cdStart"), lua.eval("now"))
 
     def test_newest_first_five_at_most(self):
         lua = self.lua
@@ -155,10 +154,19 @@ class Cooldowns(unittest.TestCase):
         lua.execute("fire('PLAYER_ENTERING_WORLD')")
         self.assertFalse(lua.eval("__addon_ns.byToken.nameplate7.cds.icons[1]:IsShown()"))
 
-    def test_a_channel_start_counts_as_a_use(self):
+    def test_a_channel_counts_once_by_its_succeeded(self):
         lua = self.lua
         lua.execute("fire('UNIT_SPELLCAST_CHANNEL_START', 'nameplate1', 'Cast-2', 1)")
+        self.assertEqual(cds(lua), [None] * 5)
+        used(lua, 1)
         self.assertEqual(cds(lua), ["blind", None, None, None, None])
+
+    def test_cooldowns_alone_listen_to_no_cast_bar_event(self):
+        lua = self.lua
+        lua.execute("settingsWindow.use('Nameplates_casts', false)")
+        listening = lua.eval("listening()") + ","
+        self.assertIn("UNIT_SPELLCAST_SUCCEEDED,", listening)
+        self.assertNotIn("UNIT_SPELLCAST_CHANNEL_START,", listening)
 
 
 if __name__ == "__main__":

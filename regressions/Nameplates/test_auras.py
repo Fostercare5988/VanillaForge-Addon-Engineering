@@ -56,6 +56,7 @@ class Auras(unittest.TestCase):
         lua.execute("forget(); table.insert(units.nameplate1.auras, { id = 30, icon = 'x', duration = 5, expires = 104 });"
                     " fire('UNIT_AURA_DELTA', 'nameplate1')")
         self.assertEqual(lua.eval("count('SetCooldown')"), 0)
+        self.assertEqual(lua.eval("count('SetText')"), 0)  # nor the stack numbers
         self.assertEqual(icons(lua), ["gouge", "own1", "own2", "own3"])
 
     def test_a_refresh_of_a_shown_aura_restarts_its_timer(self):

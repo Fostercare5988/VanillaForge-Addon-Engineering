@@ -43,6 +43,11 @@ function forget() calls = {} end
 function Widget:GetFrameLevel() return self.level or 1 end
 function Widget:SetFrameLevel(l) self.level = l end
 function Widget:SetStatusBarColor(r, g, b) self.barColor = r .. "," .. g .. "," .. b end
+function Widget:SetBackdropBorderColor(r, g, b) self.edgeColor = r .. "," .. g .. "," .. b end
+function Widget:GetStatusBarTexture()
+    if not self.fill then self.fill = newWidget("Texture", nil, self) end
+    return self.fill
+end
 function Widget:SetFont(font, size, flags) self.fontSize, self.noFont = size, nil; if self.native then touch(self, "SetFont") end end
 function Widget:SetTexture(path) self.texture = path end
 function Widget:SetTimerDuration(d, interpolation, direction) self.timer, self.direction = d, direction; tally("SetTimerDuration") end
