@@ -332,6 +332,15 @@ class Sheet(unittest.TestCase):
         lua.execute("leave(CharacterFinger0Slot)")
         self.assertFalse(lua.eval("GearRackMenu:IsShown()"))
 
+    def test_a_slot_with_nothing_to_offer_reads_the_bags_once_not_each_frame(self):
+        lua = load()
+        lua.execute("ToggleCharacter() hover(CharacterTabardSlot)")
+        self.assertFalse(lua.eval("GearRackMenu:IsShown()"), "no tabard worn or carried")
+        reads = lua.eval("calls.forSlot")
+        for _ in range(3):  # the slot's OnUpdate, while it owns the tooltip (PaperDollFrame.lua:750)
+            lua.execute("this = CharacterTabardSlot PaperDollItemSlotButton_OnEnter() this = nil")
+        self.assertEqual(lua.eval("calls.forSlot"), reads)
+
     def test_alt_click_adds_a_slot_at_the_end_or_takes_it_off(self):
         lua = load()
         lua.execute("ToggleCharacter() press('lalt') click(CharacterBackSlot)")

@@ -233,7 +233,9 @@ C_EquipmentSet = {
             local v = set.slots[s]
             if v ~= "ignored" and v ~= "empty" and not where(v) then missing = missing + 1 end
         end
-        return set.name, set.icon, id, equipped, 0, 0, 0, missing, 0
+        local ignored = 0
+        for s = 1, 19 do if set.slots[s] == "ignored" then ignored = ignored + 1 end end
+        return set.name, set.icon, id, equipped, 0, 0, 0, missing, ignored
     end,
     GetIgnoredSlots = function(id)
         local t = {}
@@ -338,9 +340,51 @@ function CreateKeybindingEntryInitializer(index, search)
     return Settings.CreateElementInitializer("KeybindingFrame", { name = "Key " .. tostring(index), bindingIndex = index })
 end
 
--- The look: the formatter, the Cooldown frame's calls, a pointer over a frame.
+-- The look: the formatter, the text binding (### C_DurationUtil.*), the Cooldown
+-- frame's calls, a pointer over a frame.
 Enum = { NumericRuleFormatRounding = { Up = 1 } }
-C_StringUtil = { CreateNumericRuleFormatter = function() return { SetBreakpoints = function() end } end }
+local function round(v, step, mode)
+    if not step or step <= 0 then return v end
+    local q = v / step
+    if mode == 1 then q = math.ceil(q - 1e-9) else q = math.floor(q + 0.5) end
+    return q * step
+end
+local Formatter = {}
+Formatter.__index = Formatter
+function Formatter:SetBreakpoints(b) self.b = b end
+function Formatter:FormatNumber(n)
+    local best
+    for _, bp in ipairs(self.b) do if bp.threshold <= n and (not best or bp.threshold > best.threshold) then best = bp end end
+    if not best then return tostring(n) end
+    local v = round(n, best.step, best.rounding)
+    if not best.components then return string.format(best.format, math.floor(v)) end
+    local c = best.components[1]
+    return string.format(best.format, math.floor(round(v / (c.div or 1), c.step, c.rounding)))
+end
+C_StringUtil = { CreateNumericRuleFormatter = function() return setmetatable({ b = {} }, Formatter) end }
+local Duration = {}
+Duration.__index = Duration
+function Duration:SetTimeFromStart(s, d) self.s, self.e = s, s + d end
+function Duration:GetRemainingDuration() return math.max(0, self.e - math.max(now, self.s)) end
+local Binding = {}
+Binding.__index = Binding
+bindings = {}
+function Binding:SetFontString(fs) self.fs = fs; bindings[fs] = self end
+function Binding:SetDuration(d) self.d = d end
+function Binding:SetFormatter(f) self.f = f end
+function Binding:SetEnabled(on) self.on = on end
+C_DurationUtil = {
+    CreateDuration = function() return setmetatable({ s = 0, e = 0 }, Duration) end,
+    CreateDurationTextBinding = function() return setmetatable({}, Binding) end,
+}
+-- The text a font string shows now: its binding's while enabled (none after
+-- the end: no expired text), else its own.
+function clock(fs)
+    local b = bindings[fs]
+    if not (b and b.on) then return fs.text end
+    local left = b.d:GetRemainingDuration()
+    return left > 0 and b.f:FormatNumber(left) or ""
+end
 function Widget:SetCooldown(start, duration) self.cd = start .. "+" .. duration end
 function Widget:Clear() self.cd = nil end
 function Widget:SetNormalTexture(path) self.normalPath = path end

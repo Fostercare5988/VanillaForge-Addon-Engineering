@@ -45,6 +45,13 @@ class Ready(unittest.TestCase):
         lua.execute("step(10)")
         self.assertEqual(lua.eval("chatText()").count("30 seconds"), 1)
 
+    def test_the_switch_off_arms_nothing_and_on_arms_a_running_cooldown(self):
+        lua = load('GearRackDB = { readyAlert = false }')
+        lua.execute("cooldowns['0x11'] = { now, 120 } fire('BAG_UPDATE_COOLDOWN')")
+        self.assertEqual(lua.eval("timerCount()"), 0, "Parting's switch is off")
+        lua.execute('settingsWindow.use("GearRack_readyAlert", true) step(90)')
+        self.assertIn("[Insignia]|h|r is ready in 30 seconds.", lua.eval("chatText()"))
+
     def test_a_cooldown_running_at_login_is_armed(self):
         lua = load(setup="now = 1000 cooldowns['0x12'] = { now - 100, 140 }")
         lua.execute("step(40)")
@@ -109,6 +116,14 @@ class Automatic(unittest.TestCase):
         self.assertEqual(lua.eval("worn[1]"), "0x17")
         lua.execute("fire('MIRROR_TIMER_STOP', 'BREATH') step(0)")
         self.assertEqual(lua.eval("worn[1]"), "0x16")
+
+    def test_the_switch_off_brings_the_gear_back(self):
+        lua = load(ON, setup=SETS)
+        lua.execute("player.mounted = true fire('PLAYER_MOUNT_DISPLAY_CHANGED') step(0)")
+        self.assertEqual(lua.eval("worn[1]"), "0x17")
+        lua.execute('settingsWindow.use("GearRack_auto", false) step(0)')
+        self.assertEqual(lua.eval("worn[1]"), "0x16")
+        self.assertIsNone(lua.eval("GearRackDB.before"), "a kept `before` held the trinket queue for good")
 
     def test_a_choice_by_hand_during_a_situation_survives_its_end(self):
         lua = load(ON, setup=SETS)
@@ -192,6 +207,24 @@ class ByTarget(unittest.TestCase):
         self.assertEqual(lua.eval("worn[16]"), "0xD")
         self.assertIn("Could not put on all of Dissolvent.", lua.eval("table.concat(chat, ' ')"))
         self.assertNotIn("ITEM_LOCK_CHANGED", lua.eval("allEvents()"), "it stops listening")
+
+    def test_a_set_missing_an_item_goes_on_once_with_no_line(self):
+        lua = load(self.ROGUE.replace('Undead = "Dissolvent"', 'Undead = "Gone"'),
+                   setup=SETS + 'makeSet("Gone", "I", only({ [16] = "0xD", [17] = "0x99" }))')
+        lua.execute('target = { enemy = true, kind = "Undead" } fire("PLAYER_TARGET_CHANGED") step(0.2)')
+        lua.execute("step(0) step(0) step(0) step(0)")
+        self.assertEqual(lua.eval("#usedSets"), 1, "it swapped three times at every target")
+        self.assertEqual(lua.eval("worn[16]"), "0xD")
+        self.assertNotIn("Could not put on", lua.eval("chatText()"))
+
+    def test_a_whole_set_in_combat_is_done_when_the_weapons_are_on(self):
+        lua = load(self.ROGUE.replace('Undead = "Dissolvent"', 'Undead = "Full"'),
+                   setup=SETS + 'makeSet("Full", "I", only({ [1] = "0x17", [16] = "0xD", [17] = "0xE" })) combat = true')
+        lua.execute('target = { enemy = true, kind = "Undead" } fire("PLAYER_TARGET_CHANGED") step(0.2)')
+        lua.execute("step(0) step(0) step(0) step(0)")
+        self.assertEqual(lua.eval("#usedSets"), 1)
+        self.assertEqual((lua.eval("worn[16]"), lua.eval("worn[17]"), lua.eval("worn[1]")), ("0xD", "0xE", "0x16"))
+        self.assertNotIn("Could not put on", lua.eval("chatText()"))
 
     def test_its_own_switch_not_the_automatic_sets_one(self):
         lua = load(self.ROGUE.replace("byTarget = true", "auto = true, byTarget = false"), setup=SETS)
