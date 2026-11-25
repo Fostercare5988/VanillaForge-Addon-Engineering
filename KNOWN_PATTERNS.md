@@ -1118,7 +1118,8 @@ on every frame or event. Nameplates' plate OnUpdate wrapper made about
 **Preferred direction:** Give hot handlers and helpers fixed parameters
 (`function(a1, a2, ..., a10)`) and forward them explicitly. To measure in lupa, inject
 `local __arg = { n = select("#", ...), ... }` into each vararg function in memory
-(`regressions/Nameplates/test_garbage_2026_10_26.py`).
+(the old Nameplates suite's `test_garbage_2026_10_26.py`, last in VanillaForge
+27098aa).
 
 ### KP-59 --- Events This Client Does Not Have
 

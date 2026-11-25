@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
 """Run one addon's regression suite, or some of its files, now or on an older commit.
 
-    python -B tools/run_suite.py FostercareTweaks                        # the whole suite
-    python -B tools/run_suite.py FostercareTweaks "test_saved_keys*.py"  # some files
-    python -B tools/run_suite.py FostercareTweaks test_x.py --old HEAD~1  # prove they fail before
+    python -B tools/run_suite.py Tweaks                        # the whole suite
+    python -B tools/run_suite.py Tweaks "test_saved_keys*.py"  # some files
+    python -B tools/run_suite.py Tweaks test_x.py --old HEAD~1  # prove they fail before
+    python -B tools/run_suite.py --all                         # every suite, one line each
 
 The addon is read from the AddOns folder in .private/workspace.json (or
 --addons), the tests from regressions/<Addon>. The suite sees the addon through
 VANILLAFORGE_ADDON_ROOT, as tools/audit_addon.py --run-tests gives it.
+
+--all runs every suite against the installed addons, after a change to the kit
+(regressions/wowkit.py, wowlua.py) or to a tool the suites use. A suite with no
+installed addon, or whose every test fails, tests code that is gone: five such
+suites (the addons before their rebuilds) sat in regressions/ for days and were
+still being edited (2026-11-25).
 
 --old runs the same tests against the addon as it was at that commit, unpacked
 with `git archive` into a temporary folder. Never stash for this: with
@@ -29,6 +36,7 @@ import re
 import subprocess
 import tarfile
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -87,21 +95,68 @@ def results(output):
     return found
 
 
+def suites(regressions=REGRESSIONS):
+    """Every suite: a folder of regressions/ with test files."""
+    return sorted(p for p in regressions.iterdir() if p.is_dir() and any(p.glob("test_*.py")))
+
+
+def installed(name, folder):
+    """The installed folder a suite tests. A suite drops the folder's load-order
+    "!" (regressions/ErrorLog runs !ErrorLog)."""
+    for candidate in (folder / name, folder / ("!" + name.lstrip("!"))):
+        if candidate.is_dir():
+            return candidate
+    return None
+
+
+def verdict(found):
+    """One line for a suite's results."""
+    failed = sum(1 for _, outcome, _ in found if outcome in ("FAIL", "ERROR"))
+    if not found:
+        return False, "no tests ran"
+    if failed == len(found):
+        return False, "all %d failed: does the suite test code that is gone?" % failed
+    if failed:
+        return False, "%d of %d failed" % (failed, len(found))
+    return True, "%d passed" % len(found)
+
+
+def run_all(folder, regressions=REGRESSIONS):
+    """Every suite against its installed addon, side by side; 0 when all pass."""
+    rows, jobs = {}, {}
+    with ThreadPoolExecutor(max_workers=min(8, os.cpu_count() or 4)) as pool:
+        for suite in suites(regressions):
+            addon = installed(suite.name, folder)
+            if addon is None:
+                rows[suite.name] = (False, "no installed addon: the suite tests nothing")
+            else:
+                jobs[suite.name] = pool.submit(lambda s=suite, a=addon: results(run(s, "test*.py", a)))
+        for name, job in jobs.items():
+            rows[name] = verdict(job.result())
+    width = max(map(len, rows), default=0)
+    for name in sorted(rows):
+        print("%-*s  %s" % (width, name, rows[name][1]))
+    bad = [name for name, (ok, _) in rows.items() if not ok]
+    print("%d suites, %s." % (len(rows), "all pass" if not bad else "%d not passing: %s" % (len(bad), ", ".join(sorted(bad)))))
+    return 1 if bad else 0
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("addon", help="the addon's folder name, as under regressions/")
+    parser.add_argument("addon", nargs="?", help="the addon's folder name, as under regressions/")
     parser.add_argument("pattern", nargs="?", default="test*.py", help="test files (unittest -p), default all")
     parser.add_argument("--old", metavar="REV", help="run against the addon at this commit instead")
+    parser.add_argument("--all", action="store_true", help="every suite against the installed addons, one line each")
     parser.add_argument("--addons", help="the AddOns folder; default from .private/workspace.json")
     args = parser.parse_args(argv)
-    # A suite drops the folder's load-order "!" (regressions/ErrorLog runs !ErrorLog).
+    if args.all:
+        if args.addon or args.old:
+            parser.error("--all takes no addon, pattern or --old")
+        return run_all(addons_folder(args.addons))
+    if not args.addon:
+        parser.error("name an addon, or give --all")
     suite = REGRESSIONS / args.addon.lstrip("!")
-    addon_dir = addons_folder(args.addons) / args.addon
-    if not addon_dir.is_dir():
-        addon_dir = addons_folder(args.addons) / ("!" + args.addon)
-    # A rebuild's suite (regressions/AutoBG_rebuild) tests the switched-over addon.
-    if not addon_dir.is_dir() and args.addon.endswith("_rebuild"):
-        addon_dir = addons_folder(args.addons) / args.addon[:-len("_rebuild")]
+    addon_dir = installed(args.addon, addons_folder(args.addons)) or addons_folder(args.addons) / args.addon
     if not suite.is_dir():
         raise SystemExit("No suite at %s" % suite)
     with tempfile.TemporaryDirectory() as tmp:

@@ -248,6 +248,10 @@ take away something players rely on.
    K1 and K2 are orders: an unknown function or event is fixed, or the line that
    calls into another addon is marked `-- vanillaforge-ignore: K1`. Without
    a suite, the linter alone: `python -B tools/vanillaforge_linter.py "<addon folder>"`.
+   A change to VanillaForge itself (a tool, the kit in `regressions/`) runs its
+   own tests and every suite: `python -B -m unittest discover -s tests -p "test_*.py"`
+   and `python -B tools/run_suite.py --all`. A tool change that skipped them left
+   CI red for three days (2026-11-22 to 11-25).
 2. When behaviour changes on purpose, update the test that encoded the old
    behaviour. For a bug fix, add a test that fails on the old code where
    practical, and prove it: `python -B tools/run_suite.py <Addon> <test file>
@@ -325,7 +329,8 @@ win where they disagree:
 5. **Each addon stands alone.** No shared library addon; addons talk through
    narrow public functions.
 6. **Tests come from the spec.** A new, smaller suite replaces the old one
-   when the new addon takes over. They play a first login, not a reload: an
+   at the switch-over: `regressions/<Addon>_rebuild` takes the addon's name and
+   the old suite is deleted in the same commit. They play a first login, not a reload: an
    addon whose frames the client saves fills the kit's `layoutCache` (KNOWN_PATTERNS
    KP-66), and the data includes the game's odd cases (an aura with no icon, a
    missing saved key, empty bags, no target).

@@ -20,6 +20,13 @@ One file, some files, or the same tests on an older commit of the addon:
 python -B tools/run_suite.py <Addon> [test_file_pattern.py] [--old <commit>]
 ```
 
+Every suite at once, one line each, after a change to the kit (`wowkit.py`,
+`wowlua.py`) or to a tool the suites use:
+
+```text
+python -B tools/run_suite.py --all
+```
+
 `--old` unpacks the addon at that commit with `git archive` (never a stash,
 which can turn LF files to CRLF) and prints each test's first error line. A new
 test for a bug fails there for the bug, not for its own setup: an error such as
@@ -64,24 +71,32 @@ The kit builds no garbage of its own, so a garbage test measures the addon.
 
 ## Suites
 
-| Addon | Folder | Harness |
-| --- | --- | --- |
-| AutoBG | `regressions/AutoBG` | inline per test file; addon_loader.py loads files; clock_mock.py is ClassicAPI's duration text bindings, rule formatters and timers that fire by time (`__frame()` is a drawn frame) |
-| Auras | `regressions/Auras` | auras_env.py (loads FostercareFrames beside it) |
-| AutoLazy | `regressions/AutoLazy` | al_env.py (1.0, written new; the 1.3 suite went at its release, 2026-11-18) |
-| Bags (the rebuild of Bagnon) | `regressions/Bags` | bags_env.py (1.0, written new 2026-11-22; replaced `regressions/Bagnon`, 2026-11-22) |
-| BrainwasherPro | `regressions/BrainwasherPro` | bwp_env.py |
-| EasyPoisons | `regressions/EasyPoisons` | ep_env.py |
-| !ErrorLog | `regressions/ErrorLog` | inline |
-| FostercareBars | `regressions/FostercareBars` | fb_env.py |
-| FostercareBattleText | `regressions/FostercareBattleText` | _fbt_runtime.py |
-| FostercareNameplates | `regressions/FostercareNameplates` | fnp_env.py |
-| FostercareFrames | `regressions/FostercareFrames` | ff_env.py |
-| FostercareRaid | `regressions/FostercareRaid` | fr_env.py |
-| FostercareTweaks | `regressions/FostercareTweaks` | ftr_env.py (1.0, the rebuild; the 1.22 suite went at its release, 2026-11-18) |
-| GearRack | `regressions/GearRack` | gr_env.py |
-| Mail | `regressions/Mail` | mail_env.py |
-| ThreatMeter | `regressions/ThreatMeter` | tm_env.py |
+One suite per installed addon, named after its folder (`regressions/ErrorLog`
+runs `!ErrorLog`). A rebuild's suite is `regressions/<Addon>_rebuild` while the
+new addon is built beside the old one; at the switch-over it takes the addon's
+name and the old suite is deleted the same day. `run_suite.py --all` names a
+suite with no installed addon, or whose every test fails: both test code that
+is gone (five such suites stayed for days, 2026-11-25).
+
+| Addon | Harness |
+| --- | --- |
+| ActionBars | fb_env.py |
+| Auras | auras_env.py (loads UnitFrames' stock-frame mocks beside it) |
+| AutoArena | aa_env.py |
+| AutoBG | abg_env.py |
+| AutoLazy | al_env.py |
+| Bags | bags_env.py |
+| BattleText | bt_env.py |
+| Brainwasher | sp_env.py |
+| !ErrorLog (`ErrorLog`) | inline (the old 1.9 addon; its rebuild comes last) |
+| GearRack | gr_env.py |
+| Mail | mail_env.py |
+| Nameplates | np_env.py |
+| RaidFrames | fr_env.py |
+| Restock | rs_env.py |
+| ThreatMeter | tm_env.py (the old addon; its rebuild is approved) |
+| Tweaks | ftr_env.py |
+| UnitFrames | ff_env.py |
 
 `tools/find_holes.py` reads each suite too: a mock for a name that no longer
 exists anywhere is listed as a hole.
