@@ -103,7 +103,7 @@ the addon's existing convention. Details: CLASSICAPI_MASTER_REFERENCE.md §4.
   docs (§1 rule 4), its Lua must run on 5.0 with the backports, its game data
   (spell and item IDs, durations, talent tables) is Classic Era's and is never
   taken over (§1 rule 2), and its locale layer, libraries and settings panel go
-  (ForgeUI, below).
+  (its options become a Settings window page, below).
 - **Events and timers, not OnUpdate,** except for animation and dragging.
   Work that runs while nothing changes is a hole even when it measures cheap:
   wake on the event, or at the moment something will next change (a label's
@@ -138,10 +138,10 @@ the addon's existing convention. Details: CLASSICAPI_MASTER_REFERENCE.md §4.
 - **Settings:** a new or rebuilt addon has no settings window of its own. Its
   options are a page that ClassicAPI's Settings window draws
   ([CLASSICAPI_MASTER_REFERENCE.md](CLASSICAPI_MASTER_REFERENCE.md#settings-window)),
-  and its slash command opens that page. The addons not rebuilt yet keep the
-  ForgeUI kit in `templates/ForgeUI/`
-  ([KNOWN_PATTERNS.md](KNOWN_PATTERNS.md#preferred-settings-theme)) until they
-  are replaced; no new page is built with it. Every option needs a real player
+  and its slash command opens that page. ThreatMeter, the last addon with a
+  window of its own, keeps its ForgeUI kit (`templates/ForgeUI/`,
+  [KNOWN_PATTERNS.md](KNOWN_PATTERNS.md#settings)) until its rebuild; no new
+  page is built with it. Every option needs a real player
   benefit. Player text is short and factual, with no developer jargon.
 - Recurring hazards and their fixes are in [KNOWN_PATTERNS.md](KNOWN_PATTERNS.md).
 
@@ -225,8 +225,8 @@ below, in this order, and write the answers in `.private/audit-<Addon>-<date>.md
    call, handlers that decode `this` or `arg1` by type, wrapped `Set*` methods
    where a script event exists, fallbacks for things that always exist, two files
    doing one job or one file doing several, two routines doing one job, the same
-   work repeated per slot or per event, tables built per call, settings windows
-   in the old style (move them to ForgeUI).
+   work repeated per slot or per event, tables built per call, a settings window
+   of the addon's own (its options move to ClassicAPI's Settings window).
 9. **Of each finding: is it a kind?** Search the whole addon by pattern for the
    rest of that kind (§2).
 
@@ -287,7 +287,7 @@ take away something players rely on.
 | Server facts and data sources | [servers/](servers/) |
 | An addon's regression tests | [regressions/README.md](regressions/README.md); one file, or on an old commit: `tools/run_suite.py` |
 | The game's Lua and engine model for tests | `regressions/wowlua.py`, `regressions/wowkit.py` |
-| The settings style | The Settings window: [CLASSICAPI_MASTER_REFERENCE.md](CLASSICAPI_MASTER_REFERENCE.md#settings-window). `templates/ForgeUI/` for addons not rebuilt yet |
+| The settings style | The Settings window: [CLASSICAPI_MASTER_REFERENCE.md](CLASSICAPI_MASTER_REFERENCE.md#settings-window). `templates/ForgeUI/` for ThreatMeter until its rebuild |
 | Whether a function or event exists | `python -B tools/known_api.py "<addon folder>"` (linter rules K1, K2) |
 | DLL versions and upstream tracking | [UPSTREAM_VERSIONS.json](UPSTREAM_VERSIONS.json), `python -B tools/check_upstream.py` |
 | Patch addon files safely | [tools/addon_edit.py](tools/addon_edit.py) |

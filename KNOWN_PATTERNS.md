@@ -405,50 +405,18 @@ and ownership constraints before changing traversal.
 
 ## 4. UI Interaction and Layout Patterns
 
-### Preferred settings theme
+### Settings
 
-Use the ForgeUI kit in [`templates/ForgeUI/`](templates/ForgeUI/README.md) for
-addon-owned configuration: the AutoLazy 1.2 layout with the `Ember` palette
-(warm mid-grey surface, orange headings and controls, peach text), approved in
-game by the user on 2026-10-20 as the standard for every addon. Apply it during
-requested UI work; preserve native game frames and useful controls rather than
-reskinning unrelated interfaces.
+Options are a page that ClassicAPI's Settings window draws
+([CLASSICAPI_MASTER_REFERENCE.md](CLASSICAPI_MASTER_REFERENCE.md#settings-window));
+the rule is VANILLAFORGE.md section 2. ThreatMeter, the last addon with a
+settings window of its own (the ForgeUI kit in `templates/ForgeUI/`, approved in
+game 2026-10-20), keeps it until its rebuild; no new page is built with it.
 
-The flat plum and lavender style below, approved for GearRack on 2026-10-05, is
-superseded; GearRack moved to ForgeUI on 2026-10-22. Keep it only in addons that
-still use it until they are moved to ForgeUI.
-
-| Element | RGBA color |
-| --- | --- |
-| Panel background | `0.055, 0.045, 0.075, 0.97` |
-| Panel border | `0.55, 0.43, 0.72, 1` |
-| Title and accent | `0.78, 0.65, 1, 1` |
-| Button background | `0.14, 0.10, 0.20, 1` |
-| Button border | `0.42, 0.33, 0.54, 1` |
-| Button hover | `0.25, 0.18, 0.35, 1` |
-| Checkbox label | `0.92, 0.90, 1, 1` |
-
-- Use a nearly opaque panel, a thin muted lavender border and flat dark plum
-  buttons. Native `Interface\\Buttons\\WHITE8X8` backdrops and
-  `Interface\\Tooltips\\UI-Tooltip-Border` edges need no extra artwork. Reference
-  edge sizes are 12 for the panel and 8 for buttons, with 4/2 pixel insets.
-- Start compact: a 360 UI-pixel panel, 20 pixel content margins, paired 156 by
-  32 buttons and an 8 pixel column gap. Scale the layout to the content; constrain
-  text and check it at supported UI scales instead of forcing these dimensions.
-- Use `GameFontNormalLarge` for the lavender title, `GameFontHighlight` for
-  button text and `GameFontHighlightSmall` for short white help text. Keep native
-  checkmarks and close controls. Give related rows consistent spacing and align
-  their labels; leave room for wrapped help without covering the next control.
-- Organize around player tasks, with short action buttons above visibility and
-  behavior choices. Label checkboxes by their visible result and put secondary
-  details beside the option. The theme does not prescribe reset or recovery
-  buttons; choose controls using the settings guidance in KP-44.
-- Hover feedback belongs in `OnEnter`/`OnLeave`; static settings need no polling
-  or `OnUpdate`. Hide the hub when opening a separate editor so its higher strata
-  cannot cover that editor. Retain drag, close, Escape and native input behavior.
-
-This is a visual preference, not evidence of correctness or performance. Verify
-entry, live changes, persistence, reset, text fit and input in the native client.
+A window the Settings window cannot draw (a list editor, a drag handle) stays
+small and plain: hover feedback in `OnEnter`/`OnLeave`, no polling or
+`OnUpdate`, native close, Escape and drag behaviour, and labels that say what
+the player sees (KP-44).
 
 ------------------------------------------------------------------------
 
@@ -786,22 +754,6 @@ Example from the old prompt: quest-log capacity assumptions.
 
 ------------------------------------------------------------------------
 
-### KP-43 --- Unverified Native Provider Version Arithmetic
-
-Do not assume a version global is always numeric or encoded in a
-particular arithmetic format.
-
-Check presence/type and verify the actual version contract before
-comparison.
-
-The verified SuperWoW `"2.2"` value is parsed with `tonumber(SUPERWOW_VERSION)`;
-do not apply ClassicAPI's integer encoding. Release and runtime versions can also
-differ: UnitXP's version
-command returns a PE timestamp rather than `90`. Use the provider-specific
-[identity evidence](ENGINE_REFERENCE.md#6-nampower), not one generic comparison.
-
-------------------------------------------------------------------------
-
 ### KP-44 --- Player-Facing Developer Jargon
 
 Normal player UI should describe the game action/result, not
@@ -929,50 +881,6 @@ not an ordinary TOC runtime entry.
 - For other unlisted Lua/XML files, inspect whether the file is client-managed,
   standalone tooling, dormant/dead code, or genuinely omitted runtime code before
   modifying the manifest.
-
-------------------------------------------------------------------------
-
-### KP-49 --- Enhanced Stack Availability vs Declared Addon Dependencies
-
-**Problem:** The framework's required client DLLs are confused with an individual
-addon's API dependencies, or shared functions are mistaken for provider loading.
-
-**Action:**
-- Require and verify all four modern API DLLs for the supported client environment;
-  distinguish that requirement from an individual addon's API dependencies.
-- An addon should declare dependencies only for components whose APIs it directly consumes.
-- An individual addon may describe UnitXP features as optional when its core works
-  without them; the framework's client installation still requires UnitXP (see ENGINE_REFERENCE.md).
-- DXVK is D3D9-to-Vulkan translation runtime infrastructure, never a Lua addon API or dependency.
-
-ClassicAPI and SuperWoW both expose GUID/position APIs, and native WoW already
-has `UnitXP`. Their presence cannot prove all required providers are loaded.
-Use exact file/release identity and current-session provider evidence; a loader
-list, a historical log or a passing Lua mock alone does not establish loading.
-
-Choose a replacement for its verified semantics, restrictions, lifecycle and
-cost, not its newer name. Native aggregates suit count-only questions but do not
-establish stack capacity or exact-copy identity. Structured aura fields can
-replace scraping only when they preserve the required slot/filter semantics.
-Likewise, a macro executor outside the native stop context may not preserve
-`/stopmacro`. Do not substitute a partial equivalent or add another provider
-beside an existing authoritative owner merely to increase DLL use.
-
-------------------------------------------------------------------------
-
-### KP-50 --- Obsolete Local Git Hooks and Release Discipline
-
-**Problem:** Addon repositories may have obsolete local release/pre-commit hooks
-(e.g. in `.git/hooks` or configured via `core.hooksPath`) referencing historical
-tooling paths or frameworks that fail during release.
-
-**Action:**
-- Inspect `.git/hooks`, `git config --get core.hooksPath`, and any wrappers.
-- Never use `git commit --no-verify` or `git push --no-verify` merely to bypass validation.
-- Repair obsolete hook paths to the canonical VanillaForge linter:
-  `C:\Users\Fostercare\Documents\VanillaForge\tools\vanillaforge_linter.py`
-- Keep local `.git/hooks` modifications out of public addon commits.
-- Rerun validation via the hook before completing a release.
 
 ------------------------------------------------------------------------
 
@@ -1279,3 +1187,8 @@ Before adding a new pattern:
 7.  Keep detailed API catalogs in `ENGINE_REFERENCE.md`, not here.
 
 A bug being annoying is not sufficient reason to make it a global law.
+
+Retired numbers stay unused, so the others keep theirs: KP-43 (DLL version
+arithmetic; addons never read a version, VANILLAFORGE.md section 7), KP-49 (proving
+the DLLs are loaded; they are treated as installed, section 1 rule 5) and KP-50 (local
+git hooks; no addon repo has one), all 2026-11-25.
