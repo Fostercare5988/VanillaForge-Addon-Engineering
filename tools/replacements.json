@@ -122,7 +122,7 @@
       "pattern": "hooksecurefunc\\s*\\(\\s*\"CooldownFrame_SetTimer\"|CooldownFrame_SetTimer\\s*=",
       "unless": "\"countdownForCooldowns\"|SetDrawSwipe\\(false\\)",
       "finding": "Draws its own countdown text over cooldown frames.",
-      "better": "Native Cooldown frames draw countdown numbers by default (ClassicAPI 1.23.7: no CVar gates them); SetHideCountdownNumbers, GetCountdownFontString and the thresholds set them per frame. The stock buttons' sweeps are 1.12 Models with none: give each a native Cooldown child with SetDrawSwipe(false), SetDrawBling(false) and the formatter, set from the CooldownFrame_SetTimer hook, with no timer (FostercareTweaks cooldown-numbers.lua, 2026-11-13).",
+      "better": "Native Cooldown frames draw countdown numbers by default (ClassicAPI 1.23.7: no CVar gates them); SetHideCountdownNumbers, GetCountdownFontString and the thresholds set them per frame. The stock buttons' sweeps are 1.12 Models with none: give each a native Cooldown child with SetDrawSwipe(false), SetDrawBling(false) and the formatter, set from the CooldownFrame_SetTimer hook, with no timer (ActionBars Look.lua; first in FostercareTweaks, 2026-11-13).",
       "source": "CLASSICAPI_MASTER_REFERENCE.md#cooldown-api-1179"
     },
     {
@@ -314,6 +314,7 @@
     {
       "id": "ui-scale-poll",
       "pattern": "\\bUIParent:GetScale\\(\\)",
+      "unless": "[\"']UI_SCALE_CHANGED[\"']",
       "finding": "Reads the UI scale on a timer or every refresh to notice a change.",
       "better": "UI_SCALE_CHANGED event: fires when the scale or window size is applied to UIParent.",
       "source": "ClassicAPI docs/API.md#ui_scale_changed-event"
@@ -407,7 +408,7 @@
     },
     {
       "id": "power-polled",
-      "pattern": "UnitManaMax\\(",
+      "pattern": "UnitManaMax\\(\\s*(?![\"']player[\"'])",
       "finding": "Reads another unit's mana, rage or energy. A lead when it is read on a ticker to keep a bar current.",
       "better": "NamPower UNIT_MANA_GUID, UNIT_RAGE_GUID and UNIT_ENERGY_GUID fire once per change for every unit, by GUID.",
       "source": "NamPower EVENTS.md (Unit GUID Events)",
@@ -425,16 +426,16 @@
       "id": "combat-log-unfiltered-in-lua",
       "pattern": "COMBAT_LOG_EVENT_UNFILTERED",
       "finding": "Takes the whole nearby combat log in Lua. An addon that reads only some units or subevents throws the rest away, one Lua call per event (hundreds a second in a raid or battleground).",
-      "better": "CombatLogAddFilter(events, source, dest) and COMBAT_LOG_EVENT: the engine drops the rest before Lua (FostercareBattleText 2.3.0: your and your pet's combat). The client has ONE filter, kept over /reload, and COMBAT_LOG_EVENT gets the union of every addon's filters, so only one addon can own it: FostercareBattleText does (2026-11-13). Before adopting it elsewhere, grep every installed addon for CombatLogAddFilter, CombatLogResetFilter and COMBAT_LOG_EVENT, and agree on one owner.",
+      "better": "CombatLogAddFilter(events, source, dest) and COMBAT_LOG_EVENT: the engine drops the rest before Lua (FostercareBattleText 2.3.0: your and your pet's combat). The client has ONE filter, kept over /reload, and COMBAT_LOG_EVENT gets the union of every addon's filters, so only one addon can own it: BattleText does (Combat.lua; since 2026-11-13). Before adopting it elsewhere, grep every installed addon for CombatLogAddFilter, CombatLogResetFilter and COMBAT_LOG_EVENT, and agree on one owner.",
       "source": "ClassicAPI docs/API.md#combatlogaddfilterevents--source--dest--spell--combatlogresetfilter",
       "unless": "CombatLogAddFilter"
     },
     {
       "id": "superwow-action-text",
-      "pattern": "\\bGetActionText\\s*\\(",
+      "pattern": "\\w+\\s*,\\s*\\w+[\\w\\s,]*=\\s*GetActionText\\s*\\(|select\\s*\\(\\s*[23]\\s*,\\s*GetActionText\\s*\\(",
       "unless": "\\bGetActionInfo\\s*\\(",
       "finding": "Reads what an action slot holds from SuperWoW's GetActionText type and id returns.",
-      "better": "GetActionInfo(slot): \"spell\", spellID / \"item\", itemID / \"macro\", macroSlot / \"equipmentset\", setName; nothing for an empty slot or a deleted macro. No SuperWoW needed (FostercareBars).",
+      "better": "GetActionInfo(slot): \"spell\", spellID / \"item\", itemID / \"macro\", macroSlot / \"equipmentset\", setName; nothing for an empty slot or a deleted macro. No SuperWoW needed (ActionBars Profiles.lua).",
       "source": "ClassicAPI docs/API.md#getactioninfoslot"
     },
     {
