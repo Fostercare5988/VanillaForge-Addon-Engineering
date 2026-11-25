@@ -278,17 +278,19 @@ class AddonAuditTests(unittest.TestCase):
         self.assertEqual(AUDIT.run_tests(start, "test*.py", 10)["status"], "failed")
         self.assertEqual(AUDIT.run_tests(start, "test*.py", 0.0001)["status"], "timeout")
 
-    def test_explicit_cli_tests_have_separate_status_from_source_review(self):
+    def test_explicit_cli_tests_keep_their_status_and_a_failed_run_is_never_ok(self):
+        # Since 2026-11-22 (0c587a1) a failed run sets the report's last word too:
+        # an Auras suite that could not import had read "status ok".
         start = self.root / "private-tests"
         start.mkdir()
         fixture = start / "test_local.py"
-        for assertion, status, code in (("self.assertTrue(True)", "passed", 0),
-                                        ("self.fail('expected')", "failed", 1)):
+        for assertion, status, overall, code in (("self.assertTrue(True)", "passed", "ok", 0),
+                                                 ("self.fail('expected')", "failed", "tests_failed", 1)):
             fixture.write_text("import unittest\nclass T(unittest.TestCase):\n def test_local(self): " + assertion + "\n", encoding="utf-8")
             with contextlib.redirect_stdout(io.StringIO()) as output, contextlib.redirect_stderr(io.StringIO()):
                 self.assertEqual(AUDIT.main([str(self.addon), "--run-tests", "--test-start", str(start)]), code)
             report = json.loads(output.getvalue())
-            self.assertEqual(report["status"], "ok")
+            self.assertEqual(report["status"], overall)
             self.assertEqual(report["tests"]["status"], status)
             self.assertEqual(report["tests"]["tests_run"], 1)
             self.assertEqual(report["tests"]["source_verification"]["status"], "unchanged")
