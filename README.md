@@ -22,7 +22,7 @@ does not only guard against mistakes; it hunts for what can be done better.
 | [KNOWN_PATTERNS.md](KNOWN_PATTERNS.md) | Recurring hazards and their fixes |
 | [regressions/](regressions/README.md) | Behaviour tests for the maintained addons |
 | `templates/ForgeUI/` | The settings look of the addons not rebuilt yet; new ones use ClassicAPI's Settings window |
-| `tools/` | Hole finder, linter (with the check that every function and event exists), audit and test runner, FrameXML extractor, upstream doc fetcher and checker |
+| `tools/` | Hole finder (with every `-- GAP:` to ask of each release), linter (with the check that every function and event exists), audit and suite runners, DLL release taker, FrameXML extractor, upstream doc fetcher and checker, byte-safe addon editor |
 | `tools/replacements.json` | Old ways a DLL now does better; grows with every audit |
 | [archive/](archive/README.md) | Earlier workflows and audits, for history |
 
@@ -33,7 +33,10 @@ Run from this folder. Python 3; regression tests also need `lupa`.
 ```text
 python -B tools/find_holes.py "<addon folder>"
 python -B tools/audit_addon.py "<addon folder>" --run-tests --test-start regressions/<Addon> --output "<report.json>"
+python -B tools/run_suite.py <Addon> [test_file.py] [--old <commit>]
+python -B tools/run_suite.py --all
 python -B tools/vanillaforge_linter.py "<addon folder>"
+python -B tools/upgrade_dll.py [component] [--pin | --next]
 python -B tools/extract_framexml.py --client "<client folder>" --all
 python -B tools/fetch_upstream_docs.py
 python -B tools/check_upstream.py

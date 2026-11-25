@@ -1,13 +1,23 @@
 #!/usr/bin/env python3
 """Take a new DLL release in one command.
 
-    python -B tools/upgrade_dll.py [component] [--pin]
+    python -B tools/upgrade_dll.py [component] [--pin | --next]
 
 Without --pin it only reports, for the component (default classicapi):
 the pinned and the latest release, the commit subjects in between, the doc
-headings that were added, removed or renamed, and the replacement-rule leads
-in every maintained addon. The full doc diff goes to
-.private/upgrade-<component>-<old>-<new>.diff for reading on demand.
+headings that were added, removed or renamed, the replacement-rule leads
+in every maintained addon, and the gaps: every `-- GAP:` in the maintained
+addons (the jobs we do because no DLL did them), the ones whose text names an
+API the release adds first, and the planned gaps of the rebuild's wishlist
+(.private/rebuild/WISHLIST.md) the same way. A release that covers a gap
+means its function is deleted (VANILLAFORGE.md section 8 rule 4). The full
+doc diff goes to .private/upgrade-<component>-<old>-<new>.diff for reading on
+demand.
+
+--next reads the default branch instead of the latest release: what the next
+release will bring, so a spec is not built on a gap that is about to close
+(C_AddOnProfiler was on master a day before !ErrorLog's build, 2026-11-25).
+It never pins: the client runs releases.
 
 With --pin it also writes the new release into UPSTREAM_VERSIONS.json, the
 only file that names a DLL version. Addons never name one (they check that
@@ -93,6 +103,46 @@ def release_identity(repo: str, release: dict, tok: str | None) -> dict:
     return ident
 
 
+# An API-shaped name: a C_ namespace, CamelCase with an inner capital, a
+# lowerCamel cvar, an EVENT_NAME. Plain words ("Until", "Frame") are left out.
+API_NAME = re.compile(r"\b(?:C_[A-Za-z]\w*|[A-Z][a-z0-9]+(?:[A-Z][A-Za-z0-9]*)+|[a-z]+[A-Z][A-Za-z0-9]*"
+                      r"|[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+)\b")
+
+
+def api_names(text: str) -> set[str]:
+    return set(API_NAME.findall(text))
+
+
+def wishlist_gaps(path: Path = PRIVATE / "rebuild" / "WISHLIST.md") -> list[dict]:
+    """The wishlist's table rows (planned gaps too), when the file is there."""
+    if not path.is_file():
+        return []
+    return [{"where": f"{path.name}:{number}", "text": line.strip()}
+            for number, line in enumerate(path.read_text("utf-8").splitlines(), 1)
+            if line.startswith("| ") and not re.match(r"^\|[\s|:-]+\|$", line.strip())]
+
+
+def code_gaps(addons: list[Path]) -> list[dict]:
+    from find_holes import Addon, gaps
+    found = []
+    for folder in addons:
+        try:
+            found += [dict(gap, where=f"{folder.name} {gap['where']}") for gap in gaps(Addon(folder))]
+        except OSError as error:
+            found.append({"where": folder.name, "text": f"unreadable: {error}"})
+    return found
+
+
+def gap_hits(gaps: list[dict], added: set[str]) -> list[dict]:
+    """The gaps whose text names something the release adds."""
+    hits = []
+    for gap in gaps:
+        names = sorted(api_names(gap["text"]) & added)
+        if names:
+            hits.append(dict(gap, names=names))
+    return hits
+
+
 def lead_scan(addons: list[Path]) -> dict[str, list[str]]:
     from find_holes import Addon, replacements
     leads: dict[str, list[str]] = {}
@@ -111,8 +161,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n", 1)[0])
     parser.add_argument("component", nargs="?", default="classicapi")
     parser.add_argument("--pin", action="store_true", help="Write the latest release into UPSTREAM_VERSIONS.json")
+    parser.add_argument("--next", action="store_true", help="Read the default branch's unreleased work; never pins")
     parser.add_argument("--addons", type=Path, help="The client's Interface/AddOns folder")
     args = parser.parse_args(argv)
+    if args.pin and args.next:
+        parser.error("--next never pins: the client runs releases")
 
     config = json.loads(CONFIG.read_text("utf-8"))
     entry = config.get(args.component)
@@ -120,15 +173,22 @@ def main(argv: list[str] | None = None) -> int:
         print(f"unknown component {args.component}; known: {', '.join(config)}", file=sys.stderr)
         return 1
     repo, tok = entry["repository"], token()
+    new_names: set[str] = set()      # API names the newer docs have and the pinned ones lack
     try:
-        release = github_api(f"/repos/{repo}/releases/latest", tok)
-        new_tag, old = release["tag_name"], entry["reference_version"]
-        new = new_tag.lstrip("v")
+        old = entry["reference_version"]
+        if args.next:
+            branch = entry.get("branch") or github_api(f"/repos/{repo}", tok)["default_branch"]
+            release, new_tag, new = None, branch, branch
+            print(f"{args.component}: pinned {old}; reading {branch}, unreleased")
+        else:
+            release = github_api(f"/repos/{repo}/releases/latest", tok)
+            new_tag = release["tag_name"]
+            new = new_tag.lstrip("v")
+            print(f"{args.component}: pinned {old}, latest {new}")
         # The pinned commit, not its tag: a maintainer can delete and renumber tags
         # (ClassicAPI's v1.24.x became v1.23.x on 2026-11-24).
         old_tag = (entry.get("reference_commit") or entry.get("release_provenance", {}).get("tag")
                    or ("v" + old))
-        print(f"{args.component}: pinned {old}, latest {new}")
         if new != old:
             compare = github_api(f"/repos/{repo}/compare/{old_tag}...{new_tag}", tok)
             print(f"\n{len(compare['commits'])} commits:")
@@ -139,6 +199,7 @@ def main(argv: list[str] | None = None) -> int:
             chunks = []
             for path in entry.get("file_shas", {}):
                 before, after = doc_at(repo, path, old_tag, tok), doc_at(repo, path, new_tag, tok)
+                new_names |= api_names(after) - api_names(before)
                 chunks += difflib.unified_diff(before.splitlines(), after.splitlines(),
                                                f"{path}@{old_tag}", f"{path}@{new_tag}", lineterm="")
                 hb, ha = headings(before), headings(after)
@@ -180,7 +241,22 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  {rule}")
         for hit in hits:
             print(f"    {hit}")
+    if new_names:
+        report_gaps(code_gaps(folders), wishlist_gaps(), new_names)
     return 0
+
+
+def report_gaps(gaps: list[dict], planned: list[dict], added: set[str]) -> None:
+    """The gaps against what the newer docs add: the ones that name an added API
+    first, then every gap in the code, to read beside the new headings."""
+    hits = gap_hits(gaps + planned, added)
+    print(f"\nGaps that name an API the newer docs add ({len(hits)}; read these first):")
+    for hit in hits:
+        print(f"  {hit['where']}: {', '.join(hit['names'])}")
+    print(f"\nEvery gap in the maintained addons ({len(gaps)}; does the release do one of them?):")
+    for gap in gaps:
+        text = gap["text"] if len(gap["text"]) <= 110 else gap["text"][:107] + "..."
+        print(f"  {gap['where']}: {text}")
 
 
 if __name__ == "__main__":

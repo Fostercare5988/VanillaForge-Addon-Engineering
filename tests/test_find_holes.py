@@ -229,6 +229,31 @@ class PiecemealCleanup(unittest.TestCase):
             self.assertEqual(HOLES.piecemeal_cleanup(HOLES.Addon(root / "Swept")), [])   # one line is no pattern
 
 
+class Gaps(unittest.TestCase):
+    def test_every_gap_comment_is_listed_with_the_lines_that_go_on_from_it(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "Toy", {
+                "Toy.toc": "## Title: Toy\nToy.lua\nUnloaded.lua\n",
+                "Toy.lua": ("local x = 1\n"
+                            "-- GAP: no event when a unit's distance changes; a DLL\n"
+                            "--   should give UNIT_DISTANCE_THRESHOLD_UPDATE.\n"
+                            "-- GAP: no chat filter (ChatFrame_AddMessageEventFilter).\n"
+                            "local function Watch() end\n"
+                            "    -- GAP: one line only\n"
+                            "--\n"
+                            "-- not part of it\n"
+                            "local s = '-- GAP: in a string, not a comment'\n"),
+            })
+            found = HOLES.gaps(HOLES.Addon(root / "Toy"))
+        self.assertEqual(found, [
+            {"where": "Toy.lua:2", "text": "no event when a unit's distance changes; a DLL "
+                                           "should give UNIT_DISTANCE_THRESHOLD_UPDATE."},
+            {"where": "Toy.lua:4", "text": "no chat filter (ChatFrame_AddMessageEventFilter)."},
+            {"where": "Toy.lua:6", "text": "one line only"},
+        ])
+
+
 class ReplacementUnless(unittest.TestCase):
     def test_a_file_already_on_the_event_is_no_lead(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -240,6 +265,37 @@ class ReplacementUnless(unittest.TestCase):
             })
             leads = {x["id"]: x for x in HOLES.replacements(HOLES.Addon(root / "Toy"))}
             self.assertEqual(leads["range-poll-ticker"]["where"], ["Poll.lua:1"])
+
+
+class RuleShapes2026_11_25(unittest.TestCase):
+    """Three rules hit code their own finding does not describe (the rebuilds'
+    lead scan, 2026-11-25): the player's own mana, the stock macro label, a
+    scale read on UI_SCALE_CHANGED. The shapes they are about still hit."""
+
+    def leads(self, files):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "Toy", dict(files, **{"Toy.toc": "## Title: Toy\n" + "\n".join(files) + "\n"}))
+            return {x["id"]: x["where"] for x in HOLES.replacements(HOLES.Addon(root / "Toy"))}
+
+    def test_quiet_on_what_the_findings_do_not_describe(self):
+        leads = self.leads({
+            "Energy.lua": 'local full = UnitMana("player") == UnitManaMax("player")\n',
+            "Slots.lua": "b.label:SetText(GetActionText(slot))\n",
+            "Size.lua": 'f:RegisterEvent("UI_SCALE_CHANGED")\nlocal k = UIParent:GetScale()\n',
+        })
+        for rule in ("power-polled", "superwow-action-text", "ui-scale-poll"):
+            self.assertNotIn(rule, leads)
+
+    def test_the_shapes_they_are_about_still_hit(self):
+        leads = self.leads({
+            "Raid.lua": "local max = UnitManaMax(b.unit)\n",
+            "Bar.lua": "local text, kind, id = GetActionText(slot)\nlocal id2 = select(3, GetActionText(s))\n",
+            "Poll.lua": "C_Timer.NewTicker(1, function() k = UIParent:GetScale() end)\n",
+        })
+        self.assertEqual(leads["power-polled"], ["Raid.lua:1"])
+        self.assertEqual(leads["superwow-action-text"], ["Bar.lua:1", "Bar.lua:2"])
+        self.assertEqual(leads["ui-scale-poll"], ["Poll.lua:1"])
 
 
 class XmlScriptGhosts(unittest.TestCase):

@@ -205,7 +205,8 @@ below, in this order, and write the answers in `.private/audit-<Addon>-<date>.md
 2. **What is unused?** Files, functions, images, options no character turns on,
    saved settings no code reads.
 3. **What does a DLL do now?** Search the docs for the job, not just the name.
-   Add each new find to [tools/replacements.json](tools/replacements.json).
+   Add each new find to [tools/replacements.json](tools/replacements.json). Ask
+   it of every `-- GAP:` the hole finder lists: a gap a DLL now covers is deleted.
 4. **What reaches into another addon?** Globals read across addons, aliases,
    shared tables. Make each connection visible and narrow, or remove it.
 5. **What is old or stale?** Code for other clients or missing libraries,
@@ -290,7 +291,7 @@ take away something players rely on.
 | Whether a function or event exists | `python -B tools/known_api.py "<addon folder>"` (linter rules K1, K2) |
 | DLL versions and upstream tracking | [UPSTREAM_VERSIONS.json](UPSTREAM_VERSIONS.json), `python -B tools/check_upstream.py` |
 | Patch addon files safely | [tools/addon_edit.py](tools/addon_edit.py) |
-| Take a new DLL release | `python -B tools/upgrade_dll.py [component] [--pin]`: what changed, the pin, leads in every addon |
+| Take a new DLL release | `python -B tools/upgrade_dll.py [component] [--pin]`: what changed, the pin, leads in every addon, and every `-- GAP:` beside the new headings (first the ones that name an API the release adds). `--next` reads the unreleased branch: what the next release brings, before a spec counts on a gap |
 | Earlier audits, workflows and decisions | [archive/](archive/README.md), for history only |
 
 ## 7. Keeping VanillaForge lean
@@ -325,7 +326,9 @@ win where they disagree:
    and names its doc heading.
 4. **A job no DLL does** is dropped, or is one small function marked
    `-- GAP: <what a DLL should do>`, so it is deleted in one place when a
-   release covers it.
+   release covers it. Name the API you wish for as the modern client names it
+   (`C_Spell.EnableSpellRangeCheck`): ClassicAPI ports those names, and
+   `upgrade_dll.py` flags a gap whose named API a release adds.
 5. **Each addon stands alone.** No shared library addon; addons talk through
    narrow public functions.
 6. **Tests come from the spec.** A new, smaller suite replaces the old one

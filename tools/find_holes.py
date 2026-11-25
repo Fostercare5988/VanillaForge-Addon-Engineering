@@ -626,6 +626,35 @@ def replacements(addon):
     return findings
 
 
+# A `-- GAP:` comment marks the one function that does a job no DLL does yet
+# (VANILLAFORGE.md section 8 rule 4); it is deleted when a release covers it.
+GAP = re.compile(r"^[ \t]*--[ \t]*GAP:[ \t]*(.*)$")
+COMMENT_LINE = re.compile(r"^[ \t]*--(?![\[=]*\[)[ \t]?(.*)$")
+
+
+def gaps(addon):
+    """Every `-- GAP:` comment, with the comment lines that go on from it: the
+    jobs the addon does itself because no DLL did them when it was written.
+    Each is a question at every audit and release (does a DLL do it now?),
+    not a verdict; tools/upgrade_dll.py names the ones a release's new API
+    names."""
+    found = []
+    for rel, text in addon.lua():
+        lines = text.splitlines()
+        for number, line in enumerate(lines, 1):
+            m = GAP.match(line)
+            if not m:
+                continue
+            words = [m.group(1).strip()]
+            for follow in lines[number:]:
+                c = COMMENT_LINE.match(follow)
+                if not c or not c.group(1).strip() or GAP.match(follow):
+                    break
+                words.append(c.group(1).strip())
+            found.append({"where": "%s:%d" % (rel, number), "text": " ".join(w for w in words if w)})
+    return found
+
+
 TICKER = re.compile(r"C_Timer\.NewTicker\s*\(")
 ON_UPDATE = re.compile(r"""(?:SetScript|HookScript)\s*\(\s*["']OnUpdate["']\s*,(?!\s*nil\b)""")
 ON_UPDATE_OFF = re.compile(r"""SetScript\s*\(\s*["']OnUpdate["']\s*,\s*nil\b""")
@@ -803,6 +832,8 @@ def report(results, out):
             lambda f: "%s[%r] at %s" % (f["table"], f["key"], f["where"]))
     section("A DLL does it now", results["replacements"], lambda f: "%s (%d at %s)\n  %s\n  Better: %s\n  Source: %s"
             % (f["id"], f["hits"], ", ".join(f["where"]), f["finding"], f["better"], f["source"]))
+    section("Gaps (-- GAP:): does a DLL do it now? Search the docs for the job, not the name", results["gaps"],
+            lambda f: "%s: %s" % (f["where"], f["text"] if len(f["text"]) <= 160 else f["text"][:157] + "..."))
     section("Connections between addons", results["connections"], lambda f: "%s reads %s's %s at %s%s"
             % (f["reader"], f["owner"], f["name"], ", ".join(f["where"]), "" if f["declared"] else "  [not declared in the TOC]"))
     section("Leaked globals (assigned without local)", results["leaks"],
@@ -852,6 +883,7 @@ def main(argv=None):
         "stock_per_frame": stock_per_frame(addon),
         "piecemeal_cleanup": piecemeal_cleanup(addon),
         "replacements": replacements(addon),
+        "gaps": gaps(addon),
         "connections": connections(addon, everyone, game),
         "leaks": leaks(addon, game),
         "ghosts": ghosts(addon, everyone, game, docs, wotlk),
