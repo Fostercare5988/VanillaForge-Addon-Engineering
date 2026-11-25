@@ -140,6 +140,12 @@ class BagBar(unittest.TestCase):
         frame(lua)
         self.assertFalse(lua.eval("BagsBank.buy:IsShown()"))
 
+    def test_pointing_off_the_buy_button_only_hides_its_tooltip(self):
+        lua = load()
+        lua.execute("openBank()")
+        lua.execute("run(BagsBank.buy, 'OnEnter'); run(BagsBank.buy, 'OnLeave')")
+        self.assertFalse(lua.eval("GameTooltip:IsShown()"))
+
 
 class Money(unittest.TestCase):
     def test_the_live_money_can_be_picked_up_a_stored_one_cannot(self):
