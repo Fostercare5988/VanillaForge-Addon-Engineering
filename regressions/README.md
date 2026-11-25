@@ -100,6 +100,3 @@ is gone (five such suites stayed for days, 2026-11-25).
 
 `tools/find_holes.py` reads each suite too: a mock for a name that no longer
 exists anywhere is listed as a hole.
-
-Notes on earlier passes (what each file proved, on which commit it failed) are
-in [archive/docs/REGRESSIONS_NOTES_2026.md](../archive/docs/REGRESSIONS_NOTES_2026.md).

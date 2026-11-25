@@ -68,8 +68,7 @@ Lua VM, FrameXML generation, or Retail API.
 
 OctoWoW's `2026.10.10` distribution label is separate from this executable build
 and from the live realm/content revision. Select the actual client root,
-launcher, realmlist and relevant local patches before applying these references;
-see the [target preflight](archive/docs/WORKFLOW.md).
+launcher, realmlist and relevant local patches before applying these references.
 
 Therefore:
 
@@ -818,8 +817,7 @@ that may bypass interception. No single suppression technique covers every frame
 For outside-click dismissal, preserve the native click-up interaction. Where
 needed, defer dismissal and guard it against closing a newly opened session.
 Test child menus, tooltips and both mouse buttons in game; a Lua model cannot
-prove native pointer safety or input ordering. See the deployed
-[OctoWoW minimap notes](archive/audit/OCTOWOW_FRAMEXML_CAPABILITIES.md#6-minimap-integration-evidence-2026-10-04).
+prove native pointer safety or input ordering.
 
 ---
 

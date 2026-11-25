@@ -278,8 +278,7 @@ Evidence: [source/docs commit](https://github.com/brues-code/ClassicAPI/commit/f
 The maintainer reports in-game verification of the three-slot case and disappearance
 of Compost errors in that commit. That is **upstream-reported empirical evidence**,
 not Niko-local or VanillaForge runtime verification. [UNVERIFIED - TEST FIRST]
-for reproduction in the user's installed client. Full provenance is in
-[the release-range audit](archive/docs/CLASSICAPI_1.15.12_AUDIT.md).
+for reproduction in the user's installed client.
 
 ---
 
@@ -670,8 +669,6 @@ stock behavior; a macro without a directive is protected only if externally
 managed. This is not a blanket promise that every macro survives every removal.
 
 Evidence: [macro source and offsets](https://github.com/brues-code/ClassicAPI/commit/452f3c14fc3270420355edecd82e27868fc19d63).
-See the [full audit](archive/docs/CLASSICAPI_1.15.12_AUDIT.md)
-for the earlier macro lineage and unchanged KP-53/KP-54 contracts.
 
 ### 14.2 Conditional slash-command families
 
@@ -3036,8 +3033,7 @@ and upstream's `docs/API.md` disagree, API.md wins (section 105).
 
 `python -B tools/upgrade_dll.py classicapi --pin` shows what changed, pins the
 release and lists the leads in every addon; then this reference is brought up
-to date for the changed sections. Earlier snapshots, release notes and the old
-refresh steps are in [archive/docs/CLASSICAPI_HISTORY.md](archive/docs/CLASSICAPI_HISTORY.md).
+to date for the changed sections.
 
 ---
 
@@ -3152,7 +3148,7 @@ checked in game on OctoWoW.
 [SOURCE-VERIFIED] C_EquipmentSet.PickupEquipmentSet(setID) puts a native set on the cursor; unknown IDs do nothing. GetCursorInfo and GetActionInfo return "equipmentset", setName; the second value is a name, not a numeric ID. CURSOR_CHANGED reports Enum.UICursorType.EquipmentSet. Action clicks fire WEAR_EQUIPMENT_SET(setID); the event alone does not equip. The bundled EquipmentManager checks item locks and casting, then calls UseEquipmentSet. Do not add duplicate equip handlers.
 
 Set action placements persist in the per-character native equipment-set file, not addon SavedVariables or server action type. Rename/save repaint buttons; deleting a set clears its buttons. Native sets do not automatically import addon outfit schemas. Item/spell trackers must classify type before inferring identity from icons.
-[UNVERIFIED - TEST FIRST] Verify tooltip tokens/events for live/offline roster units and action pickup/place/swap/use/delete/relogin. No local runtime verification is claimed. See [the release audit](archive/docs/CLASSICAPI_1.15.15_AUDIT.md).
+[UNVERIFIED - TEST FIRST] Verify tooltip tokens/events for live/offline roster units and action pickup/place/swap/use/delete/relogin. No local runtime verification is claimed.
 
 ## Quest log, tooltips, hooks and macros
 [SOURCE-VERIFIED] The [API reference](https://github.com/brues-code/ClassicAPI/blob/99de63755bdc368cf8d35ce3a09dc46dafc20930/docs/API.md) documents `C_QuestLog.GetInfo(index)` as a row-info table which does not contain completion state. `C_QuestLog.GetQuestLogTitle(index)` returns a modern row tuple; `isComplete` is `1` for complete, `-1` for failed, and `nil` otherwise. Its third value is `suggestedGroup` (always `0` here), unlike the legacy global `GetQuestLogTitle` third-value quest tag.

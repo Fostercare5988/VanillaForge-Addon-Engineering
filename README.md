@@ -24,7 +24,6 @@ does not only guard against mistakes; it hunts for what can be done better.
 | `templates/ForgeUI/` | ThreatMeter's settings window until its rebuild; every other addon uses ClassicAPI's Settings window |
 | `tools/` | Hole finder (with every `-- GAP:` to ask of each release), linter (with the check that every function and event exists), audit and suite runners, DLL release taker, FrameXML extractor, upstream doc fetcher and checker, byte-safe addon editor |
 | `tools/replacements.json` | Old ways a DLL now does better; grows with every audit |
-| [archive/](archive/README.md) | Earlier workflows and audits, for history |
 
 ## Commands
 

@@ -292,7 +292,6 @@ take away something players rely on.
 | DLL versions and upstream tracking | [UPSTREAM_VERSIONS.json](UPSTREAM_VERSIONS.json), `python -B tools/check_upstream.py` |
 | Patch addon files safely | [tools/addon_edit.py](tools/addon_edit.py) |
 | Take a new DLL release | `python -B tools/upgrade_dll.py [component] [--pin]`: what changed, the pin, leads in every addon, and every `-- GAP:` beside the new headings (first the ones that name an API the release adds). `--next` reads the unreleased branch: what the next release brings, before a spec counts on a gap |
-| Earlier audits, workflows and decisions | [archive/](archive/README.md), for history only |
 
 ## 7. Keeping VanillaForge lean
 
