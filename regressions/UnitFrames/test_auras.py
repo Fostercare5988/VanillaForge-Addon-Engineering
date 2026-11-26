@@ -127,18 +127,17 @@ class TopRight(unittest.TestCase):
         self.assertIsNone(lua.eval("BuffButton0.scripts.OnUpdate"))
         self.assertIsNone(lua.eval("BuffFrame.scripts.OnUpdate"))
 
-    def test_the_fill_switch_puts_the_rows_back_to_the_right(self):
+    def test_the_fill_switch_is_off_by_default_and_moves_the_rows(self):
         lua = self.lua
-        lua.execute("settingsWindow.use('UnitFrames_topFromLeft', false); runTimers()")
-        self.assertEqual(lua.eval("(select(4, BuffButton1:GetPoint(1)))"), -35)
+        self.assertEqual(lua.eval("(select(4, BuffButton1:GetPoint(1)))"), -35, "from the right by default")
         lua.execute("settingsWindow.use('UnitFrames_topFromLeft', true); runTimers()")
         self.assertEqual(lua.eval("(select(4, BuffButton1:GetPoint(1)))"), 35)
 
-    def test_left_to_right_closing_up_and_each_area_its_switch(self):
+    def test_the_rows_close_up_and_each_area_its_switch(self):
         lua = self.lua
         self.assertIs(lua.eval("BuffButton0:GetParent() == UnitFramesTopBuffs"), True)
         self.assertIs(lua.eval("BuffButton24:GetParent() == UnitFramesTopDebuffs"), True)
-        self.assertEqual(lua.eval("(select(4, BuffButton1:GetPoint(1)))"), 35)
+        self.assertEqual(lua.eval("(select(4, BuffButton1:GetPoint(1)))"), -35)
         lua.execute("table.remove(playerBuffs.HELPFUL, 1); playerAuras(); runTimers()")
         self.assertEqual(lua.eval("(select(4, BuffButton0:GetPoint(1)))"), 0)
         lua.execute("settingsWindow.use('UnitFrames_topDebuffs', false)")
