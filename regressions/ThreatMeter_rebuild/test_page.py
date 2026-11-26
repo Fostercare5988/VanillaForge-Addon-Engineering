@@ -91,13 +91,45 @@ class OffMeansOff(unittest.TestCase):
         self.assertFalse(lua.eval("ThreatMeter_Window:IsShown()"))
         self.assertFalse(lua.eval("ThreatMeter_Badge:IsShown()"))
 
-    def test_the_x_turns_it_off_and_says_where_to_turn_it_on(self):
+    def test_the_x_turns_it_off_and_says_how_to_turn_it_on(self):
         lua = load()
         lua.execute("run(closeButton(), 'OnClick')")
         self.assertFalse(lua.eval("ThreatMeterDB.enabled"))
         self.assertFalse(lua.eval("ThreatMeter_Window:IsShown()"))
-        self.assertIn("/tm", lua.eval("chat[#chat]"))
+        self.assertIn("/tm on", lua.eval("chat[#chat]"))
         self.assertFalse(lua.eval('Settings.GetValue("ThreatMeter_enabled")'), "the page shows it off too")
+
+
+class SlashWords(unittest.TestCase):
+    """The player's order, 2026-11-26: "/tm on and /tm off ... those toggles are essential"."""
+
+    def test_tm_off_stops_it_and_tm_on_starts_it_again(self):
+        lua = fight()
+        lua.execute('answer("%s"); SlashCmdList.THREATMETER("off"); step(0.2); step(1)' % FIGHT)
+        self.assertFalse(lua.eval("ThreatMeterDB.enabled"))
+        self.assertEqual(lua.eval("listening()"), "")
+        self.assertFalse(lua.eval("ThreatMeter_Window:IsShown()"))
+        self.assertEqual(lua.eval("#sent"), 1, "nothing asked while off")
+        self.assertIn("is off. Type /tm on", lua.eval("chat[#chat]"))
+        lua.execute('SlashCmdList.THREATMETER("on")')
+        self.assertTrue(lua.eval("ThreatMeterDB.enabled"))
+        self.assertTrue(lua.eval("ThreatMeter_Window:IsShown()"))
+        self.assertEqual(lua.eval("#sent"), 2, "still in the fight: it asks at once")
+        self.assertIn("is on", lua.eval("chat[#chat]"))
+        self.assertIsNone(lua.eval("settingsWindow.opened"), "the words do not open the page")
+
+    def test_the_words_ignore_case_and_spaces(self):
+        lua = load()
+        lua.execute('SlashCmdList.THREATMETER(" OFF ")')
+        self.assertFalse(lua.eval('Settings.GetValue("ThreatMeter_enabled")'))
+        lua.execute('SlashCmdList.THREATMETER("On")')
+        self.assertTrue(lua.eval('Settings.GetValue("ThreatMeter_enabled")'))
+
+    def test_any_other_word_opens_the_page(self):
+        lua = load()
+        lua.execute('SlashCmdList.THREATMETER("help")')
+        self.assertEqual(lua.eval("settingsWindow.opened.name"), "ThreatMeter")
+        self.assertTrue(lua.eval("ThreatMeterDB.enabled"))
 
 
 class Places(unittest.TestCase):
