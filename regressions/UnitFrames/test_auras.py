@@ -127,6 +127,13 @@ class TopRight(unittest.TestCase):
         self.assertIsNone(lua.eval("BuffButton0.scripts.OnUpdate"))
         self.assertIsNone(lua.eval("BuffFrame.scripts.OnUpdate"))
 
+    def test_the_fill_switch_puts_the_rows_back_to_the_right(self):
+        lua = self.lua
+        lua.execute("settingsWindow.use('UnitFrames_topFromLeft', false); runTimers()")
+        self.assertEqual(lua.eval("(select(4, BuffButton1:GetPoint(1)))"), -35)
+        lua.execute("settingsWindow.use('UnitFrames_topFromLeft', true); runTimers()")
+        self.assertEqual(lua.eval("(select(4, BuffButton1:GetPoint(1)))"), 35)
+
     def test_left_to_right_closing_up_and_each_area_its_switch(self):
         lua = self.lua
         self.assertIs(lua.eval("BuffButton0:GetParent() == UnitFramesTopBuffs"), True)
