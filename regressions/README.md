@@ -94,7 +94,8 @@ is gone (five such suites stayed for days, 2026-11-25).
 | Nameplates | np_env.py |
 | RaidFrames | fr_env.py |
 | Restock | rs_env.py |
-| ThreatMeter | tm_env.py (the old addon; its rebuild is approved) |
+| ThreatMeter | tm_env.py (the old 1.0.1, until the switch-over) |
+| ThreatMeter_rebuild | tm_env.py (the rebuild, in `Interface/Rebuild/ThreatMeter`; pass that folder to `audit_addon.py`) |
 | Tweaks | ftr_env.py |
 | UnitFrames | ff_env.py |
 
