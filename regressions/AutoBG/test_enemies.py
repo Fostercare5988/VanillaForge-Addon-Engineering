@@ -350,8 +350,9 @@ class Carriers(unittest.TestCase):
         self.assertTrue(lua.eval("AutoBG_AllianceFC:IsShown()"))
         self.assertIn("Thandril", lua.eval("AutoBG_AllianceFC.name.text"))
         self.assertEqual(lua.eval("AutoBG_AllianceFC:GetAttribute('unit')"), ROGUE)
-        lua.execute(f"units['{ROGUE}'].hp = 30; aura('{ROGUE}', 1, 'Focused Assault', 'HARMFUL'); units['{ROGUE}'].auras[1].applications = 3;"
-                    f" fireGUID('UNIT_HEALTH', '{ROGUE}')")
+        # The stacks come with his auras, the health with UNIT_HEALTH (the review, 2026-11-26).
+        lua.execute(f"units['{ROGUE}'].hp = 30; local id = aura('{ROGUE}', 1, 'Focused Assault', 'HARMFUL'); units['{ROGUE}'].auras[1].applications = 3;"
+                    f" auraEvent('{ROGUE}', {{ id }}); fireGUID('UNIT_HEALTH', '{ROGUE}')")
         self.assertAlmostEqual(lua.eval("AutoBG_AllianceFC.health.value"), 0.3)
         self.assertIn("3x", lua.eval("AutoBG_AllianceFC.info.text"))
         lua.execute("SlashCmdList.AUTOBG('efc')")

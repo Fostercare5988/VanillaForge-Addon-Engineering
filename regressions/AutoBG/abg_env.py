@@ -264,6 +264,13 @@ C_UnitAuras = {
         return nil, n
     end,
     GetAuraDataBySlot = function(u, slot) return d(u).auras[slot] end,
+    -- The 16 positional values of C_UnitAuras.UnitAura: spellId 10th, auraInstanceID 16th.
+    UnitAuraBySlot = function(u, slot)
+        local a = d(u).auras[slot]
+        if not a then return nil end
+        return a.name, a.icon, a.applications, nil, 0, a.expirationTime, nil, false, false, a.spellId,
+            false, false, false, false, 1, a.auraInstanceID
+    end,
 }
 function removeAura(guid, id)
     for i, a in ipairs(units[guid].auras) do if a.auraInstanceID == id then table.remove(units[guid].auras, i) end end
