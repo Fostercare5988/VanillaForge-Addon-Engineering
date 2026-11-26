@@ -54,6 +54,13 @@ function hooksecurefunc(name, fn)
     _G[name] = function(a, b, c, d) local r = old and old(a, b, c, d); fn(a, b, c, d); return r end
 end
 
+-- The screen: UIParent 1024 x 768 with its top left at 0, 768 (### frame:SetDontSavePosition).
+UIParent.left, UIParent.top = 0, 768
+function Widget:SetDontSavePosition(v) self.dontSave = v ~= false end
+function Widget:GetDontSavePosition() return self.dontSave and 1 or nil end
+-- The point a frame is placed at last: "TOPLEFT 300 -268".
+function placed(f) local p = f.points[#f.points]; return p and (p[1] .. " " .. p[4] .. " " .. p[5]) end
+
 -- Widgets: what the addon writes.
 function Widget:SetStatusBarColor(r, g, b) self.barColor = { r, g, b } end
 function Widget:SetTimerDuration(d, _, direction) self.timer, self.direction = d, direction end

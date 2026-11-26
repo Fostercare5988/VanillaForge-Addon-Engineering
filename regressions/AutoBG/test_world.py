@@ -195,24 +195,53 @@ class AtRest(unittest.TestCase):
                 continue  # Spy's sightings, in the open world
             self.assertIsNone(busy, e)
 
-    def test_positions_where_the_client_has_them_at_a_first_login(self):
-        cache = {"AutoBG_QueueFrame": (-18, 2), "AutoBG_TargetsMainFrame10": (1300, -315), "AutoBG_SpyFrame": (1380, -243)}
-        lua = load(cache=cache)
-        for name, (x, y) in cache.items():
-            self.assertEqual(lua.eval(f"{name}:GetLeft()"), x, name)
-            self.assertTrue(lua.eval(f"{name}:IsUserPlaced()"), name)
+    FRAMES = ("AutoBG_QueueFrame", "AutoBG_RespawnFrame", "AutoBG_StartTimerFrame", "AutoBG_NodeFrame", "AutoBG_AVNodeFrame",
+              "AutoBG_WSGFlagFrame", "AutoBG_ABProjectionFrame", "AutoBG_AllianceFC", "AutoBG_HordeFC",
+              "AutoBG_TargetsMainFrame10", "AutoBG_TargetsMainFrame15", "AutoBG_TargetsMainFrame40",
+              "AutoBG_FlagAlert", "AutoBG_SpyAlertWindow", "AutoBG_SpyFrame")
 
-    def test_a_dropped_queue_bar_comes_back_there_whatever_the_client_saved(self):
+    def test_every_frame_comes_up_at_its_own_place_at_a_first_login_and_the_client_saves_none(self):
+        world = ", ".join(f"{n} = {{ {i * 10}, -{i * 5} }}" for i, n in enumerate(self.FRAMES, 1))
+        lua = load(f"AutoBGDB = {{ places = {{ world = {{ {world} }} }} }}")
+        for i, name in enumerate(self.FRAMES, 1):
+            self.assertEqual(lua.eval(f"placed({name})"), f"TOPLEFT {i * 10} -{i * 5}", name)
+            self.assertTrue(lua.eval(f"{name}:GetDontSavePosition()"), name)
+
+    def test_each_battleground_keeps_its_own_places(self):
+        """2026-11-26, the player: Warsong, Arathi and Alterac each their own
+        places, so no frame is moved again in another battleground. A battleground
+        where a frame was never moved uses its place from outside them."""
+        lua = load("AutoBGDB = { places = { world = { AutoBG_RespawnFrame = { 700, -90 } } } }")
+        drag = "local g = AutoBG_RespawnFrame; run(g, 'OnDragStart'); g.left, g.top = {x}, {top}; run(g, 'OnDragStop')"
+        lua.execute("enter('Warsong Gulch')")
+        self.assertEqual(lua.eval("placed(AutoBG_RespawnFrame)"), "TOPLEFT 700 -90")  # never moved here: outside's
+        lua.execute(drag.format(x=300, top=500))
+        self.assertEqual(lua.eval("AutoBGDB.places['Warsong Gulch'].AutoBG_RespawnFrame[2]"), -268)
+        self.assertFalse(lua.eval("AutoBG_RespawnFrame:IsUserPlaced()"))
+        lua.execute("enter('Alterac Valley')")
+        self.assertEqual(lua.eval("placed(AutoBG_RespawnFrame)"), "TOPLEFT 700 -90")
+        lua.execute(drag.format(x=40, top=700))
+        lua.execute("enter('Warsong Gulch')")
+        self.assertEqual(lua.eval("placed(AutoBG_RespawnFrame)"), "TOPLEFT 300 -268")
+        lua.execute("enter('Alterac Valley')")
+        self.assertEqual(lua.eval("placed(AutoBG_RespawnFrame)"), "TOPLEFT 40 -68")
+        lua.execute("enter(nil)")
+        self.assertEqual(lua.eval("placed(AutoBG_RespawnFrame)"), "TOPLEFT 700 -90")
+        # Moved outside: every battleground where it was never moved follows; Warsong keeps its own.
+        lua.execute(drag.format(x=10, top=760) + "; enter('Arathi Basin')")
+        self.assertEqual(lua.eval("placed(AutoBG_RespawnFrame)"), "TOPLEFT 10 -8")
+        lua.execute("enter('Warsong Gulch')")
+        self.assertEqual(lua.eval("placed(AutoBG_RespawnFrame)"), "TOPLEFT 300 -268")
+
+    def test_a_drag_on_a_row_places_its_frame_for_this_battleground(self):
         lua = load()
-        lua.execute("queues[1] = { status = 'queued', map = 'Warsong Gulch' }; fire('UPDATE_BATTLEFIELD_STATUS')")
-        lua.execute("local g = AutoBG_QueueFrame; run(g, 'OnDragStart'); g.left, g.top = 300, 500; run(g, 'OnDragStop')")
-        self.assertEqual(lua.eval("AutoBGDB.places.AutoBG_QueueFrame[1]"), 300)
-        self.assertFalse(lua.eval("AutoBG_QueueFrame:IsUserPlaced()"))
-        # The next login: the client's file still has the 0, 0 it wrote before.
-        lua = load("AutoBGDB = { places = { AutoBG_QueueFrame = { 300, 500 } } }", cache={"AutoBG_QueueFrame": (0, 0)})
-        lua.execute("queues[1] = { status = 'queued', map = 'Warsong Gulch' }; fire('UPDATE_BATTLEFIELD_STATUS'); step()")
-        point = lua.eval("(function() local p = AutoBG_QueueFrame.points; p = p[#p]; return p[1] .. ' ' .. p[4] .. ' ' .. p[5] end)()")
-        self.assertEqual(point, "TOPLEFT 300 500")
+        lua.execute("queues[1] = { status = 'queued', map = 'Warsong Gulch' }; enter('Arathi Basin'); fire('UPDATE_BATTLEFIELD_STATUS')")
+        lua.execute("local g = AutoBG_QueueFrame; run(g.rows[1], 'OnDragStart'); g.left, g.top = 120, 600; run(g.rows[1], 'OnDragStop')")
+        self.assertEqual(lua.eval("AutoBGDB.places['Arathi Basin'].AutoBG_QueueFrame[1]"), 120)
+        lua.execute("scores = { { 'Ashka', 1, 'Human', 'Mage' } }; fire('UPDATE_BATTLEFIELD_SCORE'); step()")
+        lua.execute("local m = AutoBG_TargetsMainFrame15; run(m.rows[1], 'OnDragStart'); m.left, m.top = 900, 400; run(m.rows[1], 'OnDragStop')")
+        self.assertEqual(lua.eval("AutoBGDB.places['Arathi Basin'].AutoBG_TargetsMainFrame15[2]"), -368)
+        self.assertIsNone(lua.eval("AutoBGDB.places.world"))
 
     def test_odd_data_no_target_empty_raid_and_a_score_row_with_no_class(self):
         lua = load()
