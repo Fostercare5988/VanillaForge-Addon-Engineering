@@ -139,6 +139,12 @@ class Alerts(unittest.TestCase):
         lua.execute("settingsWindow.use('BattleText_alertLowHealth', false)")
         self.assertFalse(frame_of(lua, "UNIT_HEALTH"))
 
+    def test_no_low_health_for_the_killing_blow(self):
+        lua = load()
+        lua.execute("settingsWindow.use('BattleText_alertLowHealth', true)")
+        self.assertEqual(notices(lua, "health = 0 fire('UNIT_HEALTH', 'player')"), "")
+        self.assertEqual(notices(lua, "health = 1500 fire('UNIT_HEALTH', 'player')"), "")
+
     def test_low_mana_at_35_percent(self):
         lua = load(setup="playerClass = 'MAGE'")
         self.assertEqual(notices(lua, "mana = 800 fire('UNIT_POWER_UPDATE', 'player', 'MANA')"), "")
@@ -167,6 +173,28 @@ class Ready(unittest.TestCase):
         self.assertEqual(notices(lua, "fire('SPELL_UPDATE_USABLE')"), "")
         self.assertEqual(notices(lua, "reactive.Riposte = { false } fire('SPELL_UPDATE_USABLE') "
                                       "reactive.Riposte = { true } fire('SPELL_UPDATE_USABLE')"), "Riposte!")
+
+    def test_a_window_that_opens_in_the_cooldown_shows_when_it_ends(self):
+        lua = load(setup=self.RIPOSTE)
+        lua.execute("cooldowns[1] = { GetTime() - 2, 6 }")
+        self.assertEqual(notices(lua, "reactive.Riposte = { true } fire('SPELL_UPDATE_USABLE')"), "")
+        self.assertEqual(notices(lua, "fire('SPELL_UPDATE_USABLE')"), "")
+        self.assertEqual(lua.eval("liveTimers()"), 1)
+        self.assertEqual(notices(lua, "step(3.9)"), "")
+        self.assertEqual(notices(lua, "cooldowns[1] = nil step(0.2)"), "Riposte!")
+        self.assertEqual(lua.eval("liveTimers()"), 0)
+
+    def test_a_window_that_closes_in_the_cooldown_shows_nothing(self):
+        lua = load(setup=self.RIPOSTE)
+        lua.execute("cooldowns[1] = { GetTime(), 6 }")
+        self.assertEqual(notices(lua, "reactive.Riposte = { true } fire('SPELL_UPDATE_USABLE') "
+                                      "reactive.Riposte = { false } fire('SPELL_UPDATE_USABLE')"), "")
+        self.assertEqual(notices(lua, "cooldowns[1] = nil step(6.1)"), "")
+
+    def test_the_global_cooldown_holds_no_alert(self):
+        lua = load(setup=self.RIPOSTE)
+        lua.execute("cooldowns[1] = { GetTime(), 1.5, true }")
+        self.assertEqual(notices(lua, "reactive.Riposte = { true } fire('SPELL_UPDATE_USABLE')"), "Riposte!")
 
     def test_overpower_from_a_dodge_on_another_unit_shows_nothing(self):
         lua = load(setup="playerClass = 'WARRIOR' known.Overpower = 'x' targetGUID = '0xMOB'")

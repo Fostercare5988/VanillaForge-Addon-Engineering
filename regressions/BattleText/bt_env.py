@@ -196,6 +196,7 @@ icons = { [133] = "Interface\\Icons\\Spell_Fire_FlameBolt", [116] = "Interface\\
     [2457] = "Interface\\Icons\\Ability_Warrior_OffensiveStance" }
 known = {}    -- name -> icon, the spells in your book
 reactive = {} -- name -> { ready, comboTargetGUID }
+cooldowns = {} -- spell ID -> { startTime, duration, isOnGCD }; every known spell is ID 1
 C_Spell = {
     GetSpellTexture = function(id) return icons[id] end,
     IsSpellReactiveReady = function(name)
@@ -203,6 +204,11 @@ C_Spell = {
         if not known[name] then return false end
         if r then return r[1], r[2] end
         return false
+    end,
+    -- ### C_Spell.GetSpellCooldown: a new table per call; no entry is off cooldown.
+    GetSpellCooldown = function(id)
+        local c = cooldowns[id] or { 0, 0 }
+        return { startTime = c[1], duration = c[2], isEnabled = true, modRate = 1, isOnGCD = c[3] or false }
     end,
 }
 spellNames = { [2457] = "Battle Stance" }
