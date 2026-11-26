@@ -32,6 +32,16 @@ GameTooltip = newWidget("GameTooltip", "GameTooltip")
 -- The server's side: what is asked, and the warning's sound and flash.
 sent = {}
 function SendAddonMessage(prefix, msg, channel) sent[#sent + 1] = { prefix = prefix, msg = msg, channel = channel } end
+-- The server's answer to the last question: the first N players of `body` (most threat
+-- first), N the question's limit, as the real answer holds no more (14 broke nothing,
+-- more broke the old meter: commit 44dbee0, 2026-11-12).
+function serve(body)
+    local n, kept = tonumber(string.match(sent[#sent].msg, "limit=(%d+)")), {}
+    for record in string.gmatch(body, "[^;]+") do
+        if #kept < n then kept[#kept + 1] = record end
+    end
+    answer(table.concat(kept, ";"))
+end
 sounds, flashes = 0, 0
 function PlaySoundFile(file, channel) sounds = sounds + 1; lastSound = file; return true end
 function FlashClientIcon() flashes = flashes + 1 end
@@ -82,6 +92,7 @@ C_ClassColor = { GetClassColor = function(token) return COLORS[token] end }
 -- The kit's widgets, with the writes these tests read (fields only: no garbage).
 function Widget:SetValue(v, how) self.value, self.how = v, how end
 function Widget:SetStatusBarColor(r, g, b) self.r, self.g, self.b = r, g, b end
+function Widget:SetWordWrap(wrap) self.wrap = wrap end
 local kitSetText = Widget.SetText
 function Widget:SetText(t) self.writes = (self.writes or 0) + 1; kitSetText(self, t) end
 function Widget:CreateAnimationGroup() return newWidget("AnimationGroup", nil, self) end
@@ -109,6 +120,7 @@ local function describe(bar)
     local t = children(bar, "FontString")
     return { name = t[1].text, pct = t[2].text, threat = t[3].text, tps = t[4].text, value = bar.value, how = bar.how,
              r = bar.r, g = bar.g, b = bar.b, threatShown = t[3].shown, tpsShown = t[4].shown,
+             nameWidth = t[1].width, oneLine = t[1].wrap == false,
              writes = (t[1].writes or 0) + (t[2].writes or 0) + (t[3].writes or 0) + (t[4].writes or 0) }
 end
 function shownRows()
@@ -120,11 +132,21 @@ function pullLine()
     local bar = children(ThreatMeter_Window, "StatusBar")[1]
     if bar.shown then return describe(bar) end
 end
-function title()
+-- The title: the target's name on the left, your percent or a note on the right.
+function titleParts()
     for _, f in ipairs(children(ThreatMeter_Window, "Frame")) do
-        local t = children(f, "FontString")[1]
-        if t then return t.text end
+        local t = children(f, "FontString")
+        if t[1] then
+            local tied = false -- the name's right edge is the value's left
+            for _, p in ipairs(t[1].points) do if p[2] == t[2] and t[2] then tied = true end end
+            return { name = t[1].text, value = t[2] and t[2].text or "", tied = tied, oneLine = t[1].wrap == false }
+        end
     end
+end
+function title()
+    local t = titleParts()
+    if t.value ~= "" then return t.name .. "  " .. t.value end
+    return t.name
 end
 function badgeText() return children(ThreatMeter_Badge, "FontString")[1].text end
 function pulses()

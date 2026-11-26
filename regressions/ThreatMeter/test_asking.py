@@ -40,11 +40,13 @@ class WhoIsAskedAbout(unittest.TestCase):
             lua = fight(setup=setup)
             self.assertEqual(lua.eval("#sent"), 0, case)
 
-    def test_the_question_asks_for_as_many_players_as_shown(self):
+    def test_the_question_asks_for_the_most_whatever_the_window_shows(self):
+        """Review 2026-11-26: it asked for as many as shown, so you could fall out of
+        the answer (test_window, test_with_three_players_shown_the_fourth_is_still_warned)."""
         lua = fight("ThreatMeterDB = { rows = 8 }")
-        self.assertEqual(lua.eval("sent[1].msg"), "limit=8")
+        self.assertEqual(lua.eval("sent[1].msg"), "limit=14")
         lua.execute('settingsWindow.use("ThreatMeter_rows", 5); answer("%s"); step(0.2)' % FIGHT)
-        self.assertEqual(lua.eval("sent[#sent].msg"), "limit=5")
+        self.assertEqual(lua.eval("sent[#sent].msg"), "limit=14")
 
 
 class TargetNotFightingYet(unittest.TestCase):
@@ -112,7 +114,7 @@ class Pace(unittest.TestCase):
         lua.execute("step(1); step(1)")
         self.assertNotIn("no threat data", lua.eval("title()"))
         lua.execute("step(1)")
-        self.assertIn("no threat data from the server", lua.eval("title()"))
+        self.assertIn("no threat data", lua.eval("title()"))
         lua.execute('answer("%s")' % FIGHT)
         self.assertEqual(lua.eval("title()"), "Onyxia  60%")
 
@@ -202,6 +204,15 @@ class AtRest(unittest.TestCase):
         lua.execute('answer("%s"); step(0.2); answer("%s"); calm(); step(2)' % (FIGHT, FIGHT))
         self.assertEqual(lua.eval("liveTimers()"), 0)
         self.assertNotIn("OnUpdate", lua.eval("listening()"))
+
+    def test_a_question_that_fails_to_go_out_is_asked_again(self):
+        """Review 2026-11-26: the timeout was armed after the send, so a send that
+        failed left its question out for good, and the meter never asked again."""
+        lua = fight()
+        lua.execute('realSend = SendAddonMessage; SendAddonMessage = function() error("send failed") end; step(1)')
+        self.assertEqual(lua.eval("#handled"), 1, "the error reaches the error handler")
+        lua.execute("SendAddonMessage = realSend; step(0.5); step(0.55)")
+        self.assertEqual(lua.eval("#sent"), 2, "the failed question ran into its timeout")
 
     def test_a_timer_error_reaches_the_error_handler(self):
         lua = fight()

@@ -115,6 +115,43 @@ class OrderAndDraw(unittest.TestCase):
         self.assertEqual(names(lua), ["Tank", "Me"])
 
 
+class Fit(unittest.TestCase):
+    """Review 2026-11-26, measured in the client's font (Fonts/FRIZQT__.ttf, the
+    STANDARD_TEXT_FONT of Fonts.xml:4) at Claude's sizes, 220 wide with bars of 25
+    (16-point rows, a 15-point title): "Pull aggro +3.2K" is 118 wide and "You hold
+    aggro" 109, but the name column left them 93; "Azuregos  no threat data from the
+    server" is 272 of the title's 190, and "Vaelastrasz the Corrupt  85%" 196, so the
+    end went first: the number, or the note."""
+
+    def test_the_pull_line_has_the_whole_bar_for_its_text(self):
+        lua = fight()
+        lua.execute('answer("Tank:1:10000:0:1;Me:0:6800:0:0")')
+        pull, me = dict(lua.eval("pullLine()").items()), rows(lua)[1]
+        self.assertEqual(pull["name"], "Pull aggro +6.2K")
+        self.assertGreaterEqual(pull["nameWidth"], 120, "118 measured, and the outline")
+        self.assertEqual(me["nameWidth"], 93, "a player's name keeps what the columns leave")
+
+    def test_names_and_the_title_stay_on_one_line(self):
+        lua = fight()
+        lua.execute('answer("%s")' % FIGHT)
+        self.assertEqual({r["oneLine"] for r in rows(lua)}, {True})
+        self.assertTrue(lua.eval("pullLine().oneLine"))
+        self.assertTrue(lua.eval("titleParts().oneLine"))
+
+    def test_a_long_target_name_gives_way_to_your_percent(self):
+        lua = load()
+        lua.execute('retarget("Vaelastrasz the Corrupt", "worldboss"); fight(); answer("Tank:1:1000:0:1;Me:0:850:0:0")')
+        parts = dict(lua.eval("titleParts()").items())
+        self.assertEqual((parts["name"], parts["value"]), ("Vaelastrasz the Corrupt", "85%"))
+        self.assertTrue(parts["tied"], "the name ends where the percent starts")
+
+    def test_the_servers_silence_is_noted_beside_the_name(self):
+        lua = fight()
+        lua.execute("step(1); step(1); step(1)")
+        parts = dict(lua.eval("titleParts()").items())
+        self.assertEqual((parts["name"], parts["value"]), ("Onyxia", "|cff888888no threat data|r"))
+
+
 class PercentAndPull(unittest.TestCase):
     def test_percent_is_of_the_tanks_threat_whatever_the_answer_says(self):
         lua = fight()
@@ -180,6 +217,17 @@ class Warning(unittest.TestCase):
         lua.execute('answer("Me:1:1000:0:1;Healer:0:990:0:0")')
         self.assertEqual(lua.eval("sounds"), 0)
 
+    def test_with_three_players_shown_the_fourth_is_still_warned(self):
+        """Review 2026-11-26: the question asked for as many players as the window
+        shows, and the answer holds no more, so with 3 shown the fourth in threat had
+        no row, no badge, no pull line and no warning."""
+        lua = fight("ThreatMeterDB = { rows = 3 }")
+        lua.execute('serve("Tank:1:1000:0:1;A:0:950:0:1;B:0:900:0:1;Me:0:850:0:0;C:0:100:0:0")')
+        self.assertEqual(names(lua), ["Tank", "A", "Me"])
+        self.assertEqual(lua.eval("badgeText()"), "85%")
+        self.assertEqual(lua.eval("pullLine().name"), "Pull aggro +450")
+        self.assertEqual(lua.eval("sounds"), 1)
+
 
 class Preview(unittest.TestCase):
     def test_fills_the_window_and_shows_the_warning_out_of_combat(self):
@@ -198,6 +246,7 @@ class Preview(unittest.TestCase):
         lua.execute('local r = settingsWindow.row(page(), "Preview"); settingsWindow.click(r); settingsWindow.click(r)')
         self.assertEqual(names(lua), [])
         self.assertEqual(lua.eval("title()"), "ThreatMeter")
+        self.assertIn("A second click", lua.eval('settingsWindow.row(page(), "Preview").data.tooltip'))
 
     def test_a_fight_ends_it_and_the_meter_asks(self):
         lua = load()
