@@ -127,11 +127,11 @@ class TopRight(unittest.TestCase):
         self.assertIsNone(lua.eval("BuffButton0.scripts.OnUpdate"))
         self.assertIsNone(lua.eval("BuffFrame.scripts.OnUpdate"))
 
-    def test_right_to_left_closing_up_and_each_area_its_switch(self):
+    def test_left_to_right_closing_up_and_each_area_its_switch(self):
         lua = self.lua
         self.assertIs(lua.eval("BuffButton0:GetParent() == UnitFramesTopBuffs"), True)
         self.assertIs(lua.eval("BuffButton24:GetParent() == UnitFramesTopDebuffs"), True)
-        self.assertEqual(lua.eval("(select(4, BuffButton1:GetPoint(1)))"), -35)
+        self.assertEqual(lua.eval("(select(4, BuffButton1:GetPoint(1)))"), 35)
         lua.execute("table.remove(playerBuffs.HELPFUL, 1); playerAuras(); runTimers()")
         self.assertEqual(lua.eval("(select(4, BuffButton0:GetPoint(1)))"), 0)
         lua.execute("settingsWindow.use('UnitFrames_topDebuffs', false)")
