@@ -118,11 +118,11 @@ class BusyEvents(unittest.TestCase):
         lua.execute(f"units['{ROGUE}'].hp = 30; fireGUID('UNIT_HEALTH', '{ROGUE}'); units['{ROGUE}'].yards = 33; step(0.2)")
         self.assertEqual(lua.eval("n"), 0)
         self.assertAlmostEqual(lua.eval("AutoBG_AllianceFC.health.value"), 0.3)
-        self.assertIn("33 yd", lua.eval("AutoBG_AllianceFC.info.text"))
+        self.assertIn("33 yd", lua.eval("AutoBG_AllianceFC.yards.text"))
         lua.execute(f"local id = aura('{ROGUE}', 1, 'Focused Assault', 'HARMFUL'); units['{ROGUE}'].auras[1].applications = 3;"
                     f" auraEvent('{ROGUE}', {{ id }})")
-        self.assertIn("3x", lua.eval("AutoBG_AllianceFC.info.text"))
-        self.assertIn("33 yd", lua.eval("AutoBG_AllianceFC.info.text"))
+        self.assertEqual(lua.eval("AutoBG_AllianceFC.stacks.text"), "3x")
+        self.assertIn("33 yd", lua.eval("AutoBG_AllianceFC.yards.text"))
 
     def test_spy_redraws_nothing_for_an_aura_and_follows_a_known_enemy_once(self):
         lua = load("AutoBGDB = { queueOnLogin = false }", setup=COUNT)
