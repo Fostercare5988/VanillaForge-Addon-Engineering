@@ -224,8 +224,6 @@ class Stealth(unittest.TestCase):
         lua = self.lua
         lua.execute(f"enemy('{FOE}', {{ name = 'Elf', class = 'HUNTER', yards = 120, blocked = true }}); plate('{FOE}');"
                     f" fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{FOE}', 'c', 20580)")
-        self.assertFalse(lua.eval("AutoArena_AlertCard:IsShown()"))  # a moment to be sure he stays
-        lua.execute("step(1)")
         self.assertTrue(lua.eval("AutoArena_AlertCard:IsShown()"))
         self.assertTrue(lua.eval("said('sound:RaidWarning')"))
         lua.execute("AutoArena_AlertCard:Click('LeftButton')")
@@ -282,6 +280,14 @@ class Stealth(unittest.TestCase):
         lua.execute(f"fire('SPELL_GO_OTHER', 0, 11297, '{FOE}', '{MATE}')")
         self.assertEqual(lua.eval("count('sound:RaidWarning')"), 3)
         self.assertIn("on Mate", lua.eval("AutoArena_AlertCard.line.text"))
+        # The ambush card goes after 4.5 s; you still see a hider, so his card is back.
+        lua.execute("step(5)")
+        self.assertTrue(lua.eval("AutoArena_AlertCard:IsShown()"))
+        self.assertIn("Two", lua.eval("AutoArena_AlertCard.line.text"))
+        lua.execute(f"units['{TWO}'].visible = false; fireGUID('UNIT_VISIBILITY_CHANGED', '{TWO}', false)")
+        self.assertIn("Elf", lua.eval("AutoArena_AlertCard.line.text"))
+        lua.execute(f"units['{FOE}'].visible = false; fireGUID('UNIT_VISIBILITY_CHANGED', '{FOE}', false)")
+        self.assertFalse(lua.eval("AutoArena_AlertCard:IsShown()"))
 
     def test_a_hide_names_an_enemy_nobody_has_seen_yet_and_a_dead_one_hides_nothing(self):
         lua = self.lua

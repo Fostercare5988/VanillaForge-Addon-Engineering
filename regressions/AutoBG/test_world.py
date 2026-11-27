@@ -115,19 +115,21 @@ class Spy(unittest.TestCase):
         self.assertIn("Sneak", lua.eval("AutoBG_SpyAlertWindow.line.text"))
         self.assertTrue(lua.eval("said('sound:RaidWarning')"))
 
-    def test_one_card_per_detection_and_a_blip_is_none(self):
-        """2026-11-27, the player: the card pops when you detect a hidden enemy. One
-        in view for less than a moment is one hiding from you, not one you detect."""
+    def test_the_newest_seen_is_on_the_card_and_the_next_takes_his_place(self):
+        """2026-11-27, the player: the card appears whenever we see a hidden enemy
+        and goes when we cannot."""
         lua = load()
-        lua.execute("e = { name = 'A', class = 'ROGUE', stealth = 'STEALTH', visible = true }; __addon_ns.Detect(e, true); step(1)")
-        self.assertEqual(lua.eval("count('sound:RaidWarning')"), 1)
-        lua.execute("__addon_ns.Detect(e, true); step(5)")
-        self.assertEqual(lua.eval("count('sound:RaidWarning')"), 1)
-        lua.execute("e.visible = nil; __addon_ns.Detect(e, true); e.visible = true; __addon_ns.Detect(e, true); step(1)")
-        self.assertEqual(lua.eval("count('sound:RaidWarning')"), 2)  # out of view and detected again
-        lua.execute("b = { name = 'B', class = 'DRUID', stealth = 'PROWL', visible = true }; __addon_ns.Detect(b, true);"
-                    " step(0.5); b.visible = nil; __addon_ns.Detect(b, true); step(2)")
+        lua.execute("a = { name = 'A', class = 'ROGUE', stealth = 'STEALTH', visible = true }; __addon_ns.Detect(a, true);"
+                    " b = { name = 'B', class = 'DRUID', stealth = 'PROWL', visible = true }; __addon_ns.Detect(b, true)")
+        self.assertIn("B", lua.eval("AutoBG_SpyAlertWindow.line.text"))
+        self.assertIn("PROWL", lua.eval("AutoBG_SpyAlertWindow.title.text"))
         self.assertEqual(lua.eval("count('sound:RaidWarning')"), 2)
+        lua.execute("step(10)")  # no fading: it stands while you see them
+        self.assertTrue(lua.eval("AutoBG_SpyAlertWindow:IsShown()"))
+        lua.execute("b.visible = nil; __addon_ns.Detect(b, true)")
+        self.assertIn("A", lua.eval("AutoBG_SpyAlertWindow.line.text"))
+        lua.execute("a.dead = true; __addon_ns.Detect(a, true)")
+        self.assertFalse(lua.eval("AutoBG_SpyAlertWindow:IsShown()"))
 
     def test_warning_sounds_off_keeps_the_card_quiet_outside_battlegrounds(self):
         lua = load("AutoBGDB = { spySounds = false }")

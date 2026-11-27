@@ -162,30 +162,32 @@ class Rows(unittest.TestCase):
         lua.execute(f"step(9); fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 1856)")
         self.assertEqual(lua.eval(f"{self.r}.status.text"), "|cffd2c2ffVANISH|r")
 
-    def test_the_stealth_card_pops_when_you_detect_him_wall_or_not(self):
-        """2026-11-27, the player: "it must only pop when we actually detect an enemy
-        ourselves. That is the whole point. Also if we detect an enemy behind a wall"."""
+    def test_the_stealth_card_stands_while_you_see_him_wall_or_not(self):
+        """2026-11-27, the player: "often I play with no sound or my attention is
+        elsewhere... make the popup go away if we cant see the enemy, and make it
+        appear WHENEVER we see them"; a wall does not matter."""
         lua = self.lua
         shown = "AutoBG_SpyAlertWindow:IsShown()"
-        # He stealths and leaves your view: you did not detect him. No card.
-        lua.execute(f"units['{ROGUE}'].yards = 15; fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 1787);"
-                    f" units['{ROGUE}'].visible = false; fireGUID('UNIT_VISIBILITY_CHANGED', '{ROGUE}', false); step(2)")
-        self.assertFalse(lua.eval(shown))
-        self.assertFalse(lua.eval("said('sound:RaidWarning')"))
-        # Detected behind a wall: in your view stealthed, and still a moment later.
-        lua.execute(f"units['{ROGUE}'].blocked = true; aura('{ROGUE}', 1787, 'Stealth');"
-                    f" units['{ROGUE}'].visible = true; fireGUID('UNIT_VISIBILITY_CHANGED', '{ROGUE}', true)")
-        self.assertEqual(lua.eval(f"{self.r}.status.text"), "|cffc7b5ffSTEALTH|r")
-        self.assertFalse(lua.eval(shown))
-        lua.execute("step(1)")
+        # He stealths in your view, behind a wall: the card at once, with a sound.
+        lua.execute(f"units['{ROGUE}'].yards = 15; units['{ROGUE}'].blocked = true; fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 1787)")
         self.assertTrue(lua.eval(shown))
         self.assertIn("is stealthed 15 yd away", lua.eval("AutoBG_SpyAlertWindow.line.text"))
-        self.assertTrue(lua.eval("said('sound:RaidWarning')"))
+        self.assertEqual(lua.eval("count('sound:RaidWarning')"), 1)
+        # It stands while you see him, his yards following; a click targets him.
+        lua.execute(f"step(10); units['{ROGUE}'].yards = 22; step(0.5)")
+        self.assertTrue(lua.eval(shown))
+        self.assertIn("is stealthed 22 yd away", lua.eval("AutoBG_SpyAlertWindow.line.text"))
         lua.execute("AutoBG_SpyAlertWindow:Click('LeftButton')")
         self.assertTrue(lua.eval("said('^target:Thandril%-NZ$')"))
-        # One card per detection: still in view, no second card.
-        lua.execute(f"fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 1787); step(5)")
-        self.assertEqual(lua.eval("count('sound:RaidWarning')"), 1)
+        # Out of your view: the card goes. Seen again: back, with a sound.
+        lua.execute(f"units['{ROGUE}'].visible = false; fireGUID('UNIT_VISIBILITY_CHANGED', '{ROGUE}', false)")
+        self.assertFalse(lua.eval(shown))
+        lua.execute(f"sid = aura('{ROGUE}', 1787, 'Stealth'); units['{ROGUE}'].visible = true; fireGUID('UNIT_VISIBILITY_CHANGED', '{ROGUE}', true)")
+        self.assertTrue(lua.eval(shown))
+        self.assertEqual(lua.eval("count('sound:RaidWarning')"), 2)
+        # Out of stealth: the card goes.
+        lua.execute(f"removeAura('{ROGUE}', sid); auraEvent('{ROGUE}', nil, {{ sid }})")
+        self.assertFalse(lua.eval(shown))
 
     def test_a_cast_only_stealth_ends_when_an_aura_goes_in_view(self):
         lua = self.lua
