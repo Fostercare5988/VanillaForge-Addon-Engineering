@@ -218,10 +218,14 @@ class Stealth(unittest.TestCase):
     def setUp(self):
         self.lua = arena()
 
-    def test_every_stealth_warns_in_an_arena_at_any_distance(self):
+    def test_a_detected_hider_warns_at_any_distance(self):
+        """2026-11-27, the player: the card pops when we detect an enemy ourselves,
+        the same in AutoBG and AutoArena; a wall or the distance does not matter."""
         lua = self.lua
-        lua.execute(f"enemy('{FOE}', {{ name = 'Elf', class = 'HUNTER', yards = 120 }}); plate('{FOE}');"
+        lua.execute(f"enemy('{FOE}', {{ name = 'Elf', class = 'HUNTER', yards = 120, blocked = true }}); plate('{FOE}');"
                     f" fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{FOE}', 'c', 20580)")
+        self.assertFalse(lua.eval("AutoArena_AlertCard:IsShown()"))  # a moment to be sure he stays
+        lua.execute("step(1)")
         self.assertTrue(lua.eval("AutoArena_AlertCard:IsShown()"))
         self.assertTrue(lua.eval("said('sound:RaidWarning')"))
         lua.execute("AutoArena_AlertCard:Click('LeftButton')")
@@ -241,17 +245,19 @@ class Stealth(unittest.TestCase):
         lua.execute(f"units['{FOE}'].auras = {{}}; fireGUID('UNIT_VISIBILITY_CHANGED', '{FOE}', true)")
         self.assertEqual(lua.eval(f"{r}.status.text"), "100%")
 
-    def test_a_hide_heard_in_combat_events_warns_once_in_view_or_not(self):
+    def test_a_hide_heard_out_of_view_marks_the_row_and_a_detection_warns_once(self):
         lua = self.lua
         lua.execute(f"enemy('{FOE}', {{ name = 'Elf', class = 'ROGUE' }}); plate('{FOE}');"
                     f" units['{FOE}'].visible = false; fireGUID('UNIT_VISIBILITY_CHANGED', '{FOE}', false);"
                     f" fire('SPELL_GO_OTHER', 0, 1784, '{FOE}', '{FOE}')")
+        self.assertEqual(lua.eval("clock(row(1).status)"), "|cffc7b5ffSTEALTH|r 0s")
+        lua.execute("step(2)")
+        self.assertFalse(lua.eval("AutoArena_AlertCard:IsShown()"))  # not detected: no card
+        # He comes into your view stealthed: you detect him.
+        lua.execute(f"aura('{FOE}', 1784); units['{FOE}'].visible = true; fireGUID('UNIT_VISIBILITY_CHANGED', '{FOE}', true); step(1)")
         self.assertTrue(lua.eval("AutoArena_AlertCard:IsShown()"))
         self.assertIn("Elf", lua.eval("AutoArena_AlertCard.line.text"))
-        self.assertEqual(lua.eval("clock(row(1).status)"), "|cffc7b5ffSTEALTH|r 0s")
-        lua.execute(f"fire('BUFF_ADDED_OTHER', '{FOE}', 1, 1784, 1, 60, 3, 0); fire('SPELL_GO_OTHER', 0, 1784, '{FOE}', '{FOE}')")
-        self.assertEqual(lua.eval("count('sound:RaidWarning')"), 1)
-        lua.execute(f"step(5); fire('BUFF_ADDED_OTHER', '{FOE}', 1, 1784, 1, 60, 3, 2)")  # a stack change is no new stealth
+        lua.execute(f"fire('BUFF_ADDED_OTHER', '{FOE}', 1, 1784, 1, 60, 3, 0); fire('SPELL_GO_OTHER', 0, 1784, '{FOE}', '{FOE}'); step(5)")
         self.assertEqual(lua.eval("count('sound:RaidWarning')"), 1)
 
     def test_stealth_and_vanish_from_their_casts_when_no_aura_reaches_us(self):
@@ -265,14 +271,14 @@ class Stealth(unittest.TestCase):
         lua.execute(f"step(9); fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{FOE}', 'c', 1856)")
         self.assertEqual(lua.eval("row(1).status.text"), "|cffd2c2ffVANISH|r")
 
-    def test_two_rogues_hiding_together_are_two_cards_and_a_sap_is_not_held_back(self):
+    def test_two_rogues_detected_together_are_two_cards_and_a_sap_is_not_held_back(self):
         lua = self.lua
         lua.execute(f"me.pos = {{ 0, 0 }}; units['{MATE}'].pos = {{ 5, 0 }}")
         for guid, name in ((FOE, "Elf"), (TWO, "Two")):
-            lua.execute(f"enemy('{guid}', {{ name = '{name}', class = 'ROGUE', visible = false }});"
+            lua.execute(f"enemy('{guid}', {{ name = '{name}', class = 'ROGUE' }}); aura('{guid}', 1787);"
                         f" fire('BUFF_ADDED_OTHER', '{guid}', 1, 1787, 1, 60, 3, 0)")
+        lua.execute("step(1)")
         self.assertEqual(lua.eval("count('sound:RaidWarning')"), 2)
-        self.assertIn("Two", lua.eval("AutoArena_AlertCard.line.text"))
         lua.execute(f"fire('SPELL_GO_OTHER', 0, 11297, '{FOE}', '{MATE}')")
         self.assertEqual(lua.eval("count('sound:RaidWarning')"), 3)
         self.assertIn("on Mate", lua.eval("AutoArena_AlertCard.line.text"))
