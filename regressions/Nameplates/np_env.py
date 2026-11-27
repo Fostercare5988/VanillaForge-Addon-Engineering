@@ -51,7 +51,7 @@ end
 function Widget:SetFont(font, size, flags) self.fontSize, self.noFont = size, nil; if self.native then touch(self, "SetFont") end end
 function Widget:SetTexture(path) self.texture = path end
 function Widget:SetTimerDuration(d, interpolation, direction) self.timer, self.direction = d, direction; tally("SetTimerDuration") end
-function Widget:SetCooldown(start, duration) self.cdStart, self.cdDuration = start, duration; tally("SetCooldown") end
+function Widget:SetCooldown(start, duration) if type(start) ~= "number" or type(duration) ~= "number" then error("Usage: <unnamed>:SetCooldown(start, duration[, modRate])", 2) end; self.cdStart, self.cdDuration = start, duration; tally("SetCooldown") end
 function Widget:Clear() self.cdStart, self.cdDuration = nil, nil end
 function Widget:SetCountdownFormatter(f) self.formatter = f end
 function Widget:SetMinMaxValues(lo, hi) self.min, self.max = lo, hi end

@@ -312,6 +312,16 @@ class Rows(unittest.TestCase):
         lua.execute("settingsWindow.defaults()")
         self.assertTrue(lua.eval(f"{self.r}.racial:IsShown()"))
 
+    def test_a_racial_switched_off_and_used_is_not_swept(self):
+        """2026-11-27, Warsong Gulch: a Troll's Berserking switched off broke the row (/err, 9x)."""
+        lua = self.lua
+        lua.execute("settingsWindow.use('AutoBG_racial_NightElf', false)")
+        lua.execute(f"fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 20580)")
+        self.assertFalse(lua.eval(f"{self.r}.racial:IsShown()"))
+        self.assertIsNone(lua.eval(f"{self.r}.racial.cd.cdDuration"))
+        lua.execute("settingsWindow.defaults()")
+        self.assertEqual(lua.eval(f"{self.r}.racial.cd.cdDuration"), 60)
+
     def test_raid_icons_borders_and_the_range_stripe(self):
         lua = self.lua
         lua.execute(f"units['{ROGUE}'].mark = 8; fire('RAID_TARGET_UPDATE')")

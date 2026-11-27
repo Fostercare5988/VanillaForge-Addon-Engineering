@@ -57,7 +57,7 @@ end
 -- Widgets: what the addon writes.
 function Widget:SetStatusBarColor(r, g, b) self.barColor = { r, g, b } end
 function Widget:SetTimerDuration(d, _, direction) self.timer, self.direction = d, direction end
-function Widget:SetCooldown(start, duration) self.cdStart, self.cdDuration = start, duration; note("SetCooldown") end
+function Widget:SetCooldown(start, duration) if type(start) ~= "number" or type(duration) ~= "number" then error("Usage: <unnamed>:SetCooldown(start, duration[, modRate])", 2) end; self.cdStart, self.cdDuration = start, duration; note("SetCooldown") end
 function Widget:Clear() self.cdStart, self.cdDuration = nil, nil end
 -- A cooldown's countdown: its formatter, and its own font string (### CreateFrame("Cooldown")).
 function Widget:SetCountdownFormatter(f) self.countdownFormatter = f end

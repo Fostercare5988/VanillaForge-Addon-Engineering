@@ -62,7 +62,7 @@ function Widget:SetBackdropBorderColor(r, g, b) self.edgeColor = { r, g, b } end
 function Widget:SetEnabled(on) self.enabled = on and true or false end
 function Widget:LockHighlight() self.highlit = true end
 function Widget:UnlockHighlight() self.highlit = nil end
-function Widget:SetCooldown(start, duration) self.cdStart, self.cdDuration = start, duration; tally("SetCooldown") end
+function Widget:SetCooldown(start, duration) if type(start) ~= "number" or type(duration) ~= "number" then error("Usage: <unnamed>:SetCooldown(start, duration[, modRate])", 2) end; self.cdStart, self.cdDuration = start, duration; tally("SetCooldown") end
 function Widget:Clear() self.cdStart, self.cdDuration = nil, nil end
 function Widget:GetCountdownFontString() self.numbers = self.numbers or newWidget("FontString", nil, self); return self.numbers end
 function Widget:EnableMouse(on) self.mouse = on and true or false end

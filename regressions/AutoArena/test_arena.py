@@ -338,6 +338,9 @@ class Rows(unittest.TestCase):
         self.assertEqual(lua.eval("row(1).racial.cd.cdDuration"), 90)
         lua.execute("AutoArenaDB.racials.Gnome = false; __addon_ns.Frames.Apply()")
         self.assertFalse(lua.eval("row(1).racial:IsShown()"))
+        # Used while switched off: no sweep, and no error (AutoBG, 2026-11-27).
+        lua.execute(f"fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{FOE}', 'c', 20589)")
+        self.assertIsNone(lua.eval("row(1).racial.cd.cdDuration"))
 
     def test_the_realm_is_left_off_unless_asked_and_a_click_binds_the_guid(self):
         lua = self.lua
