@@ -267,16 +267,14 @@ class Rows(unittest.TestCase):
         Spy colours its distances. Fails on 368a882."""
         lua = self.lua
         lua.execute(f"units['{ROGUE}'].yards = 24; step(0.5)")
-        self.assertEqual(lua.eval(f"{self.r}.yards.text"), "|cff59ff7224 yd|r")
-        # On a chip two sizes above the row's text, the row less 4 high but never
-        # lower than the number (2026-11-27): 20-point text in a 25-pixel row.
-        self.assertTrue(lua.eval(f"{self.r}.chip:IsShown()"))
+        self.assertEqual(lua.eval(f"{self.r}.yards.text"), "|cffffffff24 yd|r")
+        # Two sizes above the row's text, bold (2026-11-27).
         self.assertEqual(lua.eval(f"{self.r}.yards.fontSize"), 22)
-        self.assertEqual(lua.eval(f"{self.r}.chip:GetHeight()"), 22)
+        self.assertEqual(lua.eval(f"{self.r}.yards.fontFlags"), "THICKOUTLINE")
         lua.execute(f"units['{ROGUE}'].blocked = true; step(0.5)")
         self.assertEqual(lua.eval(f"{self.r}.yards.text"), "|cff80808024 yd|r")
         lua.execute(f"units['{ROGUE}'].blocked = nil; step(0.5)")
-        self.assertEqual(lua.eval(f"{self.r}.yards.text"), "|cff59ff7224 yd|r")
+        self.assertEqual(lua.eval(f"{self.r}.yards.text"), "|cffffffff24 yd|r")
 
     def test_a_feigning_hunter_is_not_dead(self):
         """2026-11-23: UnitIsFeignDeath (ClassicAPI), as the Nampower Spy tells Feign
@@ -307,7 +305,6 @@ class Rows(unittest.TestCase):
         lua.execute(f"units['{ROGUE}'].visible = true; fireGUID('UNIT_VISIBILITY_CHANGED', '{ROGUE}', true);"
                     " settingsWindow.use('AutoBG_size', '10'); settingsWindow.use('AutoBG_size_yards', false); step(0.5)")
         self.assertEqual(lua.eval(f"{self.r}.yards.text"), "")
-        self.assertFalse(lua.eval(f"{self.r}.chip:IsShown()"))
         self.assertFalse(lua.eval("AutoBGDB.sizes[15].yards == false"))
 
     def test_a_racial_switched_off_is_not_shown(self):
@@ -377,36 +374,31 @@ class Carriers(unittest.TestCase):
         lua.execute("line('The Horde flag was dropped by Thandril-NZ!', 'CHAT_MSG_BG_SYSTEM_ALLIANCE')")
         self.assertFalse(lua.eval("AutoBG_AllianceFC:IsShown()"))
 
-    def test_the_card_is_rounded_in_his_class_colour_with_the_flag_he_holds(self):
-        """2026-11-27, the player: the card was "very unclear and dark"; rounded, brighter."""
+    def test_the_card_is_see_through_in_the_sides_colour_with_a_big_flag(self):
+        """2026-11-27, the player: the rounded class-colour card "looks like crap" and
+        two shamans made both cards blue; the old black see-through card, a big flag."""
         lua = load()
         match(lua)
         seen(lua, ROGUE)
         c = "AutoBG_AllianceFC"
         lua.execute("line('The Horde flag was picked up by Thandril-NZ!', 'CHAT_MSG_BG_SYSTEM_ALLIANCE')")
-        self.assertEqual(lua.eval(f"{c}.health.barColor[2]"), 0.96)  # a rogue: his class colour, full
+        self.assertEqual(lua.eval(f"{c}.health.barColor[3]"), 1)  # the Alliance's blue, not a rogue's yellow
+        self.assertEqual(lua.eval(f"{c}.health.barColor[4]"), 0.5)
         self.assertEqual(lua.eval(f"{c}.flag.texture"), "Interface\\WorldStateFrame\\HordeFlag")
+        self.assertEqual(lua.eval(f"{c}.flag:GetHeight()"), 26)
         self.assertIsNone(lua.eval(f"{c}.name.color"))  # white
-        # The edge, the back and the fill are clipped by a rounded cap at each end.
-        for tex in (f"{c}.back", f"{c}.health:GetStatusBarTexture()"):
-            self.assertEqual(lua.eval(f"#{tex}.masks"), 2)
-        self.assertEqual(lua.eval(f"{c}.back.masks[1]:GetWidth()"), 30)  # 32 high, inset 1
-        self.assertIn("CapLeft", lua.eval(f"{c}.back.masks[1].texture"))
-        self.assertIn("CapRight", lua.eval(f"{c}.back.masks[2].texture"))
 
-    def test_the_yards_chip_shows_with_yards_and_hides_without(self):
-        """2026-11-27, the player: the yards, "more visible": a dark chip, bigger and bold."""
+    def test_the_yards_are_white_to_150_then_orange_big_and_bold(self):
+        """2026-11-27, the player: the yards "more visible", white until 150 yards."""
         lua = load()
         match(lua)
         seen(lua, ROGUE)
-        chip = "AutoBG_AllianceFC.chip"
-        lua.execute(f"units['{ROGUE}'].yards = 33; line('The Horde flag was picked up by Thandril-NZ!', 'CHAT_MSG_BG_SYSTEM_ALLIANCE'); step(0.2)")
-        self.assertTrue(lua.eval(f"{chip}:IsShown()"))
-        self.assertEqual(lua.eval(f"{chip}.text.fontSize"), 15)
-        self.assertEqual(lua.eval(f"{chip}.text.fontFlags"), "THICKOUTLINE")
-        self.assertEqual(lua.eval(f"#{chip}.masks"), 2)
-        lua.execute(f"units['{ROGUE}'].visible = false; fireGUID('UNIT_VISIBILITY_CHANGED', '{ROGUE}', false)")
-        self.assertFalse(lua.eval(f"{chip}:IsShown()"))
+        y = "AutoBG_AllianceFC.yards"
+        lua.execute(f"units['{ROGUE}'].yards = 150; line('The Horde flag was picked up by Thandril-NZ!', 'CHAT_MSG_BG_SYSTEM_ALLIANCE'); step(0.2)")
+        self.assertEqual(lua.eval(f"{y}.text"), "|cffffffff150 yd|r")
+        self.assertEqual(lua.eval(f"{y}.fontFlags"), "THICKOUTLINE")
+        lua.execute(f"units['{ROGUE}'].yards = 151; step(0.2)")
+        self.assertEqual(lua.eval(f"{y}.text"), "|cffff7733151 yd|r")
 
     def test_the_flags_placed_at_their_bases_clear_both(self):
         lua = load()

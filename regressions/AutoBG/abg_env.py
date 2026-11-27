@@ -62,7 +62,7 @@ function Widget:GetDontSavePosition() return self.dontSave and 1 or nil end
 function placed(f) local p = f.points[#f.points]; return p and (p[1] .. " " .. p[4] .. " " .. p[5]) end
 
 -- Widgets: what the addon writes.
-function Widget:SetStatusBarColor(r, g, b) self.barColor = { r, g, b } end
+function Widget:SetStatusBarColor(r, g, b, a) self.barColor = { r, g, b, a } end
 function Widget:SetTimerDuration(d, _, direction) self.timer, self.direction = d, direction end
 function Widget:SetCooldown(start, duration) if type(start) ~= "number" or type(duration) ~= "number" then error("Usage: <unnamed>:SetCooldown(start, duration[, modRate])", 2) end; self.cdStart, self.cdDuration = start, duration; note("SetCooldown") end
 function Widget:Clear() self.cdStart, self.cdDuration = nil, nil end
@@ -73,22 +73,6 @@ function Widget:GetCountdownFontString()
     return self.countdownText
 end
 function Widget:SetTexture(path, g, b) self.texture = path end
--- Masks (### frame:CreateMaskTexture, ### texture:AddMaskTexture): up to three on
--- a texture, a MaskTexture only, and the game's errors past that.
-function Widget:CreateMaskTexture(name) return newWidget("MaskTexture", name, self) end
-function Widget:AddMaskTexture(mask)
-    if type(mask) ~= "table" or mask.kind ~= "MaskTexture" then error("Usage: self:AddMaskTexture(mask)", 2) end
-    self.masks = self.masks or {}
-    for _, m in ipairs(self.masks) do if m == mask then return end end
-    if #self.masks >= 3 then error("<unnamed>:AddMaskTexture(): Texture already has the maximum number of mask textures (3)", 2) end
-    self.masks[#self.masks + 1] = mask
-end
--- A StatusBar's fill: one texture, made by SetStatusBarTexture.
-function Widget:SetStatusBarTexture(path)
-    self.barTexture = self.barTexture or newWidget("Texture", nil, self)
-    self.barTexture.texture = path
-end
-function Widget:GetStatusBarTexture() return self.barTexture end
 function Widget:SetAttribute(k, v) self.attrs = self.attrs or {}; self.attrs[string.lower(k)] = v end
 function Widget:GetAttribute(k) return self.attrs and self.attrs[string.lower(k)] end
 -- A click resolves the verb as the unit buttons do; an unknown verb reaches OnClick.
