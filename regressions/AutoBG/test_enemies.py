@@ -170,7 +170,7 @@ class Rows(unittest.TestCase):
         self.assertEqual(lua.eval(f"{self.r}.status.text"), "|cffc7b5ffMELD|r")  # the row still says it
         self.assertFalse(lua.eval("AutoBG_SpyAlertWindow:IsShown()"))
         self.assertFalse(lua.eval("said('sound:RaidWarning')"))
-        # Shadowmeld next to you is no alarm either: only Stealth, Vanish and Prowl, as Spy.
+        # Shadowmeld next to you is no alarm either: it shows on the row only.
         lua.execute(f"units['{ROGUE}'].yards = 15; fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 20580)")
         self.assertFalse(lua.eval("AutoBG_SpyAlertWindow:IsShown()"))
         lua.execute(f"fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 1787)")
@@ -179,6 +179,26 @@ class Rows(unittest.TestCase):
         self.assertTrue(lua.eval("said('sound:RaidWarning')"))
         lua.execute("AutoBG_SpyAlertWindow:Click('LeftButton')")
         self.assertTrue(lua.eval("said('^target:Thandril%-NZ$')"))
+
+    def test_the_stealth_card_pops_only_for_a_hiding_you_see(self):
+        """2026-11-27, the player: "only POP when I literally SEE a stealth/prowl/invis
+        ingame, so I can quickly target and sap"."""
+        lua = self.lua
+        shown = "AutoBG_SpyAlertWindow:IsShown()"
+        # Behind a wall: no card, the row still says it.
+        lua.execute(f"units['{ROGUE}'].yards = 15; units['{ROGUE}'].blocked = true; fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 1787)")
+        self.assertEqual(lua.eval(f"{self.r}.status.text"), "|cffc7b5ffSTEALTH|r")
+        self.assertFalse(lua.eval(shown))
+        # Already hidden when he comes into view: his aura read again is no card.
+        lua.execute(f"units['{ROGUE}'].blocked = nil; aura('{ROGUE}', 1787, 'Stealth');"
+                    f" units['{ROGUE}'].visible = false; fireGUID('UNIT_VISIBILITY_CHANGED', '{ROGUE}', false);"
+                    f" units['{ROGUE}'].visible = true; fireGUID('UNIT_VISIBILITY_CHANGED', '{ROGUE}', true)")
+        self.assertEqual(lua.eval(f"{self.r}.status.text"), "|cffc7b5ffSTEALTH|r")
+        self.assertFalse(lua.eval(shown))
+        # An invisibility potion drunk in sight pops it.
+        lua.execute(f"fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 11392)")
+        self.assertTrue(lua.eval(shown))
+        self.assertIn("INVIS POT", lua.eval("AutoBG_SpyAlertWindow.title.text"))
 
     def test_a_cast_only_stealth_ends_when_an_aura_goes_in_view(self):
         lua = self.lua
