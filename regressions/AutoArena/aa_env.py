@@ -279,6 +279,8 @@ end
 
 -- Casts and spells.
 C_Spell = {
+    -- Cast at a unit, the target kept (### C_Spell.CastAtUnit).
+    CastAtUnit = function(spell, unit) note("cast:" .. tostring(spell) .. ":" .. tostring(UnitName(unit))); return true end,
     UnitCastingInfo = function(u) local c = d(u) and d(u).cast
         if c and not c.channel then return c.name, c.name, c.icon, c.from * 1000, c.to * 1000, false, nil, c.locked or false, c.spell end end,
     UnitChannelInfo = function(u) local c = d(u) and d(u).cast

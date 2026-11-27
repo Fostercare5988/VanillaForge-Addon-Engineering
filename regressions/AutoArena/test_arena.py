@@ -260,6 +260,16 @@ class Stealth(unittest.TestCase):
         self.assertTrue(lua.eval("said('^target:Elf$')"))
         self.assertFalse(lua.eval(f"settingsWindow.visible({row})"))
 
+    def test_aa_sap_saps_the_enemy_on_the_card_for_a_macro(self):
+        """2026-11-27, the player: the card's Sap "on a Keybind"; with /abg sap one macro."""
+        lua = self.lua
+        lua.execute("SlashCmdList.AUTOARENA('sap')")
+        self.assertFalse(lua.eval("said('^cast:')"))
+        self.assertIsNone(lua.eval("settingsWindow.opened"))  # the word does not open the page
+        lua.execute(f"enemy('{FOE}', {{ name = 'Elf', class = 'ROGUE' }}); plate('{FOE}');"
+                    f" fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{FOE}', 'c', 1787); SlashCmdList.AUTOARENA('sap')")
+        self.assertTrue(lua.eval("said('^cast:Sap:Elf$')"))
+
     def test_a_hide_heard_out_of_view_marks_the_row_and_a_detection_warns_once(self):
         lua = self.lua
         lua.execute(f"enemy('{FOE}', {{ name = 'Elf', class = 'ROGUE' }}); plate('{FOE}');"

@@ -181,6 +181,15 @@ class Rows(unittest.TestCase):
         self.assertTrue(lua.eval("said('^target:Thandril%-NZ$')"))
         self.assertFalse(lua.eval(f"settingsWindow.visible({row})"))
 
+    def test_abg_sap_saps_the_enemy_on_the_card_for_a_macro(self):
+        """2026-11-27, the player: the card's Sap "on a Keybind"; with /aa sap one macro."""
+        lua = self.lua
+        lua.execute("SlashCmdList.AUTOBG('sap')")  # nobody on the card: nothing
+        self.assertFalse(lua.eval("said('^cast:')"))
+        lua.execute(f"fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 1787); SlashCmdList.AUTOBG('sap')")
+        self.assertTrue(lua.eval("said('^cast:Sap:Thandril%-NZ$')"))
+        self.assertFalse(lua.eval("said('^target:')"))  # your target stays
+
     def test_the_stealth_card_stands_while_you_see_him_wall_or_not(self):
         """2026-11-27, the player: "often I play with no sound or my attention is
         elsewhere... make the popup go away if we cant see the enemy, and make it
