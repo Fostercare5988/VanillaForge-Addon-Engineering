@@ -32,7 +32,7 @@ class Pages(unittest.TestCase):
                          "Shadowmeld (Night Elf)|Escape Artist (Gnome)|Blood Fury (Orc)|"
                          "Will of the Forsaken (Undead)|War Stomp (Tauren)|Berserking (Troll)")
         self.assertIsNone(lua.eval("settingsWindow.find('Enemy racials')"))
-        self.assertEqual(rows(lua, SPY), "Spy list|Rows shown|Warning sounds")
+        self.assertEqual(rows(lua, SPY), "Spy list|Rows shown|Warning sounds|Stealth card|Sap on click")
 
     def test_claudes_choices_are_the_defaults_and_defaults_puts_them_back(self):
         lua = load()

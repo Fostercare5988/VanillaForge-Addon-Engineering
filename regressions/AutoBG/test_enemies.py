@@ -162,6 +162,25 @@ class Rows(unittest.TestCase):
         lua.execute(f"step(9); fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 1856)")
         self.assertEqual(lua.eval(f"{self.r}.status.text"), "|cffd2c2ffVANISH|r")
 
+    def test_sap_on_click_is_a_rogues_switch_off_by_default(self):
+        """2026-11-27, the player: the card for everyone, "the Sap on click should be
+        the toggle that is off as default and can be enabled (only Rogues can use it)"."""
+        lua = self.lua
+        card = "AutoBG_SpyAlertWindow"
+        row = "settingsWindow.row(settingsWindow.find('Spy'), 'Sap on click')"
+        lua.execute(f"units['{ROGUE}'].yards = 8; fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{ROGUE}', 'c', 1787); {card}:Click('LeftButton')")
+        self.assertTrue(lua.eval("said('^target:Thandril%-NZ$')"))
+        self.assertFalse(lua.eval("said('^spell:')"))
+        self.assertTrue(lua.eval(f"settingsWindow.visible({row})"))  # you play a Rogue
+        # On: the card on screen casts Sap on him; the target stays.
+        lua.execute(f"settingsWindow.use('AutoBG_sapClick', true); log = {{}}; {card}:Click('LeftButton')")
+        self.assertTrue(lua.eval("said('^spell:Sap:Thandril%-NZ$')"))
+        self.assertFalse(lua.eval("said('^target:')"))
+        # Another class: no switch, and the click targets.
+        lua.execute(f"me.class = 'MAGE'; __addon_ns.SapClick(); log = {{}}; {card}:Click('LeftButton')")
+        self.assertTrue(lua.eval("said('^target:Thandril%-NZ$')"))
+        self.assertFalse(lua.eval(f"settingsWindow.visible({row})"))
+
     def test_the_stealth_card_stands_while_you_see_him_wall_or_not(self):
         """2026-11-27, the player: "often I play with no sound or my attention is
         elsewhere... make the popup go away if we cant see the enemy, and make it

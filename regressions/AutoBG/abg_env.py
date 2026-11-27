@@ -84,6 +84,10 @@ function Widget:Click(button)
     if (verb == "target" or verb == "focus") and unit then
         note(verb .. ":" .. tostring(UnitName(unit)))
         if verb == "target" then setTarget(resolve(unit)) else focusGUID = resolve(unit); fire("PLAYER_FOCUS_CHANGED") end
+    elseif verb == "spell" and unit then
+        -- Cast on the unit's GUID, the target kept (### frame:SetAttribute, C_Spell.CastAtUnit).
+        local spell = self:GetAttribute(prefix .. "spell" .. n) or self:GetAttribute("spell" .. n)
+        note("spell:" .. tostring(spell) .. ":" .. tostring(UnitName(unit)))
     else
         -- ClassicAPI's chained OnClick hands a click with no verb to the frame's own
         -- handler with no arguments (seen in play 2026-11-23: self and button nil);

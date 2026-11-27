@@ -243,6 +243,23 @@ class Stealth(unittest.TestCase):
         lua.execute(f"units['{FOE}'].auras = {{}}; fireGUID('UNIT_VISIBILITY_CHANGED', '{FOE}', true)")
         self.assertEqual(lua.eval(f"{r}.status.text"), "100%")
 
+    def test_sap_on_click_is_a_rogues_switch_off_by_default(self):
+        """2026-11-27, the player: "the Sap on click should be the toggle that is off as
+        default and can be enabled (only Rogues can use it)"."""
+        lua = self.lua
+        card = "AutoArena_AlertCard"
+        row = "settingsWindow.row(settingsWindow.find('AutoArena'), 'Sap on click')"
+        lua.execute(f"enemy('{FOE}', {{ name = 'Elf', class = 'ROGUE' }}); plate('{FOE}');"
+                    f" fireGUID('UNIT_SPELLCAST_SUCCEEDED', '{FOE}', 'c', 1787); {card}:Click('LeftButton')")
+        self.assertTrue(lua.eval("said('^target:Elf$')"))
+        self.assertTrue(lua.eval(f"settingsWindow.visible({row})"))
+        lua.execute(f"settingsWindow.use('AutoArena_sapClick', true); log = {{}}; {card}:Click('LeftButton')")
+        self.assertTrue(lua.eval("said('^spell:Sap:Elf$')"))
+        self.assertFalse(lua.eval("said('^target:')"))
+        lua.execute(f"me.class = 'MAGE'; __addon_ns.Alerts.SapClick(); log = {{}}; {card}:Click('LeftButton')")
+        self.assertTrue(lua.eval("said('^target:Elf$')"))
+        self.assertFalse(lua.eval(f"settingsWindow.visible({row})"))
+
     def test_a_hide_heard_out_of_view_marks_the_row_and_a_detection_warns_once(self):
         lua = self.lua
         lua.execute(f"enemy('{FOE}', {{ name = 'Elf', class = 'ROGUE' }}); plate('{FOE}');"
